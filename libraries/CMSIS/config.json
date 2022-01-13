@@ -1,0 +1,6 @@
+{
+    "cflags": [
+        "-ffreestanding",
+        "-nostdlib"
+    ]
+}
