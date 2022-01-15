@@ -25,7 +25,9 @@ typedef enum {
 
 #define LOG(level, fmt, ...)                                                  \
   do {                                                                        \
+    taskENTER_CRITICAL();                                                     \
     if ((level) >= LOG_LEVEL_VERBOSITY) {                                     \
       printf("[%u] %s:%u: " fmt, (level), __FILE__, __LINE__, ##__VA_ARGS__); \
     }                                                                         \
+    taskEXIT_CRITICAL();                                                      \
   } while (0)
