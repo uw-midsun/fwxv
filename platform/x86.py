@@ -1,3 +1,5 @@
+import os
+
 cflags = [
     '-g',
     '-Os',
@@ -27,6 +29,8 @@ link_flags = [
 ]
 
 x86_env = Environment(
+    ENV = { 'PATH': os.environ['PATH'] },
+
     CC='gcc',
     CCFLAGS=cflags + define_flags,
     CPPPATH=[],
