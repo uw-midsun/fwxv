@@ -1,5 +1,4 @@
 from optparse import OptionParser
-# from jinja2 import Template, Environment, PackageLoader
 import jinja2
 import yaml
 
@@ -16,11 +15,11 @@ def write_template(env, template_name, data, dest="./"):
         f.write(output)
 
 def main():
-    print("Done writing!")
+    print("Done autogenerating")
 
 if __name__ == "__main__":
     parser = OptionParser()
-    parser.add_option("-y", "--yaml_file", dest="yaml_file",
+    parser.add_option("-y", "--yaml_file", default=[], dest="yaml_file", action="append",
                     help="yaml file to read", metavar="FILE")
     parser.add_option("-t", "--template", dest="template",
                     help="template file to populate", metavar="FILE")
@@ -29,13 +28,12 @@ if __name__ == "__main__":
     
     templateLoader = jinja2.FileSystemLoader(searchpath="./libraries/codegen/templates")
     env = jinja2.Environment(loader=templateLoader)
+
+    for y in options.yaml_file:
+        data = read_yaml(y)    
     
-    data = None
-    if options.yaml_file:
-        data = read_yaml(options.yaml_file)    
-    
-    if options.template:
-        write_template(env, options.template, data)
+        if options.template:
+            write_template(env, options.template, data)
     
     main()
     
