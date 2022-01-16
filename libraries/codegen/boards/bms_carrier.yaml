@@ -1,0 +1,38 @@
+
+---
+  Messages:
+    bps_heartbeat:
+      id: 0
+      target:
+        - centre_console
+      critical: true
+      signals:
+        status:
+          length: uint8_t
+
+    battery_vt:
+      id: 30
+      target:
+        - telemetry
+      critical: false
+      signals:
+        module_id:
+          length: uint16_t
+        voltage:
+          length: uint16_t
+        temperature:
+          length: uint16_t
+
+    battery_aggregate_vc:
+      id: 33
+      target:
+        - telemetry
+      signals:
+        voltage:
+          length: uint32_t
+        current:
+          length: uint32_t
+
+          
+
+
