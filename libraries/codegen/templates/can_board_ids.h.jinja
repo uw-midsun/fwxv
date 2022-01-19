@@ -1,0 +1,13 @@
+#pragma once
+
+#include <stdbool.h>
+
+{% set boards = data["Boards"] -%}
+
+// For setting the CAN device
+typedef enum {
+    {% for board in boards -%}
+    SYSTEM_CAN_DEVICE_{{ board | upper }} = {{ loop.index0 }},
+    {% endfor -%}
+    NUM_SYSTEM_CAN_DEVICES = {{ boards | length }}
+} SystemCanDevice;
