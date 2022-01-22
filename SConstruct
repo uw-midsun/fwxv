@@ -35,6 +35,13 @@ AddOption(
     action='store'
 )
 
+AddOption(
+    '--define',
+    dest='define',
+    type='string',
+    action='store'
+)
+
 PLATFORM = GetOption('platform')
 PROJECT = GetOption('project')
 LIBRARY = GetOption('library')
@@ -129,6 +136,8 @@ for entry in PROJ_DIRS + LIB_DIRS:
     # even though FreeRTOS depends on ms-freertos, not the other way around
     lib_incs = [lib_dir.Dir('inc') for lib_dir in LIB_DIRS]
     lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
+
+    env.Append(CPPDEFINES=[GetOption('define')])
 
     if entry in PROJ_DIRS:
         lib_deps = get_lib_deps(entry)
