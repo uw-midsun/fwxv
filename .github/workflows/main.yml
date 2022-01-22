@@ -73,10 +73,7 @@ jobs:
           mkdir .venv
           virtualenv .venv
           . .venv/bin/activate
-          PYTHONPATHNANO=$(realpath ..)/nanopb
-          if [ ! -d ${PYTHONPATHNANO} ]; then 
-          cd ${PYTHONPATHNANO}/.. && git clone https://github.com/nanopb/nanopb.git && cd ${PYTHONPATHNANO}/generator/proto && make;
-          fi
+          cd $(realpath ..) && git clone https://github.com/nanopb/nanopb.git && cd ${PYTHONPATHNANO}/generator/proto && make;
         # pip install -r requirements.txt
 
       - name: Force PATH to update
