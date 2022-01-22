@@ -73,7 +73,7 @@ jobs:
           mkdir .venv
           virtualenv .venv
           . .venv/bin/activate
-          cd $(realpath ..) && git clone https://github.com/nanopb/nanopb.git && cd ${PYTHONPATHNANO}/generator/proto && make;
+          cd .. && git clone https://github.com/nanopb/nanopb.git && cd nanopb/generator/proto && make;
         # pip install -r requirements.txt
 
       - name: Force PATH to update
