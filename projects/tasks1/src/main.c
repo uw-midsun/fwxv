@@ -14,45 +14,31 @@ static StaticTask_t s_task_tcb1;
 static StackType_t s_task_stack2;
 static StaticTask_t s_task_tcb2;
 
-static void prv_delay() {
+
+// Delay for the number of ticks specified
+// Use pdMS_TO_TICKS() to convert ms to ticks
+static void prv_delay(TickType_t ticks_to_wait) {
   TickType_t curr_tick = xTaskGetTickCount();
-  while(xTaskGetTickCount() - curr_tick < pdMS_TO_TICKS(10))
+  while(xTaskGetTickCount() - curr_tick < ticks_to_wait)
   {}
 }
 
 static void task1_func(void *params) {
+  int counter1 = 0;
   while (true) {
-    LOG_DEBUG("Task 1 called!\n");
-    prv_delay();
+  // Your code here
   }
 }
 
 static void task2_func(void *params) {
+  int counter2 = 0;
   while (true) {
-    LOG_DEBUG("Task 2 called!\n");
-    prv_delay();
+  // Your code here
   }
 }
 
 int main(void) {
-    xTaskCreateStatic(
-        task1_func,
-        "task 1",
-        configMINIMAL_STACK_SIZE,
-        NULL,
-        tskIDLE_PRIORITY + 1,
-        &s_task_stack1,
-        &s_task_tcb1
-    );
-    xTaskCreateStatic(
-        task2_func,
-        "task 2",
-        configMINIMAL_STACK_SIZE,
-        NULL,
-        tskIDLE_PRIORITY + 2,
-        &s_task_stack2,
-        &s_task_tcb2
-    );
+    // Create tasks here
 
     LOG_DEBUG("Program start...\n");
     vTaskStartScheduler();
