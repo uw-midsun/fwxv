@@ -1342,7 +1342,6 @@ static void prvAddNewTaskToReadyList( TCB_t * pxNewTCB )
 /*-----------------------------------------------------------*/
 
 #if ( INCLUDE_vTaskDelay == 1 )
-
     void vTaskDelay( const TickType_t xTicksToDelay )
     {
         BaseType_t xAlreadyYielded = pdFALSE;

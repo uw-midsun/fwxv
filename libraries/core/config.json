@@ -1,13 +1,13 @@
 {
-    "x86_libs": [
-        "x86"
-    ],
-    "arm_libs": [
-        "stm32f0xx"
-    ],
-    "mocks": {
-        "mock": [
-            "status_impl_update"
-        ]
-    }
+  "x86_libs": [
+      "x86"
+  ],
+  "arm_libs": [
+      "stm32f0xx"
+  ],
+  "mocks": {
+      "mock": [
+          "status_impl_update"
+      ]
+  }
 }
