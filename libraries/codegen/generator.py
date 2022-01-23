@@ -7,10 +7,18 @@ def read_yaml(yaml_file):
         data = yaml.load(f, Loader=yaml.FullLoader)
         return data
     
-def write_template(env, template_name, data, dest="./"):
+def write_template(env, template_name, yaml_path, data, dest="./"):
+    # get the name of the yaml file from the filepath
+    file_prefix = yaml_path.split("/")[len(yaml_path.split("/"))-1].split(".")[0]
+    data['FilePrefix'] = file_prefix
+    # get the name of the jinja file from the filepath
+    jinja_prefix = options.template[:-6]
+    # files that start with _ are generic and we want to append the specific name in front
+    file = dest + (file_prefix + jinja_prefix if jinja_prefix[0] == "_" else jinja_prefix)
+
     template = env.get_template(template_name)
     output = template.render(data=data)
-    file = dest + template_name[:-6]
+
     with open(file, "w") as f:
         f.write(output)
 
@@ -30,10 +38,10 @@ if __name__ == "__main__":
     env = jinja2.Environment(loader=templateLoader)
 
     for y in options.yaml_file:
-        data = read_yaml(y)    
-    
+        data = read_yaml(y)
+
         if options.template:
-            write_template(env, options.template, data)
+            write_template(env, options.template, y, data)
     
     main()
     

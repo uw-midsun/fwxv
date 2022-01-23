@@ -1,14 +1,17 @@
 #pragma once
 
-#include "bms_carrier_structs.h"
+{% set file_prefix = data["FilePrefix"] -%}
+{% set messages = data["Messages"] -%}
 
-{% set int_types = data["IntTypes"] -%}
+#include "{{file_prefix}}_structs.h"
 
-{% for index in int_types.keys() -%}
+{% for message in messages -%}
+{% for signal in messages[message]['signals'] -%}
 
-uint{{int_types[index]}}_t get_signal{{index}}(receive_struct* s)
+{{messages[message]['signals'][signal]['length']}} get_{{message}}_{{signal}}(receive_struct* s)
 {
-    return s->signal{{index}};
+    return s->signal_{{message}}_{{signal}};
 }
 
+{% endfor -%}
 {% endfor -%}
