@@ -1,5 +1,14 @@
 #pragma once
 
-#include "{}_structs.h"
+#include "bms_carrier_structs.h"
 
+{% set int_types = data["IntTypes"] -%}
 
+{% for index in int_types.keys() -%}
+
+uint{{int_types[index]}}_t get_signal{{index}}(receive_struct* s)
+{
+    return s->signal{{index}};
+}
+
+{% endfor -%}
