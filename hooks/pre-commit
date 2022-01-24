@@ -2,7 +2,8 @@
 echo "Automatically formatting and linting"
 
 changed = $(git diff origin/master --name-only --diff-filter=ACMRT -- '*.c' '*.h' ':(exclude)*.mako.*' ':(exclude)projects/bootloader/protogen' ':(exclude)libraries/nanopb')
-xargs -r python2 lint.py < changed
+xargs -r python2 lint.py < $changed
+xargs -r clang-format -i -style=file < $changed
 
 if [ $? -ne 0 ]; then
  echo "Code must be properly formatted before commiting!"
