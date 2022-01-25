@@ -15,7 +15,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v2
@@ -35,6 +35,7 @@ jobs:
 
       - name: Install gcc, clang, clang-format
         run: |
+          deb http://dk.archive.ubuntu.com/ubuntu/ bionic main universe
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt-get update
           sudo apt-fast -y install gcc-6

@@ -9,27 +9,27 @@ if [[ -n $(git status --porcelain) ]]; then
   exit 1
 fi
 
-if [[ $(whoami) == 'vagrant' || $MS_RUN_NATIVE ]]; then
-  make test_format
-else
-  vagrant ssh -c 'cd shared/firmware_xiv; make test_format'
-fi
+# if [[ $(whoami) == 'vagrant' || $MS_RUN_NATIVE ]]; then
+#   make test_format
+# else
+#   vagrant ssh -c 'cd shared/firmware_xiv; make test_format'
+# fi
 
-if [[ $? -ne 0 ]]; then
-  echo "Formatting applied - adding new commit"
-  git add .
-  git commit -m "Formatting (Automated commit)"
-  echo "Please push again to include formatting commit."
-  exit 1
-fi
+# if [[ $? -ne 0 ]]; then
+#   echo "Formatting applied - adding new commit"
+#   git add .
+#   git commit -m "Formatting (Automated commit)"
+#   echo "Please push again to include formatting commit."
+#   exit 1
+# fi
 
-if [[ $(whoami) == 'vagrant' || $MS_RUN_NATIVE ]]; then
-  make lint && make pylint
-else
-  vagrant ssh -c 'cd shared/firmware_xiv; make lint && make pylint'
-fi
+# if [[ $(whoami) == 'vagrant' || $MS_RUN_NATIVE ]]; then
+#   make lint && make pylint
+# else
+#   vagrant ssh -c 'cd shared/firmware_xiv; make lint && make pylint'
+# fi
 
-if [[ $? -ne 0 ]]; then
-  echo "Failed lint"
-  exit 1
-fi
+# if [[ $? -ne 0 ]]; then
+#   echo "Failed lint"
+#   exit 1
+# fi
