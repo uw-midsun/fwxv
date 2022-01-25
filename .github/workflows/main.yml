@@ -15,7 +15,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-18.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v2
@@ -35,11 +35,8 @@ jobs:
 
       - name: Install gcc, clang, clang-format
         run: |
-          sudo add-apt-repository 'deb http://azure.archive.ubuntu.com/ubuntu/ bionic universe'
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt update
-          echo "APT SOURCES:"
-          sudo cat /etc/apt/sources.list
           sudo apt -y install gcc-6
           sudo apt -y install clang-5.0
           sudo apt -y install clang-format-5.0
