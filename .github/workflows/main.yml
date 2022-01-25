@@ -37,6 +37,7 @@ jobs:
         run: |
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt update
+          echo "APT SOURCES:"
           sudo cat /etc/apt/sources.list
           sudo apt -y install gcc-6
           sudo apt -y install clang-5.0
