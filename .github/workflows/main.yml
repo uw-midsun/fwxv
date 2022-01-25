@@ -35,7 +35,7 @@ jobs:
 
       - name: Install gcc, clang, clang-format
         run: |
-          deb http://dk.archive.ubuntu.com/ubuntu/ bionic main universe
+          echo "deb http://dk.archive.ubuntu.com/ubuntu/ bionic main universe" | sudo tee -a /etc/apt/sources.list
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
           sudo apt-get update
           sudo apt-fast -y install gcc-6
