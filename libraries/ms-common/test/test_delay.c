@@ -1,5 +1,10 @@
-#include "delay.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "log.h"
+
+#include <stdint.h>
+
+#include "delay.h"
 
 void setup_test(void) {}
 
@@ -10,12 +15,12 @@ static StaticTask_t s_task_tcb;
 
 static void delay_task() {
   LOG_DEBUG("Begin Delay\n");
-  delay_us(10000);
+  delay_ms(500);
   LOG_DEBUG("End Delay\n");
   vTaskEndScheduler();
 }
 
-void test_delay_us(void) {
+void test_delay_ms(void) {
   xTaskCreateStatic(
         delay_task,
         "Delay",
