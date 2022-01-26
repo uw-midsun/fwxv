@@ -333,12 +333,10 @@ for entry in PYTHON_DIRS:
 def run_lint(target, source, env):
     print('Linting *.[ch] in {}, {}...'.format(PROJ_DIR, LIB_DIR))
     # Note: Firmware_xiv used python2. Why?
-    print(dir_list_to_str(lint_files))
     lint_cmd = 'echo {} | xargs -r python2 ./lint.py'.format(dir_list_to_str(lint_files))
     subprocess.run(lint_cmd, shell=True)
 
     print('Linting *.py files')
-    print(dir_list_to_str(py_lint_files))
     pylint_cmd = 'echo {} | xargs -r pylint'.format(dir_list_to_str(py_lint_files))
     subprocess.run(pylint_cmd, shell=True)
 
