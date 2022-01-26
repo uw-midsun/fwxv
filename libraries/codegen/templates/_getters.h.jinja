@@ -5,13 +5,13 @@
 
 #include "{{file_prefix}}_structs.h"
 
-{% for message in messages -%}
-{% for signal in messages[message]['signals'] -%}
+{%- for message in messages -%}
+    {%- for signal in messages[message]['signals'] %}
 
 {{messages[message]['signals'][signal]['length']}} get_{{message}}_{{signal}}(receive_struct* s)
 {
     return s->signal_{{message}}_{{signal}};
 }
 
-{% endfor -%}
+    {%- endfor -%}
 {% endfor -%}
