@@ -1,4 +1,3 @@
-from ast import parse
 import json
 import os
 import subprocess
@@ -121,12 +120,14 @@ def get_srcs(dir):
     # Glob the source files from OBJ_DIR because it's a variant dir
     # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
     # str(dir) is e.g. 'projects/example', so this is like build/obj/projects/example/src
-    srcs = OBJ_DIR.Dir(str(dir)).Dir('inc').glob('*.[cs]')
-    srcs += OBJ_DIR.Dir(str(dir)).Dir('inc').Dir(PLATFORM).glob('*.[cs]')
+    srcs = OBJ_DIR.Dir(str(dir)).Dir('src').glob('*.[cs]')
+    srcs += OBJ_DIR.Dir(str(dir)).Dir('src').Dir(PLATFORM).glob('*.[cs]')
     return srcs
 
+# Get header files for a project/library
 def get_inc_files(dir):
     incs = OBJ_DIR.Dir(str(dir)).Dir('inc').glob('*.h')
+    incs += OBJ_DIR.Dir(str(dir)).Dir('inc').Dir(PLATFORM).glob('*.h')
     return incs
 
 
@@ -135,6 +136,11 @@ def get_inc_dirs(dir):
     inc_dirs = [dir.Dir('inc')]
     inc_dirs += [dir.Dir('inc').Dir(PLATFORM)]
     return inc_dirs
+
+# Get Python scripts for a project/library
+def get_py_files(dir):
+    # Assumes all Python files live in /scripts
+    return dir.Dir('scripts').glob('*.py')
 
 
 # Create appropriate targets for all projects and libraries
@@ -281,66 +287,77 @@ Alias('test', test)
 clean = Command('clean.txt', [], 'rm -rf build/*')
 Alias('clean', clean)
 
+###########################################################
+# Linting and Formatting 
+###########################################################
+
 lint_files = []
 format_files = []
+py_lint_files = [] 
+py_format_files = [] 
 
-# Is there a Scons way to Glob all Python files recursively?
-PYLINT_IGNORE = ['lint.py', 'platform/arm.py', 'platform/x86.py']
-# Kinda ugly - uses set subtraction to remove pylint ignore files.
-py_files = list(set(glob.glob('**/*.py', recursive=True)) - set(PYLINT_IGNORE))
+# Python project directories (e.g /mpxe from firmware_xiv)
+PYTHON_DIRS = []
 
+# Formatter configs
 AUTOPEP8_CONFIG = '-a --max-line-length 100 -r'
+CLANG_FORMAT_CONFIG = '-i style=file'
+
+def dir_list_to_str(dir_list):
+    return ' '.join([str(file) for file in dir_list])
+
 
 # Get all src and header files (*.c, *.h) to lint/format
 for entry in PROJ_DIRS + LIB_DIRS:
     srcs = get_srcs(entry)
     incs = get_inc_files(entry)
 
+    py_files = get_py_files(entry)
+
     config = parse_config(entry) 
 
     # Avoid linting/formatting external libraries
     if not config.get('no_format'):
         format_files += srcs + incs
+        py_format_files += py_files
     if not config.get('no_lint'):
         lint_files += srcs + incs
+        py_lint_files += py_files 
+
+for entry in PYTHON_DIRS:
+    # Use Python glob instead of Scons glob, recursive search needed.
+    py_files = glob.glob('{}/**/*.py'.format(str(entry)), recursive=True)
+    py_format_files += py_files
+    py_lint_files += py_files
 
 def run_lint(target, source, env):
-    print('Linting *.[ch] in {}, {}...'.format(PROJ_DIRS, LIB_DIRS))
+    print('Linting *.[ch] in {}, {}...'.format(PROJ_DIR, LIB_DIR))
     # Note: Firmware_xiv used python2. Why?
-    lint_cmd = 'echo {} | xargs -r python2 ./lint.py'.format(' '.join([str(file) for file in lint_files]))
+    print(dir_list_to_str(lint_files))
+    lint_cmd = 'echo {} | xargs -r python2 ./lint.py'.format(dir_list_to_str(lint_files))
     subprocess.run(lint_cmd, shell=True)
 
-    print('Linting *.[py] files')
-    print('Ignoring {}'.format(' '.join(py_files)))
-    pylint_cmd = 'echo {} | xargs -r pylint'.format(' '.join(py_files))
+    print('Linting *.py files')
+    print(dir_list_to_str(py_lint_files))
+    pylint_cmd = 'echo {} | xargs -r pylint'.format(dir_list_to_str(py_lint_files))
     subprocess.run(pylint_cmd, shell=True)
 
+def run_format(target, source, env):
+    print('Formatting *.[ch] in {}, {}...'.format(str(PROJ_DIR), str(LIB_DIR)))
+    format_cmd = ('echo {} | xargs -r clang-format {}'
+                    .format(dir_list_to_str(format_files), CLANG_FORMAT_CONFIG))
+    subprocess.run(format_cmd, shell=True)
+
+    print('Formatting *.py files')
+    autopep8_cmd = ('autopep8 {1} -i {0}'
+                    .format(dir_list_to_str(py_format_files), AUTOPEP8_CONFIG))
+    subprocess.run(autopep8_cmd, shell=True)
 
 lint = Command('lint.txt', [], run_lint)
 Alias('lint', lint)
 
-def run_format(target, source, env):
-    print('Formatting *.[ch] in {}, {}...'.format(PROJ_DIRS, LIB_DIRS))
-    # Note: Firmware_xiv used python2. Why?
-    print(format_files)
-    format_cmd = 'echo {} | xargs -r clang-format -i style=file'.format(' '.join([str(file) for file in format_files]))
-    subprocess.run(format_cmd, shell=True)
-
-    print('Formatting *.[py] files')
-    print('Ignoring {}'.format(' '.join(py_files)))
-    autopep8_cmd = 'autopep8 {} -i {}'.format(AUTOPEP8_CONFIG, ' '.join(py_files))
-    subprocess.run(autopep8_cmd, shell=True)
-    
-
 format = Command('format.txt', [], run_format)
 Alias('format', format)
-
-def run_pylint(target, source, env):
-    raise NotImplementedError
-
-pylint = Command('pylint.txt', [], run_pylint)
-Alias('pylint', pylint)
-
 
 ###########################################################
 # Helper targets for x86
