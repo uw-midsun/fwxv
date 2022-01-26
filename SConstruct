@@ -130,7 +130,6 @@ def get_inc_files(dir):
     incs += OBJ_DIR.Dir(str(dir)).Dir('inc').Dir(PLATFORM).glob('*.h')
     return incs
 
-
 # Get header directories for a project/library
 def get_inc_dirs(dir):
     inc_dirs = [dir.Dir('inc')]
@@ -311,7 +310,6 @@ def dir_list_to_str(dir_list):
 for entry in PROJ_DIRS + LIB_DIRS:
     srcs = get_srcs(entry)
     incs = get_inc_files(entry)
-
     py_files = get_py_files(entry)
 
     config = parse_config(entry) 
@@ -331,25 +329,26 @@ for entry in PYTHON_DIRS:
     py_lint_files += py_files
 
 def run_lint(target, source, env):
-    print('Linting *.[ch] in {}, {}...'.format(PROJ_DIR, LIB_DIR))
-    # Note: Firmware_xiv used python2. Why?
+    print('\nLinting *.[ch] in {}, {} ...'.format(PROJ_DIR, LIB_DIR))
     lint_cmd = 'echo {} | xargs -r python2 ./lint.py'.format(dir_list_to_str(lint_files))
     subprocess.run(lint_cmd, shell=True)
 
-    print('Linting *.py files')
+    print('\nLinting *.py files ...')
     pylint_cmd = 'echo {} | xargs -r pylint'.format(dir_list_to_str(py_lint_files))
     subprocess.run(pylint_cmd, shell=True)
 
 def run_format(target, source, env):
-    print('Formatting *.[ch] in {}, {}...'.format(str(PROJ_DIR), str(LIB_DIR)))
+    print('\nFormatting *.[ch] in {}, {} ...'.format(str(PROJ_DIR), str(LIB_DIR)))
     format_cmd = ('echo {} | xargs -r clang-format {}'
                     .format(dir_list_to_str(format_files), CLANG_FORMAT_CONFIG))
     subprocess.run(format_cmd, shell=True)
 
-    print('Formatting *.py files')
+    print('\nFormatting *.py files ...')
     autopep8_cmd = ('autopep8 {1} -i {0}'
                     .format(dir_list_to_str(py_format_files), AUTOPEP8_CONFIG))
     subprocess.run(autopep8_cmd, shell=True)
+
+    print('Done Formatting.')
 
 lint = Command('lint.txt', [], run_lint)
 Alias('lint', lint)
