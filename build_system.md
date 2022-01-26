@@ -29,6 +29,8 @@ Unit tests are per-project/library and are built and run from scons. Functions m
     - e.g. `scons gdb --project=leds --platform=x86`
 - `flash [project]`: (arm specific) Flash the project's binary using openocd. A controller board must be connected an powered.
     - e.g. `scons flash --project=leds`
+- `lint`: Lints all files.
+- `format`: Formats all files.
 
 ### Arguments
 - `--platform`: Specifies target platform. One of `arm` or `x86`. Defaults to `arm`.
