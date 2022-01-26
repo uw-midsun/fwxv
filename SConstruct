@@ -138,8 +138,7 @@ def get_inc_dirs(dir):
 
 # Get Python scripts for a project/library
 def get_py_files(dir):
-    # Assumes all Python files live in /scripts
-    return dir.Dir('scripts').glob('*.py')
+    return glob.glob('{}/**/*.py'.format(str(dir)), recursive=True)
 
 
 # Create appropriate targets for all projects and libraries
@@ -302,7 +301,9 @@ PYTHON_DIRS = []
 AUTOPEP8_CONFIG = '-a --max-line-length 100 -r'
 CLANG_FORMAT_CONFIG = '-i style=file'
 
+# Convert a list of paths/Dirs to space-separated paths.
 def dir_list_to_str(dir_list):
+    # Use str(file) to ensure Dirs objects are converted to paths.
     return ' '.join([str(file) for file in dir_list])
 
 
@@ -324,7 +325,7 @@ for entry in PROJ_DIRS + LIB_DIRS:
 
 for entry in PYTHON_DIRS:
     # Use Python glob instead of Scons glob, recursive search needed.
-    py_files = glob.glob('{}/**/*.py'.format(str(entry)), recursive=True)
+    py_files = get_py_files(entry)
     py_format_files += py_files
     py_lint_files += py_files
 
