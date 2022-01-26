@@ -126,8 +126,8 @@ def get_srcs(dir):
 
 # Get header files for a project/library
 def get_inc_files(dir):
-    incs = OBJ_DIR.Dir(str(dir)).Dir('inc').glob('*.h')
-    incs += OBJ_DIR.Dir(str(dir)).Dir('inc').Dir(PLATFORM).glob('*.h')
+    incs = dir.Dir('inc').glob('*.h')
+    incs += dir.Dir('inc').Dir(PLATFORM).glob('*.h')
     return incs
 
 # Get header directories for a project/library
