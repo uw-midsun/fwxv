@@ -324,7 +324,6 @@ for entry in PROJ_DIRS + LIB_DIRS:
         py_lint_files += py_files 
 
 for entry in PYTHON_DIRS:
-    # Use Python glob instead of Scons glob, recursive search needed.
     py_files = get_py_files(entry)
     py_format_files += py_files
     py_lint_files += py_files
