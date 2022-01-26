@@ -6,5 +6,7 @@
     "cflags": [
         "-ffreestanding",
         "-nostdlib"
-    ]
+    ],
+    "no_lint": true,
+    "no_format": true
 }

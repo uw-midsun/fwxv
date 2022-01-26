@@ -1,6 +1,8 @@
+from ast import parse
 import json
 import os
 import subprocess
+import glob
 
 ###########################################################
 # Build arguments
@@ -83,6 +85,8 @@ def parse_config(entry):
         'arm_libs': [],
         'cflags': [],
         'mocks': {},
+        'no_lint': False,
+        'no_format': False
     }
     config_file = entry.File('config.json')
     if not config_file.exists():
@@ -112,15 +116,31 @@ def proj_elf(proj_name):
 def proj_bin(proj_name):
     return proj_elf(proj_name).File(proj_name + '.bin')
 
-# Create appropriate targets for all projects and libraries
-for entry in PROJ_DIRS + LIB_DIRS:
+# Get all src files for a project/library
+def get_srcs(dir):
     # Glob the source files from OBJ_DIR because it's a variant dir
     # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
-    # str(entry) is e.g. 'projects/example', so this is like build/obj/projects/example/src
-    srcs = OBJ_DIR.Dir(str(entry)).Dir('src').glob('*.[cs]')
-    srcs += OBJ_DIR.Dir(str(entry)).Dir('src').Dir(PLATFORM).glob('*.[cs]')
-    inc_dirs = [entry.Dir('inc')]
-    inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
+    # str(dir) is e.g. 'projects/example', so this is like build/obj/projects/example/src
+    srcs = OBJ_DIR.Dir(str(dir)).Dir('inc').glob('*.[cs]')
+    srcs += OBJ_DIR.Dir(str(dir)).Dir('inc').Dir(PLATFORM).glob('*.[cs]')
+    return srcs
+
+def get_inc_files(dir):
+    incs = OBJ_DIR.Dir(str(dir)).Dir('inc').glob('*.h')
+    return incs
+
+
+# Get header directories for a project/library
+def get_inc_dirs(dir):
+    inc_dirs = [dir.Dir('inc')]
+    inc_dirs += [dir.Dir('inc').Dir(PLATFORM)]
+    return inc_dirs
+
+
+# Create appropriate targets for all projects and libraries
+for entry in PROJ_DIRS + LIB_DIRS:
+    srcs = get_srcs(entry)
+    inc_dirs = get_inc_dirs(entry)
 
     config = parse_config(entry)
 
@@ -260,6 +280,67 @@ Alias('test', test)
 # This is required for phony targets for scons to be happy
 clean = Command('clean.txt', [], 'rm -rf build/*')
 Alias('clean', clean)
+
+lint_files = []
+format_files = []
+
+# Is there a Scons way to Glob all Python files recursively?
+PYLINT_IGNORE = ['lint.py', 'platform/arm.py', 'platform/x86.py']
+# Kinda ugly - uses set subtraction to remove pylint ignore files.
+py_files = list(set(glob.glob('**/*.py', recursive=True)) - set(PYLINT_IGNORE))
+
+AUTOPEP8_CONFIG = '-a --max-line-length 100 -r'
+
+# Get all src and header files (*.c, *.h) to lint/format
+for entry in PROJ_DIRS + LIB_DIRS:
+    srcs = get_srcs(entry)
+    incs = get_inc_files(entry)
+
+    config = parse_config(entry) 
+
+    # Avoid linting/formatting external libraries
+    if not config.get('no_format'):
+        format_files += srcs + incs
+    if not config.get('no_lint'):
+        lint_files += srcs + incs
+
+def run_lint(target, source, env):
+    print('Linting *.[ch] in {}, {}...'.format(PROJ_DIRS, LIB_DIRS))
+    # Note: Firmware_xiv used python2. Why?
+    lint_cmd = 'echo {} | xargs -r python2 ./lint.py'.format(' '.join([str(file) for file in lint_files]))
+    subprocess.run(lint_cmd, shell=True)
+
+    print('Linting *.[py] files')
+    print('Ignoring {}'.format(' '.join(py_files)))
+    pylint_cmd = 'echo {} | xargs -r pylint'.format(' '.join(py_files))
+    subprocess.run(pylint_cmd, shell=True)
+
+
+lint = Command('lint.txt', [], run_lint)
+Alias('lint', lint)
+
+def run_format(target, source, env):
+    print('Formatting *.[ch] in {}, {}...'.format(PROJ_DIRS, LIB_DIRS))
+    # Note: Firmware_xiv used python2. Why?
+    print(format_files)
+    format_cmd = 'echo {} | xargs -r clang-format -i style=file'.format(' '.join([str(file) for file in format_files]))
+    subprocess.run(format_cmd, shell=True)
+
+    print('Formatting *.[py] files')
+    print('Ignoring {}'.format(' '.join(py_files)))
+    autopep8_cmd = 'autopep8 {} -i {}'.format(AUTOPEP8_CONFIG, ' '.join(py_files))
+    subprocess.run(autopep8_cmd, shell=True)
+    
+
+format = Command('format.txt', [], run_format)
+Alias('format', format)
+
+def run_pylint(target, source, env):
+    raise NotImplementedError
+
+pylint = Command('pylint.txt', [], run_pylint)
+Alias('pylint', pylint)
+
 
 ###########################################################
 # Helper targets for x86
