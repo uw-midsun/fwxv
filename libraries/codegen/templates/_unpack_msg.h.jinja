@@ -1,18 +1,28 @@
 #pragma once
 
-#include "can_msg_defs.h"
+#include "can_board_ids.h"
 #include "can_unpack_impl.h"
 
+{%- set messages = data["Messages"] %}
 
-{% set messages = data["Messages"] -%}
-{%- for message in messages -%}    
-
-    {%- set signals = messages[message]['signals'] -%}
-    {#finding the length of the messages using the first signal length#}
+{%- for message, message_data in messages.items() -%}
+    {%- set signals = message_data['signals'] -%}
+    {# finding the length of the messages using the first signal length #}
     {%- set first_signal = signals|first -%}
     {%- set size = signals[first_signal]['length'] -%}
     {%- set num_of_params = 64//size -%}
-void can_unpack_{{ message }}(CanMessage *msg_ptr {%- for signal in signals -%}, uint{{size}}_t *{{signal}}_u{{size}}_ptr {%- endfor -%}){     
-        can_unpack_impl_u{{size}}(msg_ptr, {{(signals | count)*size//8}}{%- for signal in signals -%}, {{signal}}_u{{size}}_ptr{%- endfor -%}{%-for empty in range(signals | length, num_of_params)-%}, CAN_UNPACK_IMPL_EMPTY{%-endfor-%});
-} 
-{% endfor -%}
+
+{% set function_parameters -%}
+void can_unpack_{{ message }}(CanMessage* msg_ptr {%- for signal in signals -%}, uint{{size}}_t* {{signal}}_u{{size}}_ptr {%- endfor -%}) {    
+{%- endset -%}
+
+{% set function_body -%}
+can_unpack_impl_u{{size}}(msg_ptr, {{(signals | count) * size // 8 }}
+    {%- for signal in signals -%}, {{signal}}_u{{size}}_ptr{%- endfor -%}
+    {%- for empty in range(signals | length, num_of_params) -%}, CAN_UNPACK_IMPL_EMPTY{%- endfor -%});
+{%- endset %}
+
+{{function_parameters | format_function_length}}
+    {{function_body | format_function_length(4)}}
+}
+{%- endfor %}

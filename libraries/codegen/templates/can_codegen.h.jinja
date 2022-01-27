@@ -2,23 +2,20 @@
 
 {% set board = data["Board"] -%}
 
-#include "{{board}}_receive_structs.h"
-#include "{{board}}_transmit_structs.h"
+#include "{{board}}_rx_structs.h"
+#include "{{board}}_tx_structs.h"
 #include "can.h"
 
-// These 2 should include can_codegen
-// #include "{{board}}_getters.h"
-// #include "{{board}}_setters.h"
 // TODO: Shouldn't add these?
 // #include "new_can_receive_all.h"
 // #include "new_can_transmit_all.h"
 
-typedef {{board}}_receive_struct receive_struct;
-typedef {{board}}_transmit_struct transmit_struct;
+typedef {{board}}_rx_struct rx_struct;
+typedef {{board}}_tx_struct tx_struct;
 
 // TODO: Should I expose these structs?
-extern receive_struct g_receive_struct;
-extern transmit_struct g_transmit_struct;
+extern rx_struct g_rx_struct;
+extern tx_struct g_tx_struct;
 
-void can_transmit_all();
-void can_receive_all(CanStorage* storage);
+void can_tx_all();
+void can_rx_all();
