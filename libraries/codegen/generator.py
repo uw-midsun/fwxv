@@ -31,6 +31,8 @@ if __name__ == "__main__":
                     help="yaml file to read", metavar="FILE")
     parser.add_option("-t", "--template", dest="template",
                     help="template file to populate", metavar="FILE")
+    parser.add_option("-b", "--board", dest="board",
+                    help="which board to generate")
     
     (options, args) = parser.parse_args()
     
