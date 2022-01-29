@@ -85,7 +85,6 @@ def parse_config(entry):
         'cflags': [],
         'mocks': {},
         'no_lint': False,
-        'no_format': False
     }
     config_file = entry.File('config.json')
     if not config_file.exists():
@@ -316,12 +315,11 @@ for entry in PROJ_DIRS + LIB_DIRS:
     config = parse_config(entry) 
 
     # Avoid linting/formatting external libraries
-    if not config.get('no_format'):
-        format_files += srcs + incs
-        py_format_files += py_files
     if not config.get('no_lint'):
         lint_files += srcs + incs
         py_lint_files += py_files 
+        format_files += srcs + incs
+        py_format_files += py_files
 
 for entry in PYTHON_DIRS:
     py_files = get_py_files(entry)
