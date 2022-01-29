@@ -257,16 +257,18 @@ Alias('test', test)
 # Helper targets
 ###########################################################
 
-def make_new_project(target, source, env):
+def make_new_target(target, source, env):
+    # No project or library option provided
     if not PROJECT and not LIBRARY:
         raise ValueError("Missing project or library name. Expected --project=... or --library=...")
+
     target_type = 'project' if PROJECT else 'library'
-    name = PROJECT or LIBRARY
 
-    new_target(target_type, name)
+    # Assume either PROJECT or LIBRARY is given, 'or' to select the non-None value
+    new_target(target_type, PROJECT or LIBRARY)
 
-new_proj = Command('new_proj.txt', [], make_new_project)
-Alias('new', new_proj)
+new = Command('new_proj.txt', [], make_new_target)
+Alias('new', new)
 
 # 'clean.txt' is a dummy file that doesn't get created
 # This is required for phony targets for scons to be happy
