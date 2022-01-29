@@ -1,9 +1,9 @@
 #pragma once
 
-{% set file_prefix = data["FilePrefix"] -%}
+{% set board = data["Board"] -%}
 {% set messages = data["Messages"] -%}
 
-#include "{{file_prefix}}_structs.h"
+#include "{{board}}_structs.h"
 
 {%- for message in messages -%}
     {%- for signal in messages[message]['signals'] %}
