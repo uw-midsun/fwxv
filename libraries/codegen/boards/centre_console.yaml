@@ -16,7 +16,7 @@
         - bms_carrier
         - motor_controller
         - solar_5_mppts
-        - solat_6_mppts
+        - solar_6_mppts
       critical: true
       signals:
         status:
