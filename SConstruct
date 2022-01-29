@@ -298,7 +298,7 @@ PYTHON_DIRS = []
 
 # Formatter configs
 AUTOPEP8_CONFIG = '-a --max-line-length 100 -r'
-CLANG_FORMAT_CONFIG = '-i style=file'
+CLANG_FORMAT_CONFIG = '-i -style=file'
 
 # Convert a list of paths/Dirs to space-separated paths.
 def dir_list_to_str(dir_list):
