@@ -1,0 +1,40 @@
+# Message Definitions in plaintext are on the wiki at:
+# https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
+#
+# If you are making changes to this file please update the corresponding entry
+# on the wiki. If you need to add a new message use a reasonable
+# reserved ID. The higher ID the lower the priority. Generally
+# - 0-13: Critical messages (have ACK)
+# - 14-30: Actionable messages (trigger a change in another system)
+# - 30-63: Data messages (usually not actionable by an onboard device)
+
+---
+  Messages:
+    lights_sync:
+      id: 23
+      target:
+        - lights_front
+
+    rear_current_measurement:
+      id: 55
+      target:
+        - centre_console
+      signals:
+        current_id:
+          length: uint16_t
+        current:
+          length: uint16_t
+
+    rear_pd_fault:
+      id: 61
+      target:
+        - centre_console
+      signals:
+        fault_data:
+          length: uint16_t
+        enclosure_temp_data:
+          length: uint16_t
+        dcdc_temp_data:
+          length: uint16_t
+        faulting_output:
+          length: uint16_t
