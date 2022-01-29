@@ -25,7 +25,7 @@ def write_template(env, template_name, file_path, data):
 
 def process_setter_data(board, data, master_data):
     for message in data["Messages"]:
-        if board in data["Messages"][message]["target"]:
+        if board in data["Messages"][message].get("target", []):
             for signal, length in data["Messages"][message]["signals"].items():
                 master_data["Signals"].append((signal, length['length']))
 
