@@ -1,9 +1,9 @@
 name: CI
 
 on:
-  # Run on all pull requests and all pushes to master
+  # Run on all pull requests and all pushes to main
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
 
   # Allow running this workflow manually
@@ -100,35 +100,6 @@ jobs:
       #     make test_format
       #     scons lint
       #     make pylint
-
-      # - name: Build codegen
-      #   run: |
-      #     make codegen
-      #     make codegen_dbc
-
-      # - name: Check for uncommitted codegen changes
-      #   id: check-uncommitted-changes
-      #   continue-on-error: true
-      #   # https://stackoverflow.com/a/3879077
-      #   run: |
-      #     git update-index --refresh || true
-      #     git diff-index --quiet HEAD --
-
-      # - name: Post PR comment and fail on uncommitted changes
-      #   if: ${{ steps.check-uncommitted-changes.outcome == 'failure' }}
-      #   uses: actions/github-script@v4
-      #   with:
-      #     script: |
-      #       const fs = require('fs');
-      #       const comment = fs.readFileSync(
-      #         './.github/workflows/uncommitted-codegen-changes.md', 'utf8');
-      #       github.issues.createComment({
-      #         issue_number: context.issue.number,
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         body: comment,
-      #       });
-      #       core.setFailed() // Fail on uncommitted changed
 
       - name: Build stm32f0xx
         id: build-stm32
