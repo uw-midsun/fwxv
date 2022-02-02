@@ -14,6 +14,9 @@
       id: 45
       target:
         - telemetry
+      signals:
+        signal1:
+          length: uint8_t
 
     front_current_measurement:
       id: 54

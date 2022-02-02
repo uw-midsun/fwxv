@@ -44,6 +44,8 @@
 
     battery_fan_state:
       id: 57
+      target:
+        - bms_carrier
       signals:
         fan_1:
           length: uint8_t
@@ -64,6 +66,8 @@
 
     battery_relay_state:
       id: 58
+      target:
+        - bms_carrier
       signals:
         hv:
           length: uint8_t

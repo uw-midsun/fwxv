@@ -12,6 +12,8 @@
   Messages:
     drive_state:
       id: 22
+      target:
+        - motor_controller
       signals:
         drive_state:
           length: uint16_t
@@ -20,6 +22,9 @@
       id: 29
       target:
         - centre_console
+      signals:
+        signal1:
+          length: uint8_t
 
     motor_controller_vc:
       id: 35

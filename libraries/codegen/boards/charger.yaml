@@ -14,9 +14,14 @@
       id: 48
       target:
         - centre_console
+      signals:
+        signal1:
+          length: uint8_t
 
     charger_connected_state:
       id: 50
+      target:
+        - charger
       signals:
         is_connected:
           length: uint8_t

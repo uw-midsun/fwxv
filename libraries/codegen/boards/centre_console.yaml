@@ -65,6 +65,8 @@
 
     set_ebrake_state:
       id: 10
+      target:
+        - centre_console
       critical: true
       signals:
         ebrake_state:
@@ -91,9 +93,14 @@
       id: 28
       target:
         - motor_controller
+      signals:
+        signal1:
+          length: uint8_t
 
     hazard:
       id: 32
+      target:
+        - centre_console
       signals:
         state:
           length: uint8_t
@@ -102,6 +109,9 @@
       id: 31
       target:
         - motor_controller
+      signals:
+        signal1:
+          length: uint8_t
 
     state_transition_fault:
       id: 34
@@ -117,3 +127,6 @@
       id: 49
       target:
         - charger
+      signals:
+        signal1:
+          length: uint8_t

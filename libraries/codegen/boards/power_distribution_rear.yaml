@@ -14,6 +14,9 @@
       id: 23
       target:
         - lights_front
+      signals:
+        signal1:
+          length: uint8_t
 
     rear_current_measurement:
       id: 55
