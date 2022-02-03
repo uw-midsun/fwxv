@@ -19,10 +19,114 @@
         - solar_6_mppts
       critical: true
       signals:
-        status:
+        relay_mask:
           length: uint16_t
         relay_state:
           length: uint16_t
 
+    power_on_main_sequence:
+      id: 6
+      target:
+        - motor_controller
+        - pedal
+      critical: true
+      signals:
+        sequence:
+          length: uint16_t
 
+    power_off_main_sequence:
+      id: 7
+      target:
+        - motor_controller
+        - pedal
+      critical: true
+      signals:
+        sequence:
+          length: uint16_t
 
+    power_on_aux_sequence:
+      id: 8
+      target:
+        - motor_controller
+        - pedal
+      critical: true
+      signals:
+        sequence:
+          length: uint16_t
+
+    drive_output:
+      id: 9
+      target:
+        - motor_controller
+      critical: true
+      signals:
+        drive_output:
+          length: uint16_t
+
+    set_ebrake_state:
+      id: 10
+      target:
+        - centre_console
+      critical: true
+      signals:
+        ebrake_state:
+          length: uint8_t
+
+    regen_braking:
+      id: 11
+      target:
+        - motor_controller
+      critical: true
+      signals:
+        state:
+          length: uint8_t
+
+    ready_to_drive:
+      id: 13
+      target:
+        - telemetry
+      signals:
+        ready_state:
+          length: uint8_t
+
+    begin_precharge:
+      id: 28
+      target:
+        - motor_controller
+      signals:
+        signal1:
+          length: uint8_t
+
+    hazard:
+      id: 32
+      target:
+        - centre_console
+      signals:
+        state:
+          length: uint8_t
+
+    discharge_precharge:
+      id: 31
+      target:
+        - motor_controller
+      signals:
+        signal1:
+          length: uint8_t
+
+    state_transition_fault:
+      id: 34
+      target:
+        - telemetry
+      signals:
+        state_machine:
+          length: uint16_t
+        fault_reason:
+          length: uint16_t
+
+    allow_charging:
+      id: 49
+      target:
+        - charger
+      signals:
+        signal1:
+          length: uint8_t

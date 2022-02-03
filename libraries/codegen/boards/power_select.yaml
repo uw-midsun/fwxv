@@ -1,0 +1,53 @@
+# Message Definitions in plaintext are on the wiki at:
+# https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
+#
+# If you are making changes to this file please update the corresponding entry
+# on the wiki. If you need to add a new message use a reasonable
+# reserved ID. The higher ID the lower the priority. Generally
+# - 0-13: Critical messages (have ACK)
+# - 14-30: Actionable messages (trigger a change in another system)
+# - 30-63: Data messages (usually not actionable by an onboard device)
+
+---
+  Messages:
+    aux_meas_main_voltage:
+      id: 42
+      target:
+        - centre_console
+      signals:
+        aux_voltage:
+          length: uint16_t
+        aux_current:
+          length: uint16_t
+        aux_temp:
+          length: uint16_t
+        main_voltage:
+          length: uint16_t
+
+    dcdc_meas_main_current:
+      id: 43
+      target:
+        - centre_console
+      signals:
+        dcdc_voltage:
+          length: uint16_t
+        dcdc_current:
+          length: uint16_t
+        dcdc_temp:
+          length: uint16_t
+        main_current:
+          length: uint16_t
+
+    power_select_status:
+      id: 44
+      target:
+        - centre_console
+      signals:
+        fault_bitset:
+          length: uint16_t
+        warning_bitset:
+          length: uint16_t
+        valid_bitset:
+          length: uint16_t
+        cell_voltage:
+          length: uint16_t

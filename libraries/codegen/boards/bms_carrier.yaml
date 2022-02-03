@@ -42,6 +42,37 @@
         current:
           length: uint32_t
 
+    battery_fan_state:
+      id: 57
+      target:
+        - bms_carrier
+      signals:
+        fan_1:
+          length: uint8_t
+        fan_2:
+          length: uint8_t
+        fan_3:
+          length: uint8_t
+        fan_4:
+          length: uint8_t
+        fan_5:
+          length: uint8_t
+        fan_6:
+          length: uint8_t
+        fan_7:
+          length: uint8_t
+        fan_8:
+          length: uint8_t
+
+    battery_relay_state:
+      id: 58
+      target:
+        - bms_carrier
+      signals:
+        hv:
+          length: uint8_t
+        gnd:
+          length: uint8_t
 
 
 
