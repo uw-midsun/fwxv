@@ -10,21 +10,6 @@
 
 ---
   Messages:
-    relay_open_ok_6_mppts:
-      id: 
-      target:
-        - telemetry
-
-    solar_data_6_mppts:
-      id: 51
-      target:
-        - telemetry
-      signals:
-        data_point_type:
-          length: uint32_t
-        data_value:
-          length: uint32_t
-
     babydriver:
       id: 63
       target:
