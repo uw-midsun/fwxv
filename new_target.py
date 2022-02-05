@@ -8,19 +8,8 @@ Usage: python3 new_target.py project|library name
 import os
 import argparse
 import textwrap
+import json
 from string import Template
-
-RULES_TEMPLATE = Template("""\
-    # Defines $$(T)_SRC, $$(T)_INC, $$(T)_DEPS, and $$(T)_CFLAGS for the build makefile.
-    # Tests can be excluded by defining $$(T)_EXCLUDE_TESTS.
-    # Pre-defined:
-    # $$(T)_SRC_ROOT: $$(T)_DIR/src
-    # $$(T)_INC_DIRS: $$(T)_DIR/inc{/$$(PLATFORM)}
-    # $$(T)_SRC: $$(T)_DIR/src{/$$(PLATFORM)}/*.{c,s}
-
-    # Specify the libraries you want to include
-    $$(T)_DEPS := $deps
-    """)
 
 README_TEMPLATE = Template("""\
     <!--
@@ -40,6 +29,8 @@ README_TEMPLATE = Template("""\
     # $name
 
     """)
+
+DEFAULT_DEPS = ["FreeRTOS", "ms-common"]
 
 
 def new_target(target_type, name):
@@ -76,10 +67,12 @@ def new_target(target_type, name):
     for folder in folders:
         os.makedirs(os.path.join(proj_path, folder), exist_ok=True)
 
-    deps = 'ms-common' if target_type == 'project' else ''
+    deps = DEFAULT_DEPS if target_type == 'project' else []
 
-    with open(os.path.join(proj_path, 'rules.mk'), 'w') as rules_file:
-        rules_file.write(textwrap.dedent(RULES_TEMPLATE.substitute({'deps': deps})))
+    config = {"libs": deps}
+
+    with open(os.path.join(proj_path, 'config.json'), 'w') as config_file:
+        json.dump(config, config_file, indent=4)
 
     with open(os.path.join(proj_path, 'README.md'), 'w') as readme_file:
         readme_file.write(textwrap.dedent(README_TEMPLATE.substitute({'name': name})))
