@@ -268,7 +268,6 @@ Alias('clean', clean)
 # Linting and Formatting 
 ###########################################################
 
-
 # Convert a list of paths/Dirs to space-separated paths.
 def dirs_to_str(dir_list):
     # Use str(file) to ensure Dir objects are converted to paths.
