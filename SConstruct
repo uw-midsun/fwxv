@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import subprocess
 from new_target import new_target
 
@@ -260,7 +261,8 @@ Alias('test', test)
 def make_new_target(target, source, env):
     # No project or library option provided
     if not PROJECT and not LIBRARY:
-        raise ValueError("Missing project or library name. Expected --project=... or --library=...")
+        print("Missing project or library name. Expected --project=... or --library=...")
+        sys.exit(1)
 
     target_type = 'project' if PROJECT else 'library'
 

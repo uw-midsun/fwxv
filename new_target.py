@@ -32,6 +32,20 @@ README_TEMPLATE = Template("""\
 
 DEFAULT_DEPS = ["FreeRTOS", "ms-common"]
 
+def generate_config(target_type):
+    """Generates a new config.json file for a project/library.
+
+    Args:
+        target_type: Either 'project' or 'library'
+
+    Returns:
+        dict: dictionary representation of the initial config.json file.
+    """
+    deps = DEFAULT_DEPS if target_type == 'project' else []
+
+    return {"libs": deps}
+
+
 
 def new_target(target_type, name):
     """Creates a new project or library.
@@ -43,7 +57,7 @@ def new_target(target_type, name):
     └── name
         ├── inc
         ├── README.md
-        ├── rules.mk
+        ├── config.json 
         ├── src
         └── test
 
@@ -67,12 +81,8 @@ def new_target(target_type, name):
     for folder in folders:
         os.makedirs(os.path.join(proj_path, folder), exist_ok=True)
 
-    deps = DEFAULT_DEPS if target_type == 'project' else []
-
-    config = {"libs": deps}
-
     with open(os.path.join(proj_path, 'config.json'), 'w') as config_file:
-        json.dump(config, config_file, indent=4)
+        json.dump(generate_config(target_type), config_file, indent=4)
 
     with open(os.path.join(proj_path, 'README.md'), 'w') as readme_file:
         readme_file.write(textwrap.dedent(README_TEMPLATE.substitute({'name': name})))
