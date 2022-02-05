@@ -213,7 +213,7 @@ for entry in PROJ_DIRS + LIB_DIRS:
             LIBS=env['LIBS'] + lib_deps * 2 + ['unity'],
             LIBPATH=[LIB_BIN_DIR],
             CCFLAGS=env['CCFLAGS'] + config['cflags'],
-            LINKFLAGS=mock_link_flags,
+            LINKFLAGS=env['LINKFLAGS'] + mock_link_flags,
         )
         if PLATFORM == 'arm':
             target = env.Bin(target=output.File(test_file.name + '.bin'), source=target)

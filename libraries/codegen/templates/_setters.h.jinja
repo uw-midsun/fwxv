@@ -1,0 +1,15 @@
+#pragma once
+
+{% set board = data["Board"] -%}
+{% set signals = data["Signals"] -%}
+
+#include "{{board}}_structs.h"
+
+{% for (signal, length) in signals -%}
+
+void set_{{board}}_{{signal}}(receive_struct* s, {{length}} val)
+{
+    s->{{board}}_{{signal}} = val;
+}
+
+{% endfor -%}

@@ -1,0 +1,40 @@
+# Message Definitions in plaintext are on the wiki at:
+# https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
+#
+# If you are making changes to this file please update the corresponding entry
+# on the wiki. If you need to add a new message use a reasonable
+# reserved ID. The higher ID the lower the priority. Generally
+# - 0-13: Critical messages (have ACK)
+# - 14-30: Actionable messages (trigger a change in another system)
+# - 30-63: Data messages (usually not actionable by an onboard device)
+
+---
+  Messages:
+    relay_open_ok_5_mppts:
+      id: 14
+      target:
+        - telemetry
+      signals:
+        signal1:
+          length: uint8_t
+
+    solar_data_5_mppts:
+      id: 59
+      target:
+        - telemetry
+      signals:
+        data_point_type:
+          length: uint32_t
+        data_value:
+          length: uint32_t
+
+    solar_fault_5_mppts:
+      id: 60
+      target:
+        - telemetry
+        - centre_console
+      signals:
+        fault:
+          length: uint8_t
+        fault_data:
+          length: uint8_t
