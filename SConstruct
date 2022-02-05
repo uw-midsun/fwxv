@@ -114,36 +114,16 @@ def proj_elf(proj_name):
 def proj_bin(proj_name):
     return proj_elf(proj_name).File(proj_name + '.bin')
 
-# Get all src files for a project/library
-def get_srcs(dir):
-    # Glob the source files from OBJ_DIR because it's a variant dir
-    # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
-    # str(dir) is e.g. 'projects/example', so this is like build/obj/projects/example/src
-    srcs = OBJ_DIR.Dir(str(dir)).Dir('src').glob('*.[cs]')
-    srcs += OBJ_DIR.Dir(str(dir)).Dir('src').Dir(PLATFORM).glob('*.[cs]')
-    return srcs
-
-# Get header files for a project/library
-def get_inc_files(dir):
-    incs = dir.Dir('inc').glob('*.h')
-    incs += dir.Dir('inc').Dir(PLATFORM).glob('*.h')
-    return incs
-
-# Get header directories for a project/library
-def get_inc_dirs(dir):
-    inc_dirs = [dir.Dir('inc')]
-    inc_dirs += [dir.Dir('inc').Dir(PLATFORM)]
-    return inc_dirs
-
-# Get Python scripts for a project/library
-def get_py_files(dir):
-    return glob.glob('{}/**/*.py'.format(str(dir)), recursive=True)
-
 
 # Create appropriate targets for all projects and libraries
 for entry in PROJ_DIRS + LIB_DIRS:
-    srcs = get_srcs(entry)
-    inc_dirs = get_inc_dirs(entry)
+    # Glob the source files from OBJ_DIR because it's a variant dir
+    # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
+    # str(entry) is e.g. 'projects/example', so this is like build/obj/projects/example/src
+    srcs = OBJ_DIR.Dir(str(entry)).Dir('src').glob('*.[cs]')
+    srcs += OBJ_DIR.Dir(str(entry)).Dir('src').Dir(PLATFORM).glob('*.[cs]')
+    inc_dirs = [entry.Dir('inc')]
+    inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
 
     config = parse_config(entry)
 
@@ -288,63 +268,76 @@ Alias('clean', clean)
 # Linting and Formatting 
 ###########################################################
 
-lint_files = []
-format_files = []
-py_lint_files = [] 
-py_format_files = [] 
-
-# Python project directories (e.g /mpxe from firmware_xiv)
-PYTHON_DIRS = []
-
-# Formatter configs
-AUTOPEP8_CONFIG = '-a --max-line-length 100 -r'
-CLANG_FORMAT_CONFIG = '-i -style=file'
 
 # Convert a list of paths/Dirs to space-separated paths.
-def dir_list_to_str(dir_list):
-    # Use str(file) to ensure Dirs objects are converted to paths.
+def dirs_to_str(dir_list):
+    # Use str(file) to ensure Dir objects are converted to paths.
     return ' '.join([str(file) for file in dir_list])
 
+# Glob files by extension in a particular directory. Defaults to root directory.
+def glob_by_extension(extension, dir='.'):
+    return glob.glob('{}/**/*.{}'.format(str(dir), extension), recursive=True)
 
-# Get all src and header files (*.c, *.h) to lint/format
-for entry in PROJ_DIRS + LIB_DIRS:
-    srcs = get_srcs(entry)
-    incs = get_inc_files(entry)
-    py_files = get_py_files(entry)
+# Retrieve files to lint
+def get_lint_files():
+    c_lint_files = []
+    py_lint_files = [] 
+    lint_dirs = []
 
-    config = parse_config(entry) 
+    if PROJECT:
+        lint_dirs.append(PROJ_DIR.Dir(PROJECT))
+    elif LIBRARY:
+        lint_dirs.append(LIB_DIR.Dir(LIBRARY))
+    else:
+        lint_dirs += PROJ_DIRS + LIB_DIRS
 
-    # Avoid linting/formatting external libraries
-    if not config.get('no_lint'):
-        lint_files += srcs + incs
-        py_lint_files += py_files 
-        format_files += srcs + incs
-        py_format_files += py_files
+    # Get all src and header files (*.c, *.h) to lint/format
+    for dir in lint_dirs: 
+        c_files = glob_by_extension('[ch]', dir)
+        py_files = glob_by_extension('py', dir) 
 
-for entry in PYTHON_DIRS:
-    py_files = get_py_files(entry)
-    py_format_files += py_files
-    py_lint_files += py_files
+        config = parse_config(dir) 
+
+        # Avoid linting/formatting external libraries
+        if not config.get('no_lint'):
+            c_lint_files += c_files 
+            py_lint_files += py_files 
+
+    return (c_lint_files, py_lint_files)
 
 def run_lint(target, source, env):
-    print('\nLinting *.[ch] in {}, {} ...'.format(PROJ_DIR, LIB_DIR))
-    lint_cmd = 'echo {} | xargs -r python2 ./lint.py'.format(dir_list_to_str(lint_files))
-    subprocess.run(lint_cmd, shell=True)
+    C_LINT_CMD = 'python ./lint.py' 
+    PY_LINT_CMD = 'pylint' 
 
-    print('\nLinting *.py files ...')
-    pylint_cmd = 'echo {} | xargs -r pylint'.format(dir_list_to_str(py_lint_files))
-    subprocess.run(pylint_cmd, shell=True)
+    c_lint_files, py_lint_files = get_lint_files()
+
+    if len(c_lint_files) > 0:
+        print('\nLinting *.[ch] in {}, {} ...'.format(PROJ_DIR, LIB_DIR))
+        subprocess.run('{} {}'.format(C_LINT_CMD, dirs_to_str(c_lint_files)), shell=True)
+
+    if len(py_lint_files) > 0:
+        print('\nLinting *.py files ...')
+        subprocess.run('{} {}'.format(PY_LINT_CMD, dirs_to_str(py_lint_files)), shell=True)
+
+    print('Done Linting.')
 
 def run_format(target, source, env):
-    print('\nFormatting *.[ch] in {}, {} ...'.format(str(PROJ_DIR), str(LIB_DIR)))
-    format_cmd = ('echo {} | xargs -r clang-format {}'
-                    .format(dir_list_to_str(format_files), CLANG_FORMAT_CONFIG))
-    subprocess.run(format_cmd, shell=True)
+    # Formatter configs
+    AUTOPEP8_CONFIG = '-a --max-line-length 100 -r'
+    CLANG_FORMAT_CONFIG = '-i -style=file'
 
-    print('\nFormatting *.py files ...')
-    autopep8_cmd = ('autopep8 {1} -i {0}'
-                    .format(dir_list_to_str(py_format_files), AUTOPEP8_CONFIG))
-    subprocess.run(autopep8_cmd, shell=True)
+    C_FORMAT_CMD = 'clang-format {}'.format(CLANG_FORMAT_CONFIG)
+    PY_FORMAT_CMD = 'autopep8 {} -i'.format(AUTOPEP8_CONFIG)
+
+    c_format_files, py_format_files = get_lint_files()
+
+    if len(c_format_files) > 0:
+        print('\nFormatting *.[ch] in {}, {} ...'.format(str(PROJ_DIR), str(LIB_DIR)))
+        subprocess.run('{} {}'.format(C_FORMAT_CMD, dirs_to_str(c_format_files)), shell=True)
+
+    if len(py_format_files) > 0:
+        print('\nFormatting *.py files ...')
+        subprocess.run('{} {}'.format(PY_FORMAT_CMD, dirs_to_str(py_format_files)), shell=True)
 
     print('Done Formatting.')
 
