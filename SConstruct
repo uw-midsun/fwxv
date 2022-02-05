@@ -277,12 +277,15 @@ def dirs_to_str(dir_list):
 def glob_by_extension(extension, dir='.'):
     return glob.glob('{}/**/*.{}'.format(str(dir), extension), recursive=True)
 
-# Retrieve files to lint
+# Retrieve files to lint - returns a tuple (c_lint_files, py_lint_files)
 def get_lint_files():
     c_lint_files = []
     py_lint_files = [] 
+
     lint_dirs = []
 
+    # Get directories to lint based on PROJECT/LIBRARY args.
+    # If no PROJECT/LIBRARY argument,lint all directories.
     if PROJECT:
         lint_dirs.append(PROJ_DIR.Dir(PROJECT))
     elif LIBRARY:
@@ -310,10 +313,12 @@ def run_lint(target, source, env):
 
     c_lint_files, py_lint_files = get_lint_files()
 
+    # Lint C source files
     if len(c_lint_files) > 0:
         print('\nLinting *.[ch] in {}, {} ...'.format(PROJ_DIR, LIB_DIR))
         subprocess.run('{} {}'.format(C_LINT_CMD, dirs_to_str(c_lint_files)), shell=True)
 
+    # Lint Python files
     if len(py_lint_files) > 0:
         print('\nLinting *.py files ...')
         subprocess.run('{} {}'.format(PY_LINT_CMD, dirs_to_str(py_lint_files)), shell=True)
@@ -330,10 +335,12 @@ def run_format(target, source, env):
 
     c_format_files, py_format_files = get_lint_files()
 
+    # Format C source files
     if len(c_format_files) > 0:
         print('\nFormatting *.[ch] in {}, {} ...'.format(str(PROJ_DIR), str(LIB_DIR)))
         subprocess.run('{} {}'.format(C_FORMAT_CMD, dirs_to_str(c_format_files)), shell=True)
 
+    # Format Python source files
     if len(py_format_files) > 0:
         print('\nFormatting *.py files ...')
         subprocess.run('{} {}'.format(PY_FORMAT_CMD, dirs_to_str(py_format_files)), shell=True)
