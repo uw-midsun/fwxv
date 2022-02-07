@@ -110,8 +110,6 @@ if __name__ == "__main__":
     templateLoader = jinja2.FileSystemLoader(searchpath="./libraries/codegen/templates")
     env = jinja2.Environment(loader=templateLoader)
 
-# {'Messages': {'relay_open_ok_6_mppts': {'id': 15, 'target': ['telemetry'], 'signals': {'signal1': {'length': 8}}}, 'solar_data_6_mppts': {'id': 51, 'target': ['telemetry'], 'signals': {'data_point_type': {'length': 32}, 'data_value': {'length': 32}}}, 'solar_fault_6_mppts': {'id': 52, 'target': ['telemetry', 'centre_console'], 'signals': {'fault': {'length': 8}, 'fault_data': {'length': 8}}}}}
-
     if options.template and "can_dbcs" in options.template:
         data = get_dbc_data()
         file_path = "./" + options.template[:-6]
