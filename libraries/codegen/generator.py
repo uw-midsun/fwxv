@@ -9,10 +9,12 @@ def read_yaml(yaml_file):
         data = yaml.load(f, Loader=yaml.FullLoader)
         return data
 
+def get_board_name(yaml_path):
+    return yaml_path.split("/")[len(yaml_path.split("/"))-1].split(".")[0]
 
 def get_file_path(template_name, yaml_path, data, dest="./"):
     # get the name of the yaml file (board name) from the filepath
-    board = yaml_path.split("/")[len(yaml_path.split("/")) - 1].split(".")[0]
+    board = get_board_name(yaml_path)
     data["Board"] = board
     # get the name of the jinja file from the filepath
     jinja_prefix = template_name[:-6]
@@ -34,8 +36,38 @@ def process_setter_data(board, data, master_data):
             for signal, length in data["Messages"][message]["signals"].items():
                 master_data["Signals"].append((signal, length['length']))
 
-def process_dbc_data():
-    return
+def get_dbc_data():
+    yaml_files = get_yaml_files()
+    master_data = {"Messages" : []}
+    for file in yaml_files:
+        data = read_yaml(file)
+        sender = get_board_name(file)
+        for message_key in data["Messages"]:
+            start_bit = 0
+            message = data["Messages"][message_key]
+            signals = []
+            for signal_key in message["signals"]:
+                signal = message["signals"][signal_key]
+                signals.append({
+                    "signal_name": signal_key,
+                    "start_bit": start_bit,
+                    "length": signal["length"],
+                    "scale": signal.get("scale", 1),
+                    "offset": signal.get("offset", 0),
+                    "min": signal.get("min", 0),
+                    "max": signal.get("max", 100),
+                    "unit": signal.get("unit", ""),
+                    "receiver": " ".join(message["target"])
+                })
+                start_bit += signal["length"]
+            master_data["Messages"].append({
+                "id": message["id"],
+                "message_name": message_key,
+                "signals": signals,
+                "data_length": 8,
+                "sender": sender
+            })
+    return master_data
 
 def get_yaml_files():
     # get the working directory to the boards
@@ -81,42 +113,9 @@ if __name__ == "__main__":
 # {'Messages': {'relay_open_ok_6_mppts': {'id': 15, 'target': ['telemetry'], 'signals': {'signal1': {'length': 8}}}, 'solar_data_6_mppts': {'id': 51, 'target': ['telemetry'], 'signals': {'data_point_type': {'length': 32}, 'data_value': {'length': 32}}}, 'solar_fault_6_mppts': {'id': 52, 'target': ['telemetry', 'centre_console'], 'signals': {'fault': {'length': 8}, 'fault_data': {'length': 8}}}}}
 
     if options.template and "can_dbcs" in options.template:
-        yaml_files = get_yaml_files()
-        master_data = {"Messages" : []}
-        for file in yaml_files:
-            start_bit = 0
-            data = read_yaml(file)
-            for message_key in data["Messages"]:
-                message = data["Messages"][message_key]
-                id = message["id"]
-                targets = message["target"]
-                signals = []
-                for signal_key in message["signals"]:
-                    signal = message["signals"][signal_key]
-                    length = signal["length"]
-                    min = signal.get("min", 0)
-                    max = signal.get("max", 100)
-                    scale = signal.get("scale", 1)
-                    offset = signal.get("offset", 0)
-                    unit = signal.get("unit", "")
-                    for target in targets:
-                        signals.append({
-                            "data_length": 8,
-                            "sender": "",
-                            "signal_name": signal_key,
-                            "start_bit": start_bit,
-                            "length": length,
-                            "scale": scale,
-                            "offset": offset,
-                            "min": min,
-                            "max": max,
-                            "unit": unit,
-                            "receiver": target
-                        })
-                    start_bit += length
-                master_data["Messages"].append({"id":id, "message_name":message_key, "signals":signals})
+        data = get_dbc_data()
         file_path = "./" + options.template[:-6]
-        write_template(env, options.template, file_path, master_data)
+        write_template(env, options.template, file_path, data)
     elif options.board: # only for _setters.h
         data = parse_board_yaml_files(options.board)
         if options.template:
