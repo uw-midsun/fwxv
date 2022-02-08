@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 typedef struct {
     uint16_t set_relay_state_relay_mask;
     uint16_t set_relay_state_relay_state;
