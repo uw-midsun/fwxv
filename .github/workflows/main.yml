@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  # Run on all pull requests and all pushes to main
+  push:
+    branches: [main]
+  pull_request:
+
+  # Allow running this workflow manually
+  workflow_dispatch:
+
+env:
+  # Set defines for builds/tests
+  DEFINES: "LOG_LEVEL_VERBOSITY=LOG_LEVEL_WARN"
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+
+      # TODO: cache all the setup
+
+      - name: Setup directories
+        run: |
+          # create directory that will be on the PATH
+          mkdir -p ~/.local/bin
+          echo "${HOME}/.local/bin" >> $GITHUB_PATH
+          mkdir -p ~/source
+
+      - name: Install gcc, clang, clang-format
+        run: |
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+          sudo apt update
+          sudo apt -y install gcc-6
+          sudo apt -y install clang-5.0
+          sudo apt -y install clang-format-5.0
+          sudo apt -y install libc6-i386
+          # for vcan module
+          sudo apt -y install linux-modules-extra-$(uname -r)
+          ln -sf `which gcc-6` ~/.local/bin/gcc
+          ln -sf `which clang-5.0` ~/.local/bin/clang
+          ln -sf `which clang-format-5.0` ~/.local/bin/clang-format
+
+      - name: Install STM32 toolchain
+        env:
+          GCC_PATH: gcc-arm-none-eabi-6-2017-q2-update
+          GCC_ARCHIVE_PATH: gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2
+          GCC_URL: https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-rm/6-2017q2/gcc-arm-none-eabi-6-2017-q2-update-linux.tar.bz2
+        run: |
+          cd ${HOME}
+          wget -nv $GCC_URL
+          mkdir -p $GCC_PATH
+          tar -xjf $GCC_ARCHIVE_PATH
+          echo "${HOME}/${GCC_PATH}/bin" >> $GITHUB_PATH
+
+      - name: Install Python tooling
+        run: |
+          pip install --user virtualenv
+          pip install --upgrade pip
+          pip install --upgrade setuptools
+          pip install --upgrade scons
+          sudo apt install python3-testresources
+          rm -rf .venv
+          mkdir .venv
+          virtualenv .venv
+          . .venv/bin/activate
+        # pip install -r requirements.txt
+
+      - name: Install Protobufs
+        run: |
+          sudo add-apt-repository -y ppa:maarten-fonville/protobuf
+          sudo apt-get -y install protobuf-compiler
+          cd .. && git clone https://github.com/nanopb/nanopb.git && cd nanopb/generator/proto && make;
+
+      - name: Force PATH to update
+        run: hash -r
+
+      - name: Print versions of everything
+        run: |
+          arm-none-eabi-gcc --version
+          arm-none-eabi-objcopy --version
+          arm-none-eabi-objdump --version
+          arm-none-eabi-size --version
+          arm-none-eabi-gcc-ar --version
+          arm-none-eabi-gdb --version
+          gcc --version
+          make --version
+          clang --version
+          clang-format --version
+          .venv/bin/pip3 freeze
+
+      # - name: Format and lint
+      #   run: |
+      #     make test_format
+      #     scons lint
+      #     make pylint
+
+      - name: Build stm32f0xx
+        id: build-stm32
+        run: |
+          scons --platform=arm --define="${DEFINES}"
+
+      - name: Build and test
+        id: build-test
+        run: |
+          scons --platform=x86 --define="${DEFINES}"
+          scons test --platform=x86 --define="${DEFINES}"
+        # missing make pytest_all
