@@ -1,6 +1,6 @@
 #include "FreeRTOS.h"
-#include "task.h"
 #include "log.h"
+#include "task.h"
 
 #include <stdint.h>
 
@@ -21,15 +21,8 @@ static void delay_task() {
 }
 
 void test_delay_ms(void) {
-  xTaskCreateStatic(
-        delay_task,
-        "Delay",
-        configMINIMAL_STACK_SIZE,
-        NULL,
-        tskIDLE_PRIORITY + 1,
-        &s_task_stack,
-        &s_task_tcb
-    );
-  
+  xTaskCreateStatic(delay_task, "Delay", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1,
+                    &s_task_stack, &s_task_tcb);
+
   vTaskStartScheduler();
 }
