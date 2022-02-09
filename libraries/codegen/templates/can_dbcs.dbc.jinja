@@ -4,10 +4,10 @@
 
 BO_ {{message["id"]}} {{message["message_name"]}} {{message["data_length"]}} {{message["sender"]}}
 
-{%- set signals = message["signals"] -%}
+  {%- set signals = message["signals"] -%}
 
-{%- for signal in signals %}
+  {%- for signal in signals %}
   SG_ {{signal["signal_name"]}} : {{signal["start_bit"]}}|{{signal["length"]}}@1+ ({{signal["scale"]}},{{signal["offset"]}}) [{{signal["min"]}}|{{signal["max"]}}] "{{signal["unit"]}}" {{signal["receiver"]}}
-{%- endfor %}
+  {%- endfor %}
 
 {% endfor -%}
