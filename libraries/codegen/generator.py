@@ -110,7 +110,7 @@ if __name__ == "__main__":
     templateLoader = jinja2.FileSystemLoader(searchpath="./libraries/codegen/templates")
     env = jinja2.Environment(loader=templateLoader)
 
-    if options.template and "can_dbcs" in options.template:
+    if options.template and "system_can" in options.template:
         data = get_dbc_data()
         file_path = "./" + options.template[:-6]
         write_template(env, options.template, file_path, data)
