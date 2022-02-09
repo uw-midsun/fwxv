@@ -1,0 +1,16 @@
+#pragma once
+
+#include "can_msg_defs.h"
+#include "can_unpack_impl.h"
+
+
+{% set messages = data["Messages"] -%}
+{% set signals = data["signals"] -%}
+
+{%- for message in messages -%}
+    void CAN_UNPACK_{{ message | upper }}(CanMessage *msg_ptr, {{messages[message]['signals'][signal]['length']}} {{messages[message]['signals'][1]}}_u8_ptr) {    
+                                        
+    can_unpack_impl_u8((msg_ptr), 1, (status_u8_ptr) );
+    }
+       
+{%- endfor -%}
