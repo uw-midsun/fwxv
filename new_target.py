@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """New target script.
 
-This module sets up the folder structure and rules.mk for a new project or library.
+This module sets up the folder structure and config.json for a new project or library.
 
 Usage: python3 new_target.py project|library name
 """
@@ -61,7 +61,7 @@ def new_target(target_type, name):
         ├── src
         └── test
 
-    where rules.mk is required for the project or library to be valid.
+    where config.json is required for the project or library to be valid.
 
     Args:
         target_type: Either 'project' or 'library'.
