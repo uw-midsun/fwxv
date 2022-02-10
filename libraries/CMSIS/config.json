@@ -2,5 +2,6 @@
     "cflags": [
         "-ffreestanding",
         "-nostdlib"
-    ]
+    ],
+    "no_lint": true
 }

@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import glob
 
 ###########################################################
 # Build arguments
@@ -90,6 +91,7 @@ def parse_config(entry):
         'arm_libs': [],
         'cflags': [],
         'mocks': {},
+        'no_lint': False,
     }
     config_file = entry.File('config.json')
     if not config_file.exists():
@@ -118,6 +120,7 @@ def proj_elf(proj_name):
 # .bin is used for flashing to MCU
 def proj_bin(proj_name):
     return proj_elf(proj_name).File(proj_name + '.bin')
+
 
 # Create appropriate targets for all projects and libraries
 for entry in PROJ_DIRS + LIB_DIRS:
@@ -220,7 +223,7 @@ for entry in PROJ_DIRS + LIB_DIRS:
             LIBS=env['LIBS'] + lib_deps * 2 + ['unity'],
             LIBPATH=[LIB_BIN_DIR],
             CCFLAGS=env['CCFLAGS'] + config['cflags'],
-            LINKFLAGS=mock_link_flags,
+            LINKFLAGS=env['LINKFLAGS'] + mock_link_flags,
         )
         if PLATFORM == 'arm':
             target = env.Bin(target=output.File(test_file.name + '.bin'), source=target)
@@ -269,6 +272,95 @@ Alias('test', test)
 # This is required for phony targets for scons to be happy
 clean = Command('clean.txt', [], 'rm -rf build/*')
 Alias('clean', clean)
+
+###########################################################
+# Linting and Formatting 
+###########################################################
+
+# Convert a list of paths/Dirs to space-separated paths.
+def dirs_to_str(dir_list):
+    # Use str(file) to ensure Dir objects are converted to paths.
+    return ' '.join([str(file) for file in dir_list])
+
+# Glob files by extension in a particular directory. Defaults to root directory.
+def glob_by_extension(extension, dir='.'):
+    return glob.glob('{}/**/*.{}'.format(str(dir), extension), recursive=True)
+
+# Retrieve files to lint - returns a tuple (c_lint_files, py_lint_files)
+def get_lint_files():
+    c_lint_files = []
+    py_lint_files = [] 
+
+    lint_dirs = []
+
+    # Get directories to lint based on PROJECT/LIBRARY args.
+    # If no PROJECT/LIBRARY argument,lint all directories.
+    if PROJECT:
+        lint_dirs.append(PROJ_DIR.Dir(PROJECT))
+    elif LIBRARY:
+        lint_dirs.append(LIB_DIR.Dir(LIBRARY))
+    else:
+        lint_dirs += PROJ_DIRS + LIB_DIRS
+
+    # Get all src and header files (*.c, *.h) to lint/format
+    for dir in lint_dirs: 
+        c_files = glob_by_extension('[ch]', dir)
+        py_files = glob_by_extension('py', dir) 
+
+        config = parse_config(dir) 
+
+        # Avoid linting/formatting external libraries
+        if not config.get('no_lint'):
+            c_lint_files += c_files 
+            py_lint_files += py_files 
+
+    return (c_lint_files, py_lint_files)
+
+def run_lint(target, source, env):
+    C_LINT_CMD = 'python ./lint.py' 
+    PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(Dir('#').abspath) # '#' is the root dir
+
+    c_lint_files, py_lint_files = get_lint_files()
+
+    # Lint C source files
+    if len(c_lint_files) > 0:
+        print('\nLinting *.[ch] in {}, {} ...'.format(PROJ_DIR, LIB_DIR))
+        subprocess.run('{} {}'.format(C_LINT_CMD, dirs_to_str(c_lint_files)), shell=True)
+
+    # Lint Python files
+    if len(py_lint_files) > 0:
+        print('\nLinting *.py files ...')
+        subprocess.run('{} {}'.format(PY_LINT_CMD, dirs_to_str(py_lint_files)), shell=True)
+
+    print('Done Linting.')
+
+def run_format(target, source, env):
+    # Formatter configs
+    AUTOPEP8_CONFIG = '-a --max-line-length 100 -r'
+    CLANG_FORMAT_CONFIG = '-i -style=file'
+
+    C_FORMAT_CMD = 'clang-format {}'.format(CLANG_FORMAT_CONFIG)
+    PY_FORMAT_CMD = 'autopep8 {} -i'.format(AUTOPEP8_CONFIG)
+
+    c_format_files, py_format_files = get_lint_files()
+
+    # Format C source files
+    if len(c_format_files) > 0:
+        print('\nFormatting *.[ch] in {}, {} ...'.format(str(PROJ_DIR), str(LIB_DIR)))
+        subprocess.run('{} {}'.format(C_FORMAT_CMD, dirs_to_str(c_format_files)), shell=True)
+
+    # Format Python source files
+    if len(py_format_files) > 0:
+        print('\nFormatting *.py files ...')
+        subprocess.run('{} {}'.format(PY_FORMAT_CMD, dirs_to_str(py_format_files)), shell=True)
+
+    print('Done Formatting.')
+
+lint = Command('lint.txt', [], run_lint)
+Alias('lint', lint)
+
+format = Command('format.txt', [], run_format)
+Alias('format', format)
 
 ###########################################################
 # Helper targets for x86

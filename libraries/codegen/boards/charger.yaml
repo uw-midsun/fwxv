@@ -1,0 +1,35 @@
+# Message Definitions in plaintext are on the wiki at:
+# https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
+#
+# If you are making changes to this file please update the corresponding entry
+# on the wiki. If you need to add a new message use a reasonable
+# reserved ID. The higher ID the lower the priority. Generally
+# - 0-13: Critical messages (have ACK)
+# - 14-30: Actionable messages (trigger a change in another system)
+# - 30-63: Data messages (usually not actionable by an onboard device)
+
+---
+  Messages:
+    request_to_charge:
+      id: 48
+      target:
+        - centre_console
+      signals:
+        signal1:
+          length: uint8_t
+
+    charger_connected_state:
+      id: 50
+      target:
+        - charger
+      signals:
+        is_connected:
+          length: uint8_t
+
+    charger_fault:
+      id: 53
+      target:
+        - telemetry
+      signals:
+        fault:
+          length: uint8_t
