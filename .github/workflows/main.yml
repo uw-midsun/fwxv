@@ -99,9 +99,7 @@ jobs:
         run: |
           scons format
           scons lint
-        # exit if not properly formatted
           if [[ $(git diff --name-only) ]] ; then exit 1; fi
-          # make pylint
 
       - name: Build stm32f0xx
         id: build-stm32
