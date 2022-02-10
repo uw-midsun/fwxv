@@ -4,11 +4,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "FreeRTOS.h"
+#include "event_groups.h"
 #include "gpio.h"
 #include "interrupt_def.h"
 #include "status.h"
-
-typedef void (*GpioItCallback)(const GpioAddress *address, void *context);
 
 // Initializes the interrupt handler for GPIO.
 void gpio_it_init(void);
@@ -19,7 +19,8 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge);
 // Registers a new callback on a given port pin combination with the desired
 // settings.
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
-                                      InterruptEdge edge, GpioItCallback callback, void *context);
+                                      InterruptEdge edge, EventGroupHandle_t event_group,
+                                      uint32_t event_group_bit);
 
 // Triggers an interrupt in software.
 StatusCode gpio_it_trigger_interrupt(const GpioAddress *address);

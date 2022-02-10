@@ -156,9 +156,9 @@ StatusCode x86_interrupt_register_interrupt(uint8_t handler_id, const InterruptS
 
   *interrupt_id = s_x86_interrupt_next_interrupt_id;
   s_x86_interrupt_next_interrupt_id++;
-  Interrupt interrupt = {
-    .priority = settings->priority, .handler_id = handler_id, .is_event = (bool)settings->type
-  };
+  Interrupt interrupt = { .priority = settings->priority,
+                          .handler_id = handler_id,
+                          .is_event = (bool)settings->type };
   s_x86_interrupt_interrupts_map[*interrupt_id] = interrupt;
 
   return STATUS_CODE_OK;
