@@ -1,7 +1,9 @@
 import json
 import os
+import sys
 import subprocess
 import glob
+from new_target import new_target
 
 ###########################################################
 # Build arguments
@@ -244,7 +246,7 @@ def get_test_list():
     lib = LIBRARY if LIBRARY else ''
     # Assume only one of project or library is set
     entry = proj + lib
-    if entry:
+    if entry and tests.get(entry):
         if GetOption('testfile'):
             return [test for test in tests[entry] if test.name == 'test_' + GetOption('testfile')]
         else:
@@ -267,6 +269,20 @@ Alias('test', test)
 ###########################################################
 # Helper targets
 ###########################################################
+
+def make_new_target(target, source, env):
+    # No project or library option provided
+    if not PROJECT and not LIBRARY:
+        print("Missing project or library name. Expected --project=... or --library=...")
+        sys.exit(1)
+
+    target_type = 'project' if PROJECT else 'library'
+
+    # Assume either PROJECT or LIBRARY is given, 'or' to select the non-None value
+    new_target(target_type, PROJECT or LIBRARY)
+
+new = Command('new_proj.txt', [], make_new_target)
+Alias('new', new)
 
 # 'clean.txt' is a dummy file that doesn't get created
 # This is required for phony targets for scons to be happy
