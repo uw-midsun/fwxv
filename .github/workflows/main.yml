@@ -95,11 +95,13 @@ jobs:
           clang-format --version
           .venv/bin/pip3 freeze
 
-      # - name: Format and lint
-      #   run: |
-      #     make test_format
-      #     scons lint
-      #     make pylint
+      - name: Format and lint
+        run: |
+          scons format
+          scons lint
+        # exit if not properly formatted
+          if [[ $(git diff --name-only) ]] ; then exit 1; fi
+          # make pylint
 
       - name: Build stm32f0xx
         id: build-stm32
