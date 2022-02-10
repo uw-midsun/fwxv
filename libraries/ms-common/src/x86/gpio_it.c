@@ -23,8 +23,6 @@ typedef struct GpioItInterrupt {
 static uint8_t s_gpio_it_handler_id;
 static GpioItInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
 
-static EventGroupHandle_t s_event_group;
-
 static void prv_gpio_it_handler(uint8_t interrupt_id) {
   for (int i = 0; i < GPIO_PINS_PER_PORT; ++i) {
     if (s_gpio_it_interrupts[i].interrupt_id == interrupt_id) {
@@ -41,9 +39,8 @@ static void prv_gpio_it_handler(uint8_t interrupt_id) {
   }
 }
 
-void gpio_it_init(const EventGroupHandle_t event_group) {
+void gpio_it_init(void) {
   x86_interrupt_register_handler(prv_gpio_it_handler, &s_gpio_it_handler_id);
-  s_event_group = event_group;
   GpioItInterrupt empty_interrupt = {
     .address = { .port = NUM_GPIO_PORTS },
   };
