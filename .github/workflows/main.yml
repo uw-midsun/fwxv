@@ -99,8 +99,8 @@ jobs:
         run: |
           scons format
           scons lint
-          git diff --name-only
-          if [[ $(git diff --name-only) ]] ; then exit 1; fi
+          echo ""
+          if [[ $(git diff --name-only) ]] ; then echo "--THESE FILES WERE UNFORMATEED--" && exit 1; fi
 
       - name: Build stm32f0xx
         id: build-stm32
