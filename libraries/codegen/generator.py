@@ -34,7 +34,7 @@ def process_setter_data(board, data, master_data):
         if board in data["Messages"][message].get("target", []) and \
            data["Messages"][message].get("signals", False):
             for signal, length in data["Messages"][message]["signals"].items():
-                master_data["Signals"].append((signal, length['length']))
+                master_data["Signals"].append((signal, length['length'], message))
 
 def get_dbc_data():
     yaml_files = get_yaml_files()
