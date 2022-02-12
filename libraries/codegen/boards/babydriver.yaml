@@ -16,18 +16,18 @@
         - babydriver
       signals:
         id:
-          length: uint8_t
+          length: 8
         data0:
-          length: uint8_t
+          length: 8
         data1:
-          length: uint8_t
+          length: 8
         data2:
-          length: uint8_t
+          length: 8
         data3:
-          length: uint8_t
+          length: 8
         data4:
-          length: uint8_t
+          length: 8
         data5:
-          length: uint8_t
+          length: 8
         data6:
-          length: uint8_t
+          length: 8

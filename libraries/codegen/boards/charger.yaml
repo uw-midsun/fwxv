@@ -16,7 +16,7 @@
         - centre_console
       signals:
         signal1:
-          length: uint8_t
+          length: 8
 
     charger_connected_state:
       id: 50
@@ -24,7 +24,7 @@
         - charger
       signals:
         is_connected:
-          length: uint8_t
+          length: 8
 
     charger_fault:
       id: 53
@@ -32,4 +32,4 @@
         - telemetry
       signals:
         fault:
-          length: uint8_t
+          length: 8
