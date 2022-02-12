@@ -55,6 +55,7 @@
 #define TASK_STACK_512 ((size_t)512)
 #define TASK_STACK_1024 ((size_t)1024)
 #define TASK_STACK_2048 ((size_t)2048)
+#define TASK_STACK_4096 ((size_t)4096)
 
 // A convenience macro for making declaring priorities more readable.
 #define TASK_PRIORITY(prio) ((TaskPriority)prio)
