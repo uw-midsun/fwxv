@@ -3,6 +3,7 @@
 #include "delay.h"
 #include "gpio.h"
 #include "log.h"
+#include "misc.h"
 #include "tasks.h"
 
 static const GpioAddress leds[] = {
