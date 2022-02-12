@@ -5,7 +5,7 @@
 
 #include "{{board}}_structs.h"
 
-{% for (signal, length) in signals -%}
+{% for (signal, length, message) in signals -%}
 
 void set_{{board}}_{{signal}}(receive_struct* s, uint{{length}}_t val)
 {
