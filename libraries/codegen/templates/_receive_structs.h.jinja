@@ -6,7 +6,8 @@
 #include <stdint.h>
 
 typedef struct {
-    {% for (signal, length) in signals -%}
-        {{length}} {{signal}};
+    {%- for signal, length, message in signals -%}
+        {{length}} {{message}}_{{signal}};
     {% endfor -%}
 } {{board}}_receive_struct;
+
