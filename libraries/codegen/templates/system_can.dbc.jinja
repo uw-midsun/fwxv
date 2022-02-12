@@ -1,4 +1,5 @@
 {% set messages = data["Messages"] -%}
+{% set boards = data["Boards"] -%}
 
 NS_ : 
   NS_DESC_
@@ -32,14 +33,17 @@ NS_ :
 
 BS_:
 
-BU_: BABYDRIVER BMS_CARRIER CENTRE_CONSOLE CHARGER MOTOR_CONTROLLER PEDAL POWER_DISTRIBUTION_FRONT POWER_DISTRIBUTION_REAR POWER_SELECT SOLAR_5_MPPTS SOLAR_6_MPPTS STEERING
+BU_:
+{%- for board in boards -%}
+{%- if not loop.last %} {% endif -%}
+{{board|upper}}
+{%- endfor %}
 
 {% for message in messages -%}
 
 BO_ {{message["id"]}} {{message["message_name"]}} {{message["data_length"]}} {{message["sender"]}}
 
   {%- set signals = message["signals"] -%}
-
   {%- for signal in signals %}
   SG_ {{signal["signal_name"]}} : {{signal["start_bit"]}}|{{signal["length"]}}@1+ ({{signal["scale"]}},{{signal["offset"]}}) [{{signal["min"]}}|{{signal["max"]}}] "{{signal["unit"]}}" {{signal["receiver"]}}
   {%- endfor %}

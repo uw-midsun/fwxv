@@ -69,19 +69,30 @@ def get_dbc_data():
             })
     return master_data
 
-def get_yaml_files():
+def get_boards_dir():
     # get the working directory to the boards
     working_dir = os.getcwd()
     path_to_file = os.path.dirname(os.path.realpath(__file__))
-    path_to_boards = path_to_file.replace("{}/".format(working_dir), "") + "/boards"
+    return path_to_file.replace("{}/".format(working_dir), "") + "/boards"
 
+def get_yaml_files():
+    path_to_boards = get_boards_dir()
     yaml_files = []
     for filename in os.listdir(path_to_boards):
         file_prefix = filename.split(".")[0]  # only get the part before .yaml
-        if (file_prefix != "boards"):
+        if file_prefix != "boards":
             yaml_files.append(os.path.join(path_to_boards, filename))
 
     return yaml_files
+
+def get_boards():
+    path_to_boards = get_boards_dir()
+    for filename in os.listdir(path_to_boards):
+        file_prefix = filename.split(".")[0]  # only get the part before .yaml
+        if file_prefix == "boards":
+            return os.path.join(path_to_boards, filename)
+
+    return False
 
 def parse_board_yaml_files(board):
     yaml_files = get_yaml_files()
@@ -112,6 +123,8 @@ if __name__ == "__main__":
 
     if options.template and "system_can" in options.template:
         data = get_dbc_data()
+        boards = get_boards()
+        data["Boards"] = read_yaml(boards)["Boards"]
         file_path = "./" + options.template[:-6]
         write_template(env, options.template, file_path, data)
     elif options.board: # only for _setters.h
