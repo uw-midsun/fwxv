@@ -38,7 +38,7 @@ TASK(leds_task, TASK_STACK_512) {
 int main(void) {
   gpio_init();
 
-  tasks_init_task(&leds_task, TASK_PRIORITY(2), NULL);
+  tasks_init_task(leds_task, TASK_PRIORITY(2), NULL);
 
   LOG_DEBUG("Blinking LEDs...\n");
   tasks_start();

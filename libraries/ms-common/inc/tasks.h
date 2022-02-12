@@ -22,7 +22,7 @@
 // In main, initialize tasks with tasks_init_task, then start the scheduler with tasks_start.
 // Note: higher priority number means higher priority.
 //
-//   tasks_init_task(&my_cool_task, TASK_PRIORITY(1), my_context);
+//   tasks_init_task(my_cool_task, TASK_PRIORITY(1), my_context);
 //   tasks_start(); // Does not return!
 
 #include <stdbool.h>
@@ -34,7 +34,7 @@
 #include "tasks_impl.h"
 
 // Forward declare a task. This should go in a header.
-// The task is accessible as a global variable of type Task with the name passed in.
+// The task is accessible as a global variable of type Task * with the name passed in.
 #define DECLARE_TASK(name) _DECLARE_TASK(name)
 
 // Define a task function. This should go in a source file (.c).
