@@ -9,7 +9,16 @@
 # - 30-63: Data messages (usually not actionable by an onboard device)
 ---
   Boards:
-    - centre_console
+    - babydriver
     - bms_carrier
+    - centre_console
+    - charger
+    - motor_controller
     - pedal
+    - power_distribution_front
+    - power_distribution_rear
+    - power_select
+    - solar_5_mppts
+    - solar_6_mppts
+    - steering
   
