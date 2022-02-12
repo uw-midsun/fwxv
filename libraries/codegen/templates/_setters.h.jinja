@@ -7,7 +7,7 @@
 
 {% for (signal, length) in signals -%}
 
-void set_{{board}}_{{signal}}(receive_struct* s, {{length}} val)
+void set_{{board}}_{{signal}}(receive_struct* s, uint{{length}}_t val)
 {
     s->{{board}}_{{signal}} = val;
 }

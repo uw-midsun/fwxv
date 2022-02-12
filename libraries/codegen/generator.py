@@ -9,10 +9,12 @@ def read_yaml(yaml_file):
         data = yaml.load(f, Loader=yaml.FullLoader)
         return data
 
+def get_board_name(yaml_path):
+    return yaml_path.split("/")[len(yaml_path.split("/"))-1].split(".")[0]
 
 def get_file_path(template_name, yaml_path, data, dest="./"):
     # get the name of the yaml file (board name) from the filepath
-    board = yaml_path.split("/")[len(yaml_path.split("/")) - 1].split(".")[0]
+    board = get_board_name(yaml_path)
     data["Board"] = board
     # get the name of the jinja file from the filepath
     jinja_prefix = template_name[:-6]
@@ -34,22 +36,69 @@ def process_setter_data(board, data, master_data):
             for signal, length in data["Messages"][message]["signals"].items():
                 master_data["Signals"].append((signal, length['length']))
 
+def get_dbc_data():
+    yaml_files = get_yaml_files()
+    master_data = {"Messages" : []}
+    for file in yaml_files:
+        data = read_yaml(file)
+        sender = get_board_name(file)
+        for message_key in data["Messages"]:
+            start_bit = 0
+            message = data["Messages"][message_key]
+            signals = []
+            for signal_key in message["signals"]:
+                signal = message["signals"][signal_key]
+                signals.append({
+                    "signal_name": signal_key,
+                    "start_bit": start_bit,
+                    "length": signal["length"],
+                    "scale": signal.get("scale", 1),
+                    "offset": signal.get("offset", 0),
+                    "min": signal.get("min", 0),
+                    "max": signal.get("max", 100),
+                    "unit": signal.get("unit", ""),
+                    "receiver": " ".join(message["target"])
+                })
+                start_bit += signal["length"]
+            master_data["Messages"].append({
+                "id": message["id"],
+                "message_name": message_key,
+                "signals": signals,
+                "data_length": 8,
+                "sender": sender
+            })
+    return master_data
 
-def parse_board_yaml_files(board):
+def get_boards_dir():
     # get the working directory to the boards
     working_dir = os.getcwd()
     path_to_file = os.path.dirname(os.path.realpath(__file__))
-    path_to_boards = path_to_file.replace("{}/".format(working_dir), "") + "/boards"
+    return path_to_file.replace("{}/".format(working_dir), "") + "/boards"
 
+def get_yaml_files():
+    path_to_boards = get_boards_dir()
     yaml_files = []
     for filename in os.listdir(path_to_boards):
         file_prefix = filename.split(".")[0]  # only get the part before .yaml
-        if (file_prefix != "boards"):
+        if file_prefix != "boards":
             yaml_files.append(os.path.join(path_to_boards, filename))
 
+    return yaml_files
+
+def get_boards():
+    path_to_boards = get_boards_dir()
+    for filename in os.listdir(path_to_boards):
+        file_prefix = filename.split(".")[0]  # only get the part before .yaml
+        if file_prefix == "boards":
+            return os.path.join(path_to_boards, filename)
+
+    return False
+
+def parse_board_yaml_files(board):
+    yaml_files = get_yaml_files()
     master_data = {"Board": board, "Signals": []}
-    for path in yaml_files:
-        data = read_yaml(path)
+    for file in yaml_files:
+        data = read_yaml(file)
         process_setter_data(board, data, master_data)
 
     return master_data
@@ -72,7 +121,13 @@ if __name__ == "__main__":
     templateLoader = jinja2.FileSystemLoader(searchpath="./libraries/codegen/templates")
     env = jinja2.Environment(loader=templateLoader)
 
-    if options.board:
+    if options.template and "system_can" in options.template:
+        data = get_dbc_data()
+        boards = get_boards()
+        data["Boards"] = read_yaml(boards)["Boards"]
+        file_path = "./" + options.template[:-6]
+        write_template(env, options.template, file_path, data)
+    elif options.board: # only for _setters.h
         data = parse_board_yaml_files(options.board)
         if options.template:
             file_path = "./" + options.board + options.template[:-6]
