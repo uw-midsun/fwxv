@@ -15,7 +15,7 @@
   static void _prv_task_impl_##task_name(void *);                \
   static StackType_t _s_stack_##task_name[task_stack_size];      \
   /* use a compound literal so users can use it as a pointer */  \
-  Task *task_name = &(Task) {                                    \
+  Task *task_name = &(Task){                                     \
     .task_func = _prv_task_impl_##task_name,                     \
     .name = #task_name,                                          \
     .stack = _s_stack_##task_name,                               \
