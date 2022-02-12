@@ -70,7 +70,7 @@ jobs:
           mkdir .venv
           virtualenv .venv
           . .venv/bin/activate
-        # pip install -r requirements.txt
+          pip install -r requirements.txt
 
       - name: Install Protobufs
         run: |
@@ -98,10 +98,15 @@ jobs:
       - name: Format and lint
         run: |
           scons format
-          scons lint
           if [[ $(git diff --name-only) ]] ; then 
-            echo -e "\nunformatted files:";
+            echo -e "\n unformatted files:";
             git diff --name-only;
+            exit 1;
+          fi
+
+          scons lint
+          if [ $? -ne 0 ] ; then
+            echo -e "\n lint failed";
             exit 1;
           fi
 

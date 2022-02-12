@@ -338,17 +338,19 @@ def run_lint(target, source, env):
 
     c_lint_files, py_lint_files = get_lint_files()
 
+    errors = 0
     # Lint C source files
     if len(c_lint_files) > 0:
         print('\nLinting *.[ch] in {}, {} ...'.format(PROJ_DIR, LIB_DIR))
-        subprocess.run('{} {}'.format(C_LINT_CMD, dirs_to_str(c_lint_files)), shell=True)
+        errors += subprocess.run('{} {}'.format(C_LINT_CMD, dirs_to_str(c_lint_files)), shell=True).returncode
 
     # Lint Python files
     if len(py_lint_files) > 0:
         print('\nLinting *.py files ...')
-        subprocess.run('{} {}'.format(PY_LINT_CMD, dirs_to_str(py_lint_files)), shell=True)
+        errors += subprocess.run('{} {}'.format(PY_LINT_CMD, dirs_to_str(py_lint_files)), shell=True).returncode
 
     print('Done Linting.')
+    Exit(errors)
 
 def run_format(target, source, env):
     # Formatter configs
