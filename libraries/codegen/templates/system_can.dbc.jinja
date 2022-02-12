@@ -34,10 +34,7 @@ NS_ :
 BS_:
 
 BU_:
-{%- for board in boards -%}
-{%- if not loop.last %} {% endif -%}
-{{board|upper}}
-{%- endfor %}
+{%- for board in boards %} {{board|upper}} {%- endfor %}
 
 {% for message in messages -%}
 
