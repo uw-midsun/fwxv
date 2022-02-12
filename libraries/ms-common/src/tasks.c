@@ -9,6 +9,12 @@
 // Add any setup or teardown that needs to be done for every task here.
 static void prv_task(void *params) {
   Task *task = params;
+  if (task == NULL) { // guard just in case, error should have been caught previously
+    LOG_CRITICAL("CRITICAL: Tried to start null task!\n");
+    return;
+  }
+
+  LOG_DEBUG("Task %s starting.\n", task->name);
 
   // Call the task function. This shouldn't exit.
   task->task_func(task->context);
@@ -41,9 +47,11 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context) {
   task->context = context;
   task->handle = xTaskCreateStatic(prv_task, task->name, task->stack_size, task, priority,
                                    task->stack, &task->tcb);
+  configASSERT(task->handle != NULL); // make sure it was created
   return STATUS_CODE_OK;
 }
 
 void tasks_start(void) {
   vTaskStartScheduler();
+  LOG_CRITICAL("CRITICAL: scheduler stopped!\n");
 }
