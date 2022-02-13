@@ -922,9 +922,9 @@ class _CppLintState(object):
     def PrintErrorCounts(self):
         """Print a summary of errors by category, and the total."""
         for category, count in self.errors_by_category.iteritems():
-            sys.stderr.write('Category \'%s\' errors found: %d\n' % (category,
+            print('Category \'%s\' errors found: %d\n' % (category,
                                                                      count))
-        sys.stderr.write('Total errors found: %d\n' % self.error_count)
+        print('Total errors found: %d\n' % self.error_count)
 
 
 _cpplint_state = _CppLintState()
@@ -1205,15 +1205,15 @@ def Error(filename, linenum, category, confidence, message):
     if _ShouldPrintError(category, confidence, linenum):
         _cpplint_state.IncrementErrorCount(category)
         if _cpplint_state.output_format == 'vs7':
-            sys.stderr.write('%s(%s):  %s  [%s] [%d]\n' %
+            print('%s(%s):  %s  [%s] [%d]\n' %
                              (filename, linenum, message, category,
                               confidence))
         elif _cpplint_state.output_format == 'eclipse':
-            sys.stderr.write('%s:%s: warning: %s  [%s] [%d]\n' %
+            print('%s:%s: warning: %s  [%s] [%d]\n' %
                              (filename, linenum, message, category,
                               confidence))
         else:
-            sys.stderr.write('%s:%s:  %s  [%s] [%d]\n' %
+            print('%s:%s:  %s  [%s] [%d]\n' %
                              (filename, linenum, message, category,
                               confidence))
 
@@ -5885,7 +5885,7 @@ def ProcessConfigOverrides(filename):
                         if base_name:
                             pattern = re.compile(val)
                             if pattern.match(base_name):
-                                sys.stderr.write(
+                                print(
                                     'Ignoring "%s": file excluded by "%s". '
                                     'File path component "%s" matches '
                                     'pattern "%s"\n' % (filename, cfg_file,
@@ -5896,17 +5896,17 @@ def ProcessConfigOverrides(filename):
                         try:
                             _line_length = int(val)
                         except ValueError:
-                            sys.stderr.write('Line length must be numeric.')
+                            print('Line length must be numeric.')
                     elif name == 'root':
                         global _root
                         _root = val
                     else:
-                        sys.stderr.write(
+                        print(
                             'Invalid configuration option (%s) in file %s\n' %
                             (name, cfg_file))
 
         except IOError:
-            sys.stderr.write(
+            print(
                 "Skipping config file '%s': Can't open for reading\n" %
                 cfg_file)
             keep_looking = False
@@ -5969,7 +5969,7 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
                 lf_lines.append(linenum + 1)
 
     except IOError:
-        sys.stderr.write(
+        print(
             "Skipping input '%s': Can't open for reading\n" % filename)
         _RestoreFilters()
         return
@@ -5980,7 +5980,7 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
     # When reading from stdin, the extension is unknown, so no cpplint tests
     # should rely on the extension.
     if filename != '-' and file_extension not in _valid_extensions:
-        sys.stderr.write('Ignoring %s; not a valid file name '
+        print('Ignoring %s; not a valid file name '
                          '(%s)\n' % (filename, ', '.join(_valid_extensions)))
     else:
         ProcessFileData(filename, file_extension, lines, Error,
@@ -6004,7 +6004,7 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
                 Error(filename, linenum, 'whitespace/newline', 1,
                       'Unexpected \\r (^M) found; better to use only \\n')
 
-    # sys.stderr.write('Done processing %s\n' % filename)
+    # print('Done processing %s\n' % filename)
     _RestoreFilters()
 
 
@@ -6014,7 +6014,7 @@ def PrintUsage(message):
   Args:
     message: The optional error message.
   """
-    sys.stderr.write(_USAGE)
+    print(_USAGE)
     if message:
         sys.exit('\nFATAL ERROR: ' + message)
     else:
@@ -6026,7 +6026,7 @@ def PrintCategories():
 
   These are the categories used to filter messages via --filter.
   """
-    sys.stderr.write(''.join('  %s\n' % cat for cat in _ERROR_CATEGORIES))
+    print(''.join('  %s\n' % cat for cat in _ERROR_CATEGORIES))
     sys.exit(0)
 
 
@@ -6109,11 +6109,13 @@ def main():
     sys.stderr = codecs.StreamReaderWriter(sys.stderr,
                                            codecs.getreader('utf8'),
                                            codecs.getwriter('utf8'), 'replace')
-
-    _cpplint_state.ResetErrorCounts()
-    for filename in filenames:
-        ProcessFile(filename, _cpplint_state.verbose_level)
-    _cpplint_state.PrintErrorCounts()
+    try:
+        _cpplint_state.ResetErrorCounts()
+        for filename in filenames:
+            ProcessFile(filename, _cpplint_state.verbose_level)
+        _cpplint_state.PrintErrorCounts()
+    except Exception as e:
+        print(e)
 
     sys.exit(_cpplint_state.error_count > 0)
 
