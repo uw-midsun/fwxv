@@ -5,12 +5,12 @@
 
 
 {% set messages = data["Messages"] -%}
-{% set signals = data["signals"] -%}
+{%- for message in messages -%}    
 
-{%- for message in messages -%}
-    void CAN_UNPACK_{{ message | upper }}(CanMessage *msg_ptr, {{messages[message]['signals'][signal]['length']}} {{messages[message]['signals'][1]}}_u8_ptr) {    
-                                        
-    can_unpack_impl_u8((msg_ptr), 1, (status_u8_ptr) );
-    }
-       
+    {% set signals = messages[message]['signals'] -%}
+    {% set size = signals['length'] -%}
+void CAN_UNPACK_{{ message | upper }}(CanMessage *msg_ptr {%- for signal in signals -%}, uint{{ signals[signal]['length']}}_t *{{signal}}_u{{signals[signal]['length']}}_ptr {%- endfor -%}){                                     
+        can_unpack_impl_u{{size}}(msg_ptr, 1{%- for signal in signals -%}, {{signal}}_u{{signals[signal]['length']}}_ptr {%- endfor -%});
+} 
+    
 {%- endfor -%}
