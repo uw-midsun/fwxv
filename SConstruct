@@ -320,15 +320,12 @@ def get_lint_files():
 
     # Get all src and header files (*.c, *.h) to lint/format
     for dir in lint_dirs: 
-        c_files = glob_by_extension('[ch]', dir)
-        py_files = glob_by_extension('py', dir) 
-
         config = parse_config(dir) 
 
         # Avoid linting/formatting external libraries
         if not config.get('no_lint'):
-            c_lint_files += c_files 
-            py_lint_files += py_files 
+            c_lint_files += glob_by_extension('[ch]', dir)
+            py_lint_files += glob_by_extension('py', dir) 
 
     return (c_lint_files, py_lint_files)
 
@@ -343,6 +340,7 @@ def run_lint(target, source, env):
     if len(c_lint_files) > 0:
         print('\nLinting *.[ch] in {}, {} ...'.format(PROJ_DIR, LIB_DIR))
         errors += subprocess.run('{} {}'.format(C_LINT_CMD, dirs_to_str(c_lint_files)), shell=True).returncode
+    print(f"Linting c files finished with {errors} errors")
 
     # Lint Python files
     if len(py_lint_files) > 0:

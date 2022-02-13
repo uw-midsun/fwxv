@@ -1,14 +1,24 @@
+"""
+example script
+"""
+
 import math
 
 
-def sqrt(x: float):
-    return math.sqrt(float)
+def sqrt(val: float):
+    """
+    return the sqrt of val
+    """
+    return math.sqrt(val)
 
 
 THE_ANSWER_TO_LIFE = 42
 
 
 def main():
+    """
+    main func
+    """
     print(sqrt(THE_ANSWER_TO_LIFE))
 
 
