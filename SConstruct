@@ -330,7 +330,7 @@ def get_lint_files():
     return (c_lint_files, py_lint_files)
 
 def run_lint(target, source, env):
-    C_LINT_CMD = 'python3 ./lint.py' 
+    C_LINT_CMD = 'python ./lint.py' 
     PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(Dir('#').abspath) # '#' is the root dir
 
     c_lint_files, py_lint_files = get_lint_files()
@@ -340,7 +340,6 @@ def run_lint(target, source, env):
     if len(c_lint_files) > 0:
         print('\nLinting *.[ch] in {}, {} ...'.format(PROJ_DIR, LIB_DIR))
         errors += subprocess.run('{} {}'.format(C_LINT_CMD, dirs_to_str(c_lint_files)), shell=True).returncode
-    print(f"Linting c files finished with {errors} errors")
 
     # Lint Python files
     if len(py_lint_files) > 0:
@@ -348,7 +347,8 @@ def run_lint(target, source, env):
         errors += subprocess.run('{} {}'.format(PY_LINT_CMD, dirs_to_str(py_lint_files)), shell=True).returncode
 
     print('Done Linting.')
-    Exit(errors)
+    if (errors > 0):
+        Exit("Lint errors")
 
 def run_format(target, source, env):
     # Formatter configs
