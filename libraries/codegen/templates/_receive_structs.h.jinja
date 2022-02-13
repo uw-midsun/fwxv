@@ -5,9 +5,10 @@
 
 #include <stdint.h>
 
-typedef struct {
-    {%- for signal, length, message in signals -%}
-        {{length}} {{message}}_{{signal}};
+typedef struct
+{
+    {% for signal, signal_data in signals -%}
+    uint{{signal_data['length']}}_t {{signal_data['message']}}_{{signal}};
     {% endfor -%}
 } {{board}}_receive_struct;
 
