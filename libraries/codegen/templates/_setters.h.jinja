@@ -1,15 +1,13 @@
-#pragma once
-
 {% set board = data["Board"] -%}
 {% set signals = data["Signals"] -%}
 
 #include "{{board}}_structs.h"
 
-{% for (signal, length) in signals -%}
+{% for signal, signal_data in signals -%}
 
-void set_{{board}}_{{signal}}(receive_struct* s, uint{{length}}_t val)
+void set_{{message}}_{{signal}}({{board}}_receive_struct* s, uint{{signal_data['length']}}_t val)
 {
-    s->{{board}}_{{signal}} = val;
+    s->{{message}}_{{signal}} = val;
 }
 
 {% endfor -%}
