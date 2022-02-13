@@ -51,6 +51,23 @@ import string
 import sys
 import unicodedata
 
+try:
+  xrange
+except NameError:
+  xrange = range
+
+try:
+  unicode
+except NameError:
+  #  -- pylint: disable=redefined-builtin
+  basestring = unicode = str
+
+try:
+  long
+except NameError:
+  #  -- pylint: disable=redefined-builtin
+  long = int
+
 _USAGE = """
 Syntax: cpplint.py [--verbose=#] [--output=vs7] [--filter=-x,+y,...]
                    [--counting=total|toplevel|detailed] [--root=subdir]

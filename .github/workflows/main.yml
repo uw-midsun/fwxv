@@ -65,12 +65,12 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade setuptools
           pip install --upgrade scons
+          pip install --upgrade pylint
           sudo apt install python3-testresources
           rm -rf .venv
           mkdir .venv
           virtualenv .venv
           . .venv/bin/activate
-          pip install -r requirements.txt
 
       - name: Install Protobufs
         run: |
