@@ -66,6 +66,7 @@ jobs:
           pip install --upgrade setuptools
           pip install --upgrade scons
           pip install --upgrade pylint
+          pip install --upgrade cpplint
           pip install --upgrade autopep8
           sudo apt install python3-testresources
           rm -rf .venv
