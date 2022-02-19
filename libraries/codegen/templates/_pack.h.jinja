@@ -1,0 +1,14 @@
+#pragma once
+
+#include "can_msg_defs.h"
+#include "can_pack_impl.h"
+
+{% set messages = data["Messages"] -%}
+
+{% for message in messages -%}
+    void can_pack_{{message}}(CanMessage *msg_ptr{% for signal in data['Messages'][message]['signals']-%}{% set length = data['Messages'][message]['signals'][signal]%}, uint{{length['length']}}_t {{signal}}_u{{length['length']}}{% endfor -%}){
+        {{data['Messages'][message]["id"]}}
+}
+{% endfor -%}
+
+ 
