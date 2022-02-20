@@ -3,11 +3,15 @@
 #include "can_msg_defs.h"
 #include "can_pack_impl.h"
 
+
 {% set messages = data["Messages"] -%}
 
 {% for message in messages -%}
-    void can_pack_{{message}}(CanMessage *msg_ptr{% for signal in data['Messages'][message]['signals']-%}{% set length = data['Messages'][message]['signals'][signal]%}, uint{{length['length']}}_t {{signal}}_u{{length['length']}}{% endfor -%}){
-        {{data['Messages'][message]["id"]}}
+    {% set signal = data['Messages'][message]['signals']%}
+void can_pack_{{message}}(CanMessage *msg_ptr{% for key, value in data['Messages'][message]['signals'].items()-%}, uint{{value['length']}}_t {{key}}_u{{value['length']}}{% endfor -%}){
+    {% for key, value in signal.items() -%} {%- if loop.first %}can_pack_impl_u{{value['length']}}((msg_ptr), SYSTEM_CAN_DEVICE_BMS_CARRIER, SYSTEM_CAN_MESSAGE_{{message|upper}}, 
+{% endif -%}
+{% endfor -%}
 }
 {% endfor -%}
 
