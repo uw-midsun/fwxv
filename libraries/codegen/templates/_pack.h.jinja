@@ -1,18 +1,13 @@
 #pragma once
 
 #include "can_msg_defs.h"
-#include "can_pack_impl.h"
-
-
-{% set messages = data["Messages"] -%}
-
+#include "can_pack_impl.h" {% set messages = data["Messages"] -%}
 {% for message in messages -%}
-    {% set signal = data['Messages'][message]['signals']%}
-void can_pack_{{message}}(CanMessage *msg_ptr{% for key, value in data['Messages'][message]['signals'].items()-%}, uint{{value['length']}}_t {{key}}_u{{value['length']}}{% endfor -%}){
-    {% for key, value in signal.items() -%} {%- if loop.first %}can_pack_impl_u{{value['length']}}((msg_ptr), SYSTEM_CAN_DEVICE_BMS_CARRIER, SYSTEM_CAN_MESSAGE_{{message|upper}}, 
-{% endif -%}
-{% endfor -%}
-}
-{% endfor -%}
+{% set signal = data['Messages'][message]['signals'].keys() | list %}
+{% set signal_length = data["Messages"][message]['signals'][signal[0]].values() | list %}
+void can_pack_{{message}}(CanMessage *msg_ptr{% for key in signal-%}, uint{{signal_length[0]}}_t {{key}}_u{{signal_length[0]}}{% endfor-%}){
+    can_pack_impl_u{{signal_length[0]}}((msg_ptr), SYSTEM_CAN_DEVICE_BMS_CARRIER, SYSTEM_CAN_MESSAGE_{{message|upper}}, {{data['Messages'][message]['id']}},
+    {% for key in signal-%}{%-if loop.first %}({{key}}_u{{signal_length[0]}}){% else %}, ({{key}}_u{{signal_length[0]}}){% endif -%}{% endfor-%}{%for i in range( (64 / signal_length[0] - data['Messages'][message]['signals']|length) | int )-%}, CAN_PACK_IMPL_EMPTY{% endfor-%});
+}{% endfor -%}
 
  
