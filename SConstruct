@@ -59,6 +59,9 @@ if PLATFORM == 'x86':
 elif PLATFORM == 'arm':
     env = SConscript('platform/arm.py')
 
+env['CCCOMSTR'] = "Compiling $TARGET"
+env['LINKCOMSTR'] = "Linking $TARGET"
+
 ###########################################################
 # Directory setup
 ###########################################################
