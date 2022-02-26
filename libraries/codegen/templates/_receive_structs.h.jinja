@@ -1,0 +1,13 @@
+#pragma once
+
+{% set board = data["Board"] -%}
+{% set signals = data["Signals"] -%}
+
+#include <stdint.h>
+
+typedef struct
+{
+    {% for signal, signal_data in signals -%}
+    uint{{signal_data['length']}}_t {{signal_data['message']}}_{{signal}};
+    {% endfor -%}
+} {{board}}_receive_struct;

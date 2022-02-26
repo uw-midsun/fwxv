@@ -20,9 +20,9 @@
       critical: true
       signals:
         relay_mask:
-          length: uint16_t
+          length: 16
         relay_state:
-          length: uint16_t
+          length: 16
 
     power_on_main_sequence:
       id: 6
@@ -32,7 +32,7 @@
       critical: true
       signals:
         sequence:
-          length: uint16_t
+          length: 16
 
     power_off_main_sequence:
       id: 7
@@ -42,7 +42,7 @@
       critical: true
       signals:
         sequence:
-          length: uint16_t
+          length: 16
 
     power_on_aux_sequence:
       id: 8
@@ -52,7 +52,7 @@
       critical: true
       signals:
         sequence:
-          length: uint16_t
+          length: 16
 
     drive_output:
       id: 9
@@ -61,7 +61,7 @@
       critical: true
       signals:
         drive_output:
-          length: uint16_t
+          length: 16
 
     set_ebrake_state:
       id: 10
@@ -70,7 +70,7 @@
       critical: true
       signals:
         ebrake_state:
-          length: uint8_t
+          length: 8
 
     regen_braking:
       id: 11
@@ -79,7 +79,7 @@
       critical: true
       signals:
         state:
-          length: uint8_t
+          length: 8
 
     ready_to_drive:
       id: 13
@@ -87,7 +87,7 @@
         - telemetry
       signals:
         ready_state:
-          length: uint8_t
+          length: 8
 
     begin_precharge:
       id: 28
@@ -95,7 +95,7 @@
         - motor_controller
       signals:
         signal1:
-          length: uint8_t
+          length: 8
 
     hazard:
       id: 32
@@ -103,7 +103,7 @@
         - centre_console
       signals:
         state:
-          length: uint8_t
+          length: 8
 
     discharge_precharge:
       id: 31
@@ -111,7 +111,7 @@
         - motor_controller
       signals:
         signal1:
-          length: uint8_t
+          length: 8
 
     state_transition_fault:
       id: 34
@@ -119,9 +119,9 @@
         - telemetry
       signals:
         state_machine:
-          length: uint16_t
+          length: 16
         fault_reason:
-          length: uint16_t
+          length: 16
 
     allow_charging:
       id: 49
@@ -129,4 +129,4 @@
         - charger
       signals:
         signal1:
-          length: uint8_t
+          length: 8

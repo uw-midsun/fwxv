@@ -16,7 +16,7 @@
         - telemetry
       signals:
         signal1:
-          length: uint8_t
+          length: 8
 
     front_current_measurement:
       id: 54
@@ -24,9 +24,9 @@
         - centre_console
       signals:
         current_id:
-          length: uint16_t
+          length: 16
         current:
-          length: uint16_t
+          length: 16
 
     front_pd_fault:
       id: 62
@@ -34,6 +34,6 @@
         - centre_console
       signals:
         fault_data:
-          length: uint16_t
+          length: 16
         faulting_output:
-          length: uint16_t
+          length: 16

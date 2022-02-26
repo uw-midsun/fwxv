@@ -16,7 +16,7 @@
         - lights_front
       signals:
         signal1:
-          length: uint8_t
+          length: 8
 
     rear_current_measurement:
       id: 55
@@ -24,9 +24,9 @@
         - centre_console
       signals:
         current_id:
-          length: uint16_t
+          length: 16
         current:
-          length: uint16_t
+          length: 16
 
     rear_pd_fault:
       id: 61
@@ -34,10 +34,10 @@
         - centre_console
       signals:
         fault_data:
-          length: uint16_t
+          length: 16
         enclosure_temp_data:
-          length: uint16_t
+          length: 16
         dcdc_temp_data:
-          length: uint16_t
+          length: 16
         faulting_output:
-          length: uint16_t
+          length: 16
