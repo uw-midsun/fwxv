@@ -29,7 +29,6 @@ StatusCode mutex_unlock(Mutex *mutex) {
   if (mutex == NULL) {
       return STATUS_CODE_INVALID_ARGS;
   }
-
   if (xSemaphoreGive(mutex->handle) == pdFALSE) {
     return STATUS_CODE_INTERNAL_ERROR;
   }
