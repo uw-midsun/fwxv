@@ -4,7 +4,7 @@
 #include "queue.h"
 #include <stdarg.h>
 #include <stdio.h>
-#include "task.h"
+#include "tasks.h"
 
 /* NOTES
 * Top level view:
@@ -20,77 +20,68 @@
 * this task then gets added to the queue and printfs when its turn comes
 */
 
-// This definition is tentative
-#define QUEUE_LENGTH 32
-#define MAX_LOG_SIZE 100
+// Holds the output of snprintf
+static char s_buffer [MAX_LOG_SIZE];
 
-static char buffer [MAX_LOG_SIZE];
-
-// xQueueBuffer will hold the queue structure.
-StaticQueue_t xQueueBuffer;
+// s_xQueueBuffer will hold the queue structure.
+static StaticQueue_t s_xQueueBuffer;
 
 // Array to hold items
-uint8_t *log_array[QUEUE_LENGTH * MAX_LOG_SIZE] = {0};
+static uint8_t *s_log_array[QUEUE_LENGTH * MAX_LOG_SIZE] = {0};
 
 // Holds the queue object (either make this into the task or put the variables in header so task can use it)
-QueueHandle_t log_queue;
+static QueueHandle_t s_log_queue;
 
 void log_init(void){
-
-  log_queue = xQueueCreateStatic(QUEUE_LENGTH, ITEM_SIZE, log_array, &xQueueBuffer);
-  /* use functions:
-      xQueueSendToToFront
-      xQueueSendToBack
-      xQueueReceive
-      maybe : uxQueueMessagesWaiting
-      vQueueDelete - this is for deallocating the entire queue, used when shutting down the log task
-  */
+  tasks_init_task(log_task, TASK_PRIORITY(0));
 }
-
-typedef enum {
-  LOG_LEVEL_DEBUG = 0,
-  LOG_LEVEL_WARN,
-  LOG_LEVEL_CRITICAL,
-  NUM_LOG_LEVELS,
-} LogLevel;
-
-#define LOG_DEBUG(fmt, ... ) LOG(LOG_LEVEL_DEBUG, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
-#define LOG_WARN(fmt, ... ) LOG(LOG_LEVEL_WARN, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
-#define LOG_CRITICAL(fmt, ... ) LOG_C(LOG_LEVEL_CRITICAL, __FILE__, __LINE__, fmt, ##__VA_ARGS__)
-
 
 void LOG(LogLevel level, const char* file, const char* line, const char * fmt, ... ){
   va_list args;
   va_start(args, fmt);
 
-  int num_chars = snprintf(buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, level, file, line, args);
+  int num_chars = snprintf(s_buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, level, file, line, args);
 
   va_end(args);
 
   if(xTaskGetSchedulerState() == taskSCHEDULER_SUSPENDED || xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED){
-    printf("%s", buffer);
+    printf("%s", s_buffer);
     return ;
   }
 
-  xQueueSendToBack( log_queue, ( void * ) buffer, ( TickType_t ) 0 );
+  xQueueSendToBack( s_log_queue, ( void * ) s_buffer, ( TickType_t ) 0 );
   return ;
 }
 
 void LOG_C(LogLevel level, const char* file, const char* line, const char * fmt, ... ){
   // Adds message to the front of the queue
-  // Allow blocking of the queue and freeRTOS
   va_list args;
   va_start(args, fmt);
 
-  int num_chars = snprintf(buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, level, file, line, args);
+  int num_chars = snprintf(s_buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, level, file, line, args);
 
   va_end(args);
 
   if(xTaskGetSchedulerState() == taskSCHEDULER_SUSPENDED || xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED){
-    printf("%s", buffer);
+    printf("%s", s_buffer);
     return ;
   }
 
-  xQueueSendToToFront( log_queue, ( void * ) buffer, ( TickType_t ) 0 );
+  xQueueSendToToFront( s_log_queue, ( void * ) s_buffer, ( TickType_t ) 0 );
   return ;
+}
+
+TASK(log_task, TASK_STACK_256) {
+  // Do any setup.
+  // |context| from tasks_init_task is passed as a void *context parameter.
+  s_log_queue = xQueueCreateStatic(QUEUE_LENGTH, ITEM_SIZE, s_log_array, &s_xQueueBuffer);
+  char Rx_buffer [MAX_LOG_SIZE];
+
+  // All tasks MUST loop forever and cannot return.
+  while (true) {
+    if( s_log_queue != 0 ){
+      if( xQueueReceive( s_log_queue, &( Rx_buffer ), ( TickType_t ) 0 ) ){
+        printf("%s", Rx_buffer);
+      }
+    }
 }
