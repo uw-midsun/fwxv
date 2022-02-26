@@ -379,6 +379,26 @@ format = Command('format.txt', [], run_format)
 Alias('format', format)
 
 ###########################################################
+# Header file generation from jinja templates
+###########################################################
+def generate_header_files():
+    codegen_dir = "libraries/codegen"
+    working_dir = os.getcwd()
+    base_exec = "python3 {}/generator.py -b {}".format(codegen_dir, PROJECT)
+    templates = os.listdir("{}/{}/templates".format(working_dir, codegen_dir))
+
+    for template in templates:
+        if "can_board_ids" in template:
+            env.Execute("{} -y {}/boards/boards.yaml -t {}".format(base_exec, codegen_dir, template))
+        elif template[0] == "_":
+            if "_getters" in template:
+                env.Execute("{} -y {}/boards/{}.yaml -t {}".format(base_exec, codegen_dir, PROJECT, template))
+            else:
+                env.Execute("{} -t {}".format(base_exec, template))
+        else:
+            env.Execute("{} -t {}".format(base_exec, template))
+
+###########################################################
 # Helper targets for x86
 ###########################################################
 
@@ -402,6 +422,7 @@ if PLATFORM == 'x86' and PROJECT:
     Depends(gdb, proj_elf(PROJECT))
     Alias('gdb', gdb)
 
+    generate_header_files()
 ###########################################################
 # Helper targets for arm
 ###########################################################
@@ -428,3 +449,5 @@ if PLATFORM == 'arm' and PROJECT:
     flash = Command('flash.txt', [], flash_run)
     Depends(flash, proj_bin(PROJECT))
     Alias('flash', flash)
+
+    generate_header_files()
