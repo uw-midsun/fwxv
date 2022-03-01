@@ -9,10 +9,10 @@
 #define BLOCK_INDEFINITELY UINT16_MAX
 
 // Mutex handle is used to access Mutex
-// Mutex Objects must be declared statically 
+// Mutex Objects must be declared statically
 typedef struct Mutex {
   SemaphoreHandle_t handle;
-  StaticSemaphore_t buffer; 
+  StaticSemaphore_t buffer;
 } Mutex;
 
 // Initializes a mutex using provided static entity
