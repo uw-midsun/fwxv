@@ -12,11 +12,11 @@ def read_yaml(yaml_file):
 def get_board_name(yaml_path):
     return yaml_path.split("/")[len(yaml_path.split("/"))-1].split(".")[0]
 
-def get_file_path(template_name, board, dest="./"):
+def get_file_name(template_name, board):
     # get the name of the jinja file from the filepath
     jinja_prefix = template_name[:-6]
     # files that start with _ are generic and we want to prepend the board name
-    return dest + (board + jinja_prefix if jinja_prefix[0] == "_" else jinja_prefix)
+    return board + jinja_prefix if jinja_prefix[0] == "_" and board else jinja_prefix
 
 
 def write_template(env, template_name, file_path, data):
@@ -112,32 +112,30 @@ if __name__ == "__main__":
                       help="yaml file to read", metavar="FILE")
     parser.add_option("-t", "--template", dest="template",
                       help="template file to populate", metavar="FILE")
-    parser.add_option("-b", "--board", dest="board", help="which board to generate")
+    parser.add_option("-b", "--board", default=None, dest="board", help="which board to generate")
+    parser.add_option("-f", "--file_path", dest="file_path", help="output file path")
 
     (options, args) = parser.parse_args()
 
-    templateLoader = jinja2.FileSystemLoader(searchpath="./libraries/codegen/templates")
-    env = jinja2.Environment(loader=templateLoader)
-
     if options.template:
-        file_path = get_file_path(
-            options.template,
-            options.board,
-            "./projects/{}/inc/".format(options.board)
-        ) if options.board else "./" + options.template[:-6]
+        codegen_dir = '/'.join(options.template.split('/')[:-1])
+        template_name = options.template.split('/')[-1]
+        templateLoader = jinja2.FileSystemLoader(searchpath=codegen_dir)
+        env = jinja2.Environment(loader=templateLoader)
+        file_path = options.file_path + "/" + get_file_name(template_name, options.board)
 
-        if "system_can" in options.template:
+        if "system_can" in template_name:
             data = get_dbc_data()
             boards = get_boards()
             data["Boards"] = read_yaml(boards)["Boards"]
-            write_template(env, options.template, file_path, data)
+            write_template(env, template_name, file_path, data)
         elif options.board and options.yaml_file:
             for y in options.yaml_file:
                 data = read_yaml(y)
                 data["Board"] = options.board
-                write_template(env, options.template, file_path, data)
+                write_template(env, template_name, file_path, data)
         elif options.board:
             data = parse_board_yaml_files(options.board)
-            write_template(env, options.template, file_path, data)
+            write_template(env, template_name, file_path, data)
 
     main()

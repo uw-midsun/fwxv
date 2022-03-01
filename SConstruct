@@ -177,6 +177,43 @@ for entry in PROJ_DIRS + LIB_DIRS:
 Default([proj.name for proj in PROJ_DIRS])
 
 ###########################################################
+# Header file generation from jinja templates
+###########################################################
+def generate_header_files(env, target, source):
+    boards_dir = source[0]
+    templates_dir = source[1]
+    generator = source[2]
+    header_output_dir = source[3]
+    templates = templates_dir.glob('*.jinja')
+    base_exec = "python3 {} -b {} -f {}".format(generator, PROJECT, header_output_dir)
+    
+    header_files = []
+    for template in templates:
+        if template.name[0] == "_":
+            header_files.append(header_output_dir.File(PROJECT + template.name[:-6]))
+        else:
+            header_files.append(header_output_dir.File(template.name[:-6]))
+
+        if "can_board_ids" in template.name:
+            env.Execute("{} -y {}.yaml -t {}".format(base_exec, boards_dir.File("boards"), template))
+        else:
+            if "_getters" in template.name:
+                env.Execute("{} -y {}.yaml -t {}".format(base_exec, boards_dir.File(PROJECT), template))
+            else:
+                env.Execute("{} -t {}".format(base_exec, template))
+
+    return header_files
+
+codegen_dir = LIB_DIR.Dir("codegen")
+boards_dir = codegen_dir.Dir("boards")
+generator = codegen_dir.File("generator.py")
+templates_dir = codegen_dir.Dir("templates")
+header_output_dir = PROJ_DIR.Dir(PROJECT).Dir("inc")
+
+env.AddMethod(generate_header_files, "GenerateHeaderFiles")
+header_targets = env.GenerateHeaderFiles(None, [boards_dir, templates_dir, generator, header_output_dir])
+
+###########################################################
 # Testing
 ###########################################################
 
@@ -231,10 +268,14 @@ for entry in PROJ_DIRS + LIB_DIRS:
             target = env.Bin(target=output.File(test_file.name + '.bin'), source=target)
 
         # Make test executable depend on the project / library final target
+        proj_elf_target = proj_elf(entry.name)
+        lib_bin_target = lib_bin(entry.name)
+        Depends(proj_elf_target, header_targets)
+        Depends(lib_bin_target, header_targets)
         if entry in PROJ_DIRS:
-            Depends(target, proj_elf(entry.name))
+            Depends(target, proj_elf_target)
         elif entry in LIB_DIRS:
-            Depends(target, lib_bin(entry.name))
+            Depends(target, lib_bin_target)
 
         # Add to tests dict
         tests[entry.name] += [node for node in target]
@@ -378,25 +419,6 @@ Alias('lint', lint)
 format = Command('format.txt', [], run_format)
 Alias('format', format)
 
-###########################################################
-# Header file generation from jinja templates
-###########################################################
-def generate_header_files():
-    codegen_dir = "libraries/codegen"
-    working_dir = os.getcwd()
-    base_exec = "python3 {}/generator.py -b {}".format(codegen_dir, PROJECT)
-    templates = os.listdir("{}/{}/templates".format(working_dir, codegen_dir))
-
-    for template in templates:
-        if "can_board_ids" in template:
-            env.Execute("{} -y {}/boards/boards.yaml -t {}".format(base_exec, codegen_dir, template))
-        elif template[0] == "_":
-            if "_getters" in template:
-                env.Execute("{} -y {}/boards/{}.yaml -t {}".format(base_exec, codegen_dir, PROJECT, template))
-            else:
-                env.Execute("{} -t {}".format(base_exec, template))
-        else:
-            env.Execute("{} -t {}".format(base_exec, template))
 
 ###########################################################
 # Helper targets for x86
@@ -422,7 +444,6 @@ if PLATFORM == 'x86' and PROJECT:
     Depends(gdb, proj_elf(PROJECT))
     Alias('gdb', gdb)
 
-    generate_header_files()
 ###########################################################
 # Helper targets for arm
 ###########################################################
@@ -449,5 +470,3 @@ if PLATFORM == 'arm' and PROJECT:
     flash = Command('flash.txt', [], flash_run)
     Depends(flash, proj_bin(PROJECT))
     Alias('flash', flash)
-
-    generate_header_files()
