@@ -29,7 +29,7 @@ link_flags = [
 ]
 
 x86_env = Environment(
-    ENV = { 'PATH': os.environ['PATH'] },
+    ENV={'PATH': os.environ['PATH']},
 
     CC='gcc',
     CCFLAGS=cflags + define_flags,
@@ -38,6 +38,9 @@ x86_env = Environment(
     LINKFLAGS=link_flags,
 
     LIBS=[],
+
+    CCCOMSTR="$TARGET",
+    LINKCOMSTR="$TARGET"
 )
 
 Return('x86_env')

@@ -19,8 +19,8 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge);
 // Registers a new callback on a given port pin combination with the desired
 // settings.
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
-                                      InterruptEdge edge, EventGroupHandle_t event_group,
-                                      uint32_t event_group_bit);
+                                      InterruptEdge edge, TaskHandle_t task_to_notify,
+                                      UBaseType_t index_to_notify);
 
 // Triggers an interrupt in software.
 StatusCode gpio_it_trigger_interrupt(const GpioAddress *address);

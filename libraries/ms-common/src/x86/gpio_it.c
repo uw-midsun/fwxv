@@ -16,24 +16,24 @@ typedef struct GpioItInterrupt {
   uint8_t interrupt_id;
   InterruptEdge edge;
   GpioAddress address;
-  EventGroupHandle_t event_group;
-  uint32_t event_group_bits;
+  TaskHandle_t task;
+  UBaseType_t index;
+
 } GpioItInterrupt;
 
 static uint8_t s_gpio_it_handler_id;
 static GpioItInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
 
+static EventGroupHandle_t s_event_group_handle;
+static StaticEventGroup_t s_event_group_data;
+
 static void prv_gpio_it_handler(uint8_t interrupt_id) {
   for (int i = 0; i < GPIO_PINS_PER_PORT; ++i) {
     if (s_gpio_it_interrupts[i].interrupt_id == interrupt_id) {
       BaseType_t higher_priority_task_woken = pdFALSE;
-      BaseType_t result = xEventGroupSetBitsFromISR(s_gpio_it_interrupts[i].event_group,
-                                                    s_gpio_it_interrupts[i].event_group_bits,
-                                                    &higher_priority_task_woken);
-
-      if (result != pdFAIL) {
-        portYIELD_FROM_ISR(higher_priority_task_woken);
-      }
+      vTaskNotifyGiveIndexedFromISR(s_gpio_it_interrupts[i].task, s_gpio_it_interrupts[i].index,
+                                    &higher_priority_task_woken);
+      portYIELD_FROM_ISR(higher_priority_task_woken);
       return;
     }
   }
@@ -41,9 +41,7 @@ static void prv_gpio_it_handler(uint8_t interrupt_id) {
 
 void gpio_it_init(void) {
   x86_interrupt_register_handler(prv_gpio_it_handler, &s_gpio_it_handler_id);
-  GpioItInterrupt empty_interrupt = {
-    .address = { .port = NUM_GPIO_PORTS },
-  };
+  GpioItInterrupt empty_interrupt = { 0 };
   for (uint16_t i = 0; i < GPIO_PINS_PER_PORT; i++) {
     s_gpio_it_interrupts[i] = empty_interrupt;
   }
@@ -58,8 +56,8 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
 }
 
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
-                                      InterruptEdge edge, EventGroupHandle_t event_group,
-                                      uint32_t event_group_bits) {
+                                      InterruptEdge edge, TaskHandle_t task_to_notify,
+                                      UBaseType_t index_to_notify) {
   if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   } else if (s_gpio_it_interrupts[address->pin].address.port != NUM_GPIO_PORTS) {
@@ -73,8 +71,8 @@ StatusCode gpio_it_register_interrupt(const GpioAddress *address, const Interrup
   s_gpio_it_interrupts[address->pin].interrupt_id = interrupt_id;
   s_gpio_it_interrupts[address->pin].edge = edge;
   s_gpio_it_interrupts[address->pin].address = *address;
-  s_gpio_it_interrupts[address->pin].event_group = event_group;
-  s_gpio_it_interrupts[address->pin].event_group_bits = event_group_bits;
+  s_gpio_it_interrupts[address->pin].task = task_to_notify;
+  s_gpio_it_interrupts[address->pin].index = index_to_notify;
 
   return STATUS_CODE_OK;
 }

@@ -12,8 +12,8 @@
 typedef struct GpioItInterrupt {
   InterruptEdge edge;
   GpioAddress address;
-  EventGroupHandle_t event_group;
-  uint32_t event_group_bits;
+  TaskHandle_t task;
+  UBaseType_t index;
 } GpioItInterrupt;
 
 static GpioItInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
@@ -36,7 +36,7 @@ static uint8_t prv_get_irq_channel(uint8_t pin) {
 }
 
 StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
-  if (s_gpio_it_interrupts[address->pin].event_group_bits != 0) {
+  if (s_gpio_it_interrupts[address->pin].task != NULL) {
     *edge = s_gpio_it_interrupts[address->pin].edge;
     return STATUS_CODE_OK;
   }
@@ -44,36 +44,27 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
 }
 
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
-                                      InterruptEdge edge, EventGroupHandle_t event_group,
-                                      uint32_t event_group_bits) {
+                                      InterruptEdge edge, TaskHandle_t task_to_notify,
+                                      UBaseType_t index_to_notify) {
   if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
     return status_code(STATUS_CODE_INVALID_ARGS);
-  } else if (s_gpio_it_interrupts[address->pin].event_group_bits != 0) {
+  } else if (s_gpio_it_interrupts[address->pin].task != NULL) {
     return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Pin already used.");
   }
   // Try to register on NVIC and EXTI. Both must succeed for the callback to be
   // set.
   s_gpio_it_interrupts[address->pin].edge = edge;
   s_gpio_it_interrupts[address->pin].address = *address;
-  s_gpio_it_interrupts[address->pin].event_group = event_group;
-  s_gpio_it_interrupts[address->pin].event_group_bits = event_group_bits;
 
   SYSCFG_EXTILineConfig(address->port, address->pin);
-  StatusCode status;
-  status = stm32f0xx_interrupt_exti_enable(address->pin, settings, edge);
-  // If the operation failed clean up by removing the callback and pass the
-  // error up the stack.
-  if (!status_ok(status)) {
-    s_gpio_it_interrupts[address->pin].event_group_bits = 0;
-    return status;
-  }
-  status = stm32f0xx_interrupt_nvic_enable(prv_get_irq_channel(address->pin), settings->priority);
-  // If the operation failed clean up by removing the callback and pass the
-  // error up the stack.
-  if (!status_ok(status)) {
-    s_gpio_it_interrupts[address->pin].event_group_bits = 0;
-    return status;
-  }
+
+  status_ok_or_return(stm32f0xx_interrupt_exti_enable(address->pin, settings, edge));
+
+  uint8_t irq_channel = prv_get_irq_channel(address->pin);
+  status_ok_or_return(stm32f0xx_interrupt_nvic_enable(irq_channel, settings->priority));
+
+  s_gpio_it_interrupts[address->pin].task = task_to_notify;
+  s_gpio_it_interrupts[address->pin].index = index_to_notify;
 
   return STATUS_CODE_OK;
 }
@@ -93,15 +84,11 @@ static void prv_run_gpio_callbacks(uint8_t lower_bound, uint8_t upper_bound) {
   uint8_t pending = 0;
   for (int i = lower_bound; i <= upper_bound; i++) {
     stm32f0xx_interrupt_exti_get_pending(i, &pending);
-    if (pending && s_gpio_it_interrupts[i].event_group_bits != 0) {
+    if (pending && s_gpio_it_interrupts[i].task != NULL) {
       BaseType_t higher_priority_task_woken = pdFALSE;
-      BaseType_t result = xEventGroupSetBitsFromISR(s_gpio_it_interrupts[i].event_group,
-                                                    s_gpio_it_interrupts[i].event_group_bits,
-                                                    &higher_priority_task_woken);
-
-      if (result != pdFAIL) {
-        portYIELD_FROM_ISR(higher_priority_task_woken);
-      }
+      vTaskNotifyGiveIndexedFromISR(s_gpio_it_interrupts[i].task, s_gpio_it_interrupts[i].index,
+                                    &higher_priority_task_woken);
+      portYIELD_FROM_ISR(higher_priority_task_woken);
     }
     stm32f0xx_interrupt_exti_clear_pending(i);
   }
