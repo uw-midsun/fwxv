@@ -78,14 +78,15 @@ LIB_BIN_DIR = BIN_DIR.Dir('libraries')
 
 PLATFORM_DIR = Dir('platform')
 
+CODEGEN_DIR = LIB_DIR.Dir("codegen")
+BOARDS_DIR = CODEGEN_DIR.Dir("boards")
+GENERATOR = CODEGEN_DIR.File("generator.py")
+TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
+HEADER_OUTPUT_DIR = PROJ_DIR.Dir(PROJECT).Dir("inc")
+LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
+
 # Put object files in OBJ_DIR so they don't clog the source folders
 VariantDir(OBJ_DIR, Dir('.'), duplicate=0)
-CodgegenDir = LIB_DIR.Dir("codegen")
-BoardsDir = CodgegenDir.Dir("boards")
-Generator = CodgegenDir.File("generator.py")
-TemplatesDir = CodgegenDir.Dir("templates")
-HeaderOutputDir = PROJ_DIR.Dir(PROJECT).Dir("inc")
-LibrariesIncDir = LIB_DIR.Dir("ms-common").Dir("inc")
 
 ###########################################################
 # Targets
@@ -133,28 +134,28 @@ def proj_bin(proj_name):
 # Header file generation from jinja templates
 ###########################################################
 def generate_header_files(env, target, source):
-    BoardsDir = source[0]
-    TemplatesDir = source[1]
-    Generator = source[2]
-    HeaderOutputDir = source[3]
-    LibrariesIncDir = source[4]
-    templates = TemplatesDir.glob('*.jinja')
-    base_exec = "python3 {} -b {}".format(Generator, PROJECT)
+    boards_dir = source[0]
+    templates_dir = source[1]
+    generator_dir = source[2]
+    header_output_dir = source[3]
+    libraries_inc_dir = source[4]
+    templates = templates_dir.glob('*.jinja')
+    base_exec = "python3 {} -b {}".format(generator_dir, PROJECT)
     header_files = []
 
     for template in templates:
         if template.name[0] == "_":
-            header_files.append(HeaderOutputDir.File(PROJECT + template.name[:-6]))
+            header_files.append(header_output_dir.File(PROJECT + template.name[:-6]))
         else:
-            header_files.append(HeaderOutputDir.File(template.name[:-6]))
+            header_files.append(header_output_dir.File(template.name[:-6]))
 
         if "can_board_ids" in template.name:
-            env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, BoardsDir.File("boards"), template, LibrariesIncDir))
+            env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File("boards"), template, libraries_inc_dir))
         else:
             if "_getters" in template.name:
-                env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, BoardsDir.File(PROJECT), template, HeaderOutputDir))
+                env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File(PROJECT), template, header_output_dir))
             else:
-                env.Execute("{} -t {} -f {}".format(base_exec, template, HeaderOutputDir))
+                env.Execute("{} -t {} -f {}".format(base_exec, template, header_output_dir))
 
     return header_files
 
@@ -180,7 +181,7 @@ for entry in PROJ_DIRS + LIB_DIRS:
     env.Append(CPPDEFINES=[GetOption('define')])
 
     # env.AddMethod(generate_header_files, "GenerateHeaderFiles")
-    # header_targets = env.GenerateHeaderFiles(None, [BoardsDir, TemplatesDir, Generator, HeaderOutputDir, LibrariesIncDir])
+    # header_targets = env.GenerateHeaderFiles(None, [BOARDS_DIR, TEMPLATES_DIR, GENERATOR, HEADER_OUTPUT_DIR, LIBRARIES_INC_DIR])
 
     if entry in PROJ_DIRS:
         lib_deps = get_lib_deps(entry)
