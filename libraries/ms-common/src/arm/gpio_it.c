@@ -13,7 +13,7 @@ typedef struct GpioItInterrupt {
   InterruptEdge edge;
   GpioAddress address;
   TaskHandle_t task;
-  UBaseType_t index;
+  uint8_t bit;
 } GpioItInterrupt;
 
 static GpioItInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
@@ -45,7 +45,7 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
 
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
                                       InterruptEdge edge, TaskHandle_t task_to_notify,
-                                      UBaseType_t index_to_notify) {
+                                      uint8_t bit_to_set) {
   if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   } else if (s_gpio_it_interrupts[address->pin].task != NULL) {
@@ -64,7 +64,7 @@ StatusCode gpio_it_register_interrupt(const GpioAddress *address, const Interrup
   status_ok_or_return(stm32f0xx_interrupt_nvic_enable(irq_channel, settings->priority));
 
   s_gpio_it_interrupts[address->pin].task = task_to_notify;
-  s_gpio_it_interrupts[address->pin].index = index_to_notify;
+  s_gpio_it_interrupts[address->pin].bit = bit_to_set;
 
   return STATUS_CODE_OK;
 }
@@ -86,8 +86,8 @@ static void prv_run_gpio_callbacks(uint8_t lower_bound, uint8_t upper_bound) {
     stm32f0xx_interrupt_exti_get_pending(i, &pending);
     if (pending && s_gpio_it_interrupts[i].task != NULL) {
       BaseType_t higher_priority_task_woken = pdFALSE;
-      vTaskNotifyGiveIndexedFromISR(s_gpio_it_interrupts[i].task, s_gpio_it_interrupts[i].index,
-                                    &higher_priority_task_woken);
+      xTaskNotifyFromISR(s_gpio_it_interrupts[i].task, 1 << s_gpio_it_interrupts[i].index, eSetBits,
+                         &higher_priority_task_woken);
       portYIELD_FROM_ISR(higher_priority_task_woken);
     }
     stm32f0xx_interrupt_exti_clear_pending(i);
