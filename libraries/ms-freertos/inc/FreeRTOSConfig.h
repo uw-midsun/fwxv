@@ -1,17 +1,35 @@
 #pragma once
 
-/* Ensure stdint is only used by the compiler, and not the assembler. */
+// Ensure stdint is only used by the compiler, and not the assembler.
 #if defined(__ICCARM__) || defined(__CC_ARM) || defined(__GNUC__)
 #include <stdint.h>
 extern uint32_t SystemCoreClock;
 #endif
+
+// Allow projects to add more priorities with the NUM_FREERTOS_PRIORITIES macro.
+// We can't have fewer than the default in case libraries depend on having enough priorities.
+#define DEFAULT_NUM_FREERTOS_PRIORITIES 5
+#ifdef NUM_FREERTOS_PRIORITIES
+#if NUM_FREERTOS_PRIORITIES < DEFAULT_NUM_FREERTOS_PRIORITIES
+#error Too few FreeRTOS priorities! We need at least DEFAULT_NUM_FREERTOS_PRIORITIES.
+#endif
+#else
+#define NUM_FREERTOS_PRIORITIES DEFAULT_NUM_FREERTOS_PRIORITIES
+#endif
+
+// Add an additional highest priority in test mode for the test task (see task_test_helpers.h)
+#ifdef MS_TEST
+#define ADDITIONAL_FREERTOS_PRIORITIES 1
+#else
+#define ADDITIONAL_FREERTOS_PRIORITIES 0
+#endif
+#define configMAX_PRIORITIES (NUM_FREERTOS_PRIORITIES + ADDITIONAL_FREERTOS_PRIORITIES)
 
 #define configUSE_PREEMPTION 1
 #define configUSE_PORT_OPTIMISED_TASK_SELECTION 0
 #define configUSE_TICKLESS_IDLE 0
 #define configCPU_CLOCK_HZ (SystemCoreClock)
 #define configTICK_RATE_HZ ((TickType_t)1000)
-#define configMAX_PRIORITIES 5
 #define configMINIMAL_STACK_SIZE ((uint16_t)128)
 #define configMAX_TASK_NAME_LEN 16
 #define configUSE_16_BIT_TICKS 0
@@ -32,6 +50,7 @@ extern uint32_t SystemCoreClock;
 #define configSUPPORT_DYNAMIC_ALLOCATION 0
 #define configTOTAL_HEAP_SIZE 0
 #define configAPPLICATION_ALLOCATED_HEAP 0
+#define configSTACK_ALLOCATION_FROM_SEPARATE_HEAP 0
 
 // Hook function related definitions
 #define configUSE_IDLE_HOOK 0
@@ -50,7 +69,7 @@ extern uint32_t SystemCoreClock;
 #define configMAX_CO_ROUTINE_PRIORITIES 2
 
 // Software timer related functions
-#define configUSE_TIMERS 0
+#define configUSE_TIMERS 1
 #define configTIMER_TASK_PRIORITY 3
 #define configTIMER_QUEUE_LENGTH 10
 #define configTIMER_TASK_STACK_DEPTH configMINIMAL_STACK_SIZE

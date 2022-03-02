@@ -182,6 +182,9 @@ Default([proj.name for proj in PROJ_DIRS])
 
 GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.rb'
 
+# Flags to add when compiling a test
+TEST_CFLAGS = ['-DMS_TEST'] # define the MS_TEST preprocessor symbol when compiling tests
+
 # tests dict maps proj/lib -> list of their test executables
 tests = {}
 
@@ -191,7 +194,7 @@ for entry in PROJ_DIRS + LIB_DIRS:
     for test_file in OBJ_DIR.Dir(str(entry)).Dir('test').glob('*.c'):
         # Create the test_*_runner.c file
         runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
-        test_runner = Command(runner_file, test_file, 'ruby {} $SOURCE $TARGET'.format(GEN_RUNNER))
+        test_runner = env.Command(runner_file, test_file, 'ruby {} $SOURCE $TARGET'.format(GEN_RUNNER))
 
         # Link runner object, test file object, and proj/lib objects
         # into executable
