@@ -1,8 +1,6 @@
 #include "queues.h"
 #include <string.h>
 
-#define TICKS_TO_MS portTICK_PERIOD_MS 
-
 StatusCode queue_init(Queue *queue) {
     queue->handle = xQueueCreateStatic(queue->size, queue->item_size, queue->storage_buf, &queue->queue);
 
