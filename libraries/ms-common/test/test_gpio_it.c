@@ -4,66 +4,48 @@
 #include "gpio_it.h"
 #include "interrupt.h"
 #include "log.h"
-#include "task.h"
+#include "queue.h"
+#include "tasks.h"
 #include "unity.h"
 
-void setup_test(void) {}
-
-void teardown_test(void) {}
-
-
-
-
-
-
-
-
-
-
-static StackType_t s_task_stack;
-static StaticTask_t s_task_tcb;
-static StackType_t s_task_stack_2;
-static StaticTask_t s_task_tcb_2;
-
-static bool triggered = false;
-
-// higher prioority task triggered by gpio
-static void interrupt_handler() {
-  uint32_t value;
-  while (true) {
-    xTaskNotifyWait(0, UINT32_MAX, &value, portMAX_DELAY);
-    triggered = true;
-  }
-}
-
-static GpioAddress addr = { .port = GPIO_PORT_A, .pin = 5 };
-static GpioAddress addr2 = { .port = GPIO_PORT_A, .pin = 5 };
+static GpioAddress addrA0 = { .port = GPIO_PORT_A, .pin = 0 };
+static GpioAddress addrA1 = { .port = GPIO_PORT_A, .pin = 1 };
 static InterruptSettings settings = {
   .priority = INTERRUPT_PRIORITY_NORMAL,
   .type = INTERRUPT_TYPE_INTERRUPT,
 };
 
-static void prv_test_trigger(void) {
+void setup_test(void) {}
+
+void teardown_test(void) {}
+
+static uint32_t triggered = 0;
+
+TASK(handler, TASK_MIN_STACK_SIZE) {
+  while (true) {
+    xTaskNotifyWait(0, UINT32_MAX, &triggered, portMAX_DELAY);
+  }
+}
+
+TASK(controller, TASK_MIN_STACK_SIZE) {
   for (int i = 0; i < 5; ++i) {
     delay_ms(50);
-    gpio_it_trigger_interrupt(&addr);
-    TEST_ASSERT(triggered);
+    gpio_it_trigger_interrupt(&addrA0);
+    TEST_ASSERT_EQUAL(triggered, 0b1);
 
-    triggered = false;
+    triggered = 0;
   }
   vTaskEndScheduler();
 }
 
 void test_gpio_it() {
-  TaskHandle_t handler = xTaskCreateStatic(interrupt_handler, "RECEIVE", configMINIMAL_STACK_SIZE, NULL,
-                              tskIDLE_PRIORITY + 2, &s_task_stack, &s_task_tcb);
-  LOG_DEBUG("%p\n", handler);
-  TaskHandle_t send_handle =
-      xTaskCreateStatic(prv_test_trigger, "SEND", configMINIMAL_STACK_SIZE, NULL,
-                        tskIDLE_PRIORITY + 1, &s_task_stack_2, &s_task_tcb_2);
+  tasks_init_task(handler, 2, NULL);
+  tasks_init_task(controller, 1, NULL);
+  
   interrupt_init();
   gpio_it_init();
-  gpio_it_register_interrupt(&addr, &settings, INTERRUPT_EDGE_RISING_FALLING, handler, 0);
+
+  gpio_it_register_interrupt(&addrA0, &settings, INTERRUPT_EDGE_RISING_FALLING, handler->handle, 0);
 
   vTaskStartScheduler();
 }
@@ -72,31 +54,30 @@ void test_gpio_it() {
 // TEST 2
 //
 
-void prv_test_2() {
+TASK(controller_2, TASK_MIN_STACK_SIZE) {
+  for (int i = 0; i < 5; ++i) {
+    delay_ms(50);
+    gpio_it_trigger_interrupt(&addrA0);
+    gpio_it_trigger_interrupt(&addrA1);
 
+    delay_ms(10);
+
+    TEST_ASSERT_EQUAL(triggered, 0b101);
+
+    triggered = 0;
+  }
+  vTaskEndScheduler();
 }
 
-
-
-
-
-
-
-
-
-
-
-void test_gpio_it_0() {
-  TaskHandle_t handler = xTaskCreateStatic(interrupt_handler, "RECEIVE", configMINIMAL_STACK_SIZE, NULL,
-                              tskIDLE_PRIORITY + 1, &s_task_stack, &s_task_tcb);
-  LOG_DEBUG("%p\n", handler);
-  TaskHandle_t send_handle =
-      xTaskCreateStatic(prv_test_trigger, "SEND", configMINIMAL_STACK_SIZE, NULL,
-                        tskIDLE_PRIORITY + 1, &s_task_stack_2, &s_task_tcb_2);
+void test_gpio_it_2() {
+  tasks_init_task(handler, 2, NULL);
+  tasks_init_task(controller, 1, NULL);
+  
   interrupt_init();
   gpio_it_init();
-  gpio_it_register_interrupt(&addr, &settings, INTERRUPT_EDGE_RISING_FALLING, handler, 0);
+
+  gpio_it_register_interrupt(&addrA0, &settings, INTERRUPT_EDGE_RISING_FALLING, handler->handle, 0);
+  gpio_it_register_interrupt(&addrA1, &settings, INTERRUPT_EDGE_RISING_FALLING, handler->handle, 2);
 
   vTaskStartScheduler();
 }
-

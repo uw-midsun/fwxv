@@ -9,6 +9,7 @@ def read_yaml(yaml_file):
         data = yaml.load(f, Loader=yaml.FullLoader)
         return data
 
+<<<<<<< HEAD
 
 def get_file_path(template_name, yaml_path, data, dest="./"):
     # get the name of the yaml file (board name) from the filepath
@@ -18,6 +19,16 @@ def get_file_path(template_name, yaml_path, data, dest="./"):
     jinja_prefix = template_name[:-6]
     # files that start with _ are generic and we want to append the specific name in front
     return dest + (board + jinja_prefix if jinja_prefix[0] == "_" else jinja_prefix)
+=======
+def get_board_name(yaml_path):
+    return yaml_path.split("/")[len(yaml_path.split("/"))-1].split(".")[0]
+
+def get_file_name(template_name, board):
+    # get the name of the jinja file from the filepath
+    jinja_prefix = template_name[:-6]
+    # files that start with _ are generic and we want to prepend the board name
+    return board + jinja_prefix if jinja_prefix[0] == "_" and board else jinja_prefix
+>>>>>>> main
 
 
 def write_template(env, template_name, file_path, data):
@@ -31,25 +42,85 @@ def process_setter_data(board, data, master_data):
     for message in data["Messages"]:
         if board in data["Messages"][message].get("target", []) and \
            data["Messages"][message].get("signals", False):
+<<<<<<< HEAD
             for signal, length in data["Messages"][message]["signals"].items():
                 master_data["Signals"].append((signal, length['length']))
 
 
 def parse_board_yaml_files(board):
+=======
+            for signal, signal_data in data["Messages"][message]["signals"].items():
+                signal_data["message"] = message
+                master_data["Signals"].append((signal, signal_data))
+
+def get_dbc_data():
+    yaml_files = get_yaml_files()
+    master_data = {"Messages" : []}
+    for file in yaml_files:
+        data = read_yaml(file)
+        sender = get_board_name(file)
+        for message_key in data["Messages"]:
+            start_bit = 0
+            message = data["Messages"][message_key]
+            signals = []
+            for signal_key in message["signals"]:
+                signal = message["signals"][signal_key]
+                signals.append({
+                    "signal_name": signal_key,
+                    "start_bit": start_bit,
+                    "length": signal["length"],
+                    "scale": signal.get("scale", 1),
+                    "offset": signal.get("offset", 0),
+                    "min": signal.get("min", 0),
+                    "max": signal.get("max", 100),
+                    "unit": signal.get("unit", ""),
+                    "receiver": " ".join(message["target"])
+                })
+                start_bit += signal["length"]
+            master_data["Messages"].append({
+                "id": message["id"],
+                "message_name": message_key,
+                "signals": signals,
+                "data_length": 8,
+                "sender": sender
+            })
+    return master_data
+
+def get_boards_dir():
+>>>>>>> main
     # get the working directory to the boards
     working_dir = os.getcwd()
     path_to_file = os.path.dirname(os.path.realpath(__file__))
-    path_to_boards = path_to_file.replace("{}/".format(working_dir), "") + "/boards"
+    return path_to_file.replace("{}/".format(working_dir), "") + "/boards"
 
+def get_yaml_files():
+    path_to_boards = get_boards_dir()
     yaml_files = []
     for filename in os.listdir(path_to_boards):
         file_prefix = filename.split(".")[0]  # only get the part before .yaml
+<<<<<<< HEAD
         if (file_prefix != "boards"):
+=======
+        if file_prefix != "boards":
+>>>>>>> main
             yaml_files.append(os.path.join(path_to_boards, filename))
 
+    return yaml_files
+
+def get_boards():
+    path_to_boards = get_boards_dir()
+    for filename in os.listdir(path_to_boards):
+        file_prefix = filename.split(".")[0]  # only get the part before .yaml
+        if file_prefix == "boards":
+            return os.path.join(path_to_boards, filename)
+
+    return False
+
+def parse_board_yaml_files(board):
+    yaml_files = get_yaml_files()
     master_data = {"Board": board, "Signals": []}
-    for path in yaml_files:
-        data = read_yaml(path)
+    for file in yaml_files:
+        data = read_yaml(file)
         process_setter_data(board, data, master_data)
 
     return master_data
@@ -65,6 +136,7 @@ if __name__ == "__main__":
                       help="yaml file to read", metavar="FILE")
     parser.add_option("-t", "--template", dest="template",
                       help="template file to populate", metavar="FILE")
+<<<<<<< HEAD
     parser.add_option("-b", "--board", dest="board", help="which board to generate")
 
     (options, args) = parser.parse_args()
@@ -85,3 +157,32 @@ if __name__ == "__main__":
                 write_template(env, options.template, file_path, data)
 
     main()
+=======
+    parser.add_option("-b", "--board", default=None, dest="board", help="which board to generate")
+    parser.add_option("-f", "--file_path", dest="file_path", help="output file path")
+
+    (options, args) = parser.parse_args()
+
+    if options.template:
+        codegen_dir = '/'.join(options.template.split('/')[:-1])
+        template_name = options.template.split('/')[-1]
+        templateLoader = jinja2.FileSystemLoader(searchpath=codegen_dir)
+        env = jinja2.Environment(loader=templateLoader)
+        file_path = options.file_path + "/" + get_file_name(template_name, options.board)
+
+        if "system_can" in template_name:
+            data = get_dbc_data()
+            boards = get_boards()
+            data["Boards"] = read_yaml(boards)["Boards"]
+            write_template(env, template_name, file_path, data)
+        elif options.board and options.yaml_file:
+            for y in options.yaml_file:
+                data = read_yaml(y)
+                data["Board"] = options.board
+                write_template(env, template_name, file_path, data)
+        elif options.board:
+            data = parse_board_yaml_files(options.board)
+            write_template(env, template_name, file_path, data)
+
+    main()
+>>>>>>> main

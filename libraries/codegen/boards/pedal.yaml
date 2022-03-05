@@ -16,6 +16,6 @@
         - motor_interface
       signals:
         throttle_output:
-          length: uint32_t
+          length: 32
         brake_output:
-          length: uint32_t
+          length: 32

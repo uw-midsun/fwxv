@@ -16,7 +16,7 @@
         - telemetry
       signals:
         signal1:
-          length: uint8_t
+          length: 8
 
     solar_data_6_mppts:
       id: 51
@@ -24,9 +24,9 @@
         - telemetry
       signals:
         data_point_type:
-          length: uint32_t
+          length: 32
         data_value:
-          length: uint32_t
+          length: 32
 
     solar_fault_6_mppts:
       id: 52
@@ -35,6 +35,6 @@
         - centre_console
       signals:
         fault:
-          length: uint8_t
+          length: 8
         fault_data:
-          length: uint8_t
+          length: 8
