@@ -1,10 +1,7 @@
-<<<<<<< HEAD
-=======
 #include "FreeRTOS.h"
 #include "log.h"
 #include "task.h"
 
->>>>>>> main
 #include <stdint.h>
 
 #include "FreeRTOS.h"
