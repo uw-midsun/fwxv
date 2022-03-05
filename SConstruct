@@ -61,6 +61,9 @@ elif PLATFORM == 'arm':
 
 env['CCCOMSTR'] = "Compiling $TARGET"
 env['LINKCOMSTR'] = "Linking $TARGET"
+env['ARCOMSTR'] = "Archiving $TARGET"
+env['ASCOMSTR'] = "Assembling $TARGET"
+env['RANLIBCOMSTR'] = "Indexing $TARGET"
 
 ###########################################################
 # Directory setup
