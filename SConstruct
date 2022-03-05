@@ -4,6 +4,7 @@ import sys
 import subprocess
 import glob
 from new_target import new_target
+from scons.preprocessor_filter import preprocessor_filter
 
 ###########################################################
 # Build arguments
@@ -58,6 +59,11 @@ if PLATFORM == 'x86':
     env = SConscript('platform/x86.py')
 elif PLATFORM == 'arm':
     env = SConscript('platform/arm.py')
+
+# Add flags when compiling a test
+TEST_CFLAGS = ['-DMS_TEST']
+if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
+    env['CCFLAGS'] += TEST_CFLAGS
 
 ###########################################################
 # Directory setup
@@ -181,9 +187,7 @@ Default([proj.name for proj in PROJ_DIRS])
 ###########################################################
 
 GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.rb'
-
-# Flags to add when compiling a test
-TEST_CFLAGS = ['-DMS_TEST'] # define the MS_TEST preprocessor symbol when compiling tests
+GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
 
 # tests dict maps proj/lib -> list of their test executables
 tests = {}
@@ -192,10 +196,6 @@ tests = {}
 for entry in PROJ_DIRS + LIB_DIRS:
     tests[entry.name] = []
     for test_file in OBJ_DIR.Dir(str(entry)).Dir('test').glob('*.c'):
-        # Create the test_*_runner.c file
-        runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
-        test_runner = env.Command(runner_file, test_file, 'ruby {} $SOURCE $TARGET'.format(GEN_RUNNER))
-
         # Link runner object, test file object, and proj/lib objects
         # into executable
         config = parse_config(entry)
@@ -218,16 +218,41 @@ for entry in PROJ_DIRS + LIB_DIRS:
         lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
         lib_deps = get_lib_deps(entry)
 
+        # Flags used for both preprocessing and compiling
+        cpppath = env['CPPPATH'] + [inc_dirs, lib_incs]
+        ccflags = env['CCFLAGS'] + config['cflags']
+
+        # Preprocess the test source file so the runner generator sees expanded macros
+        prefix_with = lambda prefix, dir_lists: ' '.join(
+            prefix + dir_.path for dirs in dir_lists for dir_ in dirs)
+        preprocessed_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_preprocessed.c'))
+        orig_test_file_path = Dir(str(entry)).Dir('test').File(test_file)
+        preprocessed = env.Command(
+            target=preprocessed_file,
+            source=test_file,
+            action=[
+                # -E to preprocess only, -dI to keep #include directives
+                '$CC -dI -E {} $CCFLAGS $SOURCE > .tmp'.format(prefix_with('-I', cpppath)),
+                preprocessor_filter(str(orig_test_file_path), '.tmp'),
+            ],
+            CCFLAGS=ccflags,
+        )
+
+        # Create the test_*_runner.c file
+        runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
+        test_runner = env.Command(runner_file, preprocessed, 'ruby {} {} $SOURCE $TARGET'.format(
+            GEN_RUNNER, GEN_RUNNER_CONFIG))
+
         output = TEST_DIR.Dir(entry.name).Dir('test').File(test_file.name.replace('.c', ''))
         target = env.Program(
             target=output,
             source=[test_file, test_runner] + entry_objects,
             # We do env['variable'] + [entry-specific variables] to avoid
             # mutating the environment for other entries
-            CPPPATH=env['CPPPATH'] + [inc_dirs, lib_incs],
+            CPPPATH=cpppath,
             LIBS=env['LIBS'] + lib_deps * 2 + ['unity'],
             LIBPATH=[LIB_BIN_DIR],
-            CCFLAGS=env['CCFLAGS'] + config['cflags'],
+            CCFLAGS=ccflags,
             LINKFLAGS=env['LINKFLAGS'] + mock_link_flags,
         )
         if PLATFORM == 'arm':
