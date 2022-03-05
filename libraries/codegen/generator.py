@@ -14,7 +14,7 @@ def format_pack_h(env, template_name, file_path, data):
     template = env.get_template(template_name)
     raw_data = template.render(data=data).split()
     letter_count = 0
-
+    
     # traverse through the list to format the code to a correct header file format
     for i in range(len(raw_data)):
         letter_count += len(raw_data[i])
