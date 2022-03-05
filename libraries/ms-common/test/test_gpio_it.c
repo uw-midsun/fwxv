@@ -29,7 +29,7 @@ TASK(handler, TASK_MIN_STACK_SIZE) {
 
 TASK(controller, TASK_MIN_STACK_SIZE) {
   for (int i = 0; i < 5; ++i) {
-    delay_ms(50);
+    delay_ms(10);
     gpio_it_trigger_interrupt(&addrA0);
     TEST_ASSERT_EQUAL(triggered, 0b1);
 
@@ -59,6 +59,8 @@ TASK(controller_2, TASK_MIN_STACK_SIZE) {
     delay_ms(50);
     gpio_it_trigger_interrupt(&addrA0);
     gpio_it_trigger_interrupt(&addrA1);
+
+    TEST_ASSERT_EQUAL(triggered, 0);
 
     delay_ms(10);
 

@@ -9,17 +9,6 @@ def read_yaml(yaml_file):
         data = yaml.load(f, Loader=yaml.FullLoader)
         return data
 
-<<<<<<< HEAD
-
-def get_file_path(template_name, yaml_path, data, dest="./"):
-    # get the name of the yaml file (board name) from the filepath
-    board = yaml_path.split("/")[len(yaml_path.split("/")) - 1].split(".")[0]
-    data["Board"] = board
-    # get the name of the jinja file from the filepath
-    jinja_prefix = template_name[:-6]
-    # files that start with _ are generic and we want to append the specific name in front
-    return dest + (board + jinja_prefix if jinja_prefix[0] == "_" else jinja_prefix)
-=======
 def get_board_name(yaml_path):
     return yaml_path.split("/")[len(yaml_path.split("/"))-1].split(".")[0]
 
@@ -28,7 +17,6 @@ def get_file_name(template_name, board):
     jinja_prefix = template_name[:-6]
     # files that start with _ are generic and we want to prepend the board name
     return board + jinja_prefix if jinja_prefix[0] == "_" and board else jinja_prefix
->>>>>>> main
 
 
 def write_template(env, template_name, file_path, data):
@@ -42,13 +30,6 @@ def process_setter_data(board, data, master_data):
     for message in data["Messages"]:
         if board in data["Messages"][message].get("target", []) and \
            data["Messages"][message].get("signals", False):
-<<<<<<< HEAD
-            for signal, length in data["Messages"][message]["signals"].items():
-                master_data["Signals"].append((signal, length['length']))
-
-
-def parse_board_yaml_files(board):
-=======
             for signal, signal_data in data["Messages"][message]["signals"].items():
                 signal_data["message"] = message
                 master_data["Signals"].append((signal, signal_data))
@@ -87,7 +68,6 @@ def get_dbc_data():
     return master_data
 
 def get_boards_dir():
->>>>>>> main
     # get the working directory to the boards
     working_dir = os.getcwd()
     path_to_file = os.path.dirname(os.path.realpath(__file__))
@@ -98,11 +78,7 @@ def get_yaml_files():
     yaml_files = []
     for filename in os.listdir(path_to_boards):
         file_prefix = filename.split(".")[0]  # only get the part before .yaml
-<<<<<<< HEAD
-        if (file_prefix != "boards"):
-=======
         if file_prefix != "boards":
->>>>>>> main
             yaml_files.append(os.path.join(path_to_boards, filename))
 
     return yaml_files
@@ -136,28 +112,6 @@ if __name__ == "__main__":
                       help="yaml file to read", metavar="FILE")
     parser.add_option("-t", "--template", dest="template",
                       help="template file to populate", metavar="FILE")
-<<<<<<< HEAD
-    parser.add_option("-b", "--board", dest="board", help="which board to generate")
-
-    (options, args) = parser.parse_args()
-
-    templateLoader = jinja2.FileSystemLoader(searchpath="./libraries/codegen/templates")
-    env = jinja2.Environment(loader=templateLoader)
-
-    if options.board:
-        data = parse_board_yaml_files(options.board)
-        if options.template:
-            file_path = "./" + options.board + options.template[:-6]
-            write_template(env, options.template, file_path, data)
-    else:
-        for y in options.yaml_file:
-            data = read_yaml(y)
-            if options.template:
-                file_path = get_file_path(options.template, y, data)
-                write_template(env, options.template, file_path, data)
-
-    main()
-=======
     parser.add_option("-b", "--board", default=None, dest="board", help="which board to generate")
     parser.add_option("-f", "--file_path", dest="file_path", help="output file path")
 
@@ -185,4 +139,3 @@ if __name__ == "__main__":
             write_template(env, template_name, file_path, data)
 
     main()
->>>>>>> main
