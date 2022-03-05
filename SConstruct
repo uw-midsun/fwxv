@@ -231,17 +231,21 @@ for entry in PROJ_DIRS + LIB_DIRS:
             target=preprocessed_file,
             source=test_file,
             action=[
-                # -E to preprocess only, -dI to keep #include directives
-                '$CC -dI -E {} $CCFLAGS $SOURCE > .tmp'.format(prefix_with('-I', cpppath)),
-                preprocessor_filter(str(orig_test_file_path), '.tmp'),
+                # -E to preprocess only, -dI to keep #include directives, @ to suppress printing
+                '@$CC -dI -E {} $CCFLAGS $SOURCE > .tmp'.format(prefix_with('-I', cpppath)),
+                Action(
+                    preprocessor_filter(str(orig_test_file_path), '.tmp'),
+                    cmdstr='Preprocessing $TARGET'),
             ],
             CCFLAGS=ccflags,
         )
 
         # Create the test_*_runner.c file
         runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
-        test_runner = env.Command(runner_file, preprocessed, 'ruby {} {} $SOURCE $TARGET'.format(
-            GEN_RUNNER, GEN_RUNNER_CONFIG))
+        test_runner = env.Command(runner_file, preprocessed,
+            Action(
+                'ruby {} {} $SOURCE $TARGET'.format(GEN_RUNNER, GEN_RUNNER_CONFIG),
+                cmdstr='Generating test runner $TARGET'))
 
         output = TEST_DIR.Dir(entry.name).Dir('test').File(test_file.name.replace('.c', ''))
         target = env.Program(
