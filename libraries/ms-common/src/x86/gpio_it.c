@@ -28,11 +28,12 @@ static StaticEventGroup_t s_event_group_data;
 
 static void prv_gpio_it_handler(uint8_t interrupt_id) {
   for (int i = 0; i < GPIO_PINS_PER_PORT; ++i) {
-    if (s_gpio_it_interrupts[i].interrupt_id == interrupt_id) {
+    if (s_gpio_it_interrupts[i].task != NULL &&
+        s_gpio_it_interrupts[i].interrupt_id == interrupt_id) {
       BaseType_t higher_priority_task_woken = pdFALSE;
-      vTaskNotifyGiveFromISR(s_gpio_it_interrupts[i].task, &higher_priority_task_woken);
+      xTaskNotifyFromISR(s_gpio_it_interrupts[i].task, 1u << s_gpio_it_interrupts[i].bit, eSetBits,
+                         &higher_priority_task_woken);
       portYIELD_FROM_ISR(higher_priority_task_woken);
-      return;
     }
   }
 }
@@ -46,7 +47,7 @@ void gpio_it_init(void) {
 }
 
 StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
-  if (s_gpio_it_interrupts[address->pin].interrupt_id != NOT_REGISTERED) {
+  if (s_gpio_it_interrupts[address->pin].task != NULL) {
     *edge = s_gpio_it_interrupts[address->pin].edge;
     return STATUS_CODE_OK;
   }
@@ -56,9 +57,9 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
                                       InterruptEdge edge, TaskHandle_t task_to_notify,
                                       uint8_t bit_to_set) {
-  if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
+  if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT || bit_to_set > 5) {
     return status_code(STATUS_CODE_INVALID_ARGS);
-  } else if (s_gpio_it_interrupts[address->pin].address.port != NUM_GPIO_PORTS) {
+  } else if (s_gpio_it_interrupts[address->pin].task != NULL) {
     return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Pin already in use.");
   }
 
@@ -79,7 +80,6 @@ StatusCode gpio_it_trigger_interrupt(const GpioAddress *address) {
   if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
-
   return x86_interrupt_trigger(s_gpio_it_interrupts[address->pin].interrupt_id);
 }
 

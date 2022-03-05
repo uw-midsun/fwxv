@@ -46,7 +46,7 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
                                       InterruptEdge edge, TaskHandle_t task_to_notify,
                                       uint8_t bit_to_set) {
-  if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
+  if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT || bit_to_set > 5) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   } else if (s_gpio_it_interrupts[address->pin].task != NULL) {
     return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Pin already used.");
@@ -86,7 +86,7 @@ static void prv_run_gpio_callbacks(uint8_t lower_bound, uint8_t upper_bound) {
     stm32f0xx_interrupt_exti_get_pending(i, &pending);
     if (pending && s_gpio_it_interrupts[i].task != NULL) {
       BaseType_t higher_priority_task_woken = pdFALSE;
-      xTaskNotifyFromISR(s_gpio_it_interrupts[i].task, 1 << s_gpio_it_interrupts[i].index, eSetBits,
+      xTaskNotifyFromISR(s_gpio_it_interrupts[i].task, 1u << s_gpio_it_interrupts[i].bit, eSetBits,
                          &higher_priority_task_woken);
       portYIELD_FROM_ISR(higher_priority_task_woken);
     }

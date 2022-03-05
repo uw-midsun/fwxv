@@ -64,12 +64,6 @@ arm_env = Environment(
     RANLIB=ranlib,
 
     LIBS=['m'],
-
-    CCCOMSTR="[compile] $TARGET",
-    LINKCOMSTR="[ link  ] $TARGET",
-    ARCOMSTR="[  ar   ] $TARGET",
-    RANLIBCOMSTR="[ranlib ] $TARGET",
-    ASCOMSTR="[WHAT] $TARGET"
 )
 
 bin_builder = Builder(action='{} -O binary $SOURCE $TARGET'.format(objcopy))

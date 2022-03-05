@@ -17,7 +17,7 @@ void gpio_it_init(void);
 StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge);
 
 // Registers a new callback on a given port pin combination with the desired
-// settings. Set the notify value bit when a gpio_it occurs
+// settings. Set the notify value bit of the task when a gpio_it occurs
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
                                       InterruptEdge edge, TaskHandle_t task_to_notify,
                                       uint8_t bit_to_set);
