@@ -1,9 +1,7 @@
 #pragma once
-
-{% set messages = data["Messages"] -%}
-
-#include "can_msg_defs.h"
+#include "can_msg_defs.h" 
 #include "can_pack_impl.h" 
+{% set messages = data["Messages"] -%}
 
 {%- for message in messages -%}
 {%- set signal = data['Messages'][message]['signals'].keys() | list -%}

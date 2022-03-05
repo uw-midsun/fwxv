@@ -5,9 +5,9 @@
 
 {% for signal, signal_data in signals -%}
 
-void set_{{message}}_{{signal}}({{board}}_receive_struct* s, uint{{signal_data['length']}}_t val)
+void set_{{signal_data['message']}}_{{signal}}({{board}}_receive_struct* s, uint{{signal_data['length']}}_t val)
 {
-    s->{{message}}_{{signal}} = val;
+    s->{{signal_data['message']}}_{{signal}} = val;
 }
 
 {% endfor -%}
