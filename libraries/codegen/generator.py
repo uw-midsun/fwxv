@@ -9,6 +9,57 @@ def read_yaml(yaml_file):
         data = yaml.load(f, Loader=yaml.FullLoader)
         return data
 
+def blind_format(env, template_name, file_path, data):
+    # get the template as a string and split data into list
+    template = env.get_template(template_name)
+    raw_data = template.render(data=data).split()
+    letter_count = 0
+
+    # traverse through the list to format the code to a correct header file format
+    for i in range(len(raw_data)):
+        letter_count += len(raw_data[i])
+        if letter_count >= 100:
+            letter_count = 0
+            raw_data[i] = ("\n"+(" "*spacing_legnth) + raw_data[i])
+            letter_count += len(raw_data[i])
+
+        # checking for include statements
+        if raw_data[i].startswith("#"):
+            if raw_data[i] == "#pragma":
+                raw_data[i + 1] += "\n\n"
+                letter_count = 0
+            elif raw_data[i] == "#include":
+                raw_data[i + 1] += "\n"
+                letter_count = 0
+
+        # checking for the start of a function definition
+        if raw_data[i] == "void" and raw_data[i + 1].startswith("can_pack"):
+            letter_count = 1
+            spacing_legnth = len(raw_data[i] + raw_data[i + 1]) - 9
+            raw_data[i] = ("\n" + raw_data[i])
+            letter_count += len(raw_data[i])
+
+        # checking for when spacing would be needed/independent words to account for the space
+        elif raw_data[i].endswith(",") or raw_data[i].endswith("_t") :
+            letter_count += 1
+
+        # check for when going to the function body
+        if raw_data[i].endswith("{"):
+            spacing_legnth = len(raw_data[i + 1]) - 8
+            raw_data[i] += ("\n"+" ")
+            letter_count = 2
+
+        # check for when function body ends
+        elif raw_data[i].endswith("}"):
+            raw_data[i] = ("\n" + raw_data[i] + "\n")
+            letter_count = 0
+
+    raw_data = " ".join(raw_data)
+    # writes data to .h template
+    with open(file_path, "w") as f:
+       f.write(raw_data)
+    
+
 def get_board_name(yaml_path):
     return yaml_path.split("/")[len(yaml_path.split("/"))-1].split(".")[0]
 
@@ -138,6 +189,9 @@ if __name__ == "__main__":
             data = read_yaml(y)
             if options.template:
                 file_path = get_file_path(options.template, y, data)
-                write_template(env, options.template, file_path, data)
+                if options.template[:-6] == "_pack.h":
+                    blind_format(env, options.template, file_path, data)
+                else:
+                    write_template(env, options.template, file_path, data)
 
     main()
