@@ -368,6 +368,7 @@ def get_lint_files():
     # If no PROJECT/LIBRARY argument,lint all directories.
     if PROJECT:
         lint_dirs.append(PROJ_DIR.Dir(PROJECT))
+        lint_dirs.append(SMOKE_DIR.Dir(PROJECT))
     elif LIBRARY:
         lint_dirs.append(LIB_DIR.Dir(LIBRARY))
     else:
