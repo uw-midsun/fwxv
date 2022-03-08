@@ -54,12 +54,12 @@ def new_target(target_type, name):
     with the following structure:
 
     projects/libraries
-    └── name
-        ├── inc
-        ├── README.md
-        ├── config.json 
-        ├── src
-        └── test
+    - name
+        - inc
+        - README.md
+        - config.json 
+        - src
+        - test
 
     where config.json is required for the project or library to be valid.
 
