@@ -457,12 +457,17 @@ if PLATFORM == 'x86' and PROJECT:
 
     # open gdb with the elf file
     def gdb_run(target, source, env):
-        path = proj_elf(PROJECT).path
+        is_smoke = str(target[0]) == 'gdb_smoke.txt'
+        path = proj_elf(PROJECT, is_smoke).path
         os.execv('/usr/bin/gdb', ['/usr/bin/gdb', path])
 
     gdb = Command('gdb.txt', [], gdb_run)
     Depends(gdb, proj_elf(PROJECT))
     Alias('gdb', gdb)
+
+    gdb_smoke = Command('gdb_smoke.txt', [], gdb_run)
+    Depends(gdb_smoke, proj_elf(PROJECT, True))
+    Alias('gdb_smoke', gdb_smoke)
 
 ###########################################################
 # Helper targets for arm
