@@ -25,18 +25,19 @@ Unit tests are per-project/library and are built and run from scons. Functions m
 - `new [name]`: Creates a new project, smoke project, or library with the given name.
     - e.g. `scons new --project=my_new_project`
     - e.g. `scons new --library=my_new_library`
-    - `new_smoke` can be used to make a new smoke project.
+    - e.g. `scons new_smoke --project=my_smoke_test`
 - `clean`: Delete the `build` directory.
     - e.g. `scons clean`
 - `sim [project]`: (x86 specific) Run the project's binary.
     - e.g. `scons sim --project=leds --platform=x86`
+    - e.g. `scons sim_smoke --project=smoke_leds --platform=x86`
     - `sim_smoke` should be used for smoke tests.
 - `gdb [project]`: (x86 specific) Run the project's binary with gdb.
     - e.g. `scons gdb --project=leds --platform=x86`
-    - `gdb_smoke` should be used for smoke tests.
+    - e.g. `scons gdb_smoke --project=smoke_leds --platform=x86`
 - `flash [project]`: (arm specific) Flash the project's binary using openocd. A controller board must be connected an powered.
     - e.g. `scons flash --project=leds`
-    - `flash_smoke` should be used for smoke tests.
+    - e.g. `scons flash_smoke --project=smoke_leds`
 - `lint`: Lints all files.
     - Can specify `--project` or `--library` argument to only lint specific project/library
 - `format`: Formats all files.
