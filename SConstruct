@@ -234,7 +234,7 @@ GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.rb'
 tests = {}
 
 # Create the test executable targets
-for entry in PROJ_DIRS + LIB_DIRS:
+for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     tests[entry.name] = []
     for test_file in OBJ_DIR.Dir(str(entry)).Dir('test').glob('*.c'):
         # Create the test_*_runner.c file
@@ -280,7 +280,7 @@ for entry in PROJ_DIRS + LIB_DIRS:
 
         # Make test executable depend on the project / library final target
         if entry in PROJ_DIRS:
-            Depends(target, proj_elf(entry.name))
+            Depends(target, proj_elf(entry.name, entry in SMOKE_DIRS))
         elif entry in LIB_DIRS:
             Depends(target, lib_bin(entry.name))
 
