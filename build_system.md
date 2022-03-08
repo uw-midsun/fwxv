@@ -21,9 +21,10 @@ Unit tests are per-project/library and are built and run from scons. Functions m
     - e.g. `scons test --platform=x86 --library=core --test=status`
 
 ### Convenience commands:
-- `new [name]`: Creates a new project or library with the given name.
+- `new [name]`: Creates a new project, smoke project, or library with the given name.
     - e.g. `scons new --project=my_new_project`
     - e.g. `scons new --library=my_new_library`
+    - e.g. `scons new --smoke=my_new_smoke_test`
 - `clean`: Delete the `build` directory.
     - e.g. `scons clean`
 - `sim [project]`: (x86 specific) Run the project's binary.

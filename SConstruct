@@ -76,9 +76,11 @@ TEST_DIR = BUILD_DIR.Dir('test')
 
 PROJ_DIR = Dir('projects')
 LIB_DIR = Dir('libraries')
+SMOKE_DIR = Dir('smoke')
 
 PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
 LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
+SMOKE_DIRS = [entry for entry in SMOKE_DIR.glob('*')]
 
 LIB_BIN_DIR = BIN_DIR.Dir('libraries')
 
@@ -129,12 +131,12 @@ def lib_bin(lib_name):
     return BIN_DIR.Dir(LIB_DIR.name).File('lib{}.a'.format(lib_name))
 
 # ELFs are used for gdb and x86
-def proj_elf(proj_name):
-    return BIN_DIR.Dir(PROJ_DIR.name).File(proj_name)
+def proj_elf(proj_name, is_smoke=False):
+    return BIN_DIR.Dir(SMOKE_DIR.name if is_smoke else PROJ_DIR.name).File(proj_name)
 
 # .bin is used for flashing to MCU
-def proj_bin(proj_name):
-    return proj_elf(proj_name).File(proj_name + '.bin')
+def proj_bin(proj_name, is_smoke=False):
+    return proj_elf(proj_name, is_smoke).File(proj_name + '.bin')
 
 ###########################################################
 # Header file generation from jinja templates
@@ -167,7 +169,7 @@ def generate_header_files(env, target, source):
 
 
 # Create appropriate targets for all projects and libraries
-for entry in PROJ_DIRS + LIB_DIRS:
+for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     # Glob the source files from OBJ_DIR because it's a variant dir
     # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
     # str(entry) is e.g. 'projects/example', so this is like build/obj/projects/example/src
@@ -189,9 +191,10 @@ for entry in PROJ_DIRS + LIB_DIRS:
     # env.AddMethod(generate_header_files, "GenerateHeaderFiles")
     # header_targets = env.GenerateHeaderFiles(None, [BOARDS_DIR, TEMPLATES_DIR, GENERATOR, HEADER_OUTPUT_DIR, LIBRARIES_INC_DIR])
 
-    if entry in PROJ_DIRS:
+    if entry in PROJ_DIRS or entry in SMOKE_DIRS:
+        is_smoke = entry in SMOKE_DIRS
         lib_deps = get_lib_deps(entry)
-        output = proj_elf(entry.name)
+        output = proj_elf(entry.name, is_smoke)
         # SCons automagically handles object creation and linking
         target = env.Program(
             target=output,
@@ -205,7 +208,7 @@ for entry in PROJ_DIRS + LIB_DIRS:
         )
         # .bin file only required for arm, not x86
         if PLATFORM == 'arm':
-            target = env.Bin(target=proj_bin(entry.name), source=target)
+            target = env.Bin(target=proj_bin(entry.name, is_smoke), source=target)
     elif entry in LIB_DIRS:
         output = lib_bin(entry.name)
         target = env.Library(
@@ -318,16 +321,23 @@ Alias('test', test)
 def make_new_target(target, source, env):
     # No project or library option provided
     if not PROJECT and not LIBRARY:
-        print("Missing project or library name. Expected --project=... or --library=...")
+        print("Missing project or library name. Expected --project=..., or --library=...")
         sys.exit(1)
+    
+    if str(target[0]) == 'new_smoke.txt' and PROJECT:
+        target_type = 'smoke'
+    elif PROJECT:
+        target_type = 'project'
+    elif LIBRARY:
+        target_type = 'library'
 
-    target_type = 'project' if PROJECT else 'library'
-
-    # Assume either PROJECT or LIBRARY is given, 'or' to select the non-None value
-    new_target(target_type, PROJECT or LIBRARY)
+    # Chain or's to select the first non-None value 
+    new_target(target_type, PROJECT or LIBRARY or SMOKE)
 
 new = Command('new_proj.txt', [], make_new_target)
 Alias('new', new)
+new = Command('new_smoke.txt', [], make_new_target)
+Alias('new_smoke', new)
 
 # 'clean.txt' is a dummy file that doesn't get created
 # This is required for phony targets for scons to be happy
@@ -431,13 +441,18 @@ Alias('format', format)
 if PLATFORM == 'x86' and PROJECT:
     # os.exec the x86 project ELF file to simulate it
     def sim_run(target, source, env):
-        path = proj_elf(PROJECT).path
-        print('Simulating', PROJECT)
+        is_smoke = str(target[0]) == 'sim_smoke.txt'
+        path = proj_elf(PROJECT, is_smoke).path
+        print('Simulating', path)
         os.execv(path, [path])
 
     sim = Command('sim.txt', [], sim_run)
     Depends(sim, proj_elf(PROJECT))
     Alias('sim', sim)
+
+    sim_smoke = Command('sim_smoke.txt', [], sim_run)
+    Depends(sim_smoke, proj_elf(PROJECT, True))
+    Alias('sim_smoke', sim_smoke)
 
     # open gdb with the elf file
     def gdb_run(target, source, env):
@@ -455,6 +470,7 @@ if PLATFORM == 'x86' and PROJECT:
 if PLATFORM == 'arm' and PROJECT:
     # flash the MCU using openocd
     def flash_run(target, source, env):
+        is_smoke = str(target[0]) == 'flash_smoke.txt'
         OPENOCD = 'openocd'
         OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
         PROBE = 'cmsis-dap'
@@ -465,7 +481,7 @@ if PLATFORM == 'arm' and PROJECT:
             '-f target/stm32f0x.cfg',
             '-f {}/stm32f0-openocd.cfg'.format(PLATFORM_DIR),
             '-c "stm32f0x.cpu configure -rtos FreeRTOS"',
-            '-c "stm_flash {}"'.format(proj_bin(PROJECT)),
+            '-c "stm_flash {}"'.format(proj_bin(PROJECT, is_smoke)),
             '-c shutdown'
         ]
         cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
@@ -474,3 +490,7 @@ if PLATFORM == 'arm' and PROJECT:
     flash = Command('flash.txt', [], flash_run)
     Depends(flash, proj_bin(PROJECT))
     Alias('flash', flash)
+
+    flash_smoke = Command('flash_smoke.txt', [], flash_run)
+    Depends(flash_smoke, proj_bin(PROJECT, True))
+    Alias('flash_smoke', flash_smoke)
