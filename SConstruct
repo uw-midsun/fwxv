@@ -3,7 +3,7 @@ import os
 import sys
 import subprocess
 import glob
-from new_target import new_target
+from scons.new_target import new_target
 
 ###########################################################
 # Build arguments
@@ -58,6 +58,12 @@ if PLATFORM == 'x86':
     env = SConscript('platform/x86.py')
 elif PLATFORM == 'arm':
     env = SConscript('platform/arm.py')
+
+env['CCCOMSTR'] = "Compiling $TARGET"
+env['LINKCOMSTR'] = "Linking $TARGET"
+env['ARCOMSTR'] = "Archiving $TARGET"
+env['ASCOMSTR'] = "Assembling $TARGET"
+env['RANLIBCOMSTR'] = "Indexing $TARGET"
 
 ###########################################################
 # Directory setup
@@ -372,7 +378,7 @@ def get_lint_files():
     return (c_lint_files, py_lint_files)
 
 def run_lint(target, source, env):
-    C_LINT_CMD = 'python ./lint.py' 
+    C_LINT_CMD = 'python ./scons/lint.py' 
     PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(Dir('#').abspath) # '#' is the root dir
 
     c_lint_files, py_lint_files = get_lint_files()
