@@ -27,5 +27,5 @@ StatusCode queue_receive(Queue *queue, void *buf, uint32_t delay_ms);
 // Attempt to receive an item from the queue without removing it from the queue, delaying for delay_ms in ms before timing out.
 StatusCode queue_peek(Queue *queue, void *buf, uint32_t delay_ms);
 
-// Return the size of the queue.
-uint32_t queue_get_size(Queue *queue);
+// Return number of items the queue can hold.
+uint32_t queue_get_num_items(Queue *queue);

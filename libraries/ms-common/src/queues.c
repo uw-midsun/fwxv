@@ -2,7 +2,7 @@
 #include <string.h>
 
 StatusCode queue_init(Queue *queue) {
-    queue->handle = xQueueCreateStatic(queue->size, queue->item_size, queue->storage_buf, &queue->queue);
+    queue->handle = xQueueCreateStatic(queue->num_items, queue->item_size, queue->storage_buf, &queue->queue);
 
     if(queue->handle == NULL) {
         return STATUS_CODE_INVALID_ARGS;
@@ -41,6 +41,6 @@ StatusCode queue_peek(Queue *queue, void *buf, uint32_t delay_ms) {
     return STATUS_CODE_OK;
 }
 
-uint32_t queue_get_size(Queue *queue) {
-    return queue->size;
+uint32_t queue_get_num_items(Queue *queue) {
+    return queue->num_items;
 }
