@@ -337,7 +337,7 @@ def get_test_list():
 def test_runner(target, source, env):
     test_list = get_test_list()
     for test in test_list:
-        subprocess.run(test.get_path())
+        subprocess.run(test.get_path()).check_returncode()
 
 test = Command('test.txt', [], test_runner)
 Depends(test, get_test_list())
