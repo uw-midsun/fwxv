@@ -3,7 +3,7 @@ import os
 import sys
 import subprocess
 import glob
-from new_target import new_target
+from scons.new_target import new_target
 from scons.preprocessor_filter import preprocessor_filter
 
 ###########################################################
@@ -65,6 +65,12 @@ TEST_CFLAGS = ['-DMS_TEST']
 if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
     env['CCFLAGS'] += TEST_CFLAGS
 
+env['CCCOMSTR'] = "Compiling $TARGET"
+env['LINKCOMSTR'] = "Linking $TARGET"
+env['ARCOMSTR'] = "Archiving $TARGET"
+env['ASCOMSTR'] = "Assembling $TARGET"
+env['RANLIBCOMSTR'] = "Indexing $TARGET"
+
 ###########################################################
 # Directory setup
 ###########################################################
@@ -83,6 +89,13 @@ LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
 LIB_BIN_DIR = BIN_DIR.Dir('libraries')
 
 PLATFORM_DIR = Dir('platform')
+
+CODEGEN_DIR = LIB_DIR.Dir("codegen")
+BOARDS_DIR = CODEGEN_DIR.Dir("boards")
+GENERATOR = CODEGEN_DIR.File("generator.py")
+TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
+HEADER_OUTPUT_DIR = PROJ_DIR.Dir(PROJECT).Dir("inc")
+LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
 
 # Put object files in OBJ_DIR so they don't clog the source folders
 VariantDir(OBJ_DIR, Dir('.'), duplicate=0)
@@ -129,6 +142,35 @@ def proj_elf(proj_name):
 def proj_bin(proj_name):
     return proj_elf(proj_name).File(proj_name + '.bin')
 
+###########################################################
+# Header file generation from jinja templates
+###########################################################
+def generate_header_files(env, target, source):
+    boards_dir = source[0]
+    templates_dir = source[1]
+    generator_dir = source[2]
+    header_output_dir = source[3]
+    libraries_inc_dir = source[4]
+    templates = templates_dir.glob('*.jinja')
+    base_exec = "python3 {} -b {}".format(generator_dir, PROJECT)
+    header_files = []
+
+    for template in templates:
+        if template.name[0] == "_":
+            header_files.append(header_output_dir.File(PROJECT + template.name[:-6]))
+        else:
+            header_files.append(header_output_dir.File(template.name[:-6]))
+
+        if "can_board_ids" in template.name:
+            env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File("boards"), template, libraries_inc_dir))
+        else:
+            if "_getters" in template.name:
+                env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File(PROJECT), template, header_output_dir))
+            else:
+                env.Execute("{} -t {} -f {}".format(base_exec, template, header_output_dir))
+
+    return header_files
+
 
 # Create appropriate targets for all projects and libraries
 for entry in PROJ_DIRS + LIB_DIRS:
@@ -149,6 +191,9 @@ for entry in PROJ_DIRS + LIB_DIRS:
     lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
 
     env.Append(CPPDEFINES=[GetOption('define')])
+
+    # env.AddMethod(generate_header_files, "GenerateHeaderFiles")
+    # header_targets = env.GenerateHeaderFiles(None, [BOARDS_DIR, TEMPLATES_DIR, GENERATOR, HEADER_OUTPUT_DIR, LIBRARIES_INC_DIR])
 
     if entry in PROJ_DIRS:
         lib_deps = get_lib_deps(entry)
@@ -365,7 +410,7 @@ def get_lint_files():
     return (c_lint_files, py_lint_files)
 
 def run_lint(target, source, env):
-    C_LINT_CMD = 'python ./lint.py' 
+    C_LINT_CMD = 'python ./scons/lint.py' 
     PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(Dir('#').abspath) # '#' is the root dir
 
     c_lint_files, py_lint_files = get_lint_files()
@@ -409,6 +454,7 @@ Alias('lint', lint)
 
 format = Command('format.txt', [], run_format)
 Alias('format', format)
+
 
 ###########################################################
 # Helper targets for x86
