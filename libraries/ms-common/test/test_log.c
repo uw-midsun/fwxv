@@ -2,5 +2,4 @@
 
 #include "log.h"
 
-TASK_TEST(test_log, TASK_STACK_512) {
-}
+TASK_TEST(test_log, TASK_STACK_512) {}
