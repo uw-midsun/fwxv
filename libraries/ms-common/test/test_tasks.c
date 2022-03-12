@@ -1,10 +1,9 @@
-#include "tasks.h"
-
 #include <stdbool.h>
 
 #include "delay.h"
 #include "log.h"
 #include "task_test_helpers.h"
+#include "tasks.h"
 #include "unity.h"
 
 // These are tests for tasks.h, but also an example of using the task_test_helpers.h library.

@@ -1,6 +1,8 @@
 // Retargets STDOUT to UART
 #include "retarget.h"
+
 #include <stdio.h>
+
 #include "retarget_cfg.h"
 #include "stm32f0xx.h"
 

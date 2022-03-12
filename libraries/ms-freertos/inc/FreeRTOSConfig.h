@@ -13,9 +13,9 @@ extern uint32_t SystemCoreClock;
 #define MAX_FREERTOS_PRIORITIES 31
 #ifdef NUM_FREERTOS_PRIORITIES
 #if NUM_FREERTOS_PRIORITIES < DEFAULT_NUM_FREERTOS_PRIORITIES
-#error Too few FreeRTOS priorities! We need at least DEFAULT_NUM_FREERTOS_PRIORITIES.
+#error Too few FreeRTOS priorities, we need at least DEFAULT_NUM_FREERTOS_PRIORITIES.
 #elif NUM_FREERTOS_PRIORITIES > MAX_FREERTOS_PRIORITIES
-#error Too many FreeRTOS priorities! Max is MAX_FREERTOS_PRIORITIES.
+#error Too many FreeRTOS priorities, max is MAX_FREERTOS_PRIORITIES.
 #endif
 #else
 #define NUM_FREERTOS_PRIORITIES DEFAULT_NUM_FREERTOS_PRIORITIES
@@ -84,7 +84,7 @@ extern uint32_t SystemCoreClock;
 #define INCLUDE_vTaskDelete 1
 #define INCLUDE_vTaskSuspend 1
 #define INCLUDE_xResumeFromISR 1
-#define INCLUDE_vTaskDelayUntil 1
+#define INCLUDE_xTaskDelayUntil 1
 #define INCLUDE_vTaskDelay 1
 #define INCLUDE_xTaskGetSchedulerState 1
 #define INCLUDE_xTaskGetCurrentTaskHandle 1

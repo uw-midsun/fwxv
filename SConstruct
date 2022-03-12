@@ -397,35 +397,35 @@ def get_lint_files():
 
     # Get all src and header files (*.c, *.h) to lint/format
     for dir in lint_dirs: 
-        c_files = glob_by_extension('[ch]', dir)
-        py_files = glob_by_extension('py', dir) 
-
         config = parse_config(dir) 
 
         # Avoid linting/formatting external libraries
         if not config.get('no_lint'):
-            c_lint_files += c_files 
-            py_lint_files += py_files 
+            c_lint_files += glob_by_extension('[ch]', dir)
+            py_lint_files += glob_by_extension('py', dir) 
 
     return (c_lint_files, py_lint_files)
 
 def run_lint(target, source, env):
-    C_LINT_CMD = 'python ./scons/lint.py' 
+    C_LINT_CMD = 'cpplint --quiet' 
     PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(Dir('#').abspath) # '#' is the root dir
 
     c_lint_files, py_lint_files = get_lint_files()
 
+    errors = 0
     # Lint C source files
     if len(c_lint_files) > 0:
         print('\nLinting *.[ch] in {}, {} ...'.format(PROJ_DIR, LIB_DIR))
-        subprocess.run('{} {}'.format(C_LINT_CMD, dirs_to_str(c_lint_files)), shell=True)
+        errors += subprocess.run('{} {}'.format(C_LINT_CMD, dirs_to_str(c_lint_files)), shell=True).returncode
 
     # Lint Python files
     if len(py_lint_files) > 0:
         print('\nLinting *.py files ...')
-        subprocess.run('{} {}'.format(PY_LINT_CMD, dirs_to_str(py_lint_files)), shell=True)
+        errors += subprocess.run('{} {}'.format(PY_LINT_CMD, dirs_to_str(py_lint_files)), shell=True).returncode
 
     print('Done Linting.')
+    if (errors > 0):
+        Exit("Lint errors")
 
 def run_format(target, source, env):
     # Formatter configs
