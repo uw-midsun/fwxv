@@ -65,12 +65,14 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade setuptools
           pip install --upgrade scons
+          pip install --upgrade pylint
+          pip install --upgrade cpplint
+          pip install --upgrade autopep8
           sudo apt install python3-testresources
           rm -rf .venv
           mkdir .venv
           virtualenv .venv
           . .venv/bin/activate
-        # pip install -r requirements.txt
 
       - name: Install Protobufs
         run: |
@@ -95,11 +97,20 @@ jobs:
           clang-format --version
           .venv/bin/pip3 freeze
 
-      # - name: Format and lint
-      #   run: |
-      #     make test_format
-      #     scons lint
-      #     make pylint
+      - name: Format and lint
+        run: |
+          scons format
+          if [[ $(git diff --name-only) ]] ; then 
+            echo -e "\n unformatted files:";
+            git diff --name-only;
+            exit 1;
+          fi
+
+          scons lint
+          if [ $? -ne 0 ] ; then
+            echo -e "\n lint failed";
+            exit 1;
+          fi
 
       - name: Build stm32f0xx
         id: build-stm32

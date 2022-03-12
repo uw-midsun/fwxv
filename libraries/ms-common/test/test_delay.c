@@ -1,7 +1,3 @@
-#include "FreeRTOS.h"
-#include "log.h"
-#include "task.h"
-
 #include <stdint.h>
 
 #include "FreeRTOS.h"

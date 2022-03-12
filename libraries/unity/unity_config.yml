@@ -1,0 +1,6 @@
+:unity:
+  # Change setup/teardown names to conform to our coding style
+  :setup_name: setup_test
+  :teardown_name: teardown_test
+  # Parameterized tests are awesome! https://uwmidsun.atlassian.net/l/c/tXAB1D2b
+  :use_param_tests: true
