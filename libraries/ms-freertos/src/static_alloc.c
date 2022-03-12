@@ -1,11 +1,13 @@
-#include "FreeRTOS.h"
-
 #include <stdint.h>
+
+#include "FreeRTOS.h"
 
 // These are needed to statically allocate the memory for the idle and timer tasks. We have
 // configSUPPORT_STATIC_ALLOCATION set, and so the application must provide implementations of
 // vApplicationGetIdleTaskMemory and vApplicationGetTimerTaskMemory.
 // See https://www.freertos.org/a00110.html, configSUPPORT_STATIC_ALLOCATION section.
+
+#if (configSUPPORT_STATIC_ALLOCATION == 1)
 
 void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
                                    StackType_t **ppxIdleTaskStackBuffer,
@@ -23,6 +25,8 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
   *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
 }
 
+#if (configUSE_TIMERS == 1)
+
 void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
                                     StackType_t **ppxTimerTaskStackBuffer,
                                     uint32_t *pulTimerTaskStackSize) {
@@ -36,3 +40,7 @@ void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
   *ppxTimerTaskStackBuffer = uxTimerTaskStack;
   *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
 }
+
+#endif
+
+#endif

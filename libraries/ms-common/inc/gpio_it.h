@@ -5,10 +5,10 @@
 #include <stdint.h>
 
 #include "FreeRTOS.h"
-#include "task.h"
 #include "gpio.h"
 #include "interrupt_def.h"
 #include "status.h"
+#include "task.h"
 
 // Initializes the interrupt handler for GPIO.
 void gpio_it_init(void);

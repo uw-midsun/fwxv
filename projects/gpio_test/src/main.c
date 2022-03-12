@@ -9,10 +9,8 @@
 #include "tasks.h"
 
 static const GpioAddress leds[] = {
-  { .port = GPIO_PORT_B, .pin = 5 },   //
-  { .port = GPIO_PORT_B, .pin = 4 },   //
-  { .port = GPIO_PORT_B, .pin = 3 },   //
-  { .port = GPIO_PORT_A, .pin = 15 },  //
+  { .port = GPIO_PORT_B, .pin = 4 },  //
+  { .port = GPIO_PORT_B, .pin = 3 },  //
 };
 
 static const GpioAddress buttons[] = {
