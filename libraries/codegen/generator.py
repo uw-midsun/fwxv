@@ -44,10 +44,10 @@ def process_setter_data(board, data, master_data):
 
 def get_dbc_data():
     yaml_files = get_yaml_files()
-    master_data = {"Messages" : []}
-    for file in yaml_files:
-        data = read_yaml(file)
-        sender = get_board_name(file)
+    master_data = {"Messages" : [], "Boards": get_boards()}
+    for can_board_id, board in enumerate(master_data["Boards"]):
+        data = read_yaml(yaml_files[board])
+        sender = get_board_name(yaml_files[board])
         for message_key in data["Messages"]:
             start_bit = 0
             message = data["Messages"][message_key]
@@ -67,7 +67,7 @@ def get_dbc_data():
                 })
                 start_bit += signal["length"]
             master_data["Messages"].append({
-                "id": message["id"],
+                "id": (message["id"] << 5) + can_board_id,
                 "message_name": message_key,
                 "signals": signals,
                 "data_length": 8,
@@ -83,27 +83,28 @@ def get_boards_dir():
 
 def get_yaml_files():
     path_to_boards = get_boards_dir()
-    yaml_files = []
-    for filename in os.listdir(path_to_boards):
-        file_prefix = filename.split(".")[0]  # only get the part before .yaml
-        if file_prefix != "boards":
-            yaml_files.append(os.path.join(path_to_boards, filename))
+    yaml_files = {}
+    for file in os.listdir(path_to_boards):
+        board_name = file.split(".")[0]  # only get the part before .yaml
+        if board_name != "boards":
+            yaml_files[board_name] = os.path.join(path_to_boards, file)
 
     return yaml_files
 
 def get_boards():
     path_to_boards = get_boards_dir()
-    for filename in os.listdir(path_to_boards):
-        file_prefix = filename.split(".")[0]  # only get the part before .yaml
-        if file_prefix == "boards":
-            return os.path.join(path_to_boards, filename)
+    for file in os.listdir(path_to_boards):
+        board_name = file.split(".")[0]  # only get the part before .yaml
+        if board_name == "boards":
+            boards_yaml = os.path.join(path_to_boards, file)
+            return read_yaml(boards_yaml)["Boards"]
 
-    return False
+    return []
 
 def parse_board_yaml_files(board):
-    yaml_files = get_yaml_files()
     master_data = {"Board": board, "Signals": []}
-    for file in yaml_files:
+    yaml_files = list(get_yaml_files().values())
+    for file in yaml_files:  
         data = read_yaml(file)
         process_setter_data(board, data, master_data)
 
@@ -152,7 +153,7 @@ if __name__ == "__main__":
     parser.add_option("-t", "--template", dest="template",
                       help="template file to populate", metavar="FILE")
     parser.add_option("-b", "--board", default=None, dest="board", help="which board to generate")
-    parser.add_option("-f", "--file_path", dest="file_path", help="output file path")
+    parser.add_option("-f", "--file_path", default=".", dest="file_path", help="output file path")
 
     (options, args) = parser.parse_args()
 
@@ -163,15 +164,19 @@ if __name__ == "__main__":
         env = jinja2.Environment(loader=templateLoader)
         file_path = options.file_path + "/" + get_file_name(template_name, options.board)
 
-        if "system_can" in template_name:
+        if "system_can.dbc" in template_name:
             data = get_dbc_data()
-            boards = get_boards()
-            data["Boards"] = read_yaml(boards)["Boards"]
-            write_template(env, template_name, file_path, data)
-        elif options.board and options.yaml_file:
+            if len(data["Boards"]):
+                write_template(env, template_name, file_path, data)
+        elif options.yaml_file:
             for y in options.yaml_file:
                 data = read_yaml(y)
-                data["Board"] = options.board
+                if options.board:
+                    data["Board"] = options.board
+                if data.get("Boards"):
+                    data["Boards"] = [
+                        parse_board_yaml_files(data["Boards"][i]) for i in range(len(data["Boards"]))
+                    ]
                 write_template(env, template_name, file_path, data)
         elif options.board:
             data = parse_board_yaml_files(options.board)
