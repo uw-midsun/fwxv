@@ -46,4 +46,5 @@ void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
 }
 
 #endif
+
 #endif
