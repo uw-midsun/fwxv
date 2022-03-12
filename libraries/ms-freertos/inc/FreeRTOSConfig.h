@@ -8,10 +8,14 @@ extern uint32_t SystemCoreClock;
 
 // Allow projects to add more priorities with the NUM_FREERTOS_PRIORITIES macro.
 // We can't have fewer than the default in case libraries depend on having enough priorities.
+// FreeRTOS has a limit of 32 priorities, but we reserve one for the test task.
 #define DEFAULT_NUM_FREERTOS_PRIORITIES 5
+#define MAX_FREERTOS_PRIORITIES 31
 #ifdef NUM_FREERTOS_PRIORITIES
 #if NUM_FREERTOS_PRIORITIES < DEFAULT_NUM_FREERTOS_PRIORITIES
 #error Too few FreeRTOS priorities! We need at least DEFAULT_NUM_FREERTOS_PRIORITIES.
+#elif NUM_FREERTOS_PRIORITIES > MAX_FREERTOS_PRIORITIES
+#error Too many FreeRTOS priorities! Max is MAX_FREERTOS_PRIORITIES.
 #endif
 #else
 #define NUM_FREERTOS_PRIORITIES DEFAULT_NUM_FREERTOS_PRIORITIES

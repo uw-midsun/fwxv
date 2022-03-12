@@ -5,6 +5,7 @@
 // These are needed to statically allocate the memory for the idle and timer tasks. We have
 // configSUPPORT_STATIC_ALLOCATION set, and so the application must provide implementations of
 // vApplicationGetIdleTaskMemory and vApplicationGetTimerTaskMemory.
+// See https://www.freertos.org/a00110.html, configSUPPORT_STATIC_ALLOCATION section.
 
 void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
                                    StackType_t **ppxIdleTaskStackBuffer,

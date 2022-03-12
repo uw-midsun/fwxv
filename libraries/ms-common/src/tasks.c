@@ -53,5 +53,9 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context) {
 
 void tasks_start(void) {
   vTaskStartScheduler();
+
+  // We expect the scheduler to stop in task tests, but it's a critical problem otherwise.
+#ifndef MS_TEST
   LOG_CRITICAL("CRITICAL: scheduler stopped!\n");
+#endif
 }
