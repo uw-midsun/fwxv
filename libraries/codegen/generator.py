@@ -134,6 +134,10 @@ if __name__ == "__main__":
                 data = read_yaml(y)
                 if options.board:
                     data["Board"] = options.board
+                if data.get("Boards"):
+                    data["Boards"] = [
+                        parse_board_yaml_files(data["Boards"][i]) for i in range(len(data["Boards"]))
+                    ]
                 write_template(env, template_name, file_path, data)
         elif options.board:
             data = parse_board_yaml_files(options.board)
