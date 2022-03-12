@@ -5,6 +5,7 @@
 
 #include "FreeRTOS.h"
 #include "queue.h"
+#include "task.h"
 #include "tasks.h"
 
 DECLARE_TASK(log_task);
@@ -20,32 +21,46 @@ DECLARE_TASK(log_task);
 #define MIN_TASK_PRIORITY 1
 
 extern QueueHandle_t g_log_queue;
-extern char g_buffer [MAX_LOG_SIZE];
+extern char g_buffer[MAX_LOG_SIZE];
 
-#define LOG_DEBUG(fmt, ... ) LOG(LOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__)
-#define LOG_WARN(fmt, ... ) LOG(LOG_LEVEL_WARN, fmt, ##__VA_ARGS__)
-#define LOG_CRITICAL(fmt, ... ) LOG_C(LOG_LEVEL_CRITICAL, fmt, ##__VA_ARGS__)
+#define LOG_DEBUG(fmt, ...) LOG(LOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__)
+#define LOG_WARN(fmt, ...) LOG(LOG_LEVEL_WARN, fmt, ##__VA_ARGS__)
+#define LOG_CRITICAL(fmt, ...) LOG_C(LOG_LEVEL_CRITICAL, fmt, ##__VA_ARGS__)
 
-#define LOG(level, fmt, ...)                                                                                            \
-  do {                                                                                                                  \
-    snprintf(g_buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, (level), __FILE__, __LINE__, ##__VA_ARGS__);                   \
-    if(xTaskGetSchedulerState() == taskSCHEDULER_SUSPENDED || xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED)    \
-      printf("%s", g_buffer);                                                                                           \
-    else                                                                                                                \
-      xQueueSendToBack( g_log_queue, ( void * ) g_buffer, ( TickType_t ) 0 );                                           \
+#define LOG(level, fmt, ...)                                                          \
+  do {                                                                                \
+    snprintf(g_buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, (level), __FILE__, __LINE__, \
+             ##__VA_ARGS__);                                                          \
+    if (xTaskGetSchedulerState() == taskSCHEDULER_SUSPENDED ||                        \
+        xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {                      \
+      printf("%s", g_buffer);                                                         \
+    } else {                                                                          \
+      if(g_log_queue == NULL) {                                                       \
+        printf("Error: Logs not initialized message \n");                             \
+        vTaskEndScheduler();                                                          \
+      }                                                                               \
+      xQueueSendToBack(g_log_queue, (void *)g_buffer, (TickType_t)0);                 \
+    }                                                                                 \
   } while (0)
 
-#define LOG_C(level, fmt, ...)                                                                                          \
-  do {                                                                                                                  \
-    snprintf(g_buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, (level), __FILE__, __LINE__, ##__VA_ARGS__);                   \
-    if(xTaskGetSchedulerState() == taskSCHEDULER_SUSPENDED || xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED)    \
-      printf("%s", g_buffer);                                                                                           \
-    else{                                                                                                               \
-      if(IN_ORDER_LOGS)                                                                                                 \
-        xQueueSendToBack( g_log_queue, ( void * ) g_buffer, ( TickType_t ) 0 );                                         \
-      else                                                                                                              \
-        xQueueSendToFront( g_log_queue, ( void * ) g_buffer, ( TickType_t ) 0 );                                        \
-    }                                                                                                                   \
+#define LOG_C(level, fmt, ...)                                                        \
+  do {                                                                                \
+    snprintf(g_buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, (level), __FILE__, __LINE__, \
+             ##__VA_ARGS__);                                                          \
+    if (xTaskGetSchedulerState() == taskSCHEDULER_SUSPENDED ||                        \
+        xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {                      \
+      printf("%s", g_buffer);                                                         \
+    } else {                                                                          \
+      if(g_log_queue == NULL) {                                                       \
+        printf("Error: Logs init not initialized \n");                                \
+        vTaskEndScheduler();                                                          \
+      }                                                                               \
+      if (IN_ORDER_LOGS) {                                                            \
+        xQueueSendToBack(g_log_queue, (void *)g_buffer, (TickType_t)0);               \
+      } else {                                                                        \
+        xQueueSendToFront(g_log_queue, (void *)g_buffer, (TickType_t)0);              \
+      }                                                                               \
+    }                                                                                 \
   } while (0)
 
 typedef enum {
