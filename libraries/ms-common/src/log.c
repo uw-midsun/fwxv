@@ -9,7 +9,7 @@ char g_buffer [MAX_LOG_SIZE];
 static StaticQueue_t s_xQueueBuffer;
 
 // Array to hold items
-static uint8_t s_log_array[QUEUE_LENGTH * ITEM_SIZE] = {0};
+static uint8_t s_log_array[QUEUE_LENGTH * ITEM_SIZE];
 
 // Holds the queue object (either make this into the task or put the variables in header so task can use it)
 QueueHandle_t g_log_queue;
@@ -24,8 +24,10 @@ TASK(log_task, TASK_STACK_256) {
 
   // All tasks MUST loop forever and cannot return.
   while (true) {
-    if( uxQueueMessagesWaiting(g_log_queue) != 0 )
-      if( xQueueReceive( g_log_queue, &( Rx_buffer ), ( TickType_t ) 0 ) )
+    if( uxQueueMessagesWaiting(g_log_queue) != 0 ) {
+      if( xQueueReceive( g_log_queue, &( Rx_buffer ), ( TickType_t ) 0 ) ) {
         printf("%s", Rx_buffer);
+      }
+    }
   }
 }

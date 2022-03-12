@@ -22,6 +22,6 @@ static void delay_task() {
 void test_delay_ms(void) {
   xTaskCreateStatic(delay_task, "Delay", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1,
                     &s_task_stack, &s_task_tcb);
-
+  log_init();
   vTaskStartScheduler();
 }

@@ -241,6 +241,10 @@ tests = {}
 for entry in PROJ_DIRS + LIB_DIRS:
     tests[entry.name] = []
     for test_file in OBJ_DIR.Dir(str(entry)).Dir('test').glob('*.c'):
+        # Create the test_*_runner.c file
+        runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
+        test_runner = env.Command(runner_file, test_file, 'ruby {} $SOURCE $TARGET'.format(GEN_RUNNER))
+
         # Link runner object, test file object, and proj/lib objects
         # into executable
         config = parse_config(entry)
@@ -367,7 +371,7 @@ clean = Command('clean.txt', [], 'rm -rf build/*')
 Alias('clean', clean)
 
 ###########################################################
-# Linting and Formatting 
+# Linting and Formatting
 ###########################################################
 
 # Convert a list of paths/Dirs to space-separated paths.
@@ -382,7 +386,7 @@ def glob_by_extension(extension, dir='.'):
 # Retrieve files to lint - returns a tuple (c_lint_files, py_lint_files)
 def get_lint_files():
     c_lint_files = []
-    py_lint_files = [] 
+    py_lint_files = []
 
     lint_dirs = []
 
@@ -396,18 +400,35 @@ def get_lint_files():
         lint_dirs += PROJ_DIRS + LIB_DIRS
 
     # Get all src and header files (*.c, *.h) to lint/format
-    for dir in lint_dirs: 
-        config = parse_config(dir) 
+<<<<<<< HEAD
+    for dir in lint_dirs:
+        config = parse_config(dir)
 
         # Avoid linting/formatting external libraries
         if not config.get('no_lint'):
             c_lint_files += glob_by_extension('[ch]', dir)
-            py_lint_files += glob_by_extension('py', dir) 
+            py_lint_files += glob_by_extension('py', dir)
+=======
+    for dir in lint_dirs:
+        c_files = glob_by_extension('[ch]', dir)
+        py_files = glob_by_extension('py', dir)
+
+        config = parse_config(dir)
+
+        # Avoid linting/formatting external libraries
+        if not config.get('no_lint'):
+            c_lint_files += c_files
+            py_lint_files += py_files
+>>>>>>> [SOFT-605] Moved log files to ms_common and fixed config.json issues
 
     return (c_lint_files, py_lint_files)
 
 def run_lint(target, source, env):
-    C_LINT_CMD = 'cpplint --quiet' 
+<<<<<<< HEAD
+    C_LINT_CMD = 'cpplint --quiet'
+=======
+    C_LINT_CMD = 'python ./lint.py'
+>>>>>>> [SOFT-605] Moved log files to ms_common and fixed config.json issues
     PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(Dir('#').abspath) # '#' is the root dir
 
     c_lint_files, py_lint_files = get_lint_files()
