@@ -2,11 +2,19 @@ from optparse import OptionParser
 import jinja2
 import os
 import yaml
+import re
 
 
 def read_yaml(yaml_file):
     with open(yaml_file, "r") as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
+        # Only check if a board is specified
+        if "Boards" in data.keys():
+            return data
+        elif "Messages" in data.keys():
+            check_yaml_file(data)
+        else:
+            raise Exception("No message or board present in yaml")
         return data
 
 def get_board_name(yaml_path):
@@ -101,6 +109,37 @@ def parse_board_yaml_files(board):
 
     return master_data
 
+def check_yaml_file(data):
+    regex = re.compile('[@!#$%^&*()<>?/\|}{~:]')
+    message_ids = set()
+
+    for message in data["Messages"]:
+        # Message has id
+        if "id" not in data["Messages"][message]:
+            raise Exception("Message " + message + " has no id")
+        # No same ids for messages within a message
+        if data["Messages"][message]["id"] in message_ids:
+            raise Exception("Duplicate message id")
+        # All ids are between 0-64
+        elif data["Messages"][message]["id"] > 64 or data["Messages"][message]["id"] < 0:
+            raise Exception("Invalid message id")
+        else:
+            message_ids.add(data["Messages"][message]["id"])
+        # No illegal characters in message names
+        if(regex.search(message) != None):
+            raise Exception("Illegal character in message name")
+        # Doesn't have more than 8 signals per message
+        if len(data["Messages"][message]["signals"]) > 8:
+            raise Exception("More than 8 signals in a message")
+
+        signal_len = data["Messages"][message]["signals"][next(iter(data["Messages"][message]["signals"]))]["length"]
+        for signal in data["Messages"][message]["signals"]:
+            # All signals within a message are the same length
+            if data["Messages"][message]["signals"][signal]["length"] != signal_len:
+                raise Exception("Signal length mismatch")
+            # No illegal characters in signal names
+            if(regex.search(signal) != None):
+                raise Exception("Illegal character in signal name")
 
 def main():
     print("Done autogenerating")
