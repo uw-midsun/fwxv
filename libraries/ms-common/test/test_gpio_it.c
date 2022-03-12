@@ -56,7 +56,7 @@ TASK_TEST(gpio_it_test, TASK_MIN_STACK_SIZE) {
   for (int i = 0; i < 5; ++i) {
     delay_ms(100);
     gpio_it_trigger_interrupt(&buttons[0]);
-    
+
     TEST_ASSERT_EQUAL(triggered, 0b1);
 
     triggered = 0;
