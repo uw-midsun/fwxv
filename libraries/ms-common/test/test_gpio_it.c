@@ -35,7 +35,7 @@ TASK(handler, TASK_MIN_STACK_SIZE) {
     triggered = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     for (int i = 0; i < 2; ++i) {
-      if ((value & (1u << i)) != 0) {
+      if ((triggered & (1u << i)) != 0) {
         gpio_toggle_state(&leds[i]);
       }
     }
