@@ -1,3 +1,6 @@
 {
-  "no_lint": true
+  "no_lint": true,
+  "cflags": [
+    "-DUNITY_SKIP_DEFAULT_RUNNER"
+  ]
 }
