@@ -407,11 +407,7 @@ def get_lint_files():
     return (c_lint_files, py_lint_files)
 
 def run_lint(target, source, env):
-<<<<<<< HEAD
-    C_LINT_CMD = 'python3 ./lint.py' 
-=======
     C_LINT_CMD = 'cpplint --quiet' 
->>>>>>> origin
     PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(Dir('#').abspath) # '#' is the root dir
 
     c_lint_files, py_lint_files = get_lint_files()
