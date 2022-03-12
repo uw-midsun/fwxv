@@ -3,7 +3,8 @@ import os
 import sys
 import subprocess
 import glob
-from new_target import new_target
+from scons.new_target import new_target
+from scons.preprocessor_filter import preprocessor_filter
 
 ###########################################################
 # Build arguments
@@ -59,6 +60,17 @@ if PLATFORM == 'x86':
 elif PLATFORM == 'arm':
     env = SConscript('platform/arm.py')
 
+# Add flags when compiling a test
+TEST_CFLAGS = ['-DMS_TEST']
+if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
+    env['CCFLAGS'] += TEST_CFLAGS
+
+env['CCCOMSTR'] = "Compiling $TARGET"
+env['LINKCOMSTR'] = "Linking $TARGET"
+env['ARCOMSTR'] = "Archiving $TARGET"
+env['ASCOMSTR'] = "Assembling $TARGET"
+env['RANLIBCOMSTR'] = "Indexing $TARGET"
+
 ###########################################################
 # Directory setup
 ###########################################################
@@ -77,6 +89,13 @@ LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
 LIB_BIN_DIR = BIN_DIR.Dir('libraries')
 
 PLATFORM_DIR = Dir('platform')
+
+CODEGEN_DIR = LIB_DIR.Dir("codegen")
+BOARDS_DIR = CODEGEN_DIR.Dir("boards")
+GENERATOR = CODEGEN_DIR.File("generator.py")
+TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
+HEADER_OUTPUT_DIR = PROJ_DIR.Dir(PROJECT).Dir("inc")
+LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
 
 # Put object files in OBJ_DIR so they don't clog the source folders
 VariantDir(OBJ_DIR, Dir('.'), duplicate=0)
@@ -123,6 +142,35 @@ def proj_elf(proj_name):
 def proj_bin(proj_name):
     return proj_elf(proj_name).File(proj_name + '.bin')
 
+###########################################################
+# Header file generation from jinja templates
+###########################################################
+def generate_header_files(env, target, source):
+    boards_dir = source[0]
+    templates_dir = source[1]
+    generator_dir = source[2]
+    header_output_dir = source[3]
+    libraries_inc_dir = source[4]
+    templates = templates_dir.glob('*.jinja')
+    base_exec = "python3 {} -b {}".format(generator_dir, PROJECT)
+    header_files = []
+
+    for template in templates:
+        if template.name[0] == "_":
+            header_files.append(header_output_dir.File(PROJECT + template.name[:-6]))
+        else:
+            header_files.append(header_output_dir.File(template.name[:-6]))
+
+        if "can_board_ids" in template.name:
+            env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File("boards"), template, libraries_inc_dir))
+        else:
+            if "_getters" in template.name:
+                env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File(PROJECT), template, header_output_dir))
+            else:
+                env.Execute("{} -t {} -f {}".format(base_exec, template, header_output_dir))
+
+    return header_files
+
 
 # Create appropriate targets for all projects and libraries
 for entry in PROJ_DIRS + LIB_DIRS:
@@ -143,6 +191,9 @@ for entry in PROJ_DIRS + LIB_DIRS:
     lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
 
     env.Append(CPPDEFINES=[GetOption('define')])
+
+    # env.AddMethod(generate_header_files, "GenerateHeaderFiles")
+    # header_targets = env.GenerateHeaderFiles(None, [BOARDS_DIR, TEMPLATES_DIR, GENERATOR, HEADER_OUTPUT_DIR, LIBRARIES_INC_DIR])
 
     if entry in PROJ_DIRS:
         lib_deps = get_lib_deps(entry)
@@ -181,6 +232,7 @@ Default([proj.name for proj in PROJ_DIRS])
 ###########################################################
 
 GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.rb'
+GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
 
 # tests dict maps proj/lib -> list of their test executables
 tests = {}
@@ -189,10 +241,6 @@ tests = {}
 for entry in PROJ_DIRS + LIB_DIRS:
     tests[entry.name] = []
     for test_file in OBJ_DIR.Dir(str(entry)).Dir('test').glob('*.c'):
-        # Create the test_*_runner.c file
-        runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
-        test_runner = Command(runner_file, test_file, 'ruby {} $SOURCE $TARGET'.format(GEN_RUNNER))
-
         # Link runner object, test file object, and proj/lib objects
         # into executable
         config = parse_config(entry)
@@ -215,16 +263,45 @@ for entry in PROJ_DIRS + LIB_DIRS:
         lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
         lib_deps = get_lib_deps(entry)
 
+        # Flags used for both preprocessing and compiling
+        cpppath = env['CPPPATH'] + [inc_dirs, lib_incs]
+        ccflags = env['CCFLAGS'] + config['cflags']
+
+        # Preprocess the test source file so the runner generator sees expanded macros
+        prefix_with = lambda prefix, dir_lists: ' '.join(
+            prefix + dir_.path for dirs in dir_lists for dir_ in dirs)
+        preprocessed_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_preprocessed.c'))
+        orig_test_file_path = Dir(str(entry)).Dir('test').File(test_file)
+        preprocessed = env.Command(
+            target=preprocessed_file,
+            source=test_file,
+            action=[
+                # -E to preprocess only, -dI to keep #include directives, @ to suppress printing
+                '@$CC -dI -E {} $CCFLAGS $SOURCE > .tmp'.format(prefix_with('-I', cpppath)),
+                Action(
+                    preprocessor_filter(str(orig_test_file_path), '.tmp'),
+                    cmdstr='Preprocessing $TARGET'),
+            ],
+            CCFLAGS=ccflags,
+        )
+
+        # Create the test_*_runner.c file
+        runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
+        test_runner = env.Command(runner_file, preprocessed,
+            Action(
+                'ruby {} {} $SOURCE $TARGET'.format(GEN_RUNNER, GEN_RUNNER_CONFIG),
+                cmdstr='Generating test runner $TARGET'))
+
         output = TEST_DIR.Dir(entry.name).Dir('test').File(test_file.name.replace('.c', ''))
         target = env.Program(
             target=output,
             source=[test_file, test_runner] + entry_objects,
             # We do env['variable'] + [entry-specific variables] to avoid
             # mutating the environment for other entries
-            CPPPATH=env['CPPPATH'] + [inc_dirs, lib_incs],
+            CPPPATH=cpppath,
             LIBS=env['LIBS'] + lib_deps * 2 + ['unity'],
             LIBPATH=[LIB_BIN_DIR],
-            CCFLAGS=env['CCFLAGS'] + config['cflags'],
+            CCFLAGS=ccflags,
             LINKFLAGS=env['LINKFLAGS'] + mock_link_flags,
         )
         if PLATFORM == 'arm':
@@ -377,6 +454,7 @@ Alias('lint', lint)
 
 format = Command('format.txt', [], run_format)
 Alias('format', format)
+
 
 ###########################################################
 # Helper targets for x86
