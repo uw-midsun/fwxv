@@ -25,7 +25,7 @@ TASK(log_task, TASK_STACK_256) {
 
   // All tasks MUST loop forever and cannot return.
   while (true) {
-    if(uxQueueSpacesAvailable(g_log_queue) == 0) {
+    if (uxQueueSpacesAvailable(g_log_queue) == 0) {
       printf("Error: Log queue is full\n");
     }
     if (uxQueueMessagesWaiting(g_log_queue) != 0) {

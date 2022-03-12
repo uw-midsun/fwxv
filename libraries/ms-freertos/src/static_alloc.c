@@ -1,6 +1,6 @@
-#include "FreeRTOS.h"
-
 #include <stdint.h>
+
+#include "FreeRTOS.h"
 
 // These are needed to statically allocate the memory for the idle and timer tasks. We have
 // configSUPPORT_STATIC_ALLOCATION set, and so the application must provide implementations of

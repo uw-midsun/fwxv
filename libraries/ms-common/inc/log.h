@@ -35,7 +35,7 @@ extern char g_buffer[MAX_LOG_SIZE];
         xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {                      \
       printf("%s", g_buffer);                                                         \
     } else {                                                                          \
-      if(g_log_queue == NULL) {                                                       \
+      if (g_log_queue == NULL) {                                                      \
         printf("Error: Logs not initialized message \n");                             \
         vTaskEndScheduler();                                                          \
       }                                                                               \
@@ -51,7 +51,7 @@ extern char g_buffer[MAX_LOG_SIZE];
         xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED) {                      \
       printf("%s", g_buffer);                                                         \
     } else {                                                                          \
-      if(g_log_queue == NULL) {                                                       \
+      if (g_log_queue == NULL) {                                                      \
         printf("Error: Logs init not initialized \n");                                \
         vTaskEndScheduler();                                                          \
       }                                                                               \
