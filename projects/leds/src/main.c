@@ -25,7 +25,7 @@ TASK(leds_task, TASK_STACK_512) {
     gpio_init_pin(&leds[i], &led_settings);
   }
 
-  while (true) {
+  every_ms(50 * SIZEOF_ARRAY(leds)) {
 #ifdef MS_PLATFORM_X86
     LOG_DEBUG("blink\n");
 #endif
