@@ -64,7 +64,6 @@ TASK_TEST(gpio_it_test, TASK_MIN_STACK_SIZE) {
   }
 }
 
-
 // test for hardware, uncomment and test with tutorial boards. leds should toggle with the two
 // buttons
 
