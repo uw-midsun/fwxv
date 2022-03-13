@@ -1,27 +1,16 @@
-// #pragma once
+#pragma once
 
-// #include "soft_timer.h"
-// #include "status.h"
+#include "soft_timer.h"
+#include "status.h"
 
-// typedef uint32_t WatchdogTimeout;
-// typedef void (*WatchdogExpiryCallback)(void *context);
+// declare a watchdog, watchdog is refered to by name
+#define DECLARE_WATCH_DOG(name) DECLARE_SOFT_TIMER(_watchdog_##name)
 
-// typedef struct WatchdogStorage {
-//   SoftTimerId timer_id;
-//   WatchdogTimeout timeout_ms;
-//   WatchdogExpiryCallback callback;
-//   void *callback_context;
-// } WatchdogStorage;
+// start watchdog
+#define watchdog_start(name, timeout_ms, callback) \
+  soft_timer_start(timeout_ms, callback, _watchdog_##name)
 
-// typedef struct WatchdogSettings {
-//   WatchdogTimeout timeout_ms;
-//   WatchdogExpiryCallback callback;
-//   void *callback_context;
-// } WatchdogSettings;
+// :)
+#define watchdog_kick(name) soft_timer_reset(_watchdog_##name)
 
-// void watchdog_start(WatchdogStorage *storage, WatchdogTimeout timeout_ms,
-//                     WatchdogExpiryCallback callback, void *context);
-
-// void watchdog_kick(WatchdogStorage *storage);
-
-// void watchdog_cancel(WatchdogStorage *storage);
+#define watchdog_cancel(name) soft_timer_cancel(_watchdog_##name)
