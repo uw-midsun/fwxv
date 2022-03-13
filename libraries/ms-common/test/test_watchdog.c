@@ -11,7 +11,7 @@ static void prv_callback() {
   callback_called = true;
 }
 
-TASK_TEST(s_watchdog, TASK_STACK_256) {
+TASK_TEST(watchdog, TASK_STACK_256) {
   callback_called = false;
   watchdog_start(s_watchdog, 100, prv_callback);
 
