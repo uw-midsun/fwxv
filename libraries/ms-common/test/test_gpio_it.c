@@ -36,6 +36,7 @@ TASK(handler, TASK_MIN_STACK_SIZE) {
 
     for (int i = 0; i < 2; ++i) {
       if ((triggered & (1u << i)) != 0) {
+        LOG_DEBUG("triggered pin %i\n", buttons[i].pin);
         gpio_toggle_state(&leds[i]);
       }
     }
@@ -62,3 +63,18 @@ TASK_TEST(gpio_it_test, TASK_MIN_STACK_SIZE) {
     triggered = 0;
   }
 }
+
+// test for hardware
+// TASK_TEST(hardware_test, TASK_MIN_STACK_SIZE) {
+//   tasks_init_task(handler, 2, NULL);
+
+//   interrupt_init();
+//   gpio_it_init();
+
+//   gpio_it_register_interrupt(&buttons[0], &settings, INTERRUPT_EDGE_RISING, handler->handle, 0);
+//   gpio_it_register_interrupt(&buttons[1], &settings, INTERRUPT_EDGE_FALLING, handler->handle, 1);
+
+//   while (true) {
+//     vTaskDelay(portMAX_DELAY);
+//   }
+// }
