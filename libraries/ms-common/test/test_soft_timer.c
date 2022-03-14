@@ -14,17 +14,20 @@ void prv_set(TimerHandle_t id) {
 static SoftTimer s_timer;
 
 TASK_TEST(soft_timer_test, TASK_STACK_1024) {
+  SoftTimer *timer_p = &s_timer;
+
   triggered = false;
-  soft_timer_start(500, prv_set, s_timer);
+  soft_timer_start(500, prv_set, *timer_p);
 
   delay_ms(299);
-  TEST_ASSERT_EQUAL(201, soft_timer_remaining_time(s_timer));
-  delay_ms(200);
+  TEST_ASSERT_EQUAL(201, soft_timer_remaining_time(*timer_p));
+  delay_ms(199);
 
   TEST_ASSERT_FALSE(triggered);
-  TEST_ASSERT_EQUAL(1, soft_timer_remaining_time(s_timer));
 
-  delay_ms(2);
+  TEST_ASSERT_UINT32_WITHIN(1, 2, soft_timer_remaining_time(*timer_p));
+
+  delay_ms(3);
 
   TEST_ASSERT_TRUE(triggered);
 
