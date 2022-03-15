@@ -25,7 +25,10 @@ typedef struct SoftTimer {
   xTimerStart((timer).handle, 0)
 
 // Cancels the soft timer specified by name. Returns true if successful.
-#define soft_timer_cancel(timer) xTimerDelete((timer).handle, 0)
+// the timer is not cancelled immediately,
+#define soft_timer_cancel(timer) \
+  xTimerStop((timer).handle, 0); \
+  xTimerDelete((timer).handle, 0)
 
 // restart the timer
 #define soft_timer_reset(timer) xTimerReset((timer).handle, 0)
