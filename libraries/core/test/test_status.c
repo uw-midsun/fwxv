@@ -1,9 +1,8 @@
-#include "status.h"
-
 #include <stdbool.h>
 #include <stdio.h>
 
 #include "misc.h"
+#include "status.h"
 #include "unity.h"
 
 void setup_test(void) {}

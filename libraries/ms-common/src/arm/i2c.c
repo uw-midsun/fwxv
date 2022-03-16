@@ -4,6 +4,7 @@
 // slave's transaction and transition it into an idle state for the next valid
 // transaction.
 #include "i2c.h"
+
 #include <stdbool.h>
 // #include "critical_section.h"
 #include "log.h"
