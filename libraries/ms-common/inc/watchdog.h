@@ -1,7 +1,6 @@
 #pragma once
 
 #include "soft_timer.h"
-#include "status.h"
 
 // declare a watchdog, watchdog is refered to by name
 typedef SoftTimer WatchDog;
