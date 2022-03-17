@@ -16,27 +16,23 @@ typedef struct SoftTimer {
   TimerHandle_t handle;
 } SoftTimer;
 
+typedef void (*SoftTimerCallback)(TimerHandle_t handle);
+
 // Adds a software timer. The provided duration is the number of
 // miliseconds before running and the callback is the process to run once
 // the time has expired.
-#define soft_timer_start(duration_ms, callback, timer)                                           \
-  (timer).handle = xTimerCreateStatic(NULL, pdMS_TO_TICKS(duration_ms), pdFALSE, NULL, callback, \
-                                      &(timer).buffer);                                          \
-  xTimerStart((timer).handle, 0)
+StatusCode soft_timer_start(uint32_t duration_ms, SoftTimerCallback callback, SoftTimer *timer);
 
 // Cancels the soft timer specified by name. Returns true if successful.
 // the timer is not cancelled immediately,
-#define soft_timer_cancel(timer) \
-  xTimerStop((timer).handle, 0); \
-  xTimerDelete((timer).handle, 0)
+StatusCode soft_timer_cancel(SoftTimer *timer);
 
 // restart the timer
-#define soft_timer_reset(timer) xTimerReset((timer).handle, 0)
+StatusCode soft_timer_reset(SoftTimer *timer);
 
 // Checks if the software timer is running
-#define soft_timer_inuse(timer) xTimerIsTimerActive((timer).handle)
+bool soft_timer_inuse(SoftTimer *timer);
 
 // Checks the time left in ticks on a particular timer. Returns a 0 if the timer
 // has expired and is no longer in use.
-#define soft_timer_remaining_time(timer) \
-  soft_timer_inuse(timer) ? xTimerGetExpiryTime((timer).handle) - xTaskGetTickCount() : 0
+uint32_t soft_timer_remaining_time(SoftTimer *timer);
