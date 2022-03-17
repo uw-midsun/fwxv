@@ -6,9 +6,10 @@
 typedef SoftTimer WatchDog;
 
 // start watchdog
-#define watchdog_start(name, timeout_ms, callback) soft_timer_start(timeout_ms, callback, name)
+#define watchdog_start(watchdog, timeout_ms, callback) \
+  soft_timer_start(timeout_ms, callback, watchdog)
 
 // :)
-#define watchdog_kick(name) soft_timer_reset(name)
+#define watchdog_kick(watchdog) soft_timer_reset(watchdog)
 
-#define watchdog_cancel(name) soft_timer_cancel(name)
+#define watchdog_cancel(watchdog) soft_timer_cancel(watchdog)
