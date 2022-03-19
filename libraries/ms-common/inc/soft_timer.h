@@ -11,6 +11,8 @@
 #include "status.h"
 #include "timers.h"
 
+// Create a soft timer with:
+// SoftTimer timer = { 0 };
 typedef struct SoftTimer {
   StaticTimer_t buffer;
   TimerHandle_t handle;
