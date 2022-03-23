@@ -324,7 +324,7 @@ def make_new_target(target, source, env):
         print("Missing project or library name. Expected --project=..., or --library=...")
         sys.exit(1)
     
-    if str(target[0]) == 'new_smoke.txt' and PROJECT:
+    if env.get("smoke") and PROJECT:
         target_type = 'smoke'
     elif PROJECT:
         target_type = 'project'
@@ -332,11 +332,11 @@ def make_new_target(target, source, env):
         target_type = 'library'
 
     # Chain or's to select the first non-None value 
-    new_target(target_type, PROJECT or LIBRARY or SMOKE)
+    new_target(target_type, PROJECT or LIBRARY)
 
 new = Command('new_proj.txt', [], make_new_target)
 Alias('new', new)
-new = Command('new_smoke.txt', [], make_new_target)
+new = Command('new_smoke.txt', [], make_new_target, smoke=True)
 Alias('new_smoke', new)
 
 # 'clean.txt' is a dummy file that doesn't get created
@@ -442,8 +442,7 @@ Alias('format', format)
 if PLATFORM == 'x86' and PROJECT:
     # os.exec the x86 project ELF file to simulate it
     def sim_run(target, source, env):
-        is_smoke = str(target[0]) == 'sim_smoke.txt'
-        path = proj_elf(PROJECT, is_smoke).path
+        path = proj_elf(PROJECT, env.get("smoke")).path
         print('Simulating', path)
         os.execv(path, [path])
 
@@ -451,21 +450,20 @@ if PLATFORM == 'x86' and PROJECT:
     Depends(sim, proj_elf(PROJECT))
     Alias('sim', sim)
 
-    sim_smoke = Command('sim_smoke.txt', [], sim_run)
+    sim_smoke = Command('sim_smoke.txt', [], sim_run, smoke=True)
     Depends(sim_smoke, proj_elf(PROJECT, True))
     Alias('sim_smoke', sim_smoke)
 
     # open gdb with the elf file
     def gdb_run(target, source, env):
-        is_smoke = str(target[0]) == 'gdb_smoke.txt'
-        path = proj_elf(PROJECT, is_smoke).path
+        path = proj_elf(PROJECT, env.get("smoke")).path
         os.execv('/usr/bin/gdb', ['/usr/bin/gdb', path])
 
     gdb = Command('gdb.txt', [], gdb_run)
     Depends(gdb, proj_elf(PROJECT))
     Alias('gdb', gdb)
 
-    gdb_smoke = Command('gdb_smoke.txt', [], gdb_run)
+    gdb_smoke = Command('gdb_smoke.txt', [], gdb_run, smoke=True)
     Depends(gdb_smoke, proj_elf(PROJECT, True))
     Alias('gdb_smoke', gdb_smoke)
 
@@ -476,7 +474,6 @@ if PLATFORM == 'x86' and PROJECT:
 if PLATFORM == 'arm' and PROJECT:
     # flash the MCU using openocd
     def flash_run(target, source, env):
-        is_smoke = str(target[0]) == 'flash_smoke.txt'
         OPENOCD = 'openocd'
         OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
         PROBE = 'cmsis-dap'
@@ -487,7 +484,7 @@ if PLATFORM == 'arm' and PROJECT:
             '-f target/stm32f0x.cfg',
             '-f {}/stm32f0-openocd.cfg'.format(PLATFORM_DIR),
             '-c "stm32f0x.cpu configure -rtos FreeRTOS"',
-            '-c "stm_flash {}"'.format(proj_bin(PROJECT, is_smoke)),
+            '-c "stm_flash {}"'.format(proj_bin(PROJECT, env.get("smoke"))),
             '-c shutdown'
         ]
         cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
@@ -497,6 +494,6 @@ if PLATFORM == 'arm' and PROJECT:
     Depends(flash, proj_bin(PROJECT))
     Alias('flash', flash)
 
-    flash_smoke = Command('flash_smoke.txt', [], flash_run)
+    flash_smoke = Command('flash_smoke.txt', [], flash_run, smoke=True)
     Depends(flash_smoke, proj_bin(PROJECT, True))
     Alias('flash_smoke', flash_smoke)

@@ -53,10 +53,6 @@ Unit tests are per-project/library and are built and run from scons. Functions m
 Features that would be nice to have in the future but haven't been done yet:
 - gdb on arm
 - tests on arm
-- command for formatting code
-- command for linting code
-- command for creating a new project and library from a template
 - split some code (e.g. code for building tests) into separate file
 - move the config.json schema into its own file
 - ensure unit test failures are handled properly
-
