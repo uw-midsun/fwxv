@@ -6,8 +6,8 @@
 {%- set messages = data["Messages"] -%}
 
 {%- for message in messages -%}
-{%- set signal = data['Messages'][message]['signals'].keys() | list -%}
-{%- set signal_length = data["Messages"][message]['signals'][signal[0]].values() | list %}
+    {%- set signal = data['Messages'][message]['signals'].keys() | list -%}
+    {%- set signal_length = data["Messages"][message]['signals'][signal[0]].values() | list %}
 
 {% set function_parameters -%}
 void can_pack_{{message}}(CanMessage *msg_ptr{%- for key in signal-%}, uint{{signal_length[0]}}_t {{key}}_u{{signal_length[0]}}{%- endfor-%}){ 
