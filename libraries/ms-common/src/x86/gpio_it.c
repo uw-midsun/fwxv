@@ -3,14 +3,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "FreeRTOS.h"
-#include "event_groups.h"
 #include "gpio.h"
 #include "interrupt_def.h"
 #include "status.h"
 #include "x86_interrupt.h"
-
-#define NOT_REGISTERED 0xFF
 
 typedef struct GpioItInterrupt {
   uint8_t interrupt_id;
@@ -22,9 +18,6 @@ typedef struct GpioItInterrupt {
 
 static uint8_t s_gpio_it_handler_id;
 static GpioItInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
-
-static EventGroupHandle_t s_event_group_handle;
-static StaticEventGroup_t s_event_group_data;
 
 static void prv_gpio_it_handler(uint8_t interrupt_id) {
   for (int i = 0; i < GPIO_PINS_PER_PORT; ++i) {

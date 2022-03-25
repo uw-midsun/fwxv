@@ -10,6 +10,12 @@
 #include "status.h"
 #include "task.h"
 
+// TEMP STRUCT PLACEHOLDER FOR BROADCASE
+typedef struct NotifySetting {
+  TaskHandle_t task;
+  uint8_t bit;
+} NotifySetting;
+
 // Initializes the interrupt handler for GPIO.
 void gpio_it_init(void);
 
@@ -20,8 +26,7 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge);
 // settings. Set the notify value bit of the task when a gpio_it occurs
 // The task to notify needs to be initialized before calling register interrupt
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
-                                      InterruptEdge edge, TaskHandle_t task_to_notify,
-                                      uint8_t bit_to_set);
+                                      const NotifySetting *notificationSetting);
 
 // Triggers an interrupt in software.
 StatusCode gpio_it_trigger_interrupt(const GpioAddress *address);
