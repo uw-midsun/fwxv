@@ -11,14 +11,16 @@
 #include "status.h"
 #include "timers.h"
 
+typedef TimerHandle_t SoftTimerId;
+
 // Create a soft timer with:
 // SoftTimer timer = { 0 };
 typedef struct SoftTimer {
   StaticTimer_t buffer;
-  TimerHandle_t handle;
+  SoftTimerId id;
 } SoftTimer;
 
-typedef void (*SoftTimerCallback)(TimerHandle_t handle);
+typedef void (*SoftTimerCallback)(SoftTimerId id);
 
 // Adds a software timer. The provided duration is the number of
 // miliseconds before running and the callback is the process to run once
