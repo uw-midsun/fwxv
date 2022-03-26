@@ -9,10 +9,12 @@
 static bool triggered = false;
 static TimerHandle_t last_triggered_id;
 
-void prv_set(TimerHandle_t id) {
+void prv_set(TimerHandle_t t) {
   triggered = true;
-  last_triggered_id = id;
+  // last_triggered_id = id;
 }
+
+void prv_run_callback(TimerHandle_t t) {}
 
 static SoftTimer s_timer;
 static SoftTimer s_timer_2;
