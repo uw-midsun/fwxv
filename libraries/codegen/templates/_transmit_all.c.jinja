@@ -13,7 +13,7 @@ void can_transmit_all() {
   can_pack_{{message}}(&msg {%- for signal in signals %}, &g_transmit_struct.{{message}}_{{signal}} {%- endfor %});
       {%- endset -%}
   {{function_parameters | format_function_parameters}}
-  can_transmit(&msg, NULL);
+  can_transmit_{{message}}(&msg, NULL);
 
   {% endfor %}
 }
