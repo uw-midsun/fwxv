@@ -164,7 +164,7 @@ def generate_header_files(env, target, source):
         if "can_board_ids" in template.name:
             env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File("boards"), template, libraries_inc_dir))
         else:
-            if "_getters" in template.name:
+            if template.name[:-8] in ["_getters", "_transmit_all"]:
                 env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File(PROJECT), template, header_output_dir))
             else:
                 env.Execute("{} -t {} -f {}".format(base_exec, template, header_output_dir))

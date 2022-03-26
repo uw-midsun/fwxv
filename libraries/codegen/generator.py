@@ -17,19 +17,45 @@ def read_yaml(yaml_file):
             raise Exception("No message or board present in yaml")
         return data
 
+def get_template_spacing(template):
+    # Returns an integer that indicates the amount of spaces needed leading up to the first open bracket
+    # Loop through the template until the first open bracket to find where the parameter declaration starts to determine correct spacing
+    spacing = 0
+    start_of_parameter = 0
+    for i in range(len(template)):
+        if '(' in template[i]:
+            start_of_parameter = i
+            break
+        else:
+            if '\n' in template[i]:
+                spacing += len(template[i]) - 1
+            else:
+                spacing += len(template[i])
+
+    # Count the number of letters leading up to the bracket
+    for i in range(len(template[start_of_parameter])):
+        if template[start_of_parameter][i] == '(':
+            spacing += 1
+            break
+        else:
+            spacing += 1
+    return spacing
+
 def format_function_parameters(template):
     # Custom jinja filter that takes in the function parameter string
     # and format it to indent to a new line whenever string length 
     # reaches 100 characters.
 
-    template = template.split()
+    template = re.split(r'(\s+)', template)
     letter_count = 0
+
+    parameter_tabbing_space = get_template_spacing(template)
     for i in range(len(template)):
-        letter_count += len(template[i]) + 1
+        letter_count += len(template[i])
         if letter_count >= 100:
-            template[i] = "\n" + (" "*(len(template[0]) + len(template[1]) - 9)) + template[i]
+            template[i] = "\n" + (" "*parameter_tabbing_space) + template[i]
             letter_count = len(template[i])
-    template = " ".join(template)
+    template = "".join(template)
     return (template)
 
 def format_function_body(template):
@@ -37,15 +63,17 @@ def format_function_body(template):
     # and format it to indent to a new line whenever string length 
     # reaches 100 characters.
     
-    template = template.split()
-    template[0] = '  ' + template[0] 
+    template = re.split(r'(\s+)', template)
+    template[0] = '  ' + template[0]
     letter_count = 0
+    
+    function_body_spacing = get_template_spacing(template=template)
     for i in range(len(template)):
-        letter_count += len(template[i]) + 1
+        letter_count += len(template[i])
         if letter_count >= 100:
-            template[i] = "\n" + (" " *(len(template[0]) - 10)) + template[i]
+            template[i] = "\n" + (" "*function_body_spacing) + template[i]
             letter_count = len(template[i])
-    template = " ".join(template)
+    template = "".join(template)
     return (template)
 
 def get_board_name(yaml_path):
