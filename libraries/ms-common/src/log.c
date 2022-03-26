@@ -11,13 +11,12 @@ static StaticQueue_t s_log_queue;
 // Array to hold items
 static uint8_t s_log_array[QUEUE_LENGTH * ITEM_SIZE];
 
-// Holds the queue object (either make this into the task or put the variables in header so task can
-// use it)
+// Queue handle definition
 QueueHandle_t g_log_queue = NULL;
 
 void log_init(void) {
   g_log_queue = xQueueCreateStatic(QUEUE_LENGTH, ITEM_SIZE, s_log_array, &s_log_queue);
-  tasks_init_task(log_task, TASK_PRIORITY(MIN_TASK_PRIORITY), NULL);
+  tasks_init_task(log_task, TASK_PRIORITY(tskIDLE_PRIORITY + 1), NULL);
 }
 
 TASK(log_task, TASK_STACK_256) {

@@ -8,9 +8,10 @@
 #include "task.h"
 #include "tasks.h"
 
+// NOTE: Log debug cannot be used in core
+
 DECLARE_TASK(log_task);
 
-// This definition is tentative
 #define QUEUE_LENGTH 32
 #define MAX_LOG_SIZE (size_t)200
 
@@ -18,9 +19,17 @@ DECLARE_TASK(log_task);
 #define IN_ORDER_LOGS 0
 #endif
 
-#define MIN_TASK_PRIORITY 1
-
+// Global queue handle used in all log calls
 extern QueueHandle_t g_log_queue;
+
+typedef enum {
+  LOG_LEVEL_DEBUG = 0,
+  LOG_LEVEL_WARN,
+  LOG_LEVEL_CRITICAL,
+  NUM_LOG_LEVELS,
+} LogLevel;
+
+void log_init(void);
 
 #define LOG_DEBUG(fmt, ...) LOG(LOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__)
 #define LOG_WARN(fmt, ...) LOG(LOG_LEVEL_WARN, fmt, ##__VA_ARGS__)
@@ -61,12 +70,3 @@ extern QueueHandle_t g_log_queue;
       }                                                                                 \
     }                                                                                   \
   } while (0)
-
-typedef enum {
-  LOG_LEVEL_DEBUG = 0,
-  LOG_LEVEL_WARN,
-  LOG_LEVEL_CRITICAL,
-  NUM_LOG_LEVELS,
-} LogLevel;
-
-void log_init(void);
