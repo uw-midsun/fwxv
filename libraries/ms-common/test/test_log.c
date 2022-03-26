@@ -9,6 +9,20 @@ void setup_test(void) {
   log_init();
 }
 
+TASK(blink_task, TASK_STACK_512) {
+  // should print
+  // "blink first"
+  // "blink critical"
+  // "blink second"
+  while (true) {
+    LOG_DEBUG("blink first\n");
+    delay_ms(2);
+    LOG_DEBUG("blink second\n");
+    LOG_CRITICAL("blink critical\n");
+    delay_ms(2);
+  }
+}
+
 // uncoment when testing log_debug for no scheduler
 // void test_log_no_scheduler(){
 //   LOG_DEBUG("this is a log debug \n");
@@ -16,16 +30,8 @@ void setup_test(void) {
 //   LOG_WARN("im afraid youre schedulerless\n");
 // }
 
+// comment out when testing with no scheduler
 TASK_TEST(test_log, TASK_STACK_512) {
-  // test normal log
-  // test log without scheduler (idk if this is possible)
-
-  // test log when the array gets filled up
-  // test all criticals
-  // test all debugs
-  /// test long string MAX string size 200
-  // Log the different variable types
-
   delay_ms(1);
 
   for (int i = 1; i <= 33; i++) {
@@ -72,4 +78,8 @@ TASK_TEST(test_log, TASK_STACK_512) {
             trash);
 
   delay_ms(50);
+
+  tasks_init_task(blink_task, TASK_PRIORITY(2), NULL);
+
+  delay_ms(8);
 }
