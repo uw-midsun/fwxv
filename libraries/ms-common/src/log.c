@@ -3,7 +3,7 @@
 #define ITEM_SIZE MAX_LOG_SIZE
 
 // Holds the output of snprintf
-char g_log_buffer[MAX_LOG_SIZE];
+char log_buffer[MAX_LOG_SIZE];
 
 // s_log_queue will hold the queue structure.
 static StaticQueue_t s_log_queue;
