@@ -26,6 +26,10 @@ typedef void (*SoftTimerCallback)(SoftTimerId id);
 // miliseconds before running and the callback is the process to run once
 // the time has expired.
 StatusCode soft_timer_start(uint32_t duration_ms, SoftTimerCallback callback, SoftTimer *timer);
+StatusCode soft_timer_start_with_context(uint32_t duration_ms, SoftTimerCallback callback,
+                                         SoftTimer *timer, void *context);
+
+void *soft_timer_get_context(SoftTimerId id);
 
 // Cancels the soft timer specified by name. Returns true if successful.
 // the timer is not cancelled immediately,

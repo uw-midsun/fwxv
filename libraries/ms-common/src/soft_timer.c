@@ -1,12 +1,21 @@
 #include "soft_timer.h"
 
 StatusCode soft_timer_start(uint32_t duration_ms, SoftTimerCallback callback, SoftTimer *timer) {
+  return soft_timer_start_with_context(duration_ms, callback, timer, NULL);
+}
+
+StatusCode soft_timer_start_with_context(uint32_t duration_ms, SoftTimerCallback callback,
+                                         SoftTimer *timer, void *context) {
   timer->id = xTimerCreateStatic(NULL, pdMS_TO_TICKS(duration_ms), pdFALSE,  //
-                                 NULL, callback, &timer->buffer);
+                                 context, callback, &timer->buffer);
   if (xTimerStart(timer->id, 0) != pdPASS) {
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "timer command queue is full");
   }
   return STATUS_CODE_OK;
+}
+
+void *soft_timer_get_context(SoftTimerId id) {
+  return pvTimerGetTimerID(id);
 }
 
 // Cancels the soft timer specified by name. Returns true if successful.

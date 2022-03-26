@@ -7,14 +7,14 @@
 #include "unity.h"
 
 static bool triggered = false;
-static TimerHandle_t last_triggered_id;
+static SoftTimerId last_triggered_id;
 
-void prv_set(TimerHandle_t t) {
+void prv_set(SoftTimerId id) {
   triggered = true;
-  // last_triggered_id = id;
+  last_triggered_id = id;
 }
 
-void prv_run_callback(TimerHandle_t t) {}
+void prv_run_callback(SoftTimerId t) {}
 
 static SoftTimer s_timer;
 static SoftTimer s_timer_2;
@@ -69,7 +69,7 @@ TASK_TEST(multiple_timer, TASK_STACK_1024) {
 
     TEST_ASSERT_TRUE(triggered);
     triggered = false;
-    TEST_ASSERT_EQUAL(last_triggered_id, s_timer_2.handle);
+    TEST_ASSERT_EQUAL(last_triggered_id, s_timer_2.id);
     TEST_ASSERT_TRUE(soft_timer_inuse(&s_timer));
     TEST_ASSERT_FALSE(soft_timer_inuse(&s_timer_2));
 
@@ -77,7 +77,7 @@ TASK_TEST(multiple_timer, TASK_STACK_1024) {
 
     TEST_ASSERT_TRUE(triggered);
     triggered = false;
-    TEST_ASSERT_EQUAL(last_triggered_id, s_timer.handle);
+    TEST_ASSERT_EQUAL(last_triggered_id, s_timer.id);
     TEST_ASSERT_FALSE(soft_timer_inuse(&s_timer));
     TEST_ASSERT_FALSE(soft_timer_inuse(&s_timer_2));
   }
