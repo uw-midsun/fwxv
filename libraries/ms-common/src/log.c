@@ -22,7 +22,7 @@ void log_init(void) {
 
 TASK(log_task, TASK_STACK_256) {
   // Buffer to hold the received message from QueueReceive
-  char rx_buffer[MAX_LOG_SIZE];
+  static char rx_buffer[MAX_LOG_SIZE];
 
   // All tasks MUST loop forever and cannot return.
   while (true) {
