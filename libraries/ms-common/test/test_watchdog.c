@@ -7,7 +7,7 @@ static WatchDog s_watchdog;
 
 bool callback_called = false;
 
-static void prv_callback() {
+static void prv_callback(SoftTimerId id) {
   callback_called = true;
 }
 
