@@ -3,7 +3,7 @@
 #define ITEM_SIZE MAX_LOG_SIZE
 
 // Holds the output of snprintf
-char g_buffer[MAX_LOG_SIZE];
+char g_log_buffer[MAX_LOG_SIZE];
 
 // s_log_queue will hold the queue structure.
 static StaticQueue_t s_log_queue;
@@ -21,17 +21,16 @@ void log_init(void) {
 }
 
 TASK(log_task, TASK_STACK_256) {
+  // Buffer to hold the received message from QueueReceive
   char rx_buffer[MAX_LOG_SIZE];
 
   // All tasks MUST loop forever and cannot return.
   while (true) {
-    if (uxQueueSpacesAvailable(g_log_queue) == 0) {
-      printf("Error: Log queue is full\n");
-    }
-    if (uxQueueMessagesWaiting(g_log_queue) != 0) {
-      if (xQueueReceive(g_log_queue, (rx_buffer), (TickType_t)0)) {
-        printf("%s", rx_buffer);
+    if (xQueueReceive(g_log_queue, rx_buffer, portMAX_DELAY)) {
+      if (uxQueueSpacesAvailable(g_log_queue) <= 1) {
+        printf("WARNING: Log queue is full\n");
       }
+      printf("%s", rx_buffer);
     }
   }
 }
