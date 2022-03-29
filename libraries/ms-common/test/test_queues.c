@@ -21,24 +21,21 @@ static StaticQueue_t s_queue;
 static uint8_t s_queue_buf[BUF_SIZE];
 static QueueHandle_t s_queue_handle;
 
-static Queue* queue;
+static Queue queue;
 
 static bool s_task_started;
 
 void setup_test(void) {
   s_task_started = false;
-  Queue queue1 = {
-    .handle = s_queue_handle,
-    .queue = s_queue,
-    .item_size = sizeof(uint8_t),
-    .num_items = LIST_SIZE,
-    .storage_buf = s_queue_buf
-  };
 
-  queue = &queue1;
+  queue.handle = s_queue_handle;
+  queue.queue = s_queue;
+  queue.item_size = sizeof(uint8_t);
+  queue.num_items = LIST_SIZE;
+  queue.storage_buf = s_queue_buf;
 
   BaseType_t status;
-  status = queue_init(queue);
+  status = queue_init(&queue);
   if(status == STATUS_CODE_OK) LOG_DEBUG("Q created\n");
 }
 
@@ -50,11 +47,12 @@ TASK(sendMessages, TASK_STACK_512) {
   uint8_t index = 0;
 
   while (true) {
-    delay_ms(100);
-    status = queue_send(queue, (void *) &s_list[index], 0);
+    status = queue_send(&queue, (void *) &s_list[index], 100);
     if (status != STATUS_CODE_OK) {
       LOG_DEBUG("Error writing to queue %d\n", index);
       continue;
+    } else {
+      LOG_DEBUG("Success %d\n", index);
     }
     if (++index == 5) {
       index = 0;
@@ -64,23 +62,22 @@ TASK(sendMessages, TASK_STACK_512) {
 
 TASK(printMessages, TASK_STACK_512) {
     BaseType_t status;
-    const uint8_t out;
+    const uint8_t outstr;
     while (true) {
-      delay_ms(100);
-      status = queue_receive(queue, out, 0);
+      status = queue_receive(&queue, &outstr, 100);
       if (status != STATUS_CODE_OK) {
         LOG_DEBUG("Error reading from queue\n");
         continue;
       }
-      LOG_DEBUG("Received string: %s in task 2\n", out);
+      LOG_DEBUG("Received int: %d in task 2\n", outstr);
     }
 }
 
 TASK_TEST(test_running_task, TASK_STACK_512) {
   // Start the task: note no need to call tasks_start() because we're inside a test task and
   // FreeRTOS is already running.
-  tasks_init_task(sendMessages, TASK_PRIORITY(1), NULL);
-  // tasks_init_task(printMessages, TASK_PRIORITY(1), NULL);
+  tasks_init_task(sendMessages, TASK_PRIORITY(2), NULL);
+  tasks_init_task(printMessages, TASK_PRIORITY(1), NULL);
 
   // The task doesn't start immediately because the test task has the highest priority.
   TEST_ASSERT_FALSE(s_task_started);
