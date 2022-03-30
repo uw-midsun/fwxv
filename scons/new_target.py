@@ -41,7 +41,7 @@ def generate_config(target_type):
     Returns:
         dict: dictionary representation of the initial config.json file.
     """
-    deps = DEFAULT_DEPS if target_type == 'project' else []
+    deps = DEFAULT_DEPS if target_type == 'project' or target_type == 'smoke' else []
 
     return {"libs": deps}
 
@@ -72,7 +72,8 @@ def new_target(target_type, name):
     """
     type_folders = {
         'project': 'projects',
-        'library': 'libraries'
+        'library': 'libraries',
+        'smoke': 'smoke'
     }
 
     proj_path = os.path.join(type_folders[target_type], name)
@@ -93,7 +94,7 @@ def new_target(target_type, name):
 def main():
     """Main entry point of program"""
     parser = argparse.ArgumentParser(description='Creates new project/library')
-    parser.add_argument('type', choices=['project', 'library'])
+    parser.add_argument('type', choices=['project', 'library', 'smoke'])
     parser.add_argument('name')
     args = parser.parse_args()
 

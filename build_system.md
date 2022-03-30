@@ -21,17 +21,23 @@ Unit tests are per-project/library and are built and run from scons. Functions m
     - e.g. `scons test --platform=x86 --library=core --test=status`
 
 ### Convenience commands:
-- `new [name]`: Creates a new project or library with the given name.
+
+- `new [name]`: Creates a new project, smoke project, or library with the given name.
     - e.g. `scons new --project=my_new_project`
     - e.g. `scons new --library=my_new_library`
+    - e.g. `scons new_smoke --project=my_smoke_test`
 - `clean`: Delete the `build` directory.
     - e.g. `scons clean`
 - `sim [project]`: (x86 specific) Run the project's binary.
     - e.g. `scons sim --project=leds --platform=x86`
+    - e.g. `scons sim_smoke --project=smoke_leds --platform=x86`
+    - `sim_smoke` should be used for smoke tests.
 - `gdb [project]`: (x86 specific) Run the project's binary with gdb.
     - e.g. `scons gdb --project=leds --platform=x86`
+    - e.g. `scons gdb_smoke --project=smoke_leds --platform=x86`
 - `flash [project]`: (arm specific) Flash the project's binary using openocd. A controller board must be connected an powered.
     - e.g. `scons flash --project=leds`
+    - e.g. `scons flash_smoke --project=smoke_leds`
 - `lint`: Lints all files.
     - Can specify `--project` or `--library` argument to only lint specific project/library
 - `format`: Formats all files.
@@ -47,10 +53,6 @@ Unit tests are per-project/library and are built and run from scons. Functions m
 Features that would be nice to have in the future but haven't been done yet:
 - gdb on arm
 - tests on arm
-- command for formatting code
-- command for linting code
-- command for creating a new project and library from a template
 - split some code (e.g. code for building tests) into separate file
 - move the config.json schema into its own file
 - ensure unit test failures are handled properly
-
