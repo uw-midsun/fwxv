@@ -9,35 +9,30 @@ typedef struct Subscription {
 static uint8_t s_topic_indices[NUM_TOPICS];
 static Subscription s_task_publish_table[NUM_TOPICS][NUM_TOPIC_ENTRIES];
 
-bool event_from_notification(uint32_t *notification, Event *event) {
+StatusCode event_from_notification(uint32_t *notification, Event *event) {
   if (notification == NULL) {
-    // This should not occur
-    LOG_WARN("Invalid Input"); 
-    event = NULL;
-    return true;
+    *event = INVALID_EVENT;
+    return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid Input");
+  }
+  if (*notification == 0) {
+    *event = INVALID_EVENT;
+    return STATUS_CODE_OK;
   }
   // Get index of first 1 in notification
   *event = 31 - __builtin_clz(*notification);
   // Clear bit
-  *notification = *notification & ~(1<<*event);
+  *notification = *notification & ~(1u << *event);
+
   // Check if there are still bits to clear
-  if (*notification) {
-    return true;
-  } else {
-    return false;
-  }
-}
-  
-StatusCode notify_get(uint32_t *notification) {
-  if (notification == NULL) {
-    return STATUS_CODE_INVALID_ARGS;
-  }
-  BaseType_t result = xTaskNotifyWait(0, 0, notification, 0);
-  if (result) {
+  if (*notification == 0) {
     return STATUS_CODE_OK;
   } else {
-    return STATUS_CODE_EMPTY;
+    return STATUS_CODE_INCOMPLETE;
   }
+}
+
+StatusCode notify_get(uint32_t *notification) {
+  return notify_wait(notification, 0);
 }
 
 StatusCode notify_wait(uint32_t *notification, uint32_t ms_to_wait) {
@@ -51,7 +46,7 @@ StatusCode notify_wait(uint32_t *notification, uint32_t ms_to_wait) {
     ticks_to_wait = pdMS_TO_TICKS(ms_to_wait);
   }
   // Block on notification arriving
-  BaseType_t result = xTaskNotifyWait(0, 0, notification, ticks_to_wait);
+  BaseType_t result = xTaskNotifyWait(0, UINT32_MAX, notification, ticks_to_wait);
   if (result) {
     return STATUS_CODE_OK;
   } else {
@@ -60,13 +55,22 @@ StatusCode notify_wait(uint32_t *notification, uint32_t ms_to_wait) {
 }
 
 StatusCode notify(TaskHandle_t task, Event event) {
-  BaseType_t result = xTaskNotify(task, 1 << event, eSetBits);
+  if (event >= INVALID_EVENT) {
+    return STATUS_CODE_INVALID_ARGS;
+  }
+  BaseType_t result = xTaskNotify(task, 1u << event, eSetBits);
   // Should always return true
   if (result) {
     return STATUS_CODE_OK;
   } else {
     return STATUS_CODE_UNKNOWN;
   }
+}
+
+void notify_from_isr(TaskHandle_t task, Event event) {
+  BaseType_t task_woken = 0;
+  xTaskNotifyFromISR(task, 1u << event, eSetBits, &task_woken);
+  portYIELD_FROM_ISR(task_woken);
 }
 
 StatusCode subscribe(TaskHandle_t task, Topic topic, Event event) {
@@ -95,18 +99,12 @@ StatusCode publish(Topic topic) {
   if (topic >= NUM_TOPICS) {
     return STATUS_CODE_INVALID_ARGS;
   }
-  // Iterate through all stored subscriptions, notifying the 
+  // Iterate through all stored subscriptions, notifying the
   // task at its specified event
   for (uint8_t sub = 0; sub < s_topic_indices[topic]; sub++) {
     Subscription *pub = &s_task_publish_table[topic][sub];
+    struct tskTaskControlBlock *t = pub->task;
     status_ok_or_return(notify(pub->task, pub->e));
   }
   return STATUS_CODE_OK;
 }
-
-
-
-
-
-
-

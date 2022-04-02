@@ -1,8 +1,8 @@
-#include "notify.h"
-#include "unity.h"
-#include "test_helpers.h"
-#include "task_test_helpers.h"
 #include "delay.h"
+#include "notify.h"
+#include "task_test_helpers.h"
+#include "test_helpers.h"
+#include "unity.h"
 
 void setup_test(void) {}
 void teardown_test(void) {}
@@ -47,7 +47,7 @@ TASK(receive_task, TASK_STACK_512) {
   // Wait for notifications to stack up, then iterate through received
   delay_ms(1);
   uint8_t i = 0;
-  while(event_from_notification(&notification, &e)) {
+  while (event_from_notification(&notification, &e)) {
     TEST_ASSERT_EQUAL(s_notify_events[i], e);
     i++;
   }
@@ -57,4 +57,4 @@ TASK_TEST(test_notifications, TASK_MIN_STACK_SIZE) {
   tasks_init_task(notify_task, TASK_PRIORITY(1), NULL);
   tasks_init_task(receive_task, TASK_PRIORITY(1), NULL);
   delay_ms(20);
-}  
+}

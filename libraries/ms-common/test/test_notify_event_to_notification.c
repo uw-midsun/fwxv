@@ -1,6 +1,6 @@
 #include "notify.h"
-#include "unity.h"
 #include "test_helpers.h"
+#include "unity.h"
 
 void setup_test(void) {}
 void teardown_test(void) {}
@@ -46,7 +46,7 @@ void test_invalid_args(void) {
   StatusCode result;
   Event event;
   uint32_t notification;
-  
+
   // Failure on NULL notification
   event = 0;
   result = event_from_notification(NULL, &event);
