@@ -10,7 +10,7 @@
 //
 //   #include "tasks.h"
 //   ...
-//   tasks_init_task(my_task, TEST_PRIORITY(1), NULL);
+//   tasks_init_task(my_task, TASK_PRIORITY(1), NULL);
 //
 // Note that since the FreeRTOS scheduler is already running within a test task, there is no need to
 // call tasks_start().
