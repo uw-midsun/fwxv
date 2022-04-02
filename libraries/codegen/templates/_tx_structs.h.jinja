@@ -9,7 +9,7 @@ typedef struct
 {
 {%- for message in messages -%}
     {%- set signals = data['Messages'][message]['signals'].keys() | list -%}
-    {%- for signal in signals%}
+    {%- for signal in signals %}
     uint8_t {{message}}_{{signal}};
     {%- endfor -%}
 {% endfor %}
