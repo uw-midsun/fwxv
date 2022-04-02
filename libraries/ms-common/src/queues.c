@@ -1,4 +1,5 @@
 #include "queues.h"
+
 #include <string.h>
 
 StatusCode queue_init(Queue *queue) {

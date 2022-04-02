@@ -1,7 +1,6 @@
 {
     "libs": [
-        "ms-freertos",
-        "core"
+        "ms-freertos"
     ],
     "cflags": [
         "-ffreestanding",
