@@ -1,0 +1,16 @@
+#pragma once
+
+{%- set messages = data["Messages"] -%}
+{%- set board = data["Board"] %}
+
+#include <stdint.h>
+
+typedef struct
+{
+{%- for message in messages -%}
+    {%- set signals = data['Messages'][message]['signals'].keys() | list -%}
+    {%- for signal in signals%}
+    uint8_t {{message}}_{{signal}};
+    {%- endfor -%}
+{% endfor %}
+} {{board}}_tx_struct;
