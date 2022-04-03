@@ -19,7 +19,7 @@ StatusCode gpio_init(void) {
   StatusCode status = mutex_init(&s_gpioMutex);
 
   if (status != STATUS_CODE_OK) {
-    return status_code(status)
+    return status_code(status);
   }
 
   return status;
