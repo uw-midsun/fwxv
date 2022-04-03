@@ -36,7 +36,8 @@ TASK(task1, TASK_STACK_512) {
     status = gpio_get_state(&s_gpio_addr, &state);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
     TEST_ASSERT_TRUE(state == GPIO_STATE_LOW);
-    delay_ms(200);
+    LOG_DEBUG("task1 loop finished\n");
+    delay_ms(300);
   }
 }
 
@@ -66,6 +67,7 @@ TASK(task2, TASK_STACK_512) {
       TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
       TEST_ASSERT_TRUE(state == GPIO_STATE_HIGH);
     }
+    LOG_DEBUG("task2 loop finished\n");
     delay_ms(100);
   }
 }
