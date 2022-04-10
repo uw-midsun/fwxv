@@ -13,10 +13,10 @@ static GPIO_TypeDef *s_gpio_port_map[] = { GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GP
 static uint32_t s_gpio_rcc_ahb_timer_map[] = { RCC_AHBPeriph_GPIOA, RCC_AHBPeriph_GPIOB,
                                                RCC_AHBPeriph_GPIOC, RCC_AHBPeriph_GPIOD,
                                                RCC_AHBPeriph_GPIOE, RCC_AHBPeriph_GPIOF };
-static Mutex s_gpioMutex;
+static Mutex s_gpio_mutex;
 
 StatusCode gpio_init(void) {
-  StatusCode status = mutex_init(&s_gpioMutex);
+  StatusCode status = mutex_init(&s_gpio_mutex);
 
   if (status != STATUS_CODE_OK) {
     return status_code(status);
@@ -26,14 +26,14 @@ StatusCode gpio_init(void) {
 }
 
 StatusCode gpio_init_pin(const GpioAddress *address, const GpioSettings *settings) {
-  StatusCode status = mutex_lock(&s_gpioMutex, BLOCK_INDEFINITELY);
+  StatusCode status = mutex_lock(&s_gpio_mutex, BLOCK_INDEFINITELY);
 
   if (status != STATUS_CODE_OK) {
     return status_code(status);
   } else if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT ||
       settings->direction >= NUM_GPIO_DIRS || settings->state >= NUM_GPIO_STATES ||
       settings->resistor >= NUM_GPIO_RESES || settings->alt_function >= NUM_GPIO_ALTFNS) {
-    mutex_unlock(&s_gpioMutex);
+    mutex_unlock(&s_gpio_mutex);
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
@@ -79,33 +79,33 @@ StatusCode gpio_init_pin(const GpioAddress *address, const GpioSettings *setting
 
   // Use the init_struct to set the pin.
   GPIO_Init(s_gpio_port_map[address->port], &init_struct);
-  mutex_unlock(&s_gpioMutex);
+  mutex_unlock(&s_gpio_mutex);
   return STATUS_CODE_OK;
 }
 
 StatusCode gpio_set_state(const GpioAddress *address, GpioState state) {
-  StatusCode status = mutex_lock(&s_gpioMutex, BLOCK_INDEFINITELY);
+  StatusCode status = mutex_lock(&s_gpio_mutex, BLOCK_INDEFINITELY);
 
   if (status != STATUS_CODE_OK) {
     return status_code(status);
   } else if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT ||
       state >= NUM_GPIO_STATES) {
-    mutex_unlock(&s_gpioMutex);
+    mutex_unlock(&s_gpio_mutex);
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
   GPIO_WriteBit(s_gpio_port_map[address->port], 0x01 << address->pin, (BitAction)state);
-  mutex_unlock(&s_gpioMutex);
+  mutex_unlock(&s_gpio_mutex);
   return STATUS_CODE_OK;
 }
 
 StatusCode gpio_toggle_state(const GpioAddress *address) {
-  StatusCode status = mutex_lock(&s_gpioMutex, BLOCK_INDEFINITELY);
+  StatusCode status = mutex_lock(&s_gpio_mutex, BLOCK_INDEFINITELY);
 
   if (status != STATUS_CODE_OK) {
     return status_code(status);
   } else if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
-    mutex_unlock(&s_gpioMutex);
+    mutex_unlock(&s_gpio_mutex);
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
@@ -117,22 +117,22 @@ StatusCode gpio_toggle_state(const GpioAddress *address) {
     GPIO_SetBits(s_gpio_port_map[address->port], pin);
   }
 
-  mutex_unlock(&s_gpioMutex);
+  mutex_unlock(&s_gpio_mutex);
   return STATUS_CODE_OK;
 }
 
 StatusCode gpio_get_state(const GpioAddress *address, GpioState *input_state) {
-  StatusCode status = mutex_lock(&s_gpioMutex, BLOCK_INDEFINITELY);
+  StatusCode status = mutex_lock(&s_gpio_mutex, BLOCK_INDEFINITELY);
 
   if (status != STATUS_CODE_OK) {
     return status_code(status);
   } else if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
-    mutex_unlock(&s_gpioMutex);
+    mutex_unlock(&s_gpio_mutex);
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
   *input_state = GPIO_ReadInputDataBit(s_gpio_port_map[address->port], 0x01 << address->pin);
 
-  mutex_unlock(&s_gpioMutex);
+  mutex_unlock(&s_gpio_mutex);
   return STATUS_CODE_OK;
 }
