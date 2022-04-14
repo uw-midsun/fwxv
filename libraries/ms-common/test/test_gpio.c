@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "delay.h"
 #include "log.h"
@@ -31,13 +32,26 @@ TASK(task1, TASK_STACK_512) {
 
   // Loop forever, because tasks should not exit.
   while (true) {
-    status = gpio_set_state(&s_gpio_addr, GPIO_STATE_LOW);
+    LOG_DEBUG("task1 loop start\n");
+    status = gpio_set_state(&s_gpio_addr, GPIO_STATE_HIGH);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
+    usleep(10000);
+
+    status = gpio_get_state(&s_gpio_addr, &state);
+    TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
+    TEST_ASSERT_TRUE(state == GPIO_STATE_HIGH);
+    usleep(1000);
+
+    status = gpio_toggle_state(&s_gpio_addr);
+    TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
+    usleep(10000);
+
     status = gpio_get_state(&s_gpio_addr, &state);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
     TEST_ASSERT_TRUE(state == GPIO_STATE_LOW);
+
     LOG_DEBUG("task1 loop finished\n");
-    delay_ms(300);
+    delay_ms(10);
   }
 }
 
@@ -48,27 +62,23 @@ TASK(task2, TASK_STACK_512) {
 
   // Loop forever, because tasks should not exit.
   while (true) {  
-    status = gpio_set_state(&s_gpio_addr, GPIO_STATE_HIGH);
+    LOG_DEBUG("task2 loop start\n");
+    status = gpio_get_state(&s_gpio_addr, &state);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
+    TEST_ASSERT_TRUE(state == GPIO_STATE_LOW);
+    usleep(10000);
+
+    status = gpio_toggle_state(&s_gpio_addr);
+    TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
+    usleep(10000);
+
     status = gpio_get_state(&s_gpio_addr, &state);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
     TEST_ASSERT_TRUE(state == GPIO_STATE_HIGH);
-    delay_ms(100);
-    status = gpio_get_state(&s_gpio_addr, &state);
-    TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
-    status = gpio_toggle_state(&s_gpio_addr);
-    TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
-    if (state == GPIO_STATE_HIGH) {
-      status = gpio_get_state(&s_gpio_addr, &state);
-      TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
-      TEST_ASSERT_TRUE(state == GPIO_STATE_LOW);
-    } else {
-      status = gpio_get_state(&s_gpio_addr, &state);
-      TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
-      TEST_ASSERT_TRUE(state == GPIO_STATE_HIGH);
-    }
+    usleep(10000);
+
     LOG_DEBUG("task2 loop finished\n");
-    delay_ms(100);
+    delay_ms(10);
   }
 }
 
