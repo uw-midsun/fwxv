@@ -23,10 +23,8 @@ void setup_test(void) {
   queue.num_items = LIST_SIZE;
   queue.storage_buf = s_queue_buf;
 
-  BaseType_t status;
-  status = queue_init(&queue);
-  if(status == STATUS_CODE_OK)
-    LOG_DEBUG("Q created with %d item capacity\n", queue_get_num_items(&queue));
+  queue_init(&queue);
+  TEST_ASSERT_EQUAL_UINT32(queue_get_num_items(&queue), QUEUE_LENGTH);
 }
 
 void teardown_test(void) {}
@@ -38,7 +36,6 @@ TASK(sendMessages, TASK_STACK_512) {
   while (true) {
     do {
       status = queue_send(&queue, (void *) &s_list[index], 100);
-      if (status==STATUS_CODE_OK)
       if (++index == QUEUE_LENGTH) {
         index = 0;
       }
@@ -57,11 +54,11 @@ TASK(receiveMessages, TASK_STACK_512) {
     while (true) {
       status = queue_receive(&queue, &outstr, 100);
       if (status != STATUS_CODE_OK) {
-        TEST_ASSERT_EQUAL_UINT8_ARRAY(s_list, recv_str, QUEUE_LENGTH);
         delay_ms(100);
         continue;
       }
       recv_str[index] = outstr;
+      TEST_ASSERT_EQUAL_UINT8_ARRAY(s_list, recv_str, index+1);
       if (++index == QUEUE_LENGTH) {
         index = 0;
       }
@@ -76,7 +73,9 @@ TASK(peekMessages, TASK_STACK_512) {
       status = queue_peek(&queue, &outstr, 200);
       if (status != STATUS_CODE_OK) {
       } else {
-        TEST_ASSERT_EQUAL_UINT8(5, outstr);
+        // Peek runs immediately after the queue is filled so
+        // assert first item sent
+        TEST_ASSERT_EQUAL_UINT8(s_list[0], outstr);
         delay_ms(500);
       }
     }
