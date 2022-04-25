@@ -47,18 +47,22 @@ TASK(sendMessages, TASK_STACK_512) {
 TASK(receiveMessages, TASK_STACK_512) {
     BaseType_t status;
     uint8_t outstr = 0;
-    uint8_t recv_str[QUEUE_LENGTH] = {0};
+    uint8_t prev_outstr = 0;
     uint8_t index = 0;
 
     delay_ms(200);
     while (true) {
+      prev_outstr = outstr;
       status = queue_receive(&queue, &outstr, 100);
       if (status != STATUS_CODE_OK) {
+        // Outstrs are the same for previous and current iteration,
+        // recieve failed
+        TEST_ASSERT_EQUAL_UINT8(outstr, prev_outstr);
         delay_ms(100);
         continue;
       }
-      recv_str[index] = outstr;
-      TEST_ASSERT_EQUAL_UINT8_ARRAY(s_list, recv_str, index+1);
+      // Outstr is expected value
+      TEST_ASSERT_EQUAL_UINT8(outstr, s_list[index]);
       if (++index == QUEUE_LENGTH) {
         index = 0;
       }
