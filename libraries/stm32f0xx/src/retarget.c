@@ -5,6 +5,7 @@
 
 #include "retarget_cfg.h"
 #include "stm32f0xx.h"
+#include "mutex.h"
 
 static void prv_init_gpio(void) {
   RETARGET_CFG_UART_GPIO_ENABLE_CLK();
@@ -25,6 +26,8 @@ static void prv_init_gpio(void) {
   GPIO_Init(RETARGET_CFG_UART_GPIO_PORT, &gpio_init);
 }
 
+static Mutex _write_mutex;
+
 void retarget_init(void) {
   RETARGET_CFG_UART_ENABLE_CLK();
   prv_init_gpio();
@@ -35,11 +38,12 @@ void retarget_init(void) {
   USART_Init(RETARGET_CFG_UART, &usart_init);
 
   USART_Cmd(RETARGET_CFG_UART, ENABLE);
+
+  mutex_init(&_write_mutex);
 }
 
 int _write(int fd, char *ptr, int len) {
-  uint32_t primask = __get_PRIMASK();
-  __disable_irq();
+  mutex_lock(&_write_mutex, BLOCK_INDEFINITELY);
 
   for (int i = 0; i < len; i++) {
     while (USART_GetFlagStatus(RETARGET_CFG_UART, USART_FLAG_TXE) == RESET) {
@@ -47,10 +51,7 @@ int _write(int fd, char *ptr, int len) {
     USART_SendData(RETARGET_CFG_UART, (uint8_t) * (ptr + i));
   }
 
-  if (!primask) {
-    __enable_irq();
-  }
-
+  mutex_unlock(&_write_mutex);
   return len;
 }
 
