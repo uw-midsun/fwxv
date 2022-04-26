@@ -3,9 +3,9 @@
 
 #include <stdio.h>
 
+#include "mutex.h"
 #include "retarget_cfg.h"
 #include "stm32f0xx.h"
-#include "mutex.h"
 
 static void prv_init_gpio(void) {
   RETARGET_CFG_UART_GPIO_ENABLE_CLK();
