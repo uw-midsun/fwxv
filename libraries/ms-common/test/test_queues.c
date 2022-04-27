@@ -59,12 +59,12 @@ TASK(receiveMessages, TASK_STACK_512) {
         // recieve failed
         TEST_ASSERT_EQUAL_UINT8(outstr, prev_outstr);
         delay_ms(100);
-        continue;
-      }
-      // Outstr is expected value
-      TEST_ASSERT_EQUAL_UINT8(outstr, s_list[index]);
-      if (++index == QUEUE_LENGTH) {
-        index = 0;
+      } else {
+        // Outstr is expected value
+        TEST_ASSERT_EQUAL_UINT8(outstr, s_list[index]); 
+        if (++index == QUEUE_LENGTH) {
+          index = 0;
+        }
       }
     }
 }
