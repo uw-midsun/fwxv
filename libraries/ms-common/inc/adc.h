@@ -14,6 +14,14 @@ typedef enum {
   NUM_ADC_MODES,
 } AdcMode;
 
+extern const GpioAddress ADC_BAT;
+extern const GpioAddress ADC_REF;
+extern const GpioAddress ADC_TEMP;
+
+// const GpioAddress ADC_CHANNEL_BAT = { .port = NUM_GPIO_PORTS, .pin = 15 };
+
+typedef void (*AdcCallback)(uint8_t adc_channel, void *context);
+
 // Initialize the ADC to the desired conversion mode
 void adc_init(AdcMode adc_mode);
 
@@ -21,17 +29,17 @@ void adc_init(AdcMode adc_mode);
 // A race condition may occur when setting a pin during a conversion.
 // However, it should not cause issues given the intended use cases
 // To set adc channels REF/TEMP/BAT, you must use adc_set_channel() below
-StatusCode adc_set_channel_pin(GpioAddress address, bool new_state);
+StatusCode adc_set_channel(GpioAddress address, bool new_state);
 
 // Register a callback function to be called when the specified pin
 // completes a conversion
-StatusCode adc_register_callback_pin(GpioAddress address, AdcPinCallback callback, void *context);
+StatusCode adc_register_callback(GpioAddress address);
 
 // Do not call |adc_read_raw/converted| or |adc_read_raw/converted_pin| from an interrupt callback
 // with INTERRUPT_PRIORITY_HIGH, as it will cause deadlock.
 
 // Obtain the raw 12-bit value read by the specified pin
-StatusCode adc_read_raw_pin(GpioAddress address, uint16_t *reading);
+StatusCode adc_read_raw(GpioAddress address, uint16_t *reading);
 
 // Obtain the converted value at the specified pin, in mV
-StatusCode adc_read_converted_pin(GpioAddress address, uint16_t *reading);
+StatusCode adc_read_converted(GpioAddress address, uint16_t *reading);
