@@ -2,9 +2,9 @@
 
 #include "delay.h"
 #include "log.h"
+#include "queues.h"
 #include "task_test_helpers.h"
 #include "tasks.h"
-#include "queues.h"
 #include "unity.h"
 
 #define LIST_SIZE 5
@@ -18,7 +18,6 @@ static uint8_t s_queue_buf[BUF_SIZE];
 static Queue queue;
 
 void setup_test(void) {
-
   queue.item_size = sizeof(uint8_t);
   queue.num_items = LIST_SIZE;
   queue.storage_buf = s_queue_buf;
@@ -35,60 +34,60 @@ TASK(sendMessages, TASK_STACK_512) {
 
   while (true) {
     do {
-      status = queue_send(&queue, (void *) &s_list[index], 100);
+      status = queue_send(&queue, (void *)&s_list[index], 100);
       if (++index == QUEUE_LENGTH) {
         index = 0;
       }
-    } while(status == STATUS_CODE_OK);
+    } while (status == STATUS_CODE_OK);
     delay_ms(2000);
   }
 }
 
 TASK(receiveMessages, TASK_STACK_512) {
-    BaseType_t status;
-    uint8_t outstr = 0;
-    uint8_t prev_outstr = 0;
-    uint8_t index = 0;
+  BaseType_t status;
+  uint8_t outstr = 0;
+  uint8_t prev_outstr = 0;
+  uint8_t index = 0;
 
-    delay_ms(200);
-    while (true) {
-      prev_outstr = outstr;
-      status = queue_receive(&queue, &outstr, 100);
-      if (status != STATUS_CODE_OK) {
-        // Outstrs are the same for previous and current iteration,
-        // recieve failed
-        TEST_ASSERT_EQUAL_UINT8(outstr, prev_outstr);
-        delay_ms(100);
-      } else {
-        // Outstr is expected value
-        TEST_ASSERT_EQUAL_UINT8(outstr, s_list[index]); 
-        if (++index == QUEUE_LENGTH) {
-          index = 0;
-        }
+  delay_ms(200);
+  while (true) {
+    prev_outstr = outstr;
+    status = queue_receive(&queue, &outstr, 100);
+    if (status != STATUS_CODE_OK) {
+      // Outstrs are the same for previous and current iteration,
+      // recieve failed
+      TEST_ASSERT_EQUAL_UINT8(outstr, prev_outstr);
+      delay_ms(100);
+    } else {
+      // Outstr is expected value
+      TEST_ASSERT_EQUAL_UINT8(outstr, s_list[index]);
+      if (++index == QUEUE_LENGTH) {
+        index = 0;
       }
     }
+  }
 }
 
 TASK(peekMessages, TASK_STACK_512) {
-    BaseType_t status;
-    uint8_t outstr = 0;
+  BaseType_t status;
+  uint8_t outstr = 0;
 
-    while(true) {
-      status = queue_peek(&queue, &outstr, 200);
-      if (status != STATUS_CODE_OK) {
-      } else {
-        // Peek runs immediately after the queue is filled so
-        // assert first item sent
-        TEST_ASSERT_EQUAL_UINT8(s_list[0], outstr);
-        delay_ms(500);
-      }
+  while (true) {
+    status = queue_peek(&queue, &outstr, 200);
+    if (status != STATUS_CODE_OK) {
+    } else {
+      // Peek runs immediately after the queue is filled so
+      // assert first item sent
+      TEST_ASSERT_EQUAL_UINT8(s_list[0], outstr);
+      delay_ms(500);
     }
+  }
 }
 
 TASK_TEST(test_running_task, TASK_STACK_512) {
   // Send
   tasks_init_task(sendMessages, TASK_PRIORITY(3), NULL);
-  
+
   delay_ms(100);
 
   // Peek and receive
