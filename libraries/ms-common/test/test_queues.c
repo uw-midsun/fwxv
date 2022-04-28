@@ -1,7 +1,6 @@
 #include <stdbool.h>
 
 #include "delay.h"
-#include "log.h"
 #include "queues.h"
 #include "task_test_helpers.h"
 #include "tasks.h"
