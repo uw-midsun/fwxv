@@ -32,10 +32,10 @@ TASK_TEST(soft_timer_test, TASK_STACK_1024) {
 
     soft_timer_cancel(&s_timer);
 
-    xTaskDelayUntil(&last_wake,
-                    2);  // if soft_timer wasn't cancelled, it should be finished by now, check if
-                         // triggered was set
-                         // this delay also let soft_timer cancel to be processed
+    xTaskDelayUntil(&last_wake, 2);
+    // if soft_timer wasn't cancelled, it should be finished by now, check if
+    // triggered was set
+    // this delay also let soft_timer cancel to be processed
     TEST_ASSERT_FALSE(triggered);
     TEST_ASSERT_FALSE(soft_timer_inuse(&s_timer));
 
