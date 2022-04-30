@@ -82,9 +82,11 @@ TEST_DIR = BUILD_DIR.Dir('test')
 
 PROJ_DIR = Dir('projects')
 LIB_DIR = Dir('libraries')
+SMOKE_DIR = Dir('smoke')
 
 PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
 LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
+SMOKE_DIRS = [entry for entry in SMOKE_DIR.glob('*')]
 
 LIB_BIN_DIR = BIN_DIR.Dir('libraries')
 
@@ -135,12 +137,12 @@ def lib_bin(lib_name):
     return BIN_DIR.Dir(LIB_DIR.name).File('lib{}.a'.format(lib_name))
 
 # ELFs are used for gdb and x86
-def proj_elf(proj_name):
-    return BIN_DIR.Dir(PROJ_DIR.name).File(proj_name)
+def proj_elf(proj_name, is_smoke=False):
+    return BIN_DIR.Dir(SMOKE_DIR.name if is_smoke else PROJ_DIR.name).File(proj_name)
 
 # .bin is used for flashing to MCU
-def proj_bin(proj_name):
-    return proj_elf(proj_name).File(proj_name + '.bin')
+def proj_bin(proj_name, is_smoke=False):
+    return proj_elf(proj_name, is_smoke).File(proj_name + '.bin')
 
 ###########################################################
 # Header file generation from jinja templates
@@ -164,7 +166,7 @@ def generate_header_files(env, target, source):
         if "can_board_ids" in template.name:
             env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File("boards"), template, libraries_inc_dir))
         else:
-            if "_getters" in template.name:
+            if template.name[:-8] in ["_getters", "_transmit_all"]:
                 env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File(PROJECT), template, header_output_dir))
             else:
                 env.Execute("{} -t {} -f {}".format(base_exec, template, header_output_dir))
@@ -173,7 +175,7 @@ def generate_header_files(env, target, source):
 
 
 # Create appropriate targets for all projects and libraries
-for entry in PROJ_DIRS + LIB_DIRS:
+for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     # Glob the source files from OBJ_DIR because it's a variant dir
     # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
     # str(entry) is e.g. 'projects/example', so this is like build/obj/projects/example/src
@@ -195,9 +197,10 @@ for entry in PROJ_DIRS + LIB_DIRS:
     # env.AddMethod(generate_header_files, "GenerateHeaderFiles")
     # header_targets = env.GenerateHeaderFiles(None, [BOARDS_DIR, TEMPLATES_DIR, GENERATOR, HEADER_OUTPUT_DIR, LIBRARIES_INC_DIR])
 
-    if entry in PROJ_DIRS:
+    if entry in PROJ_DIRS or entry in SMOKE_DIRS:
+        is_smoke = entry in SMOKE_DIRS
         lib_deps = get_lib_deps(entry)
-        output = proj_elf(entry.name)
+        output = proj_elf(entry.name, is_smoke)
         # SCons automagically handles object creation and linking
         target = env.Program(
             target=output,
@@ -211,7 +214,7 @@ for entry in PROJ_DIRS + LIB_DIRS:
         )
         # .bin file only required for arm, not x86
         if PLATFORM == 'arm':
-            target = env.Bin(target=proj_bin(entry.name), source=target)
+            target = env.Bin(target=proj_bin(entry.name, is_smoke), source=target)
     elif entry in LIB_DIRS:
         output = lib_bin(entry.name)
         target = env.Library(
@@ -238,7 +241,7 @@ GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
 tests = {}
 
 # Create the test executable targets
-for entry in PROJ_DIRS + LIB_DIRS:
+for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     tests[entry.name] = []
     for test_file in OBJ_DIR.Dir(str(entry)).Dir('test').glob('*.c'):
         # Link runner object, test file object, and proj/lib objects
@@ -309,7 +312,7 @@ for entry in PROJ_DIRS + LIB_DIRS:
 
         # Make test executable depend on the project / library final target
         if entry in PROJ_DIRS:
-            Depends(target, proj_elf(entry.name))
+            Depends(target, proj_elf(entry.name, entry in SMOKE_DIRS))
         elif entry in LIB_DIRS:
             Depends(target, lib_bin(entry.name))
 
@@ -350,16 +353,23 @@ Alias('test', test)
 def make_new_target(target, source, env):
     # No project or library option provided
     if not PROJECT and not LIBRARY:
-        print("Missing project or library name. Expected --project=... or --library=...")
+        print("Missing project or library name. Expected --project=..., or --library=...")
         sys.exit(1)
+    
+    if env.get("smoke") and PROJECT:
+        target_type = 'smoke'
+    elif PROJECT:
+        target_type = 'project'
+    elif LIBRARY:
+        target_type = 'library'
 
-    target_type = 'project' if PROJECT else 'library'
-
-    # Assume either PROJECT or LIBRARY is given, 'or' to select the non-None value
+    # Chain or's to select the first non-None value 
     new_target(target_type, PROJECT or LIBRARY)
 
 new = Command('new_proj.txt', [], make_new_target)
 Alias('new', new)
+new = Command('new_smoke.txt', [], make_new_target, smoke=True)
+Alias('new_smoke', new)
 
 # 'clean.txt' is a dummy file that doesn't get created
 # This is required for phony targets for scons to be happy
@@ -367,7 +377,7 @@ clean = Command('clean.txt', [], 'rm -rf build/*')
 Alias('clean', clean)
 
 ###########################################################
-# Linting and Formatting 
+# Linting and Formatting
 ###########################################################
 
 # Convert a list of paths/Dirs to space-separated paths.
@@ -382,7 +392,7 @@ def glob_by_extension(extension, dir='.'):
 # Retrieve files to lint - returns a tuple (c_lint_files, py_lint_files)
 def get_lint_files():
     c_lint_files = []
-    py_lint_files = [] 
+    py_lint_files = []
 
     lint_dirs = []
 
@@ -390,24 +400,25 @@ def get_lint_files():
     # If no PROJECT/LIBRARY argument,lint all directories.
     if PROJECT:
         lint_dirs.append(PROJ_DIR.Dir(PROJECT))
+        lint_dirs.append(SMOKE_DIR.Dir(PROJECT))
     elif LIBRARY:
         lint_dirs.append(LIB_DIR.Dir(LIBRARY))
     else:
         lint_dirs += PROJ_DIRS + LIB_DIRS
 
     # Get all src and header files (*.c, *.h) to lint/format
-    for dir in lint_dirs: 
-        config = parse_config(dir) 
+    for dir in lint_dirs:
+        config = parse_config(dir)
 
         # Avoid linting/formatting external libraries
         if not config.get('no_lint'):
             c_lint_files += glob_by_extension('[ch]', dir)
-            py_lint_files += glob_by_extension('py', dir) 
+            py_lint_files += glob_by_extension('py', dir)
 
     return (c_lint_files, py_lint_files)
 
 def run_lint(target, source, env):
-    C_LINT_CMD = 'cpplint --quiet' 
+    C_LINT_CMD = 'cpplint --quiet'
     PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(Dir('#').abspath) # '#' is the root dir
 
     c_lint_files, py_lint_files = get_lint_files()
@@ -463,22 +474,30 @@ Alias('format', format)
 if PLATFORM == 'x86' and PROJECT:
     # os.exec the x86 project ELF file to simulate it
     def sim_run(target, source, env):
-        path = proj_elf(PROJECT).path
-        print('Simulating', PROJECT)
+        path = proj_elf(PROJECT, env.get("smoke")).path
+        print('Simulating', path)
         os.execv(path, [path])
 
     sim = Command('sim.txt', [], sim_run)
     Depends(sim, proj_elf(PROJECT))
     Alias('sim', sim)
 
+    sim_smoke = Command('sim_smoke.txt', [], sim_run, smoke=True)
+    Depends(sim_smoke, proj_elf(PROJECT, True))
+    Alias('sim_smoke', sim_smoke)
+
     # open gdb with the elf file
     def gdb_run(target, source, env):
-        path = proj_elf(PROJECT).path
+        path = proj_elf(PROJECT, env.get("smoke")).path
         os.execv('/usr/bin/gdb', ['/usr/bin/gdb', path])
 
     gdb = Command('gdb.txt', [], gdb_run)
     Depends(gdb, proj_elf(PROJECT))
     Alias('gdb', gdb)
+
+    gdb_smoke = Command('gdb_smoke.txt', [], gdb_run, smoke=True)
+    Depends(gdb_smoke, proj_elf(PROJECT, True))
+    Alias('gdb_smoke', gdb_smoke)
 
 ###########################################################
 # Helper targets for arm
@@ -497,7 +516,7 @@ if PLATFORM == 'arm' and PROJECT:
             '-f target/stm32f0x.cfg',
             '-f {}/stm32f0-openocd.cfg'.format(PLATFORM_DIR),
             '-c "stm32f0x.cpu configure -rtos FreeRTOS"',
-            '-c "stm_flash {}"'.format(proj_bin(PROJECT)),
+            '-c "stm_flash {}"'.format(proj_bin(PROJECT, env.get("smoke"))),
             '-c shutdown'
         ]
         cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
@@ -506,3 +525,7 @@ if PLATFORM == 'arm' and PROJECT:
     flash = Command('flash.txt', [], flash_run)
     Depends(flash, proj_bin(PROJECT))
     Alias('flash', flash)
+
+    flash_smoke = Command('flash_smoke.txt', [], flash_run, smoke=True)
+    Depends(flash_smoke, proj_bin(PROJECT, True))
+    Alias('flash_smoke', flash_smoke)
