@@ -8,11 +8,12 @@
 #include "status.h"
 #include "stm32f0xx_interrupt.h"
 #include "stm32f0xx_syscfg.h"
+#include "notify.h"
 
 typedef struct GpioInterrupt {
   InterruptSettings settings;
   GpioAddress address;
-  NotifySetting notifySetting;
+  Event event;
 } GpioInterrupt;
 
 static GpioInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
