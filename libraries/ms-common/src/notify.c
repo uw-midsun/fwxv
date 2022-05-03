@@ -1,4 +1,5 @@
 #include "notify.h"
+
 #include "log.h"
 
 typedef struct Subscription {
