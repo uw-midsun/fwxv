@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 #include "interrupt_def.h"
 #include "status.h"
@@ -14,8 +14,7 @@ void stm32f0xx_interrupt_init(void);
 StatusCode stm32f0xx_interrupt_nvic_enable(uint8_t irq_channel, InterruptPriority priority);
 
 // Enables the external interrupt line with the given settings.
-StatusCode stm32f0xx_interrupt_exti_enable(uint8_t line, const InterruptSettings *settings,
-                                           InterruptEdge edge);
+StatusCode stm32f0xx_interrupt_exti_enable(uint8_t line, const InterruptSettings *settings);
 
 // Triggers a software interrupt on a given external interrupt.
 StatusCode stm32f0xx_interrupt_exti_trigger(uint8_t line);

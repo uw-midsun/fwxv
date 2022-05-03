@@ -7,14 +7,9 @@
 #include "FreeRTOS.h"
 #include "gpio.h"
 #include "interrupt_def.h"
+#include "notify.h"
 #include "status.h"
 #include "task.h"
-
-// TEMP STRUCT PLACEHOLDER FOR BROADCASE
-typedef struct NotifySetting {
-  TaskHandle_t task;
-  uint8_t bit;
-} NotifySetting;
 
 // Initializes the interrupt handler for GPIO.
 void gpio_it_init(void);
@@ -23,10 +18,11 @@ void gpio_it_init(void);
 StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge);
 
 // Registers a new callback on a given port pin combination with the desired
-// settings. Set the notify value bit of the task when a gpio_it occurs
-// The task to notify needs to be initialized before calling register interrupt
+// settings. Set the notify value bit of the task when a gpio_it occurs.
+// The task to notify needs to be initialized before calling register interrupt.
+// Register interrupt needs to be called before scheduler starts.
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
-                                      const NotifySetting *notificationSetting);
+                                      const Event event, const TaskHandle_t task);
 
 // Triggers an interrupt in software.
 StatusCode gpio_it_trigger_interrupt(const GpioAddress *address);

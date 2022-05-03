@@ -5,15 +5,16 @@
 
 #include "gpio.h"
 #include "interrupt_def.h"
+#include "notify.h"
 #include "status.h"
 #include "stm32f0xx_interrupt.h"
 #include "stm32f0xx_syscfg.h"
-#include "notify.h"
 
 typedef struct GpioInterrupt {
   InterruptSettings settings;
   GpioAddress address;
   Event event;
+  TaskHandle_t task;
 } GpioInterrupt;
 
 static GpioInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
@@ -28,8 +29,16 @@ static uint8_t prv_get_irq_channel(uint8_t pin) {
   return 7;
 }
 
-StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *interruptSettings,
-                                      const NotifySetting *notifySettings) {
+StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
+  if (s_gpio_it_interrupts[address->pin].task != NULL) {
+    *edge = s_gpio_it_interrupts[address->pin].settings.edge;
+    return STATUS_CODE_OK;
+  }
+  return STATUS_CODE_UNINITIALIZED;
+}
+
+StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
+                                      const Event event, const TaskHandle_t task) {
   if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
@@ -37,24 +46,20 @@ StatusCode gpio_it_register_interrupt(const GpioAddress *address, const Interrup
   //   return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Pin already used.");
   // }
 
-  // TEMP: check notify bit, would be checked in broadcast?
-  if (notifySettings->bit >= 32) {
-    return status_msg(STATUS_CODE_INVALID_ARGS, "bit can only be 0-31");
-  }
-
   // Try to register on NVIC and EXTI. Both must succeed for the callback to be
   // set.
 
   SYSCFG_EXTILineConfig(address->port, address->pin);
 
-  status_ok_or_return(stm32f0xx_interrupt_exti_enable(address->pin, settings, edge));
+  status_ok_or_return(stm32f0xx_interrupt_exti_enable(address->pin, settings));
 
   uint8_t irq_channel = prv_get_irq_channel(address->pin);
   status_ok_or_return(stm32f0xx_interrupt_nvic_enable(irq_channel, settings->priority));
 
   s_gpio_it_interrupts[address->pin].address = *address;
-  s_gpio_it_interrupts[address->pin].interruptSettings = interruptSettings;
-  s_gpio_it_interrupts[address->pin].notifySettings = *notifySettings;
+  s_gpio_it_interrupts[address->pin].settings = *settings;
+  s_gpio_it_interrupts[address->pin].event = event;
+  s_gpio_it_interrupts[address->pin].task = task;
 
   return STATUS_CODE_OK;
 }
@@ -75,10 +80,7 @@ static void prv_run_gpio_callbacks(uint8_t lower_bound, uint8_t upper_bound) {
   for (int i = lower_bound; i <= upper_bound; i++) {
     stm32f0xx_interrupt_exti_get_pending(i, &pending);
     if (pending && s_gpio_it_interrupts[i].task != NULL) {
-      BaseType_t higher_priority_task_woken = pdFALSE;
-      xTaskNotifyFromISR(s_gpio_it_interrupts[i].task, 1u << s_gpio_it_interrupts[i].bit, eSetBits,
-                         &higher_priority_task_woken);
-      portYIELD_FROM_ISR(higher_priority_task_woken);
+      notify_from_isr(s_gpio_it_interrupts[i].task, s_gpio_it_interrupts[i].event);
     }
     stm32f0xx_interrupt_exti_clear_pending(i);
   }
