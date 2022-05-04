@@ -22,6 +22,18 @@ static const GpioAddress buttons[] = {
 static InterruptSettings settings = {
   .priority = INTERRUPT_PRIORITY_NORMAL,
   .type = INTERRUPT_TYPE_INTERRUPT,
+  .edge = INTERRUPT_EDGE_FALLING,
+};
+
+static InterruptSettings rising = {
+  .priority = INTERRUPT_PRIORITY_NORMAL,
+  .type = INTERRUPT_TYPE_INTERRUPT,
+  .edge = INTERRUPT_EDGE_RISING,
+};
+
+enum {
+  BUTTON_0 = 0,
+  BUTTON_1,
 };
 
 void setup_test(void) {}
@@ -32,7 +44,7 @@ static uint32_t triggered = 0;
 
 TASK(handler, TASK_MIN_STACK_SIZE) {
   while (true) {
-    triggered = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    notify_get(&triggered);
 
     for (int i = 0; i < 2; ++i) {
       if ((triggered & (1u << i)) != 0) {
@@ -49,10 +61,8 @@ TASK_TEST(gpio_it_test, TASK_MIN_STACK_SIZE) {
   interrupt_init();
   gpio_it_init();
 
-  gpio_it_register_interrupt(&buttons[0], &settings, INTERRUPT_EDGE_RISING_FALLING, handler->handle,
-                             0);
-  gpio_it_register_interrupt(&buttons[1], &settings, INTERRUPT_EDGE_RISING_FALLING, handler->handle,
-                             1);
+  gpio_it_register_interrupt(&buttons[0], &settings, BUTTON_0, handler->handle);
+  gpio_it_register_interrupt(&buttons[1], &settings, BUTTON_1, handler->handle);
 
   for (int i = 0; i < 5; ++i) {
     delay_ms(100);
@@ -73,8 +83,8 @@ TASK_TEST(gpio_it_test, TASK_MIN_STACK_SIZE) {
 //   interrupt_init();
 //   gpio_it_init();
 
-//   gpio_it_register_interrupt(&buttons[0], &settings, INTERRUPT_EDGE_RISING, handler->handle, 0);
-//   gpio_it_register_interrupt(&buttons[1], &settings, INTERRUPT_EDGE_FALLING, handler->handle, 1);
+//   gpio_it_register_interrupt(&buttons[0], &settings, BUTTON_0, handler->handle);
+//   gpio_it_register_interrupt(&buttons[1], &settings, BUTTON_1, handler->handle);
 
 //   while (true) {
 //     vTaskDelay(portMAX_DELAY);
