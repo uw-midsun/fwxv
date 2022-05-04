@@ -9,10 +9,6 @@ StatusCode soft_timer_start(uint32_t duration_ms, SoftTimerCallback callback, So
   return STATUS_CODE_OK;
 }
 
-void *soft_timer_get_context(SoftTimerId id) {
-  return pvTimerGetTimerID(id);
-}
-
 StatusCode soft_timer_cancel(SoftTimer *timer) {
   if (xTimerDelete(timer->id, 0) != pdPASS) {
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "timer command queue is full");
