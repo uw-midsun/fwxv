@@ -39,16 +39,17 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
 
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
                                       const Event event, const TaskHandle_t task) {
-  if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
+  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+    return STATUS_CODE_UNREACHABLE;
+  } else if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT ||
+             event >= INVALID_EVENT) {
     return status_code(STATUS_CODE_INVALID_ARGS);
+  } else if (s_gpio_it_interrupts[address->pin].task != NULL) {
+    return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Pin already used.");
   }
-  // else if (s_gpio_it_interrupts[address->pin].task != NULL) {
-  //   return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Pin already used.");
-  // }
 
   // Try to register on NVIC and EXTI. Both must succeed for the callback to be
   // set.
-
   SYSCFG_EXTILineConfig(address->port, address->pin);
 
   status_ok_or_return(stm32f0xx_interrupt_exti_enable(address->pin, settings));
