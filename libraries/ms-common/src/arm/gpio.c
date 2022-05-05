@@ -3,11 +3,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "FreeRTOS.h"
 #include "status.h"
 #include "stm32f0xx.h"
 #include "stm32f0xx_gpio.h"
 #include "stm32f0xx_rcc.h"
-#include "FreeRTOS.h"
 #include "task.h"
 
 static GPIO_TypeDef *s_gpio_port_map[] = { GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF };

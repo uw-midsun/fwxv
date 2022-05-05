@@ -2,14 +2,14 @@
 #include <unistd.h>
 
 #include "delay.h"
+#include "gpio.h"
 #include "log.h"
+#include "status.h"
 #include "task_test_helpers.h"
 #include "tasks.h"
 #include "unity.h"
-#include "gpio.h"
-#include "status.h"
 
-static GpioAddress s_gpio_addr = { .port = GPIO_PORT_A, .pin = 5};
+static GpioAddress s_gpio_addr = { .port = GPIO_PORT_A, .pin = 5 };
 static GpioSettings s_gpio_settings = {
   .direction = GPIO_DIR_OUT,
   .state = GPIO_STATE_HIGH,
@@ -63,7 +63,7 @@ TASK(task2, TASK_STACK_512) {
   StatusCode status;
 
   // Loop forever, because tasks should not exit.
-  while (true) {  
+  while (true) {
     LOG_DEBUG("task2 loop start\n");
     status = gpio_get_state(&s_gpio_addr, &state);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
@@ -80,7 +80,7 @@ TASK(task2, TASK_STACK_512) {
     status = gpio_get_state(&s_gpio_addr, &state);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
     TEST_ASSERT_TRUE(state == GPIO_STATE_HIGH);
-    
+
     // Task 1 interrupt
     non_blocking_delay_ms(1500);
     status = gpio_get_state(&s_gpio_addr, &state);
@@ -95,7 +95,7 @@ TASK(task2, TASK_STACK_512) {
 TASK_TEST(test_running_task, TASK_STACK_512) {
   // Start the task: note no need to call tasks_start() because we're inside a test task and
   // FreeRTOS is already running.
-  tasks_init_task(task1, TASK_PRIORITY(2), NULL); // higher priority
+  tasks_init_task(task1, TASK_PRIORITY(2), NULL);  // higher priority
   tasks_init_task(task2, TASK_PRIORITY(1), NULL);
 
   // To let it run, use a delay.
