@@ -98,5 +98,5 @@ StatusCode gpio_get_state(const GpioAddress *address, GpioState *state) {
   }
 
   taskEXIT_CRITICAL();
-  return status_code(status);
+  return STATUS_CODE_OK;
 }

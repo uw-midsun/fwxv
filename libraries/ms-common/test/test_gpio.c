@@ -27,31 +27,33 @@ void teardown_test(void) {}
 // Create two tasks here
 TASK(task1, TASK_STACK_512) {
   LOG_DEBUG("task1 started\n");
-  GpioState state;
+  GpioState state = GPIO_STATE_LOW;
   StatusCode status;
 
   // Loop forever, because tasks should not exit.
   while (true) {
     LOG_DEBUG("task1 loop start\n");
+    TEST_ASSERT_TRUE(state == GPIO_STATE_LOW);
+
     status = gpio_set_state(&s_gpio_addr, GPIO_STATE_HIGH);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
-    usleep(10000);
+    non_blocking_delay_ms(500);
 
     status = gpio_get_state(&s_gpio_addr, &state);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
     TEST_ASSERT_TRUE(state == GPIO_STATE_HIGH);
-    usleep(1000);
+    non_blocking_delay_ms(500);
 
     status = gpio_toggle_state(&s_gpio_addr);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
-    usleep(10000);
+    non_blocking_delay_ms(500);
 
     status = gpio_get_state(&s_gpio_addr, &state);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
     TEST_ASSERT_TRUE(state == GPIO_STATE_LOW);
 
     LOG_DEBUG("task1 loop finished\n");
-    delay_ms(10);
+    delay_ms(1000);
   }
 }
 
@@ -66,16 +68,24 @@ TASK(task2, TASK_STACK_512) {
     status = gpio_get_state(&s_gpio_addr, &state);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
     TEST_ASSERT_TRUE(state == GPIO_STATE_LOW);
-    usleep(10000);
+
+    // Task 1 interrupt
+    non_blocking_delay_ms(1500);
+    status = gpio_get_state(&s_gpio_addr, &state);
+    TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
+    TEST_ASSERT_TRUE(state == GPIO_STATE_LOW);
 
     status = gpio_toggle_state(&s_gpio_addr);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
-    usleep(10000);
-
     status = gpio_get_state(&s_gpio_addr, &state);
     TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
     TEST_ASSERT_TRUE(state == GPIO_STATE_HIGH);
-    usleep(10000);
+    
+    // Task 1 interrupt
+    non_blocking_delay_ms(1500);
+    status = gpio_get_state(&s_gpio_addr, &state);
+    TEST_ASSERT_TRUE(status == STATUS_CODE_OK);
+    TEST_ASSERT_TRUE(state == GPIO_STATE_LOW);
 
     LOG_DEBUG("task2 loop finished\n");
     delay_ms(10);
@@ -89,5 +99,5 @@ TASK_TEST(test_running_task, TASK_STACK_512) {
   tasks_init_task(task2, TASK_PRIORITY(1), NULL);
 
   // To let it run, use a delay.
-  delay_ms(5000);
+  delay_ms(10000);
 }
