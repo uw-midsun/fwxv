@@ -45,6 +45,7 @@ StatusCode gpio_set_state(const GpioAddress *address, GpioState state) {
   }
 
   s_pin_settings[prv_get_index(address)].state = state;
+  LOG_DEBUG("Pin %d at port %s set to: %s\n", address->pin, address->port == GPIO_PORT_A ? "Port A" : "Port B", state == GPIO_STATE_HIGH ? "HIGH" : "LOW");
 
   return STATUS_CODE_OK;
 }
@@ -56,8 +57,10 @@ StatusCode gpio_toggle_state(const GpioAddress *address) {
 
   uint32_t index = prv_get_index(address);
   if (s_pin_settings[index].state == GPIO_STATE_LOW) {
+    LOG_DEBUG("Pin %d at port %s set to: HIGH\n", address->pin, address->port == GPIO_PORT_A ? "Port A" : "Port B");
     s_pin_settings[index].state = GPIO_STATE_HIGH;
   } else {
+    LOG_DEBUG("Pin %d at port %s set to: LOW\n", address->pin, address->port == GPIO_PORT_A ? "Port A" : "Port B");
     s_pin_settings[index].state = GPIO_STATE_LOW;
   }
 
