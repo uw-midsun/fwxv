@@ -5,7 +5,6 @@
 // Supports 7-bit addresses, does not support fast mode plus
 #include <stddef.h>
 #include <stdint.h>
-
 #include "gpio.h"
 #include "i2c_mcu.h"
 #include "status.h"

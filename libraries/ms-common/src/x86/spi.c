@@ -1,5 +1,4 @@
 #include "spi.h"
-
 #include "log.h"
 #include "spi_mcu.h"
 

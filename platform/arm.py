@@ -1,11 +1,12 @@
 import os
 
+ARM_TOOLS_DIR = '/usr/local/gcc-arm-none-eabi-6-2017-q2-update/bin'
 PLATFORM_DIR = os.getcwd()
 
-compiler = 'arm-none-eabi-gcc'
-ranlib = 'arm-none-eabi-ranlib'
-objcopy = 'arm-none-eabi-objcopy'
-ar = 'arm-none-eabi-ar'
+compiler = ARM_TOOLS_DIR + '/arm-none-eabi-gcc'
+ranlib = ARM_TOOLS_DIR + '/arm-none-eabi-ranlib'
+objcopy = ARM_TOOLS_DIR + '/arm-none-eabi-objcopy'
+ar = ARM_TOOLS_DIR + '/arm-none-eabi-ar'
 
 arch_cflags = [
     '-mlittle-endian',
@@ -48,8 +49,6 @@ link_flags = [
 ]
 
 arm_env = Environment(
-    ENV = { 'PATH': os.environ['PATH'] },
-
     CC=compiler,
     CCFLAGS=cflags + arch_cflags + define_flags,
     CPPPATH=[],

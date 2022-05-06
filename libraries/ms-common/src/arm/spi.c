@@ -1,5 +1,4 @@
 #include "spi.h"
-
 #include "gpio.h"
 #include "spi_mcu.h"
 #include "stm32f0xx.h"

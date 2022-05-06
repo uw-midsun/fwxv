@@ -1,42 +1,48 @@
 #pragma once
-
-// Software-based timers using FreeRTOS
-// Soft timers should only be used for delayed function calls, use tasks and delayUntil for periodic
-// code running
-
+// Software-based timers backed by single hardware timer
+// Requires interrupts to be initialized.
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "FreeRTOS.h"
 #include "status.h"
-#include "timers.h"
 
-typedef TimerHandle_t SoftTimerId;
+#define SOFT_TIMER_MIN_TIME_US 50
+#define SOFT_TIMER_MAX_TIMERS 30
 
-// Soft timer storage, must be declared statically
-typedef struct SoftTimer {
-  StaticTimer_t buffer;
-  SoftTimerId id;
-} SoftTimer;
+#define SOFT_TIMER_INVALID_TIMER (SOFT_TIMER_MAX_TIMERS)
 
-// Soft timer callback, called when soft timer expire
-typedef void (*SoftTimerCallback)(SoftTimerId id);
+typedef uint16_t SoftTimerId;
 
-// Adds a software timer. The provided duration is the number of
-// miliseconds before running and the callback is the process to run once
-// the time has expired.
-StatusCode soft_timer_start(uint32_t duration_ms, SoftTimerCallback callback, SoftTimer *timer);
+typedef void (*SoftTimerCallback)(SoftTimerId timer_id, void *context);
 
-// Cancels the soft timer specified by name. Returns true if successful.
-// the timer is not cancelled immediately,
-StatusCode soft_timer_cancel(SoftTimer *timer);
+// Initializes a set of software timers. Clock speed should be in MHz.
+// Subsequent calls will do nothing. The clock speed is that of the external PLL
+// crystal.
+void soft_timer_init(void);
 
-// restart the timer
-StatusCode soft_timer_reset(SoftTimer *timer);
+// Adds a software timer. The provided duration is the number of microseconds
+// before running and the callback is the process to run once the time has
+// expired. The timer_id is set to the id of the timer that will run the
+// callback.
+StatusCode soft_timer_start(uint32_t duration_us, SoftTimerCallback callback, void *context,
+                            SoftTimerId *timer_id);
 
-// Checks if the software timer is running
-bool soft_timer_inuse(SoftTimer *timer);
+// Starts a software timer in milliseconds. Max duration is still UINT32_MAX us.
+#define soft_timer_start_millis(duration_ms, callback, context, timer_id) \
+  soft_timer_start((duration_ms)*1000, (callback), (context), (timer_id))
 
-// Checks the time left in ticks on a particular timer. Returns a 0 if the timer
-// has expired and is no longer in use.
-uint32_t soft_timer_remaining_time(SoftTimer *timer);
+// Starts a software timer in seconds. Max duration is still UINT32_MAX us.
+#define soft_timer_start_seconds(duration_s, callback, context, timer_id) \
+  soft_timer_start((duration_s)*1000000, (callback), (context), (timer_id))
+
+// Cancels the soft timer specified by id. Returns true if successful.
+bool soft_timer_cancel(SoftTimerId timer_id);
+
+// Checks if software timers are running. Returns true if any soft timers are in
+// use.
+bool soft_timer_inuse(void);
+
+// Checks the time left on a particular timer. Returns a 0 if the timer has
+// expired and is no longer in use, or if timer_id is invalid. Note that since timer ids are re-used
+// this could return false values once the timer has expired or if it is cancelled.
+uint32_t soft_timer_remaining_time(SoftTimerId timer_id);

@@ -1,3 +1,4 @@
+#include "log.h"
 #include "status.h"
 #include "test_helpers.h"
 #include "unity.h"
@@ -7,8 +8,7 @@
 
 StatusCode TEST_MOCK(status_impl_update)(StatusCode code, const char *source, const char *caller,
                                          const char *message) {
-  // Log debug can't be used in core
-  printf("Mock: code %d\nsrc: %s\ncaller: %s\nmsg: %s\n", code, source, caller, message);
+  LOG_DEBUG("Mock: code %d\nsrc: %s\ncaller: %s\nmsg: %s\n", code, source, caller, message);
 
   return STATUS_CODE_OK;
 }
