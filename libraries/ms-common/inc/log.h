@@ -44,7 +44,7 @@ void log_init(void);
       printf("%s", log_buffer);                                                         \
     } else {                                                                            \
       if (g_log_queue == NULL) {                                                        \
-        printf("Error: Logs not initialized message \n");                               \
+        printf("Error: Logs init not initialized \n");                                  \
         vTaskEndScheduler();                                                            \
       }                                                                                 \
       xQueueSendToBack(g_log_queue, log_buffer, 0);                                     \
