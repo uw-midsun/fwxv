@@ -17,6 +17,65 @@ def read_yaml(yaml_file):
             raise Exception("No message or board present in yaml")
         return data
 
+def get_template_spacing(template):
+    # Returns an integer that indicates the amount of spaces needed leading up to the first open bracket
+    # Loop through the template until the first open bracket to find where the parameter declaration starts to determine correct spacing
+    spacing = 0
+    start_of_parameter = 0
+    for i in range(len(template)):
+        if '(' in template[i]:
+            start_of_parameter = i
+            break
+        else:
+            if '\n' in template[i]:
+                spacing += len(template[i]) - 1
+            else:
+                spacing += len(template[i])
+
+    # Count the number of letters leading up to the bracket
+    for i in range(len(template[start_of_parameter])):
+        if template[start_of_parameter][i] == '(':
+            spacing += 1
+            break
+        else:
+            spacing += 1
+    return spacing
+
+def format_function_parameters(template):
+    # Custom jinja filter that takes in the function parameter string
+    # and format it to indent to a new line whenever string length 
+    # reaches 100 characters.
+
+    template = re.split(r'(\s+)', template)
+    letter_count = 0
+
+    parameter_tabbing_space = get_template_spacing(template)
+    for i in range(len(template)):
+        letter_count += len(template[i])
+        if letter_count >= 100:
+            template[i] = "\n" + (" "*parameter_tabbing_space) + template[i]
+            letter_count = len(template[i])
+    template = "".join(template)
+    return (template)
+
+def format_function_body(template):
+    # Custom jinja filter that takes in the function body string
+    # and format it to indent to a new line whenever string length 
+    # reaches 100 characters.
+    
+    template = re.split(r'(\s+)', template)
+    template[0] = '  ' + template[0]
+    letter_count = 0
+    
+    function_body_spacing = get_template_spacing(template=template)
+    for i in range(len(template)):
+        letter_count += len(template[i])
+        if letter_count >= 100:
+            template[i] = "\n" + (" "*function_body_spacing) + template[i]
+            letter_count = len(template[i])
+    template = "".join(template)
+    return (template)
+
 def get_board_name(yaml_path):
     return yaml_path.split("/")[len(yaml_path.split("/"))-1].split(".")[0]
 
@@ -162,6 +221,8 @@ if __name__ == "__main__":
         template_name = options.template.split('/')[-1]
         templateLoader = jinja2.FileSystemLoader(searchpath=codegen_dir)
         env = jinja2.Environment(loader=templateLoader)
+        env.filters["format_function_parameters"] = format_function_parameters
+        env.filters["format_function_body"] = format_function_body
         file_path = options.file_path + "/" + get_file_name(template_name, options.board)
 
         if "system_can.dbc" in template_name:
@@ -181,5 +242,6 @@ if __name__ == "__main__":
         elif options.board:
             data = parse_board_yaml_files(options.board)
             write_template(env, template_name, file_path, data)
+        
 
     main()

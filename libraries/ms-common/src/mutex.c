@@ -11,7 +11,7 @@ StatusCode mutex_init(Mutex *mutex) {
 
 StatusCode mutex_lock(Mutex *mutex, uint16_t ms_to_wait) {
   TickType_t ticks_to_wait;
-  if (mutex == NULL) {
+  if (mutex == NULL || mutex->handle == NULL) {
     return STATUS_CODE_INVALID_ARGS;
   }
   if (ms_to_wait == BLOCK_INDEFINITELY) {
@@ -26,7 +26,7 @@ StatusCode mutex_lock(Mutex *mutex, uint16_t ms_to_wait) {
 }
 
 StatusCode mutex_unlock(Mutex *mutex) {
-  if (mutex == NULL) {
+  if (mutex == NULL || mutex->handle == NULL) {
     return STATUS_CODE_INVALID_ARGS;
   }
   if (xSemaphoreGive(mutex->handle) == pdFALSE) {
