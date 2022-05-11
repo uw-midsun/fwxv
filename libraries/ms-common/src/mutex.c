@@ -1,4 +1,5 @@
 #include "mutex.h"
+#include <stdio.h>
 
 StatusCode mutex_init(Mutex *mutex) {
   mutex->handle = xSemaphoreCreateMutexStatic(&mutex->buffer);

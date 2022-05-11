@@ -1,0 +1,18 @@
+{% set messages = data["Messages"] -%}
+{% set board = data["Board"] -%}
+
+#include "{{board}}_pack_msg.h"
+#include "can_codegen.h"
+
+void can_tx_all() {
+    CanMessage msg = { 0 };
+{%- for message, message_data in messages.items() -%}
+    {%- set signals = message_data["signals"].keys() -%}
+    {%- set function_parameters -%}
+can_pack_{{message}}(&msg {%- for signal in signals %}, g_tx_struct.{{message}}_{{signal}} {%- endfor -%});
+    {%- endset %}
+
+    {{function_parameters | format_function_length(4)}}
+    can_transmit(&msg, NULL);
+{%- endfor %}
+}
