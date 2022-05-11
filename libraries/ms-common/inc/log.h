@@ -9,6 +9,7 @@
 #include "tasks.h"
 
 // NOTE: Log debug cannot be used in core
+// NOTE: Please use %lli instead of %li 
 
 DECLARE_TASK(log_task);
 
