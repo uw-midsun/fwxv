@@ -25,8 +25,6 @@ static void prv_init_gpio(void) {
   GPIO_Init(RETARGET_CFG_UART_GPIO_PORT, &gpio_init);
 }
 
-static Mutex _write_mutex;
-
 void retarget_init(void) {
   RETARGET_CFG_UART_ENABLE_CLK();
   prv_init_gpio();
@@ -37,8 +35,6 @@ void retarget_init(void) {
   USART_Init(RETARGET_CFG_UART, &usart_init);
 
   USART_Cmd(RETARGET_CFG_UART, ENABLE);
-
-  mutex_init(&_write_mutex);
 }
 
 int _write(int fd, char *ptr, int len) {
