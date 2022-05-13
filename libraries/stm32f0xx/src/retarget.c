@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 
-#include "mutex.h"
 #include "retarget_cfg.h"
 #include "stm32f0xx.h"
 
@@ -43,15 +42,12 @@ void retarget_init(void) {
 }
 
 int _write(int fd, char *ptr, int len) {
-  mutex_lock(&_write_mutex, BLOCK_INDEFINITELY);
-
   for (int i = 0; i < len; i++) {
     while (USART_GetFlagStatus(RETARGET_CFG_UART, USART_FLAG_TXE) == RESET) {
     }
     USART_SendData(RETARGET_CFG_UART, (uint8_t) * (ptr + i));
   }
 
-  mutex_unlock(&_write_mutex);
   return len;
 }
 
