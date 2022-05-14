@@ -132,7 +132,6 @@ for entry in PROJ_DIRS + LIB_DIRS:
 
     if entry in PROJ_DIRS:
         lib_deps = get_lib_deps(entry)
-        print("AIDS", lib_incs)
         output = proj_elf(entry.name)
         # SCons automagically handles object creation and linking
         target = env.Program(
@@ -141,7 +140,7 @@ for entry in PROJ_DIRS + LIB_DIRS:
             CPPPATH=env['CPPPATH'] + [inc_dirs, lib_incs],
             # link each library twice so that dependency cycles are resolved
             # See: https://stackoverflow.com/questions/45135
-            LIBS=env['LIBS'] + lib_deps * 2 + ["rt"],
+            LIBS=env['LIBS'] + lib_deps * 2,
             LIBPATH=[LIB_BIN_DIR],
             CCFLAGS=env['CCFLAGS'] + config['cflags'],
         )

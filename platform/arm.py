@@ -1,6 +1,6 @@
 import os
 
-ARM_TOOLS_DIR = '/usr/local/gcc-arm-none-eabi-6-2017-q2-update/bin'
+ARM_TOOLS_DIR = '/usr/local/gcc-arm-none-eabi-10.3-2021.10/bin'
 PLATFORM_DIR = os.getcwd()
 
 compiler = ARM_TOOLS_DIR + '/arm-none-eabi-gcc'

@@ -11,6 +11,7 @@
 #include "soft_timer.h"  // Software timers for scheduling future events.
 #include "gpio_it.h"
 #include "log.h"
+#include "wait.h"
 
 // Depending on which board you are working with you will need to (un)comment
 // the relevant block of GPIO pins. Generally these would be in a configuration
@@ -79,8 +80,7 @@ int main(void) {
   gpio_it_register_interrupt(&btn, &int_set, INTERRUPT_EDGE_RISING, prv_gpio_it_cb, NULL);
   // Keep toggling the state of the pins from on to off with a 50 ms delay between.
   while (true) {
-    delay_ms(1000);
-    gpio_it_trigger_interrupt(&btn);
+    wait();
   }
 
   return 0;
