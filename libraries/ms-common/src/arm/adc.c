@@ -3,8 +3,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#include "FreeRTOS.h"
 #include "gpio.h"
 #include "log.h"
+#include "semphr.h"
 #include "status.h"
 #include "stm32f0xx.h"
 
@@ -40,19 +42,53 @@ const GpioAddress ADC_TEMP = {
 typedef struct AdcStatus {
   uint32_t sequence;
   bool continuous;
-  volatile bool converting;
+  SemaphoreHandle_t converting;
+  StaticSemaphore_t converting_buf;
 } AdcStatus;
 
 static AdcStatus s_adc_status;
 
-// Functionalities used by GpioAddress version of adc library
-typedef struct AdcInterrupt {
-  uint16_t reading;
-} AdcInterrupt;
-
 #define NUM_ADC_CHANNELS 18
 
-static AdcInterrupt s_adc_interrupts[NUM_ADC_CHANNELS];
+static uint16_t s_adc_readings[NUM_ADC_CHANNELS];
+
+// ADC Channel to GPIO Address mapping found in table 13 of the specific device
+// datasheet. Channels 0 to 7 are occupied by port A, 8 to 9 by prt B, and 10 to
+// 15 by port C
+StatusCode adc_get_channel(GpioAddress address, uint8_t *adc_channel) {
+  *adc_channel = address.pin;
+  switch (address.port) {
+    case GPIO_PORT_A:
+      if (address.pin > 7) {
+        return status_code(STATUS_CODE_INVALID_ARGS);
+      }
+      *adc_channel += ADC_SPECIAL_CHANNELS;
+      break;
+    case GPIO_PORT_B:
+      if (address.pin > 1) {
+        return status_code(STATUS_CODE_INVALID_ARGS);
+      }
+      *adc_channel += ADC_SPECIAL_CHANNELS + 8;
+      break;
+    case GPIO_PORT_C:
+      if (address.pin > 5) {
+        return status_code(STATUS_CODE_INVALID_ARGS);
+      }
+      *adc_channel += ADC_SPECIAL_CHANNELS + 10;
+      break;
+    case NUM_GPIO_PORTS:  // for special channels BAT/REF/TEMP
+      if (address.pin >= ADC_SPECIAL_CHANNELS) {
+        return status_code(STATUS_CODE_INVALID_ARGS);
+      }
+      break;
+    default:
+      return status_code(STATUS_CODE_INVALID_ARGS);
+  }
+  if (*adc_channel > NUM_ADC_CHANNELS) {
+    return status_code(STATUS_CODE_INVALID_ARGS);
+  }
+  return STATUS_CODE_OK;
+}
 
 // Formula obtained from section 13.9 of the reference manual. Returns reading
 // in kelvin
@@ -77,15 +113,7 @@ static uint16_t prv_get_vdda(uint16_t reading) {
   return reading;
 }
 
-static void prv_reset_channel(uint8_t channel) {
-  s_adc_interrupts[channel].callback = NULL;
-  s_adc_interrupts[channel].reading = 0;
-}
-
-static StatusCode prv_check_channel_valid_and_enabled(uint8_t adc_channel) {
-  if (adc_channel >= NUM_ADC_CHANNELS) {
-    return status_code(STATUS_CODE_INVALID_ARGS);
-  }
+static StatusCode prv_check_channel_enabled(uint8_t adc_channel) {
   if (!(ADC1->CHSELR & ((uint32_t)1 << adc_channel))) {
     return status_code(STATUS_CODE_EMPTY);
   }
@@ -132,57 +160,20 @@ void adc_init(AdcMode adc_mode) {
   // Initialize static variables
   s_adc_status.continuous = adc_mode;
   s_adc_status.sequence = 0;
-  s_adc_status.converting = false;
 
-  if (adc_mode) {
+  if (adc_mode == ADC_MODE_CONTINUOUS) {
     ADC_StartOfConversion(ADC1);
   }
 
   for (size_t i = 0; i < NUM_ADC_CHANNELS; ++i) {
-    prv_reset_channel(i);
+    s_adc_readings[i] = 0;
   }
 
   // Configure internal reference channel to run by default for voltage
   // conversions
-  adc_set_channel(ADC_CHANNEL_REF, true);
-}
-
-// ADC Channel to GPIO Address mapping found in table 13 of the specific device
-// datasheet. Channels 0 to 7 are occupied by port A, 8 to 9 by prt B, and 10 to
-// 15 by port C
-StatusCode adc_get_channel(GpioAddress address, uint8_t *adc_channel) {
-  *adc_channel = address.pin;
-  switch (address.port) {
-    case GPIO_PORT_A:
-      if (address.pin > 7) {
-        return status_code(STATUS_CODE_INVALID_ARGS);
-      }
-      *adc_channel += ADC_SPECIAL_CHANNELS;
-      break;
-    case GPIO_PORT_B:
-      if (address.pin > 1) {
-        return status_code(STATUS_CODE_INVALID_ARGS);
-      }
-      *adc_channel += ADC_SPECIAL_CHANNELS + 8;
-      break;
-    case GPIO_PORT_C:
-      if (address.pin > 5) {
-        return status_code(STATUS_CODE_INVALID_ARGS);
-      }
-      *adc_channel += ADC_SPECIAL_CHANNELS + 10;
-      break;
-    case NUM_GPIO_PORTS:  // for special channels BAT/REF/TEMP
-      if (address.pin >= ADC_SPECIAL_CHANNELS) {
-        return status_code(STATUS_CODE_INVALID_ARGS);
-      }
-      break;
-    default:
-      return status_code(STATUS_CODE_INVALID_ARGS);
-  }
-  if (*adc_channel > 18) {
-    return status_code(STATUS_CODE_INVALID_ARGS);
-  }
-  return STATUS_CODE_OK;
+  adc_set_channel(ADC_REF, true);
+  // setup converting status semaphore
+  s_adc_status.converting = xSemaphoreCreateBinaryStatic(&s_adc_status.converting_buf);
 }
 
 void ADC1_COMP_IRQHandler() {
@@ -190,7 +181,7 @@ void ADC1_COMP_IRQHandler() {
     uint16_t reading = ADC_GetConversionValue(ADC1);
     if (s_adc_status.sequence != 0) {
       uint8_t current_channel = __builtin_ctz(s_adc_status.sequence);
-      s_adc_interrupts[current_channel].reading = reading;
+      s_adc_readings[current_channel] = reading;
 
       s_adc_status.sequence &= ~((uint32_t)1 << current_channel);
     }
@@ -201,7 +192,9 @@ void ADC1_COMP_IRQHandler() {
     ADC_ClearITPendingBit(ADC1, ADC_IT_EOSEQ);
   }
 
-  s_adc_status.converting = false;
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+  xSemaphoreGiveFromISR(s_adc_status.converting, &xHigherPriorityTaskWoken);
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 // the following functions are wrappers over the legacy AdcChannel API dealing with GpioAddresses
@@ -209,9 +202,6 @@ void ADC1_COMP_IRQHandler() {
 StatusCode adc_set_channel(GpioAddress address, bool new_state) {
   uint8_t channel;
   status_ok_or_return(adc_get_channel(address, &channel));
-  if (channel >= NUM_ADC_CHANNELS) {
-    return status_code(STATUS_CODE_INVALID_ARGS);
-  }
 
   if (new_state) {
     ADC_ChannelConfig(ADC1, (1u << channel), ADC_SampleTime_239_5Cycles);
@@ -224,15 +214,12 @@ StatusCode adc_set_channel(GpioAddress address, bool new_state) {
     case ADC_CHANNEL_BAT:
       ADC_VbatCmd(new_state);
       break;
-
     case ADC_CHANNEL_REF:
       ADC_VrefintCmd(new_state);
       break;
-
     case ADC_CHANNEL_TEMP:
       ADC_TempSensorCmd(new_state);
       break;
-
     default:
       break;
   }
@@ -241,40 +228,21 @@ StatusCode adc_set_channel(GpioAddress address, bool new_state) {
   return STATUS_CODE_OK;
 }
 
-StatusCode adc_register_callback(GpioAddress address) {
-  uint8_t adc_channel;
-  status_ok_or_return(adc_get_channel(address, &adc_channel));
-  status_ok_or_return(prv_check_channel_valid_and_enabled(adc_channel));
-  prv_reset_channel(adc_channel);
-  // s_adc_interrupts[adc_channel].pin_callback = callback;
-  // s_adc_interrupts[adc_channel].context = context;
-  return STATUS_CODE_OK;
-}
-
 StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
   uint8_t channel;
   status_ok_or_return(adc_get_channel(address, &channel));
-
-  status_ok_or_return(prv_check_channel_valid_and_enabled(channel));
+  status_ok_or_return(prv_check_channel_enabled(channel));
 
   if (!s_adc_status.continuous) {
-    // SOFT-347: We previously waited while |ADC_GetFlagStatus(ADC1, ADC_FLAG_EOSEQ)| was true.
-    // But the EOSEQ flag is normally 0 and is set to 1 at the end of conversion, but reset by
-    // |ADC1_COMP_IRQHandler| before the interrupt finishes. So this loop always sees it as 0. Thus
-    // we weren't waiting at all and just returning the old s_adc_interrupts[adc_channel].reading.
-    // Fix: track whether we're converting with a volatile bool which is reset in the IRQHandler.
-    // The ADC interrupt has INTERRUPT_PRIORITY_HIGH so it can interrupt soft timer callbacks and
-    // other INTERRUPT_PRIORITY_NORMAL interrupts, but if this is called from another interrupt with
-    // INTERRUPT_PRIORITY_HIGH, the NVIC will queue the ADC interrupt until the calling interrupt
-    // returns and this loop will deadlock.
-
-    s_adc_status.converting = true;
+    xSemaphoreTake(s_adc_status.converting, 0);
     ADC_StartOfConversion(ADC1);
-    while (s_adc_status.converting) {
-    }
+
+    // wait until conversion is finished
+    xSemaphoreTake(s_adc_status.converting, portMAX_DELAY);
+    xSemaphoreGive(s_adc_status.converting);
   }
 
-  *reading = s_adc_interrupts[channel].reading;
+  *reading = s_adc_readings[channel];
 
   return STATUS_CODE_OK;
 }
@@ -282,7 +250,7 @@ StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
 StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
   uint8_t channel;
   status_ok_or_return(adc_get_channel(address, &channel));
-  status_ok_or_return(prv_check_channel_valid_and_enabled(channel));
+  status_ok_or_return(prv_check_channel_enabled(channel));
 
   uint16_t adc_reading = 0;
   status_ok_or_return(adc_read_raw(address, &adc_reading));
@@ -291,24 +259,17 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
     case ADC_CHANNEL_TEMP:
       *reading = prv_get_temp(adc_reading);
       return STATUS_CODE_OK;
-
     case ADC_CHANNEL_REF:
       *reading = prv_get_vdda(adc_reading);
       return STATUS_CODE_OK;
-
     case ADC_CHANNEL_BAT:
-      adc_reading *= 2;  // why?
+      adc_reading *= 2;
       break;
-
     default:
       break;
   }
-
-  // this is the adc_read_converted(ADC_CHANNEL_REF, &vdda);
   uint16_t vdda;
-  adc_read_converted(ADC_CHANNEL_REF, &vdda);
-
+  adc_read_converted(ADC_REF, &vdda);
   *reading = (adc_reading * vdda) / 4095;
-
   return STATUS_CODE_OK;
 }
