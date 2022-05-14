@@ -132,7 +132,6 @@ for entry in PROJ_DIRS + LIB_DIRS:
 
     if entry in PROJ_DIRS:
         lib_deps = get_lib_deps(entry)
-        print("AIDS", lib_incs)
         output = proj_elf(entry.name)
         # SCons automagically handles object creation and linking
         target = env.Program(
