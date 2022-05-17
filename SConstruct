@@ -46,6 +46,13 @@ AddOption(
     action='store'
 )
 
+AddOption(
+    '--sanitizer',
+    dest='sanitizer',
+    type='string',
+    action='store'
+)
+SANITIZER = GetOption('sanitizer')
 PLATFORM = GetOption('platform')
 PROJECT = GetOption('project')
 LIBRARY = GetOption('library')
@@ -64,6 +71,8 @@ elif PLATFORM == 'arm':
 TEST_CFLAGS = ['-DMS_TEST']
 if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
     env['CCFLAGS'] += TEST_CFLAGS
+if "GCC_VERSION" in env:
+    print("its there")
 
 env['CCCOMSTR'] = "Compiling $TARGET"
 env['LINKCOMSTR'] = "Linking $TARGET"
@@ -172,7 +181,16 @@ def generate_header_files(env, target, source):
                 env.Execute("{} -t {} -f {}".format(base_exec, template, header_output_dir))
 
     return header_files
-
+    
+# Adding Sanitizer Argument to Environment Flags
+if SANITIZER == 'asan':
+    env['CCFLAGS'] += ["-fsanitize=address"]
+    env['CXXFLAGS'] += ["-fsanitize=address"]
+    env['LINKFLAGS'] += ["-fsanitize=address"]
+elif SANITIZER == 'tsan':
+    env['CCFLAGS'] += ["-fsanitize=thread"]
+    env['CXXFLAGS'] += ["-fsanitize=thread"]
+    env['LINKFLAGS'] += ["-fsanitize=thread"]
 
 # Create appropriate targets for all projects and libraries
 for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
@@ -193,10 +211,10 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
 
     env.Append(CPPDEFINES=[GetOption('define')])
-
+    
+    #-----------------------------------------------------------------------------
     # env.AddMethod(generate_header_files, "GenerateHeaderFiles")
     # header_targets = env.GenerateHeaderFiles(None, [BOARDS_DIR, TEMPLATES_DIR, GENERATOR, HEADER_OUTPUT_DIR, LIBRARIES_INC_DIR])
-
     if entry in PROJ_DIRS or entry in SMOKE_DIRS:
         is_smoke = entry in SMOKE_DIRS
         lib_deps = get_lib_deps(entry)
@@ -375,6 +393,11 @@ Alias('new_smoke', new)
 # This is required for phony targets for scons to be happy
 clean = Command('clean.txt', [], 'rm -rf build/*')
 Alias('clean', clean)
+###########################################################
+# Sanitizer
+###########################################################
+def enable_sanitizers():
+    return 0
 
 ###########################################################
 # Linting and Formatting
