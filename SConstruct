@@ -75,8 +75,6 @@ elif PLATFORM == 'arm':
 TEST_CFLAGS = ['-DMS_TEST']
 if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
     env['CCFLAGS'] += TEST_CFLAGS
-if "GCC_VERSION" in env:
-    print("its there")
 
 env['CCCOMSTR'] = "Compiling $TARGET"
 env['LINKCOMSTR'] = "Linking $TARGET"
