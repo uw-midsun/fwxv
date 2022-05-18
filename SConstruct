@@ -216,7 +216,6 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
 
     env.Append(CPPDEFINES=[GetOption('define')])
     
-    #-----------------------------------------------------------------------------
     # env.AddMethod(generate_header_files, "GenerateHeaderFiles")
     # header_targets = env.GenerateHeaderFiles(None, [BOARDS_DIR, TEMPLATES_DIR, GENERATOR, HEADER_OUTPUT_DIR, LIBRARIES_INC_DIR])
     if entry in PROJ_DIRS or entry in SMOKE_DIRS:
