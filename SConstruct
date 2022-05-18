@@ -397,11 +397,6 @@ Alias('new_smoke', new)
 # This is required for phony targets for scons to be happy
 clean = Command('clean.txt', [], 'rm -rf build/*')
 Alias('clean', clean)
-###########################################################
-# Sanitizer
-###########################################################
-def enable_sanitizers():
-    return 0
 
 ###########################################################
 # Linting and Formatting
