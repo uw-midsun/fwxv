@@ -96,6 +96,7 @@ TEST_DIR = BUILD_DIR.Dir('test')
 PROJ_DIR = Dir('projects')
 LIB_DIR = Dir('libraries')
 SMOKE_DIR = Dir('smoke')
+CAN_DIR = Dir('can')
 
 PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
 LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
@@ -109,7 +110,7 @@ CODEGEN_DIR = LIB_DIR.Dir("codegen")
 BOARDS_DIR = CODEGEN_DIR.Dir("boards")
 GENERATOR = CODEGEN_DIR.File("generator.py")
 TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
-HEADER_OUTPUT_DIR = PROJ_DIR.Dir(PROJECT).Dir("inc")
+
 LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
 
 # Put object files in OBJ_DIR so they don't clog the source folders
@@ -128,6 +129,7 @@ def parse_config(entry):
         'cflags': [],
         'mocks': {},
         'no_lint': False,
+        "can": False,
     }
     config_file = entry.File('config.json')
     if not config_file.exists():
@@ -160,32 +162,56 @@ def proj_bin(proj_name, is_smoke=False):
 ###########################################################
 # Header file generation from jinja templates
 ###########################################################
-def generate_header_files(env, target, source):
-    boards_dir = source[0]
-    templates_dir = source[1]
-    generator_dir = source[2]
-    header_output_dir = source[3]
-    libraries_inc_dir = source[4]
-    templates = templates_dir.glob('*.jinja')
-    base_exec = "python3 {} -b {}".format(generator_dir, PROJECT)
-    header_files = []
-
-    for template in templates:
-        if template.name[0] == "_":
-            header_files.append(header_output_dir.File(PROJECT + template.name[:-6]))
-        else:
-            header_files.append(header_output_dir.File(template.name[:-6]))
-
-        if "can_board_ids" in template.name:
-            env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File("boards"), template, libraries_inc_dir))
-        else:
-            if template.name[:-8] in ["_getters", "_transmit_all"]:
-                env.Execute("{} -y {}.yaml -t {} -f {}".format(base_exec, boards_dir.File(PROJECT), template, header_output_dir))
-            else:
-                env.Execute("{} -t {} -f {}".format(base_exec, template, header_output_dir))
-
-    return header_files
+# TODO: Need to check if board has yaml and if board even needs CAN
+def generate_can_files(env, target=[], source=[], project=PROJECT):
+    source_yaml = BOARDS_DIR.File(project + ".yaml")
+    project_dir = OBJ_DIR.Dir("projects").Dir(project)
+    source_dir = project_dir.Dir("src").Dir("can_codegen")
+    header_dir = project_dir.Dir("inc").Dir("can_codegen")
+    source += [BOARDS_DIR, TEMPLATES_DIR, GENERATOR]
     
+    templates = TEMPLATES_DIR.glob('*.jinja')
+    base_exec = "python3 {} -b {}".format(GENERATOR, project)
+    header_files = []
+    source_files = []
+    source_command = "{} -y {} -f {}".format(base_exec, source_yaml, source_dir)
+    header_command = "{} -y {} -f {}".format(base_exec, source_yaml, header_dir)
+
+    # TODO: Fix up system_can.dbc output directory
+    for template in templates:
+        if "can_board_ids" in template.name:
+            env.Command(
+                LIBRARIES_INC_DIR.File(template.name[:-6]),
+                source,
+                "{} -y {} -t {} -f {}".format(base_exec, BOARDS_DIR.File("boards.yaml"), template, LIBRARIES_INC_DIR)
+            )
+            target.append(LIBRARIES_INC_DIR.File(template.name[:-6]))
+        else:
+            if template.name.startswith("_"):
+                if ".c" in template.name:
+                    source_command += " -t {}".format(template)
+                    source_files.append(source_dir.File(project + template.name[:-6]))
+                else:
+                    header_command += " -t {}".format(template)
+                    header_files.append(header_dir.File(project + template.name[:-6]))
+            else:
+                # For can_codegen.h
+                env.Command(
+                    header_dir.File(template.name[:-6]),
+                    source,
+                    "{} -t {} -f {}".format(base_exec, template, header_dir)
+                )
+                target.append(header_dir.File(template.name[:-6]))
+    
+    source.append(source_yaml)
+    env.Command(header_files, source, header_command)
+    env.Command(source_files, source, source_command)
+
+    target += source_files + header_files
+    return source_files, header_dir
+
+env.AddMethod(generate_can_files, "GenerateCanFiles")
+
 # Adding Sanitizer Argument to Environment Flags
 if SANITIZER == 'asan':
     env['CCFLAGS'] += ["-fsanitize=address"]
@@ -195,18 +221,38 @@ elif SANITIZER == 'tsan':
     env['CCFLAGS'] += ["-fsanitize=thread"]
     env['CXXFLAGS'] += ["-fsanitize=thread"]
     env['LINKFLAGS'] += ["-fsanitize=thread"]
-
+    
 # Create appropriate targets for all projects and libraries
-for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
+for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:    
     # Glob the source files from OBJ_DIR because it's a variant dir
     # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
     # str(entry) is e.g. 'projects/example', so this is like build/obj/projects/example/src
     srcs = OBJ_DIR.Dir(str(entry)).Dir('src').glob('*.[cs]')
     srcs += OBJ_DIR.Dir(str(entry)).Dir('src').Dir(PLATFORM).glob('*.[cs]')
+    
     inc_dirs = [entry.Dir('inc')]
     inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
-
+    
     config = parse_config(entry)
+    
+    if config["can"]:
+        # TODO: Current output files are like so
+        # - /build/x86
+        #     - obj
+        #         - can
+        #             - can.o
+        #         - projects
+        #             - new_can
+        # The CAN output should actually go into the projects/<project>
+        # Fine for now but will be an issue if ever trying to build multiple projects
+        srcs += OBJ_DIR.Dir(str(CAN_DIR)).Dir('src').glob('*.[cs]')
+        srcs += OBJ_DIR.Dir(str(CAN_DIR)).Dir('src').Dir(PLATFORM).glob('*.[cs]')
+        inc_dirs += [CAN_DIR.Dir('inc')]
+        inc_dirs += [CAN_DIR.Dir('inc').Dir(PLATFORM)]
+        # Add Autogenerated files
+        can_sources, can_header_dir = env.GenerateCanFiles(project=entry.name)
+        srcs += [t for t in can_sources]
+        inc_dirs += [can_header_dir]
 
     # Just include all library headers
     # This resolves dependency issues like ms-freertos including FreeRTOS headers
@@ -215,9 +261,6 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
 
     env.Append(CPPDEFINES=[GetOption('define')])
-    
-    # env.AddMethod(generate_header_files, "GenerateHeaderFiles")
-    # header_targets = env.GenerateHeaderFiles(None, [BOARDS_DIR, TEMPLATES_DIR, GENERATOR, HEADER_OUTPUT_DIR, LIBRARIES_INC_DIR])
     if entry in PROJ_DIRS or entry in SMOKE_DIRS:
         is_smoke = entry in SMOKE_DIRS
         lib_deps = get_lib_deps(entry)
@@ -233,6 +276,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
             LIBPATH=[LIB_BIN_DIR],
             CCFLAGS=env['CCFLAGS'] + config['cflags'],
         )
+        
         # .bin file only required for arm, not x86
         if PLATFORM == 'arm':
             target = env.Bin(target=proj_bin(entry.name, is_smoke), source=target)

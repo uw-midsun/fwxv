@@ -3,15 +3,12 @@
 {% set board = data["Board"] -%}
 {% set messages = data["Messages"] -%}
 
-#include "{{board}}_structs.h"
+#include "can_codegen.h"
 
-{%- for message in messages -%}
-    {%- for signal in messages[message]['signals'] %}
+{%- for message, message_data in messages.items() -%}
+    {%- for signal, signal_data in message_data['signals'].items() %}
 
-uint{{messages[message]['signals'][signal]['length']}}_t get_{{message}}_{{signal}}(receive_struct* s)
-{
-    return s->signal_{{message}}_{{signal}};
-}
-
+#define get_{{message}}_{{signal}}() \
+    g_rx_struct.{{message}}_{{signal}}
     {%- endfor -%}
 {% endfor -%}

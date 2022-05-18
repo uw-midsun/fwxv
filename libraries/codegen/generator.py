@@ -1,9 +1,9 @@
 from optparse import OptionParser
+from collections import OrderedDict
 import jinja2
 import os
 import yaml
 import re
-
 
 def read_yaml(yaml_file):
     with open(yaml_file, "r") as f:
@@ -17,64 +17,47 @@ def read_yaml(yaml_file):
             raise Exception("No message or board present in yaml")
         return data
 
-def get_template_spacing(template):
+def get_function_line_spacing(function_words):
     # Returns an integer that indicates the amount of spaces needed leading up to the first open bracket
-    # Loop through the template until the first open bracket to find where the parameter declaration starts to determine correct spacing
+    # Loop through the line array until the first open bracket to find where the parameter declaration starts to determine correct spacing
     spacing = 0
-    start_of_parameter = 0
-    for i in range(len(template)):
-        if '(' in template[i]:
-            start_of_parameter = i
+    bracket_location = -1
+    for i in range(len(function_words)):
+        if '(' in function_words[i]:
+            bracket_location = i
             break
         else:
-            if '\n' in template[i]:
-                spacing += len(template[i]) - 1
-            else:
-                spacing += len(template[i])
-
+            spacing += len(function_words[i])
+            if '\n' in function_words[i]:
+                spacing -= 1
+    
+    if bracket_location == -1:
+        raise Exception("No bracket in provided line!")
+    
     # Count the number of letters leading up to the bracket
-    for i in range(len(template[start_of_parameter])):
-        if template[start_of_parameter][i] == '(':
-            spacing += 1
+    for i in range(len(function_words[bracket_location])):
+        spacing += 1
+        if function_words[bracket_location][i] == '(':
             break
-        else:
-            spacing += 1
     return spacing
 
-def format_function_parameters(template):
-    # Custom jinja filter that takes in the function parameter string
+def format_function_length(function_line, spacing=0):
+    # Custom jinja filter that takes in the function string
     # and format it to indent to a new line whenever string length 
     # reaches 100 characters.
 
-    template = re.split(r'(\s+)', template)
+    # Splits by whitespace
+    function_line = re.split(r'(\s+)', function_line)
     letter_count = 0
 
-    parameter_tabbing_space = get_template_spacing(template)
-    for i in range(len(template)):
-        letter_count += len(template[i])
+    spacing += get_function_line_spacing(function_line)
+    for i in range(len(function_line)):
+        letter_count += len(function_line[i])
         if letter_count >= 100:
-            template[i] = "\n" + (" "*parameter_tabbing_space) + template[i]
-            letter_count = len(template[i])
-    template = "".join(template)
-    return (template)
-
-def format_function_body(template):
-    # Custom jinja filter that takes in the function body string
-    # and format it to indent to a new line whenever string length 
-    # reaches 100 characters.
-    
-    template = re.split(r'(\s+)', template)
-    template[0] = '  ' + template[0]
-    letter_count = 0
-    
-    function_body_spacing = get_template_spacing(template=template)
-    for i in range(len(template)):
-        letter_count += len(template[i])
-        if letter_count >= 100:
-            template[i] = "\n" + (" "*function_body_spacing) + template[i]
-            letter_count = len(template[i])
-    template = "".join(template)
-    return (template)
+            function_line[i] = "\n" + (" " * spacing) + function_line[i]
+            letter_count = len(function_line[i])
+    function_line = "".join(function_line)
+    return (function_line)
 
 def get_board_name(yaml_path):
     return yaml_path.split("/")[len(yaml_path.split("/"))-1].split(".")[0]
@@ -85,21 +68,17 @@ def get_file_name(template_name, board):
     # files that start with _ are generic and we want to prepend the board name
     return board + jinja_prefix if jinja_prefix[0] == "_" and board else jinja_prefix
 
-
 def write_template(env, template_name, file_path, data):
     template = env.get_template(template_name)
     output = template.render(data=data)
     with open(file_path, "w") as f:
         f.write(output)
 
-
 def process_setter_data(board, data, master_data):
-    for message in data["Messages"]:
-        if board in data["Messages"][message].get("target", []) and \
-           data["Messages"][message].get("signals", False):
-            for signal, signal_data in data["Messages"][message]["signals"].items():
-                signal_data["message"] = message
-                master_data["Signals"].append((signal, signal_data))
+    for message, message_data in data["Messages"].items():
+        if board in message_data.get("target", []) and \
+           message_data.get("signals", False): # extra check to make sure there's signals
+            master_data["Messages"][message] = message_data
 
 def get_dbc_data():
     yaml_files = get_yaml_files()
@@ -152,6 +131,7 @@ def get_yaml_files():
 
 def get_boards():
     path_to_boards = get_boards_dir()
+    # TODO: Don't use a loop just grab the file
     for file in os.listdir(path_to_boards):
         board_name = file.split(".")[0]  # only get the part before .yaml
         if board_name == "boards":
@@ -161,9 +141,9 @@ def get_boards():
     return []
 
 def parse_board_yaml_files(board):
-    master_data = {"Board": board, "Signals": []}
+    master_data = {"Board": board, "Messages": {}}
     yaml_files = list(get_yaml_files().values())
-    for file in yaml_files:  
+    for file in yaml_files:
         data = read_yaml(file)
         process_setter_data(board, data, master_data)
 
@@ -207,41 +187,53 @@ def main():
 
 if __name__ == "__main__":
     parser = OptionParser()
+    # TODO: Get rid of -y option or -b option, redundant
     parser.add_option("-y", "--yaml_file", default=[], dest="yaml_file", action="append",
                       help="yaml file to read", metavar="FILE")
-    parser.add_option("-t", "--template", dest="template",
+    parser.add_option("-t", "--template", default=[], dest="template", action="append",
                       help="template file to populate", metavar="FILE")
     parser.add_option("-b", "--board", default=None, dest="board", help="which board to generate")
     parser.add_option("-f", "--file_path", default=".", dest="file_path", help="output file path")
 
     (options, args) = parser.parse_args()
 
-    if options.template:
-        codegen_dir = '/'.join(options.template.split('/')[:-1])
-        template_name = options.template.split('/')[-1]
+    for template in options.template:
+        codegen_dir = '/'.join(template.split('/')[:-1])
+        template_name = template.split('/')[-1]
         templateLoader = jinja2.FileSystemLoader(searchpath=codegen_dir)
         env = jinja2.Environment(loader=templateLoader)
-        env.filters["format_function_parameters"] = format_function_parameters
-        env.filters["format_function_body"] = format_function_body
+        env.filters["format_function_length"] = format_function_length
         file_path = options.file_path + "/" + get_file_name(template_name, options.board)
 
+        # TODO: Fix this
         if "system_can.dbc" in template_name:
             data = get_dbc_data()
             if len(data["Boards"]):
                 write_template(env, template_name, file_path, data)
+        elif "_rx_structs.h" in template_name or \
+             "_rx_all.c" in template_name or \
+             "_getters.h.jinja" in template_name or \
+             "_unpack_msg.h.jinja" in template_name:
+            data = parse_board_yaml_files(options.board)
+            write_template(env, template_name, file_path, data)
         elif options.yaml_file:
             for y in options.yaml_file:
                 data = read_yaml(y)
                 if options.board:
                     data["Board"] = options.board
-                if data.get("Boards"):
-                    data["Boards"] = [
-                        parse_board_yaml_files(data["Boards"][i]) for i in range(len(data["Boards"]))
-                    ]
+                if data.get("Boards"): # For can_boards_ids.h
+                    yaml_files = get_yaml_files()
+                    # TODO: really should optimize this and change
+                    # Should also just be able to get yaml from board name
+                    boards = data["Boards"].copy()
+                    data["Boards"] = OrderedDict()
+                    for board in boards:
+                        yaml_data = read_yaml(yaml_files[board])
+                        data["Boards"][board] = yaml_data
                 write_template(env, template_name, file_path, data)
         elif options.board:
-            data = parse_board_yaml_files(options.board)
+            data = {}
+            data["Board"] = options.board
             write_template(env, template_name, file_path, data)
-        
 
     main()

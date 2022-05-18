@@ -1,0 +1,33 @@
+---
+  Messages:
+    transmit_msg1:
+      id: 0
+      target:
+        - centre_console
+        - new_can
+      critical: true
+      signals:
+        status:
+          length: 8
+    
+    transmit_msg2:
+      id: 1
+      target:
+        - centre_console
+        - new_can
+      critical: true
+      signals:
+        signal:
+          length: 8
+        signal2:
+          length: 8
+
+    transmit_msg3:
+      id: 2
+      target:
+        - centre_console
+      critical: true
+      signals:
+        help:
+          length: 8
+
