@@ -10,10 +10,6 @@
 #define BAUDRATE 9600
 
 typedef struct {
-  volatile uint8_t tx_buf[UART_MAX_BUFFER_LEN * sizeof(uint8_t)];
-} UartStorage;
-
-typedef struct {
   UartPort uart;
   Queue *rx_queue;
 } UartRxSettings;
@@ -27,8 +23,9 @@ typedef struct {
 } UartSettings;
 
 // Assumes standard 8 N 1
+// tx_buf array must be declared statically, and have size num_items*item_size
 // Initializes buffer and queue for tx and rx on provided UartPort
-StatusCode uart_init(UartPort uart, UartSettings *settings, UartStorage *storage);
+StatusCode uart_init(UartPort uart, UartSettings *settings, uint8_t *tx_buf);
 
 // Uses a queue handler from UartRxSettings which all recieved data is written to
 // If the queue is full the oldest data is dropped and overwritten

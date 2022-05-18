@@ -22,7 +22,6 @@ typedef struct {
   uint32_t irq;
   Queue rx_queue;
   USART_TypeDef *base;
-  UartStorage *storage;
   Mutex *tx_mutex;
 } UartPortData;
 
@@ -54,7 +53,7 @@ static void prv_rx_push(UartPort uart);
 
 static void prv_handle_irq(UartPort uart);
 
-StatusCode uart_init(UartPort uart, UartSettings *settings, UartStorage *storage) {
+StatusCode uart_init(UartPort uart, UartSettings *settings, uint8_t *tx_buf) {
   // Reserve USART Port 1 for Retarget.c
   if (uart == UART_PORT_1) return STATUS_CODE_INVALID_ARGS;
 
@@ -62,11 +61,9 @@ StatusCode uart_init(UartPort uart, UartSettings *settings, UartStorage *storage
 
   s_port[uart].rcc_cmd(s_port[uart].periph, ENABLE);
 
-  s_port[uart].storage = storage;
-
   tx_queue.item_size = sizeof(uint8_t);
   tx_queue.num_items = UART_MAX_BUFFER_LEN;
-  tx_queue.storage_buf = s_port[uart].storage->tx_buf;
+  tx_queue.storage_buf = tx_buf;
 
   GpioSettings gpio_settings = {
     .alt_function = settings->alt_fn,
@@ -129,8 +126,6 @@ static void prv_tx_pop(UartPort uart) {
 }
 
 static void prv_rx_push(UartPort uart) {
-  UartStorage *storage = s_port[uart].storage;
-
   uint8_t rx_data = USART_ReceiveData(s_port[uart].base);
   // If the queue is full drop oldest data
   if (queue_send(&s_port[uart].rx_queue, &rx_data, 0) == STATUS_CODE_RESOURCE_EXHAUSTED) {
