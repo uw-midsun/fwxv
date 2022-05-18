@@ -2,35 +2,27 @@
 
 #include <stdint.h>
 #include "gpio.h"
+#include "queues.h"
 #include "status.h"
 #include "uart_mcu.h"
 
 #define UART_MAX_BUFFER_LEN 512
 #define BAUDRATE 9600
 
-typedef void (*UartRxHandler)(const uint8_t *rx_arr, size_t len, void *context);
-
 typedef struct {
-  void *context;
-
-  volatile uint8_t tx_buf[UART_MAX_BUFFER_LEN*sizeof(uint8_t)];
-  volatile uint8_t rx_buf[UART_MAX_BUFFER_LEN];
-
-  Queue *rx_line_buf;
-  char delimiter;
+  volatile uint8_t tx_buf[UART_MAX_BUFFER_LEN * sizeof(uint8_t)];
 } UartStorage;
 
 typedef struct {
   UartPort uart;
   Queue *rx_queue;
-  void *context;
 } UartRxSettings;
 
 typedef struct {
   void *context;
 
-  GpioAddress tx;
-  GpioAddress rx;
+  GpioAddress tx;  // tx pin
+  GpioAddress rx;  // rx pin
   GpioAltFn alt_fn;
 } UartSettings;
 
@@ -42,9 +34,8 @@ StatusCode uart_init(UartPort uart, UartSettings *settings, UartStorage *storage
 // If the queue is full the oldest data is dropped and overwritten
 StatusCode uart_rx_init(UartRxSettings *settings);
 
-// Sets the delimiter used to break up lines between callbacks
-// Note that the default delimiter is \n
-StatusCode uart_set_delimiter(UartPort uart, uint8_t delimiter);
-
 // Non-blocking TX
-StatusCode uart_tx(UartPort uart, uint8_t *tx_data, size_t len);
+// Returns STATUS_CODE_OK on successful tx - waits ms_to_wait to aquire mutex
+// otherwise if a tx is already being performed on UartPort uart,
+// return STATUS_CODE_RESOURCE_EXHAUSTED
+StatusCode uart_tx(UartPort uart, uint8_t *tx_data, uint8_t len, uint16_t ms_to_wait);
