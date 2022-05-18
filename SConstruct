@@ -50,7 +50,8 @@ AddOption(
     '--sanitizer',
     dest='sanitizer',
     type='string',
-    action='store'
+    action='store',
+    default="none"
 )
 SANITIZER = GetOption('sanitizer')
 PLATFORM = GetOption('platform')
@@ -62,6 +63,9 @@ LIBRARY = GetOption('library')
 ###########################################################
 
 # Retrieve the construction environment from the appropriate platform script
+if SANITIZER != 'none':
+    print("Defaulting Platform to x86 because ARM is not compatible with Sanitizers")
+    PLATFORM = 'x86'
 if PLATFORM == 'x86':
     env = SConscript('platform/x86.py')
 elif PLATFORM == 'arm':
