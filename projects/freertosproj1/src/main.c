@@ -3,47 +3,51 @@
 
 #include "FreeRTOS.h"
 #include "delay.h"
-#include "gpio.h"
 #include "log.h"
 #include "misc.h"
-#include "task.h"
+#include "queues.h"
+#include "status.h"
+#include "tasks.h"
 
-// // Non blocking delay. Simply consumes cpu cycles until a given time has passed
-// static void prv_delay(const TickType_t delay_ms) {
-//   TickType_t curr_tick = xTaskGetTickCount();
-//   while(xTaskGetTickCount() - curr_tick < pdMS_TO_TICKS(delay_ms))
-// {
-//   }
-// }
+#define LIST_SIZE 5
+#define ITEM_SZ 6
+
+#define QUEUE_LEN 5
+#define BUF_SIZE (QUEUE_LEN * ITEM_SZ)
+
+static const char s_list[LIST_SIZE][ITEM_SZ] = { "Item1", "Item2", "Item3", "Item4", "Item5" };
+
+// Task static entities
+static uint8_t s_queue1_buf[BUF_SIZE];
+static Queue s_queue1 = {
+  // Add parameters
+};
 
 TASK(task1, TASK_STACK_512) {
-  int counter1 = 0;
+  LOG_DEBUG("Task 1 initialized!\n");
+  StatusCode ret;
   while (true) {
-    LOG_DEBUG("task1:\n");
-    LOG_DEBUG(" %d\n", counter1);
-    counter1 += 1;
-    delay_s(1);
+    // Your code goes here
   }
 }
 
 TASK(task2, TASK_STACK_512) {
-  int counter2 = 0;
+  LOG_DEBUG("Task 2 initialized!\n");
+  const char outstr[5];
+  StatusCode ret;
   while (true) {
-    LOG_DEBUG("task2:\n");
-    LOG_DEBUG(" %d\n", counter2);
-    counter2 += 1;
-    delay_s(1);
+    // Your code goes here
   }
 }
 
 int main(void) {
   log_init();
-  // Create tasks here
-  tasks_init_task(task1, TASK_PRIORITY(1), NULL);
+  // Initialize queues here
+
+  tasks_init_task(task1, TASK_PRIORITY(2), NULL);
   tasks_init_task(task2, TASK_PRIORITY(2), NULL);
 
   LOG_DEBUG("Program start...\n");
-  // Start the scheduler
   tasks_start();
 
   return 0;
