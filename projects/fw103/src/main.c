@@ -32,33 +32,35 @@ TASK(task1, TASK_STACK_512) {
   StatusCode ret;
   while (true) {
     // Your code goes here
-    if (queue_send(&s_queue1, &(s_list[(i++) % LIST_SIZE]), 1000) != STATUS_CODE_OK) {
+    if (queue_send(&s_queue1, s_list[(i++) % LIST_SIZE], 1000) != STATUS_CODE_OK) {
       LOG_DEBUG("Write to queue failed.\n");
     }
+    delay_ms(1000);
   }
 }
 
 TASK(task2, TASK_STACK_512) {
   LOG_DEBUG("Task 2 initialized!\n");
   const char outstr[6];
-  unsigned int i = 0;
   StatusCode ret;
   while (true) {
     // Your code goes here
     if (queue_receive(&s_queue1, outstr, 1000) != STATUS_CODE_OK) {
       LOG_DEBUG("Read from queue failed\n");
     } else {
-      LOG_DEBUG("%s", outstr);
+      LOG_DEBUG("%s\n", outstr);
     }
+    delay_ms(1000);
   }
 }
 
 int main(void) {
   log_init();
   // Initialize queues here
+  queue_init(&s_queue1);
 
-  tasks_init_task(task1, TASK_PRIORITY(1), NULL);
-  tasks_init_task(task2, TASK_PRIORITY(1), NULL);
+  tasks_init_task(task1, TASK_PRIORITY(2), NULL);
+  tasks_init_task(task2, TASK_PRIORITY(2), NULL);
 
   LOG_DEBUG("Program start...\n");
   tasks_start();
