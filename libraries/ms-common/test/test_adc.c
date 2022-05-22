@@ -174,7 +174,6 @@ void test_adc_mock_reading() {
   TEST_ASSERT_TRUE(reading != 0);
 }
 
-
 //
 // ONLY ONE TASK TEST CAN WORK AT THE SAME TIME, COMMENT OUT TO TEST INDIVIDUALLY
 //
