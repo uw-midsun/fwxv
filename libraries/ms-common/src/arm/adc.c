@@ -171,7 +171,7 @@ void adc_init(AdcMode adc_mode) {
   for (size_t i = 0; i < NUM_ADC_CHANNELS; ++i) {
     s_adc_stores[i].reading = 0;
     s_adc_stores[i].task = NULL;
-    s_adc_status[i].event = 0;
+    s_adc_stores[i].event = 0;
   }
 
   // Configure internal reference channel to run by default for voltage
@@ -264,7 +264,7 @@ StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
     xSemaphoreGive(s_adc_status.converting);
   }
 
-  *reading = s_adc_readings[channel];
+  *reading = s_adc_stores[channel].reading;
 
   return STATUS_CODE_OK;
 }
