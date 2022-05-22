@@ -6,7 +6,9 @@
 #include <stdint.h>
 
 #include "gpio.h"
+#include "notify.h"
 #include "status.h"
+#include "tasks.h"
 
 typedef enum {
   ADC_MODE_SINGLE = 0,
@@ -33,7 +35,7 @@ StatusCode adc_set_channel(GpioAddress address, bool new_state);
 
 // Register a callback function to be called when the specified pin
 // completes a conversion
-StatusCode adc_register_callback(GpioAddress address);
+StatusCode adc_register_event(GpioAddress address, Task *task, Event event);
 
 // Do not call |adc_read_raw/converted| or |adc_read_raw/converted_pin| from an interrupt callback
 // with INTERRUPT_PRIORITY_HIGH, as it will cause deadlock.

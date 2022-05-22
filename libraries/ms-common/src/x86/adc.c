@@ -18,11 +18,13 @@
 #define ADC_TEMP_RETURN 293
 #define ADC_VDDA_RETURN 3300
 
+#define ADC_PRIORITY 3
+
 enum {
-  ADC_CHANNEL_BAT = 0,
+  ADC_CHANNEL_BAT = 16,
   ADC_CHANNEL_REF,
   ADC_CHANNEL_TEMP,
-  ADC_SPECIAL_CHANNELS,
+  NUM_ADC_CHANNELS,
 };
 
 const GpioAddress ADC_BAT = {
@@ -40,7 +42,13 @@ const GpioAddress ADC_TEMP = {
 
 #define NUM_ADC_CHANNELS 18
 
-static uint16_t s_adc_readings[NUM_ADC_CHANNELS];
+typedef struct AdcStore {
+  uint16_t reading;
+  Task *task;
+  Event event;
+} AdcStore;
+
+static AdcStore s_adc_stores[NUM_ADC_CHANNELS];
 
 static bool s_active_channels[NUM_ADC_CHANNELS];
 
@@ -52,33 +60,35 @@ static uint16_t prv_get_vdda(uint16_t reading) {
   return ADC_VDDA_RETURN;
 }
 
-static StatusCode prv_check_channel_valid_and_enabled(AdcChannel adc_channel) {
-  if (adc_channel >= NUM_ADC_CHANNELS) {
-    return status_code(STATUS_CODE_INVALID_ARGS);
-  }
+static StatusCode prv_check_channel_enabled(uint8_t adc_channel) {
   if (!s_active_channels[adc_channel]) {
     return status_code(STATUS_CODE_EMPTY);
   }
   return STATUS_CODE_OK;
 }
 
-static void prv_periodic_continous_cb(SoftTimerId id, void *context) {
-  for (AdcChannel i = 0; i < NUM_ADC_CHANNELS; i++) {
-    if (s_adc_interrupts[i].callback != NULL) {
-      s_adc_interrupts[i].callback(i, s_adc_interrupts[i].context);
-    } else if (s_adc_interrupts[i].pin_callback != NULL) {
-      s_adc_interrupts[i].pin_callback(prv_channel_to_gpio(i), s_adc_interrupts[i].context);
+TASK(periodic_callback, TASK_STACK_256) {
+  TickType_t last_wake_time = xTaskGetTickCount();
+
+  while (true) {
+    xTaskDelayUntil(&last_wake_time, ADC_CONTINUOUS_CB_FREQ_MS);
+
+    for (uint8_t i = 0; i < NUM_ADC_CHANNELS; ++i) {
+      if (s_active_channels[i] && s_adc_stores[i].task != NULL) {
+        notify(s_adc_stores[i].task->handle, s_adc_stores[i].event);
+      }
     }
   }
-  soft_timer_start_millis(ADC_CONTINUOUS_CB_FREQ_MS, prv_periodic_continous_cb, NULL, NULL);
 }
 
 void adc_init(AdcMode adc_mode) {
   if (adc_mode == ADC_MODE_CONTINUOUS) {
-    soft_timer_start_millis(ADC_CONTINUOUS_CB_FREQ_MS, prv_periodic_continous_cb, NULL, NULL);
+    tasks_init_task(periodic_callback, ADC_PRIORITY, NULL);
   }
   for (size_t i = 0; i < NUM_ADC_CHANNELS; ++i) {
-    prv_reset_channel(i);
+    s_adc_stores[i].reading = 0;
+    s_adc_stores[i].task = NULL;
+    s_adc_stores[i].event = 0;
   }
   adc_set_channel(ADC_REF, true);
 }
@@ -93,22 +103,21 @@ StatusCode adc_get_channel(GpioAddress address, uint8_t *adc_channel) {
       if (address.pin > 7) {
         return status_code(STATUS_CODE_INVALID_ARGS);
       }
-      *adc_channel += ADC_SPECIAL_CHANNELS;
       break;
     case GPIO_PORT_B:
       if (address.pin > 1) {
         return status_code(STATUS_CODE_INVALID_ARGS);
       }
-      *adc_channel += ADC_SPECIAL_CHANNELS + 8;
+      *adc_channel += 8;
       break;
     case GPIO_PORT_C:
       if (address.pin > 5) {
         return status_code(STATUS_CODE_INVALID_ARGS);
       }
-      *adc_channel += ADC_SPECIAL_CHANNELS + 10;
+      *adc_channel += 10;
       break;
     case NUM_GPIO_PORTS:  // for special channels BAT/REF/TEMP
-      if (address.pin >= ADC_SPECIAL_CHANNELS) {
+      if (address.pin < ADC_CHANNEL_BAT || address.pin > ADC_CHANNEL_TEMP) {
         return status_code(STATUS_CODE_INVALID_ARGS);
       }
       break;
@@ -121,12 +130,22 @@ StatusCode adc_get_channel(GpioAddress address, uint8_t *adc_channel) {
   return STATUS_CODE_OK;
 }
 
+StatusCode adc_register_event(GpioAddress address, Task *task, Event event) {
+  uint8_t channel;
+  status_ok_or_return(adc_get_channel(address, &channel));
+  status_ok_or_return(prv_check_channel_enabled(channel));
+  s_adc_stores[channel].task = task;
+  s_adc_stores[channel].event = event;
+  return STATUS_CODE_OK;
+}
+
 // the following functions are wrappers over the legacy AdcChannel API dealing with GpioAddresses
 // instead
 StatusCode adc_set_channel(GpioAddress address, bool new_state) {
   uint8_t channel;
   status_ok_or_return(adc_get_channel(address, &channel));
   s_active_channels[channel] = new_state;
+  return STATUS_CODE_OK;
 }
 
 StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
@@ -134,8 +153,8 @@ StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
   status_ok_or_return(adc_get_channel(address, &channel));
   status_ok_or_return(prv_check_channel_enabled(channel));
 
-  s_adc_readings[channel] = ADC_RETURNED_VOLTAGE_RAW;
-  *reading = s_adc_readings[channel];
+  s_adc_stores[channel].reading = ADC_RETURNED_VOLTAGE_RAW;
+  *reading = s_adc_stores[channel].reading;
 
   return STATUS_CODE_OK;
 }

@@ -11,10 +11,10 @@
 #include "stm32f0xx.h"
 
 enum {
-  ADC_CHANNEL_BAT = 0,
+  ADC_CHANNEL_BAT = 16,
   ADC_CHANNEL_REF,
   ADC_CHANNEL_TEMP,
-  ADC_SPECIAL_CHANNELS,
+  NUM_ADC_CHANNELS,
 };
 
 const GpioAddress ADC_BAT = {
@@ -48,9 +48,13 @@ typedef struct AdcStatus {
 
 static AdcStatus s_adc_status;
 
-#define NUM_ADC_CHANNELS 18
+typedef struct AdcStore {
+  uint16_t reading;
+  Task *task;
+  Event event;
+} AdcStore;
 
-static uint16_t s_adc_readings[NUM_ADC_CHANNELS];
+static AdcStore s_adc_stores[NUM_ADC_CHANNELS];
 
 // ADC Channel to GPIO Address mapping found in table 13 of the specific device
 // datasheet. Channels 0 to 7 are occupied by port A, 8 to 9 by prt B, and 10 to
@@ -62,22 +66,21 @@ StatusCode adc_get_channel(GpioAddress address, uint8_t *adc_channel) {
       if (address.pin > 7) {
         return status_code(STATUS_CODE_INVALID_ARGS);
       }
-      *adc_channel += ADC_SPECIAL_CHANNELS;
       break;
     case GPIO_PORT_B:
       if (address.pin > 1) {
         return status_code(STATUS_CODE_INVALID_ARGS);
       }
-      *adc_channel += ADC_SPECIAL_CHANNELS + 8;
+      *adc_channel += 8;
       break;
     case GPIO_PORT_C:
       if (address.pin > 5) {
         return status_code(STATUS_CODE_INVALID_ARGS);
       }
-      *adc_channel += ADC_SPECIAL_CHANNELS + 10;
+      *adc_channel += 10;
       break;
     case NUM_GPIO_PORTS:  // for special channels BAT/REF/TEMP
-      if (address.pin >= ADC_SPECIAL_CHANNELS) {
+      if (address.pin < ADC_CHANNEL_BAT || address.pin > ADC_CHANNEL_TEMP) {
         return status_code(STATUS_CODE_INVALID_ARGS);
       }
       break;
@@ -166,7 +169,9 @@ void adc_init(AdcMode adc_mode) {
   }
 
   for (size_t i = 0; i < NUM_ADC_CHANNELS; ++i) {
-    s_adc_readings[i] = 0;
+    s_adc_stores[i].reading = 0;
+    s_adc_stores[i].task = NULL;
+    s_adc_status[i].event = 0;
   }
 
   // Configure internal reference channel to run by default for voltage
@@ -177,13 +182,22 @@ void adc_init(AdcMode adc_mode) {
 }
 
 void ADC1_COMP_IRQHandler() {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
   if (ADC_GetITStatus(ADC1, ADC_IT_EOC)) {
     uint16_t reading = ADC_GetConversionValue(ADC1);
     if (s_adc_status.sequence != 0) {
-      uint8_t current_channel = __builtin_ctz(s_adc_status.sequence);
-      s_adc_readings[current_channel] = reading;
+      uint8_t channel = __builtin_ctz(s_adc_status.sequence);
+      s_adc_stores[channel].reading = reading;
+      s_adc_status.sequence &= ~((uint32_t)1 << channel);
 
-      s_adc_status.sequence &= ~((uint32_t)1 << current_channel);
+      if (s_adc_stores[channel].task != NULL) {
+        // cannot use notify here because we need additional processing after notify
+        // YIELD_FROM_ISR should be at the end of the function
+        // even though it has same behaviour on stm32 as using notify_from_isr
+        xTaskNotifyFromISR(s_adc_stores[channel].task->handle, 1u << s_adc_stores[channel].event,
+                           eSetBits, &xHigherPriorityTaskWoken);
+      }
     }
   }
 
@@ -192,9 +206,17 @@ void ADC1_COMP_IRQHandler() {
     ADC_ClearITPendingBit(ADC1, ADC_IT_EOSEQ);
   }
 
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   xSemaphoreGiveFromISR(s_adc_status.converting, &xHigherPriorityTaskWoken);
   portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+}
+
+StatusCode adc_register_event(GpioAddress address, Task *task, Event event) {
+  uint8_t channel;
+  status_ok_or_return(adc_get_channel(address, &channel));
+  status_ok_or_return(prv_check_channel_enabled(channel));
+  s_adc_stores[channel].task = task;
+  s_adc_stores[channel].event = event;
+  return STATUS_CODE_OK;
 }
 
 // the following functions are wrappers over the legacy AdcChannel API dealing with GpioAddresses
