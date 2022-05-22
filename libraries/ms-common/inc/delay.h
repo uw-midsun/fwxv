@@ -12,5 +12,8 @@
 // Delay for a period in milliseconds.
 void delay_ms(uint32_t t);
 
+// Non-blocking delay for a period in milliseconds.
+void non_blocking_delay_ms(uint32_t t);
+
 // Delay for a period in seconds.
 #define delay_s(time) delay_ms((time)*1000)

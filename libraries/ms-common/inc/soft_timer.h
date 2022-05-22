@@ -1,7 +1,7 @@
 #pragma once
 
 // Software-based timers using FreeRTOS
-// soft timers should only be used for delayed function calls, use tasks and delayUntil for periodic
+// Soft timers should only be used for delayed function calls, use tasks and delayUntil for periodic
 // code running
 
 #include <stdbool.h>
@@ -13,23 +13,19 @@
 
 typedef TimerHandle_t SoftTimerId;
 
-// Create a soft timer with:
-// SoftTimer timer = { 0 };
+// Soft timer storage, must be declared statically
 typedef struct SoftTimer {
   StaticTimer_t buffer;
   SoftTimerId id;
 } SoftTimer;
 
+// Soft timer callback, called when soft timer expire
 typedef void (*SoftTimerCallback)(SoftTimerId id);
 
 // Adds a software timer. The provided duration is the number of
 // miliseconds before running and the callback is the process to run once
 // the time has expired.
 StatusCode soft_timer_start(uint32_t duration_ms, SoftTimerCallback callback, SoftTimer *timer);
-StatusCode soft_timer_start_with_context(uint32_t duration_ms, SoftTimerCallback callback,
-                                         SoftTimer *timer, void *context);
-
-void *soft_timer_get_context(SoftTimerId id);
 
 // Cancels the soft timer specified by name. Returns true if successful.
 // the timer is not cancelled immediately,

@@ -5,18 +5,20 @@
 
 // For setting the CAN device
 typedef enum {
-    {% for board in boards -%}
-    SYSTEM_CAN_DEVICE_{{ board["Board"] | upper }} = {{ loop.index0 }},
+    {% for board, board_data in boards.items() -%}
+    SYSTEM_CAN_DEVICE_{{ board | upper }} = {{ loop.index0 }},
     {% endfor -%}
     NUM_SYSTEM_CAN_DEVICES = {{ boards | length }}
 } SystemCanDevice;
 
-{%- for board in boards -%}
-  {%- set signals = board["Signals"] -%}
-  {%- for signal in signals %}
+{%- for board, board_data in boards.items() -%}
+  {%- set messages = board_data["Messages"] -%}
+  {% for message, message_data in messages.items() %}
 
-#define SYSTEM_CAN_MESSAGE_{{signal[1]["message"]|upper}} \
-  ({{signal[0]|upper}} << 5) + SYSTEM_CAN_DEVICE_{{board["Board"]|upper}}
+#define SYSTEM_CAN_MESSAGE_{{board|upper}}_{{message|upper}} \
+  ({{message_data["id"]}} << 5) + SYSTEM_CAN_DEVICE_{{board|upper}}
 
   {%- endfor %}
 {%- endfor %}
+
+// end of file

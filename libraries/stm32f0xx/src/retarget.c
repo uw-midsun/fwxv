@@ -38,17 +38,10 @@ void retarget_init(void) {
 }
 
 int _write(int fd, char *ptr, int len) {
-  uint32_t primask = __get_PRIMASK();
-  __disable_irq();
-
   for (int i = 0; i < len; i++) {
     while (USART_GetFlagStatus(RETARGET_CFG_UART, USART_FLAG_TXE) == RESET) {
     }
     USART_SendData(RETARGET_CFG_UART, (uint8_t) * (ptr + i));
-  }
-
-  if (!primask) {
-    __enable_irq();
   }
 
   return len;

@@ -1,0 +1,29 @@
+{% set messages = data["Messages"] -%}
+{% set board = data["Board"] -%}
+
+#include "{{board}}_unpack_msg.h"
+#include "can_codegen.h"
+
+void can_rx_all() {
+    CanMessage msg = { 0 };
+    while (can_receive(&msg, NULL) == STATUS_CODE_OK) {
+        // TODO: Not sure if for loop is best way
+        // Might be O(n)
+        // If store all functions in callback array may be better?
+        // Or do some sort or binary search for O(lgn)
+        switch (msg.id) {
+{%- for message, message_data in messages.items() %}
+            case SYSTEM_CAN_MESSAGE_{{board | upper}}_{{message | upper}}:
+
+    {%- set signals = message_data["signals"].keys() -%}
+    {%- set function_parameters -%}
+can_unpack_{{message}}(&msg {%- for signal in signals %}, &g_rx_struct.{{message}}_{{signal}} {%- endfor -%});
+    {%- endset %}
+                {{function_parameters | format_function_length(16)}}
+                break;
+{%- endfor %}
+            default:
+                break;
+        }
+    }
+}
