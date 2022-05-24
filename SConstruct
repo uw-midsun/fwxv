@@ -46,14 +46,6 @@ AddOption(
     action='store'
 )
 
-AddOption(
-    '--sanitizer',
-    dest='sanitizer',
-    type='string',
-    action='store',
-    default="none"
-)
-SANITIZER = GetOption('sanitizer')
 PLATFORM = GetOption('platform')
 PROJECT = GetOption('project')
 LIBRARY = GetOption('library')
@@ -63,9 +55,6 @@ LIBRARY = GetOption('library')
 ###########################################################
 
 # Retrieve the construction environment from the appropriate platform script
-if SANITIZER != 'none':
-    print("Defaulting Platform to x86 because ARM is not compatible with Sanitizers")
-    PLATFORM = 'x86'
 if PLATFORM == 'x86':
     env = SConscript('platform/x86.py')
 elif PLATFORM == 'arm':
@@ -75,6 +64,27 @@ elif PLATFORM == 'arm':
 TEST_CFLAGS = ['-DMS_TEST']
 if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
     env['CCFLAGS'] += TEST_CFLAGS
+
+# Parse asan / tsan and Adding Sanitizer Argument to Environment Flags
+# Note platform needs to be explicitly set to x86
+
+AddOption(
+    '--sanitizer',
+    dest='sanitizer',
+    type='string',
+    action='store',
+    default="none"
+)
+SANITIZER = GetOption('sanitizer')
+
+if SANITIZER == 'asan':
+    env['CCFLAGS'] += ["-fsanitize=address"]
+    env['CXXFLAGS'] += ["-fsanitize=address"]
+    env['LINKFLAGS'] += ["-fsanitize=address"]
+elif SANITIZER == 'tsan':
+    env['CCFLAGS'] += ["-fsanitize=thread"]
+    env['CXXFLAGS'] += ["-fsanitize=thread"]
+    env['LINKFLAGS'] += ["-fsanitize=thread"]
 
 env['CCCOMSTR'] = "Compiling $TARGET"
 env['LINKCOMSTR'] = "Linking $TARGET"
@@ -210,16 +220,6 @@ def generate_can_files(env, target=[], source=[], project=PROJECT):
 
 env.AddMethod(generate_can_files, "GenerateCanFiles")
 
-# Adding Sanitizer Argument to Environment Flags
-if SANITIZER == 'asan':
-    env['CCFLAGS'] += ["-fsanitize=address"]
-    env['CXXFLAGS'] += ["-fsanitize=address"]
-    env['LINKFLAGS'] += ["-fsanitize=address"]
-elif SANITIZER == 'tsan':
-    env['CCFLAGS'] += ["-fsanitize=thread"]
-    env['CXXFLAGS'] += ["-fsanitize=thread"]
-    env['LINKFLAGS'] += ["-fsanitize=thread"]
-    
 # Create appropriate targets for all projects and libraries
 for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:    
     # Glob the source files from OBJ_DIR because it's a variant dir
