@@ -48,6 +48,7 @@ Unit tests are per-project/library and are built and run from scons. Functions m
 - `--project`: Specifies target project. Only required when running convenience commands or tests.
 - `--library`: Specifies target library. Only required when running convenience commands or tests.
 - `--test`: Specify test file to run.
+- `--sanitizer`: Specifies the sanitizer. One of `asan` for Address sanitizer or `tsan` for Thread sanitizer. Defaults to `none`. Note it only works on `x86` platform.
 
 # Future Improvements
 Features that would be nice to have in the future but haven't been done yet:

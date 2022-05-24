@@ -65,6 +65,27 @@ TEST_CFLAGS = ['-DMS_TEST']
 if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
     env['CCFLAGS'] += TEST_CFLAGS
 
+# Parse asan / tsan and Adding Sanitizer Argument to Environment Flags
+# Note platform needs to be explicitly set to x86
+
+AddOption(
+    '--sanitizer',
+    dest='sanitizer',
+    type='string',
+    action='store',
+    default="none"
+)
+SANITIZER = GetOption('sanitizer')
+
+if SANITIZER == 'asan':
+    env['CCFLAGS'] += ["-fsanitize=address"]
+    env['CXXFLAGS'] += ["-fsanitize=address"]
+    env['LINKFLAGS'] += ["-fsanitize=address"]
+elif SANITIZER == 'tsan':
+    env['CCFLAGS'] += ["-fsanitize=thread"]
+    env['CXXFLAGS'] += ["-fsanitize=thread"]
+    env['LINKFLAGS'] += ["-fsanitize=thread"]
+
 env['CCCOMSTR'] = "Compiling $TARGET"
 env['LINKCOMSTR'] = "Linking $TARGET"
 env['ARCOMSTR'] = "Archiving $TARGET"
@@ -238,7 +259,6 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
 
     env.Append(CPPDEFINES=[GetOption('define')])
-
     if entry in PROJ_DIRS or entry in SMOKE_DIRS:
         is_smoke = entry in SMOKE_DIRS
         lib_deps = get_lib_deps(entry)
