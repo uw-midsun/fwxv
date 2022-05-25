@@ -27,7 +27,7 @@ TASK(task1, TASK_STACK_512) {
 TASK(task2, TASK_STACK_512) {
   int counter2 = 0;
   while (true) {
-    LOG_DEBUG("Task2 has a total of %d times \n", counter2++);
+    LOG_DEBUG("Task1 has a total of %d times \n", counter2++);
     prv_delay(1000);
   }
 }
