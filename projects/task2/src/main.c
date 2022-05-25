@@ -48,7 +48,7 @@ TASK(task2, TASK_STACK_512) {
   StatusCode ret;
   while (true) {
     ret = queue_receive(&s_queue1, &outstr, 1000);
-    delay_ms(500);
+    delay_ms(1000);
     if (ret == STATUS_CODE_OK) {
       LOG_DEBUG("read in: %s \n", outstr);
     } else {
