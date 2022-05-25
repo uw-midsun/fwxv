@@ -1,0 +1,19 @@
+#pragma once
+
+#include "can_boards_ids.h"
+#include "can_codegen.h"
+
+{% set board = data["Board"] -%}
+{% set messages = data["Messages"] -%}
+
+#include <stdint.h>
+
+typedef struct
+{
+{%- for message, message_data in messages.items() -%}
+    {%- set ids = message_data['id'] -%}
+    {%- for id, id_data in ids.items() %}
+    can_add_filter({{message}}_{{id}});
+    {%- endfor %}
+{%- endfor %}
+} {{board}}_rx_struct;
