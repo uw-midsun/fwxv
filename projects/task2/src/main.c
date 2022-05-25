@@ -20,7 +20,9 @@ static const char s_list[LIST_SIZE][ITEM_SZ] = { "Item1", "Item2", "Item3", "Ite
 
 static uint8_t s_queue1_buf[BUF_SIZE];
 static Queue s_queue1 = {
-  .num_items = LIST_SIZE, .item_size = ITEM_SZ, .storage_buf = s_queue1_buf
+  .num_items = LIST_SIZE, 
+  .item_size = ITEM_SZ, 
+  .storage_buf = s_queue1_buf
 };
 
 TASK(task1, TASK_STACK_512) {
