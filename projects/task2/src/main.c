@@ -28,14 +28,14 @@ TASK(task1, TASK_STACK_512) {
   int current_item = 0;
   StatusCode ret;
   while (true) {
-    if (current_item < LIST_SIZE) {
+    for (int i = 0; i < LIST_SIZE; i++) {
       ret = queue_send(&s_queue1, &s_list[current_item], 1000);
-    }
-    delay_ms(1000);
-    if (ret == STATUS_CODE_OK) {
-      current_item++;
-    } else {
-      LOG_DEBUG("write to queue failed\n");
+      delay_ms(1000);
+      if (ret == STATUS_CODE_OK) {
+        current_item++;
+      } else {
+        LOG_DEBUG("write to queue failed\n");
+      }
     }
   }
 }
