@@ -29,4 +29,5 @@ typedef enum {
 typedef struct InterruptSettings {
   InterruptType type;
   InterruptPriority priority;
+  InterruptEdge edge;
 } InterruptSettings;

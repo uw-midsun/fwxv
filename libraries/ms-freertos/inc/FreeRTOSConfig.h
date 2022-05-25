@@ -91,7 +91,7 @@ extern uint32_t SystemCoreClock;
 #define INCLUDE_uxTaskGetStackHighWaterMark 0
 #define INCLUDE_xTaskGetIdleTaskHandle 0
 #define INCLUDE_eTaskGetState 0
-#define INCLUDE_xEventGroupSetBitFromISR 1
+#define INCLUDE_xEventGroupSetBitFromISR 0
 #define INCLUDE_xTimerPendFunctionCall 0
 #define INCLUDE_xTaskAbortDelay 0
 #define INCLUDE_xTaskGetHandle 0

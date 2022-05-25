@@ -47,17 +47,16 @@ StatusCode stm32f0xx_interrupt_nvic_enable(uint8_t irq_channel, InterruptPriorit
   return STATUS_CODE_OK;
 }
 
-StatusCode stm32f0xx_interrupt_exti_enable(uint8_t line, const InterruptSettings *settings,
-                                           InterruptEdge edge) {
+StatusCode stm32f0xx_interrupt_exti_enable(uint8_t line, const InterruptSettings *settings) {
   if (line >= NUM_STM32F0XX_INTERRUPT_LINES || settings->type >= NUM_INTERRUPT_TYPES ||
-      edge >= NUM_INTERRUPT_EDGES) {
+      settings->edge >= NUM_INTERRUPT_EDGES) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
   EXTI_InitTypeDef init_struct = {
     .EXTI_Line = (uint32_t)0x01 << line,
     .EXTI_Mode = 0x04 * settings->type,
-    .EXTI_Trigger = 0x08 + 0x04 * edge,
+    .EXTI_Trigger = 0x08 + 0x04 * settings->edge,
     .EXTI_LineCmd = ENABLE,
   };
   EXTI_Init(&init_struct);
@@ -97,7 +96,7 @@ StatusCode stm32f0xx_interrupt_exti_mask_set(uint8_t line, bool masked) {
   if (line >= NUM_STM32F0XX_INTERRUPT_LINES) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
-  
+
   if (masked) {
     EXTI->IMR &= ~((uint32_t)0x01 << line);
   } else {
