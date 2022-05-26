@@ -2,6 +2,7 @@
 // PWM Module
 
 // Usage Notes:
+// - Module is not thread safe - do not use from more than one task at a time
 // - Module must be initialized for the timer you want before use.
 // - Use pwm_set_dc unless you have reason not to.
 // - pwm_set_pulse affords resolution < 1% unlike pwm_set_dc.
