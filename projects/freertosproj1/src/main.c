@@ -21,31 +21,46 @@ static const char s_list[LIST_SIZE][ITEM_SZ] = { "Item1", "Item2", "Item3", "Ite
 static uint8_t s_queue1_buf[BUF_SIZE];
 static Queue s_queue1 = {
   // Add parameters
+  .num_items = QUEUE_LEN,
+  .item_size = ITEM_SZ,
+  .storage_buf = s_queue1_buf,
 };
 
 TASK(task1, TASK_STACK_512) {
   LOG_DEBUG("Task 1 initialized!\n");
   StatusCode ret;
+  int i = 0;
   while (true) {
-    // Your code goes here
+    ret = queue_send(&s_queue1, &s_list[i], 0);
+    if (ret == STATUS_CODE_OK) {
+      i = (i == 5) ? 0 : i + 1;
+    } else {
+      LOG_DEBUG("write to queue failed\n");
+    }
+    delay_ms(100);
   }
 }
 
 TASK(task2, TASK_STACK_512) {
   LOG_DEBUG("Task 2 initialized!\n");
-  const char outstr[5];
+  const char outstr[ITEM_SZ];
   StatusCode ret;
   while (true) {
-    // Your code goes here
+    ret = queue_receive(&s_queue1, outstr, 0);
+    if (ret == STATUS_CODE_OK) {
+      LOG_DEBUG("read from queue: %s\n", outstr);
+    } else {
+      LOG_DEBUG("read from queue failed\n");
+    }
+    delay_ms(100);
   }
 }
-
 int main(void) {
   log_init();
-  // Initialize queues here
+  queue_init(&s_queue1);
 
-  tasks_init_task(task1, TASK_PRIORITY(2), NULL);
-  tasks_init_task(task2, TASK_PRIORITY(2), NULL);
+  tasks_init_task(task1, TASK_PRIORITY(1), NULL);
+  tasks_init_task(task2, TASK_PRIORITY(1), NULL);
 
   LOG_DEBUG("Program start...\n");
   tasks_start();
