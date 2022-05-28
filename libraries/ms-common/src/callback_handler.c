@@ -11,9 +11,8 @@ typedef struct {
 } Callback; 
 
 static Callback s_callback_storage[MAX_CALLBACKS];
-static Event s_first_available_event = 0;
 
-// Bit map of registered callbacks. A 1-bit represents the callback is registered.
+// Bitmap of registered callbacks. A 1-bit represents the callback is registered.
 static uint32_t s_registered_callbacks = 0;
 
 static Mutex callback_mutex;
@@ -23,10 +22,11 @@ void callback_init(void) {
   mutex_init(&callback_mutex);
 }
 
+// Helper function to find smallest event available to assign to a callback.
 Event prv_find_next_event() {
-  // This will happen if all bits in s_registered_callbacks are 1's.
-  // I.e. 32 callbacks registered, no more capacity.
   if (!(~s_registered_callbacks)) {
+    // This will happen if all bits in s_registered_callbacks are 1's.
+    // I.e. 32 callbacks registered, no more capacity.
     return INVALID_EVENT;
   }
   // Gets index of least significant 0 bit (first available event)
@@ -45,6 +45,7 @@ StatusCode prv_trigger_callback(Event event) {
     return STATUS_CODE_INVALID_ARGS;
   }
 
+  mutex_lock(&callback_mutex, BLOCK_INDEFINITELY);
   // Run callback
   void *context = s_callback_storage[event].context;
   s_callback_storage[event].callback_fn(context);
@@ -55,13 +56,12 @@ StatusCode prv_trigger_callback(Event event) {
 
   // Clear bit in bitmask
   s_registered_callbacks &= ~(1u << event);
-  // LOG_DEBUG("Ran callback: %d, callbacks is: %08jx\n", event, (uintmax_t)s_registered_callbacks);
+  mutex_unlock(&callback_mutex);
 
   return STATUS_CODE_OK;
 }
 
 Event register_callback(CallbackFn cb, void *context) {
-  mutex_lock(&callback_mutex, BLOCK_INDEFINITELY);
   Event event = prv_find_next_event();
 
   if (event >= INVALID_EVENT) {
@@ -69,12 +69,13 @@ Event register_callback(CallbackFn cb, void *context) {
     return event;
   }
 
-  // Set <event> bit in s_registered_callbacks to 1.
+  mutex_lock(&callback_mutex, BLOCK_INDEFINITELY);
+
+  // Set |event|th bit in s_registered_callbacks to 1.
   s_registered_callbacks |= 1u << event;
   s_callback_storage[event] = (Callback){.callback_fn=cb, .context=context};
   mutex_unlock(&callback_mutex);
 
-  // LOG_DEBUG("Registered callback: %d, callbacks is: %08jx\n", event, (uintmax_t)s_registered_callbacks);
   return event;
 }
 
