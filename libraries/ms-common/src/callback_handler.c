@@ -1,7 +1,6 @@
 #include "callback_handler.h"
 
 #include "log.h"
-#include "mutex.h"
 #include "notify.h"
 #include "status.h"
 
@@ -15,11 +14,8 @@ static Callback s_callback_storage[MAX_CALLBACKS];
 // Bitmap of registered callbacks. A 1-bit represents the callback is registered.
 static uint32_t s_registered_callbacks = 0;
 
-static Mutex callback_mutex;
-
 void callback_init(void) {
   StatusCode result = tasks_init_task(callback_task, TASK_PRIORITY(tskIDLE_PRIORITY + 1), NULL);
-  mutex_init(&callback_mutex);
 }
 
 // Helper function to find smallest event available to assign to a callback.
@@ -45,7 +41,6 @@ StatusCode prv_trigger_callback(Event event) {
     return STATUS_CODE_INVALID_ARGS;
   }
 
-  mutex_lock(&callback_mutex, BLOCK_INDEFINITELY);
   // Run callback
   void *context = s_callback_storage[event].context;
   s_callback_storage[event].callback_fn(context);
@@ -56,7 +51,6 @@ StatusCode prv_trigger_callback(Event event) {
 
   // Clear bit in bitmask
   s_registered_callbacks &= ~(1u << event);
-  mutex_unlock(&callback_mutex);
 
   return STATUS_CODE_OK;
 }
@@ -69,12 +63,9 @@ Event register_callback(CallbackFn cb, void *context) {
     return event;
   }
 
-  mutex_lock(&callback_mutex, BLOCK_INDEFINITELY);
-
   // Set |event|th bit in s_registered_callbacks to 1.
   s_registered_callbacks |= 1u << event;
   s_callback_storage[event] = (Callback){.callback_fn=cb, .context=context};
-  mutex_unlock(&callback_mutex);
 
   return event;
 }
