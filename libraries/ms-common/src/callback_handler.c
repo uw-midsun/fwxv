@@ -7,7 +7,7 @@
 typedef struct {
   CallbackFn callback_fn;
   void *context;
-} Callback; 
+} Callback;
 
 static Callback s_callback_storage[MAX_CALLBACKS];
 
@@ -65,7 +65,7 @@ Event register_callback(CallbackFn cb, void *context) {
 
   // Set |event|th bit in s_registered_callbacks to 1.
   s_registered_callbacks |= 1u << event;
-  s_callback_storage[event] = (Callback){.callback_fn=cb, .context=context};
+  s_callback_storage[event] = (Callback){ .callback_fn = cb, .context = context };
 
   return event;
 }

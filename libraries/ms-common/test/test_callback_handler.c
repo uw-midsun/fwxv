@@ -41,7 +41,8 @@ TASK(register_max_callbacks, TASK_STACK_512) {
     delay_ms(10);
   }
 
-  while (1);
+  while (1) {
+  }
 }
 
 // Try registering a callback when MAX_CALLBACKS has been reached
@@ -58,9 +59,9 @@ TASK(callback_overflow, TASK_STACK_512) {
 
   free(num);
 
-  while (1);
+  while (1) {
+  }
 }
-
 
 TASK_TEST(test_callbacks, TASK_STACK_512) {
   delay_ms(1);

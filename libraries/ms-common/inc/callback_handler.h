@@ -1,23 +1,23 @@
 #pragma once
 // Callback handler library. Can register up to 32 callbacks
-// 
+//
 // USAGE:
 //
 // Define a callback to register.
 //
-// 		void example_fn(void *context);
+//    void example_fn(void *context);
 //
 // Register the callback with any arguments passed as a context pointer.
 //
-// 		uint8_t my_number = 4;
-//		uint8_t *arg = &my_number;
-// 		Event event = register_callback(example_fn, arg)
+//    uint8_t my_number = 4;
+//    uint8_t *arg = &my_number;
+//    Event event = register_callback(example_fn, arg)
 //
 // Trigger the callback by notifying the callback handler task |callback_task|.
 // Pass the event returned by |register_callback| in the notification.
-// 		#include "notify.h"		
-//		...
-//			notify(callback_task->handle, event);
+//    #include "notify.h"
+//    ...
+//      notify(callback_task->handle, event);
 
 #include <stdint.h>
 #include <stdio.h>
