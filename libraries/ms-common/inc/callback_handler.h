@@ -15,14 +15,13 @@
 #include "task.h"
 #include "tasks.h"
 
-typedef void (*callback)(void);
+typedef void (*CallbackFn)(void *);
 
 DECLARE_TASK(callback_task);
 
-#define QUEUE_LENGTH 32
 #define MAX_CALLBACKS 32
-#define ITEM_SIZE sizeof(callback)
+#define ITEM_SIZE sizeof(CallbackFn)
 
 void callback_init(void);
 
-Event register_callback(callback);
+Event register_callback(CallbackFn, void *context);

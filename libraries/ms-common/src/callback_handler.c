@@ -5,7 +5,12 @@
 #include "notify.h"
 #include "status.h"
 
-static callback s_callback_storage[MAX_CALLBACKS] = { NULL };
+typedef struct {
+  CallbackFn callback_fn;
+  void *context;
+} Callback; 
+
+static Callback s_callback_storage[MAX_CALLBACKS];
 static Event s_first_available_event = 0;
 
 // Bit map of registered callbacks. A 1-bit represents the callback is registered.
@@ -21,7 +26,7 @@ void callback_init(void) {
 Event prv_find_next_event() {
   // This will happen if all bits in s_registered_callbacks are 1's.
   // I.e. 32 callbacks registered, no more capacity.
-  if (~s_registered_callbacks == 0u) {
+  if (!(~s_registered_callbacks)) {
     return INVALID_EVENT;
   }
   // Gets index of least significant 0 bit (first available event)
@@ -30,33 +35,46 @@ Event prv_find_next_event() {
   return event;
 }
 
-StatusCode prv_run_callback(Event event) {
-  if (event > 31) {
+StatusCode prv_trigger_callback(Event event) {
+  if (event >= MAX_CALLBACKS) {
+    return STATUS_CODE_INVALID_ARGS;
+  }
+
+  // Callback has not been registered
+  if (!(s_registered_callbacks & (1u << event))) {
     return STATUS_CODE_INVALID_ARGS;
   }
 
   // Run callback
-  // ADD context field
-  s_callback_storage[event]();
-  s_callback_storage[event] = NULL;
+  void *context = s_callback_storage[event].context;
+  s_callback_storage[event].callback_fn(context);
+
+  // Clear Callback object
+  s_callback_storage[event].callback_fn = NULL;
+  s_callback_storage[event].context = NULL;
 
   // Clear bit in bitmask
   s_registered_callbacks &= ~(1u << event);
-  LOG_DEBUG("Ran callback: %d, callbacks is: %08lx\n", event, s_registered_callbacks);
+  // LOG_DEBUG("Ran callback: %d, callbacks is: %08jx\n", event, (uintmax_t)s_registered_callbacks);
 
   return STATUS_CODE_OK;
 }
 
-Event register_callback(callback cb) {
+Event register_callback(CallbackFn cb, void *context) {
   mutex_lock(&callback_mutex, BLOCK_INDEFINITELY);
   Event event = prv_find_next_event();
 
+  if (event >= INVALID_EVENT) {
+    LOG_CRITICAL("RESOURCE EXHAUSTED\n");
+    return event;
+  }
+
   // Set <event> bit in s_registered_callbacks to 1.
   s_registered_callbacks |= 1u << event;
-  s_callback_storage[event] = cb;
+  s_callback_storage[event] = (Callback){.callback_fn=cb, .context=context};
   mutex_unlock(&callback_mutex);
 
-  LOG_DEBUG("Registered callback: %d, callbacks is: %08lx\n", event, s_registered_callbacks);
+  // LOG_DEBUG("Registered callback: %d, callbacks is: %08jx\n", event, (uintmax_t)s_registered_callbacks);
   return event;
 }
 
@@ -66,6 +84,6 @@ TASK(callback_task, TASK_STACK_512) {
   while (true) {
     notify_wait(&notification, BLOCK_INDEFINITELY);
     event_from_notification(&notification, &event);
-    prv_run_callback(event);
+    prv_trigger_callback(event);
   }
 }
