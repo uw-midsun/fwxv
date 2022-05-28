@@ -70,5 +70,5 @@ TASK_TEST(test_callbacks, TASK_STACK_512) {
   delay_ms(1);
   tasks_init_task(callback_overflow, TASK_PRIORITY(1), NULL);
 
-  delay_ms(3000);
+  delay_ms(1000);
 }
