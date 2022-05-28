@@ -25,6 +25,7 @@
 
 #include "FreeRTOS.h"
 #include "tasks.h"
+#include "notify.h"
 
 // Each callback function must have the following signature.
 typedef void (*CallbackFn)(void *);
