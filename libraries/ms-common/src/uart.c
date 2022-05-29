@@ -4,12 +4,27 @@
 #include "stm32f0xx.h"
 #include "stm32f0xx_rcc.h"
 #include "stm32f0xx_usart.h"
+#include "stm32f0xx_interrupt.h"
 
-// basic idea: tx is stored in a queue, interrupt-driven
-// rx data is received to a queue, the task which initialized it
-// has access to the queue and can read at its leisure
+static Queue tx_queue_port_1;
+static Queue tx_queue_port_2;
+static Queue tx_queue_port_3;
+static Queue tx_queue_port_4;
 
-static Queue tx_queue;
+static uint8_t tx_buf_port_1[UART_MAX_BUFFER_LEN];
+static uint8_t tx_buf_port_2[UART_MAX_BUFFER_LEN];
+static uint8_t tx_buf_port_3[UART_MAX_BUFFER_LEN];
+static uint8_t tx_buf_port_4[UART_MAX_BUFFER_LEN];
+
+static Queue rx_queue_port_1;
+static Queue rx_queue_port_2;
+static Queue rx_queue_port_3;
+static Queue rx_queue_port_4;
+
+static uint8_t rx_buf_port_1[UART_MAX_BUFFER_LEN];
+static uint8_t rx_buf_port_2[UART_MAX_BUFFER_LEN];
+static uint8_t rx_buf_port_3[UART_MAX_BUFFER_LEN];
+static uint8_t rx_buf_port_4[UART_MAX_BUFFER_LEN];
 
 static Mutex tx_data_port_1;
 static Mutex tx_data_port_2;
@@ -20,7 +35,10 @@ typedef struct {
   void (*rcc_cmd)(uint32_t periph, FunctionalState state);
   uint32_t periph;
   uint32_t irq;
-  Queue rx_queue;
+  Queue *tx_queue;
+  Queue *rx_queue;
+  uint8_t *tx_buf;
+  uint8_t *rx_buf;
   USART_TypeDef *base;
   Mutex *tx_mutex;
 } UartPortData;
@@ -30,30 +48,43 @@ static UartPortData s_port[] = {
                     .periph = RCC_APB2Periph_USART1,
                     .irq = USART1_IRQn,
                     .tx_mutex = &tx_data_port_1,
+                    .tx_queue = &tx_queue_port_1,
+                    .rx_queue = &rx_queue_port_1,
+                    .tx_buf = tx_buf_port_1,
+                    .rx_buf = rx_buf_port_1,
                     .base = USART1 },
   [UART_PORT_2] = { .rcc_cmd = RCC_APB1PeriphClockCmd,
                     .periph = RCC_APB1Periph_USART2,
                     .irq = USART2_IRQn,
                     .tx_mutex = &tx_data_port_2,
+                    .tx_queue = &tx_queue_port_2,
+                    .rx_queue = &rx_queue_port_2,
+                    .tx_buf = tx_buf_port_2,
+                    .rx_buf = rx_buf_port_2,
                     .base = USART2 },
   [UART_PORT_3] = { .rcc_cmd = RCC_APB1PeriphClockCmd,
                     .periph = RCC_APB1Periph_USART3,
                     .tx_mutex = &tx_data_port_3,
+                    .tx_queue = &tx_queue_port_3,
+                    .rx_queue = &rx_queue_port_3,
+                    .tx_buf = tx_buf_port_2,
+                    .rx_buf = rx_buf_port_2,
                     .irq = USART3_4_IRQn,
                     .base = USART3 },
   [UART_PORT_4] = { .rcc_cmd = RCC_APB1PeriphClockCmd,
                     .periph = RCC_APB1Periph_USART4,
                     .tx_mutex = &tx_data_port_4,
+                    .tx_queue = &tx_queue_port_4,
+                    .rx_queue = &rx_queue_port_4,
+                    .tx_buf = tx_buf_port_2,
+                    .rx_buf = rx_buf_port_2,
                     .irq = USART3_4_IRQn,
                     .base = USART4 },
 };
 
-static void prv_tx_pop(UartPort uart);
-static void prv_rx_push(UartPort uart);
-
 static void prv_handle_irq(UartPort uart);
 
-StatusCode uart_init(UartPort uart, UartSettings *settings, uint8_t *tx_buf) {
+StatusCode uart_init(UartPort uart, UartSettings *settings) {
   // Reserve USART Port 1 for Retarget.c
   if (uart == UART_PORT_1) return STATUS_CODE_INVALID_ARGS;
 
@@ -61,9 +92,15 @@ StatusCode uart_init(UartPort uart, UartSettings *settings, uint8_t *tx_buf) {
 
   s_port[uart].rcc_cmd(s_port[uart].periph, ENABLE);
 
-  tx_queue.item_size = sizeof(uint8_t);
-  tx_queue.num_items = UART_MAX_BUFFER_LEN;
-  tx_queue.storage_buf = tx_buf;
+  s_port[uart].tx_queue->item_size = sizeof(uint8_t);
+  s_port[uart].tx_queue->num_items = UART_MAX_BUFFER_LEN;
+  s_port[uart].tx_queue->storage_buf = s_port[uart].tx_buf;
+  queue_init(s_port[uart].tx_queue);
+
+  s_port[uart].rx_queue->item_size = sizeof(uint8_t);
+  s_port[uart].rx_queue->num_items = UART_MAX_BUFFER_LEN;
+  s_port[uart].rx_queue->storage_buf = s_port[uart].rx_buf;
+  queue_init(s_port[uart].rx_queue);
 
   GpioSettings gpio_settings = {
     .alt_function = settings->alt_fn,
@@ -89,60 +126,65 @@ StatusCode uart_init(UartPort uart, UartSettings *settings, uint8_t *tx_buf) {
   return STATUS_CODE_OK;
 }
 
-StatusCode uart_tx(UartPort uart, uint8_t *tx_data, uint8_t len, uint16_t ms_to_wait) {
+StatusCode uart_tx(UartPort uart, uint8_t *data, size_t *len) {
   // Aquire tx mutex
-  if (mutex_lock(s_port[uart].tx_mutex, ms_to_wait) == STATUS_CODE_TIMEOUT)
+  if (mutex_lock(s_port[uart].tx_mutex, 0) == STATUS_CODE_TIMEOUT)
     return STATUS_CODE_RESOURCE_EXHAUSTED;
 
-  for (int i = 0; i < len; i++) {
-    queue_send(&tx_queue, &tx_data[i], 0);
+  StatusCode status;
+  for (uint8_t i = 0; i < *len; i++) {
+    status = queue_send(s_port[uart].tx_queue, &data[i], 0);
+    if(status != STATUS_CODE_OK) {
+      *len = i;
+      break;
+    }
   }
 
-  if (USART_GetFlagStatus(s_port[uart].base, USART_FLAG_TXE) == SET) {
-    prv_tx_pop(uart);
+  if (USART_GetFlagStatus(s_port[uart].base, USART_FLAG_TXE) == SET)
     USART_ITConfig(s_port[uart].base, USART_IT_TXE, ENABLE);
-  }
-
-  return STATUS_CODE_OK;
+  return status;
 }
 
-StatusCode uart_rx_init(UartRxSettings *settings) {
-  USART_ITConfig(s_port[settings->uart].base, USART_IT_RXNE, ENABLE);
-  s_port[settings->uart].rx_queue = *settings->rx_queue;
-
-  return STATUS_CODE_OK;
-}
-
-static void prv_tx_pop(UartPort uart) {
-  uint8_t tx_data = 0;
-  // If tx queue is empty, disable tx interrupts and return
-  if (queue_receive(&tx_queue, &tx_data, 0) == STATUS_CODE_EMPTY) {
-    // Release tx mutex
-    mutex_unlock(s_port[uart].tx_mutex);
-    USART_ITConfig(s_port[uart].base, USART_IT_TXE, DISABLE);
-    return;
+StatusCode uart_rx(UartPort uart, uint8_t *data, size_t *len) {
+  StatusCode status;
+  for(uint8_t i = 0; i < *len; i++) {
+    status = queue_receive(s_port[uart].rx_queue, &data[i], 0);
+    if(status != STATUS_CODE_OK) {
+      *len = i;
+      break;
+    }
   }
-  USART_SendData(s_port[uart].base, tx_data);
-}
 
-static void prv_rx_push(UartPort uart) {
-  uint8_t rx_data = USART_ReceiveData(s_port[uart].base);
-  // If the queue is full drop oldest data
-  if (queue_send(&s_port[uart].rx_queue, &rx_data, 0) == STATUS_CODE_RESOURCE_EXHAUSTED) {
-    uint8_t outstr;
-    queue_receive(&s_port[uart].rx_queue, &outstr, 0);
-    queue_send(&s_port[uart].rx_queue, &rx_data, 0);
-  }
+  // If the buffer was filled and items remain in the queue
+  uint8_t buf;
+  if(queue_peek(s_port[uart].rx_queue, &buf, 0) == STATUS_CODE_OK)
+    status = STATUS_CODE_INCOMPLETE;
+
+  return status;
 }
 
 static void prv_handle_irq(UartPort uart) {
   if (USART_GetITStatus(s_port[uart].base, USART_IT_TXE) == SET) {
-    prv_tx_pop(uart);
+    uint8_t tx_data = 0;
+    // If tx queue is empty, disable   tx interrupts and return
+    if (xQueueReceiveFromISR(s_port[uart].tx_queue->handle, &tx_data, pdFALSE) == pdFALSE) {
+      // Release tx mutex
+      mutex_unlock(s_port[uart].tx_mutex);
+      USART_ITConfig(s_port[uart].base, USART_IT_TXE, DISABLE);
+    } else {
+      USART_SendData(s_port[uart].base, tx_data);
+    }
     USART_ClearITPendingBit(s_port[uart].base, USART_IT_TXE);
   }
 
   if (USART_GetITStatus(s_port[uart].base, USART_IT_RXNE) == SET) {
-    prv_rx_push(uart);
+    uint8_t rx_data = USART_ReceiveData(s_port[uart].base);
+    if(xQueueSendFromISR(s_port[uart].rx_queue->handle, &rx_data, pdFALSE) == errQUEUE_FULL) {
+      // Drop oldest data
+      uint8_t buf = 0;
+      xQueueReceiveFromISR(s_port[uart].tx_queue->handle, &buf, pdFALSE);
+      xQueueSendFromISR(s_port[uart].rx_queue->handle, &rx_data, pdFALSE);
+    }
   }
 
   // Clear overrun flag

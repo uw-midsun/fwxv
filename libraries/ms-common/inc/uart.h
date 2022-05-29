@@ -23,16 +23,14 @@ typedef struct {
 } UartSettings;
 
 // Assumes standard 8 N 1
-// tx_buf array must be declared statically, and have size num_items*item_size
-// Initializes buffer and queue for tx and rx on provided UartPort
-StatusCode uart_init(UartPort uart, UartSettings *settings, uint8_t *tx_buf);
+// Port 1 is reserved for retarget.c
+StatusCode uart_init(UartPort uart, UartSettings *settings);
 
-// Uses a queue handler from UartRxSettings which all recieved data is written to
-// If the queue is full the oldest data is dropped and overwritten
-StatusCode uart_rx_init(UartRxSettings *settings);
+// RX data is read to *data with length returned as *len
+// *data read into and overwritten from ISR queue buffer when function is called
+StatusCode uart_rx(UartPort uart, uint8_t *data, size_t *len);
 
 // Non-blocking TX
-// Returns STATUS_CODE_OK on successful tx - waits ms_to_wait to aquire mutex
-// otherwise if a tx is already being performed on UartPort uart,
-// return STATUS_CODE_RESOURCE_EXHAUSTED
-StatusCode uart_tx(UartPort uart, uint8_t *tx_data, uint8_t len, uint16_t ms_to_wait);
+// Returns STATUS_CODE_RESOURCE_EXHAUSTED if mutex is in use
+// *len returns number of items read
+StatusCode uart_tx(UartPort uart, uint8_t *data, size_t *len);
