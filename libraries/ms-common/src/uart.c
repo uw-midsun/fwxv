@@ -2,9 +2,9 @@
 #include <string.h>
 #include "mutex.h"
 #include "stm32f0xx.h"
+#include "stm32f0xx_interrupt.h"
 #include "stm32f0xx_rcc.h"
 #include "stm32f0xx_usart.h"
-#include "stm32f0xx_interrupt.h"
 
 static Queue tx_queue_port_1;
 static Queue tx_queue_port_2;
@@ -134,7 +134,7 @@ StatusCode uart_tx(UartPort uart, uint8_t *data, size_t *len) {
   StatusCode status;
   for (uint8_t i = 0; i < *len; i++) {
     status = queue_send(s_port[uart].tx_queue, &data[i], 0);
-    if(status != STATUS_CODE_OK) {
+    if (status != STATUS_CODE_OK) {
       *len = i;
       break;
     }
@@ -147,9 +147,9 @@ StatusCode uart_tx(UartPort uart, uint8_t *data, size_t *len) {
 
 StatusCode uart_rx(UartPort uart, uint8_t *data, size_t *len) {
   StatusCode status;
-  for(uint8_t i = 0; i < *len; i++) {
+  for (uint8_t i = 0; i < *len; i++) {
     status = queue_receive(s_port[uart].rx_queue, &data[i], 0);
-    if(status != STATUS_CODE_OK) {
+    if (status != STATUS_CODE_OK) {
       *len = i;
       break;
     }
@@ -157,8 +157,7 @@ StatusCode uart_rx(UartPort uart, uint8_t *data, size_t *len) {
 
   // If the buffer was filled and items remain in the queue
   uint8_t buf;
-  if(queue_peek(s_port[uart].rx_queue, &buf, 0) == STATUS_CODE_OK)
-    status = STATUS_CODE_INCOMPLETE;
+  if (queue_peek(s_port[uart].rx_queue, &buf, 0) == STATUS_CODE_OK) status = STATUS_CODE_INCOMPLETE;
 
   return status;
 }
@@ -179,7 +178,7 @@ static void prv_handle_irq(UartPort uart) {
 
   if (USART_GetITStatus(s_port[uart].base, USART_IT_RXNE) == SET) {
     uint8_t rx_data = USART_ReceiveData(s_port[uart].base);
-    if(xQueueSendFromISR(s_port[uart].rx_queue->handle, &rx_data, pdFALSE) == errQUEUE_FULL) {
+    if (xQueueSendFromISR(s_port[uart].rx_queue->handle, &rx_data, pdFALSE) == errQUEUE_FULL) {
       // Drop oldest data
       uint8_t buf = 0;
       xQueueReceiveFromISR(s_port[uart].tx_queue->handle, &buf, pdFALSE);
