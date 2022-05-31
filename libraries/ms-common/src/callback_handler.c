@@ -34,11 +34,13 @@ Event prv_find_next_event() {
 
 StatusCode prv_trigger_callback(Event event) {
   if (event >= MAX_CALLBACKS) {
+    LOG_CRITICAL("Cannot trigger callback, event %d out of range \n", event);
     return STATUS_CODE_INVALID_ARGS;
   }
 
   // Callback has not been registered
   if (!(s_registered_callbacks & (1u << event))) {
+    LOG_CRITICAL("Cannot trigger callback, event %d has not been registered\n", event);
     return STATUS_CODE_INVALID_ARGS;
   }
 
@@ -46,12 +48,21 @@ StatusCode prv_trigger_callback(Event event) {
   void *context = s_callback_storage[event].context;
   s_callback_storage[event].callback_fn(context);
 
-  // Clear Callback object
-  s_callback_storage[event].callback_fn = NULL;
-  s_callback_storage[event].context = NULL;
+  return STATUS_CODE_OK;
+}
+
+StatusCode cancel_callback(Event event) {
+  // Callback has not been registered
+  if (!(s_registered_callbacks & (1u << event))) {
+    return STATUS_CODE_INVALID_ARGS;
+  }
 
   // Clear bit in bitmask
   s_registered_callbacks &= ~(1u << event);
+
+  // Clear Callback object
+  s_callback_storage[event].callback_fn = NULL;
+  s_callback_storage[event].context = NULL;
 
   return STATUS_CODE_OK;
 }
@@ -74,12 +85,13 @@ Event register_callback(CallbackFn cb, void *context) {
 TASK(callback_task, TASK_STACK_512) {
   uint32_t notification = 0;
   Event event = 0;
+  StatusCode notification_status;
   while (true) {
     notify_wait(&notification, BLOCK_INDEFINITELY);
 
-    while (event != 0) {
-      event_from_notification(&notification, &event);
+    do {
+      notification_status = event_from_notification(&notification, &event);
       prv_trigger_callback(event);
-    }
+    } while (notification_status != STATUS_CODE_OK);
   }
 }

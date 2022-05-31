@@ -8,7 +8,7 @@
 
 void setup_test(void) {
   log_init();
-  callback_init();
+  callback_init(TASK_PRIORITY(1));
 }
 
 void teardown_test(void) {}
@@ -18,7 +18,7 @@ void print_num(void *context) {
   LOG_DEBUG("%d has been printed.\n", *num);
 }
 
-// Register maximum number of callbacks, then trigger all of them successively.
+// Register maximum number of callbacks, then trigger all of them successively and unregister.
 TASK(register_max_callbacks, TASK_STACK_512) {
   CallbackFn cb = &print_num;
 
@@ -36,10 +36,32 @@ TASK(register_max_callbacks, TASK_STACK_512) {
   delay_ms(50);
 
   for (uint8_t i = 0; i < MAX_CALLBACKS; ++i) {
-    StatusCode result = notify(callback_task->handle, registered_events[i]);
-    TEST_ASSERT(result);
-    delay_ms(10);
+    notify(callback_task->handle, registered_events[i]);
+    // TEST_ASSERT(result);
   }
+  delay_ms(5);
+  for (uint8_t i = 0; i < MAX_CALLBACKS; ++i) {
+    TEST_ASSERT_EQUAL(cancel_callback(registered_events[i]), STATUS_CODE_OK);
+  }
+
+  while (1) {
+  }
+}
+
+// Register 1 callback, and call it 10 times in succession, then unregister.
+TASK(repeated_callback_trigger, TASK_STACK_512) {
+  CallbackFn cb = &print_num;
+
+  uint32_t *num = malloc(sizeof(uint32_t));
+  Event event = register_callback(cb, num);
+
+  for (uint8_t i = 0; i < 10; ++i) {
+    notify(callback_task->handle, event);
+    delay_ms(1);
+  }
+  TEST_ASSERT_EQUAL(cancel_callback(event), STATUS_CODE_OK);
+
+  free(num);
 
   while (1) {
   }
@@ -69,6 +91,7 @@ TASK_TEST(test_callbacks, TASK_STACK_512) {
   tasks_init_task(register_max_callbacks, TASK_PRIORITY(1), NULL);
   delay_ms(1);
   tasks_init_task(callback_overflow, TASK_PRIORITY(1), NULL);
-
-  delay_ms(1000);
+  delay_ms(150);
+  tasks_init_task(repeated_callback_trigger, TASK_PRIORITY(1), NULL);
+  delay_ms(50);
 }

@@ -41,3 +41,6 @@ void callback_init(TaskPriority priority);
 // Returns an Event - number between 0 and 31.
 // This Event will be needed in order to trigger the callback.
 Event register_callback(CallbackFn cb, void *context);
+
+// Unregisters the callback. Frees up space
+StatusCode cancel_callback(Event event);
