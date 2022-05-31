@@ -1,6 +1,7 @@
 #include "callback_handler.h"
 
 #include "log.h"
+#include "tasks.h"
 #include "notify.h"
 #include "status.h"
 
@@ -14,8 +15,8 @@ static Callback s_callback_storage[MAX_CALLBACKS];
 // Bitmap of registered callbacks. A 1-bit represents the callback is registered.
 static uint32_t s_registered_callbacks = 0;
 
-void callback_init(void) {
-  StatusCode result = tasks_init_task(callback_task, TASK_PRIORITY(tskIDLE_PRIORITY + 1), NULL);
+void callback_init(TaskPriority priority) {
+  StatusCode result = tasks_init_task(callback_task, priority, NULL);
 }
 
 // Helper function to find smallest event available to assign to a callback.
