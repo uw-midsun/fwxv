@@ -33,10 +33,9 @@ typedef void (*CallbackFn)(void *);
 DECLARE_TASK(callback_task);
 
 #define MAX_CALLBACKS 32
-#define ITEM_SIZE sizeof(CallbackFn)
 
 // Initialize callback handler.
-void callback_init(void);
+void callback_init(TaskPriority priority);
 
 // Register a callback function |cb| with generic argument |context|.
 // Returns an Event - number between 0 and 31.

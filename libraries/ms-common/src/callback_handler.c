@@ -76,7 +76,10 @@ TASK(callback_task, TASK_STACK_512) {
   Event event = 0;
   while (true) {
     notify_wait(&notification, BLOCK_INDEFINITELY);
-    event_from_notification(&notification, &event);
-    prv_trigger_callback(event);
+
+    while (event != 0) {
+      event_from_notification(&notification, &event);
+      prv_trigger_callback(event);
+    }
   }
 }
