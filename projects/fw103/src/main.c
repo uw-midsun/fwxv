@@ -30,25 +30,25 @@ TASK(task1, TASK_STACK_512) {
   StatusCode ret;
   while (true) {
     for (size_t i = 0; i < LIST_SIZE; ++i) {
-      char *to_send = s_list[i];
-      ret = queue_send(&s_queue1, &to_send, 0);
-      delay_ms(100);
+      // char *to_send = s_list[i];
+      ret = queue_send(&s_queue1, s_list[i], 0);
       if (ret != STATUS_CODE_OK) {
         LOG_DEBUG("write to queue failed.\n");
       } else {
-        LOG_DEBUG("Sent \"%s\"\n", to_send);
+        LOG_DEBUG("Sent \"%s\"\n", s_list[i]);
       }
+      delay_ms(100);
     }
   }
 }
 
 TASK(task2, TASK_STACK_512) {
   LOG_DEBUG("Task 2 initialized!\n");
-  // const char outstr[ITEM_SZ];
-  char *outstr;
+  const char outstr[ITEM_SZ];
+  // char *outstr;
   StatusCode ret;
   while (true) {
-    ret = queue_receive(&s_queue1, &outstr, 100);
+    ret = queue_receive(&s_queue1, outstr, 100);
     if (ret != STATUS_CODE_OK) {
       LOG_DEBUG("read from queue failed.\n");
     } else {
