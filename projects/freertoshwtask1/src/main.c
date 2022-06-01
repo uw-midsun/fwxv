@@ -42,4 +42,4 @@ int main(void) {
   tasks_start();
 
   return 0;
-}
+}  // finished
