@@ -59,7 +59,7 @@ TASK(task2, TASK_STACK_512) {
 
 int main(void) {
   log_init();
-  // Initialize queues here
+  // Initialize queues
   queue_init(&s_queue1);
 
   tasks_init_task(task1, TASK_PRIORITY(2), NULL);
