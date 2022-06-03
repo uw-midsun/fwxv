@@ -27,22 +27,20 @@ static Queue s_queue1 = {
 };
 
 TASK(task1, TASK_STACK_512) {
-  LOG_DEBUG("Task 1 initialized!\n");
   StatusCode ret;
-  int i = 0;
+  int i;
   while (true) {
-    ret = queue_send(&s_queue1, &s_list[i], 0);
-    if (ret == STATUS_CODE_OK) {
-      i = (i == 5) ? 0 : i + 1;
-    } else {
-      LOG_DEBUG("write to queue failed\n");
+    for (i = 0; i < LIST_SIZE; ++i) {
+      ret = queue_send(&s_queue1, &s_list[i], 0);
+      if (ret != STATUS_CODE_OK) {
+        LOG_DEBUG("write to queue failed.\n");
+      }
+      delay_ms(100);
     }
-    delay_ms(100);
   }
 }
 
 TASK(task2, TASK_STACK_512) {
-  LOG_DEBUG("Task 2 initialized!\n");
   const char outstr[ITEM_SZ];
   StatusCode ret;
   while (true) {
