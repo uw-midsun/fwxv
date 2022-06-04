@@ -36,12 +36,19 @@ typedef enum {
   NUM_CAN_HW_BITRATES
 } CanHwBitrate;
 
+typedef enum {
+  CAN_CONTINUOUS = 0,
+  CAN_ONE_SHOT_MODE,
+  NUM_CAN_MODES
+} CanMode;
+
 typedef struct CanSettings {
   uint16_t device_id;
   CanHwBitrate bitrate;
   GpioAddress tx;
   GpioAddress rx;
   bool loopback;
+  CanMode mode;
 } CanSettings;
 
 // Initializes CAN using the specified settings.
