@@ -208,9 +208,10 @@ def generate_can_files(env, target=[], source=[], project=PROJECT):
     # TODO: Fix up system_can.dbc output directory
     for template in templates:
         if "can_board_ids" in template.name:
+            # TODO: Need to fix for multiple projects that depend on can_codegen.h
             env.Command(
                 LIBRARIES_INC_DIR.File(template.name[:-6]),
-                source,
+                [], # TODO: Fix this part
                 "{} -y {} -t {} -f {}".format(base_exec, BOARDS_DIR.File("boards.yaml"), template, LIBRARIES_INC_DIR)
             )
             target.append(LIBRARIES_INC_DIR.File(template.name[:-6]))
