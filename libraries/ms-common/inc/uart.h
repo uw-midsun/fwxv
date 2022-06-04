@@ -6,20 +6,16 @@
 #include "status.h"
 #include "uart_mcu.h"
 
+// Module is not thread safe - do not access a single port from
+// two locations at the same time
+
 #define UART_MAX_BUFFER_LEN 512
-#define BAUDRATE 9600
 
 typedef struct {
-  UartPort uart;
-  Queue *rx_queue;
-} UartRxSettings;
-
-typedef struct {
-  void *context;
-
   GpioAddress tx;  // tx pin
   GpioAddress rx;  // rx pin
   GpioAltFn alt_fn;
+  uint32_t baudrate;
 } UartSettings;
 
 // Assumes standard 8 N 1
