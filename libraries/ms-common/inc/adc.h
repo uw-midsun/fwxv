@@ -20,10 +20,6 @@ extern const GpioAddress ADC_BAT;
 extern const GpioAddress ADC_REF;
 extern const GpioAddress ADC_TEMP;
 
-// const GpioAddress ADC_CHANNEL_BAT = { .port = NUM_GPIO_PORTS, .pin = 15 };
-
-typedef void (*AdcCallback)(uint8_t adc_channel, void *context);
-
 // Initialize the ADC to the desired conversion mode
 void adc_init(AdcMode adc_mode);
 
