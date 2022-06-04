@@ -256,7 +256,8 @@ StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
   status_ok_or_return(prv_check_channel_enabled(channel));
 
   if (!s_adc_status.continuous) {
-    xSemaphoreTake(s_adc_status.converting, 0);
+    // wait for adc conversion to be available
+    xSemaphoreTake(s_adc_status.converting, portMAX_DELAY);
     ADC_StartOfConversion(ADC1);
 
     // wait until conversion is finished
