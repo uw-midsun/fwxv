@@ -52,7 +52,7 @@ TASK(task2, TASK_STACK_512) {
   while (true) {
     ret = queue_receive(&s_queue1, outstr, 100);
     delay_ms(100);
-    if (ret == STATUS_CODE_OK) {
+    if (ret == STATUS_CODE_OK) {  // checking if read from queue worked
       LOG_DEBUG("%s\n", outstr);
     } else {
       LOG_DEBUG("read from queue failed");
