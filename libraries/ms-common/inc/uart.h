@@ -22,11 +22,14 @@ typedef struct {
 // Port 1 is reserved for retarget.c
 StatusCode uart_init(UartPort uart, UartSettings *settings);
 
-// RX data is read to *data with length returned as *len
-// *data read into and overwritten from ISR queue buffer when function is called
+// Reads |*len| bytes of data into |*data| from UART rx queue at port |port|, up to
+// UART_MAX_BUFFER_LEN. If less than |*len| available, it is updated to number of bytes read. If rx
+// data buffer is full, oldest data is removed from front of queue. This method should not be called
+// from more than one task for the same port
 StatusCode uart_rx(UartPort uart, uint8_t *data, size_t *len);
 
-// Non-blocking TX
-// Returns STATUS_CODE_RESOURCE_EXHAUSTED if mutex is in use
-// *len returns number of items read
+// Sends |*len| bytes of data from |*data| UART tx queue at port |port|,
+// up to UART_MAX_BUFFER_LEN or if queue is full.
+// If less than |*len| sent, it is updated to total bytes sent.
+// This method should not be called from more than one task for the same port
 StatusCode uart_tx(UartPort uart, uint8_t *data, size_t *len);

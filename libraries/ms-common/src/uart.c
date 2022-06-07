@@ -21,17 +21,7 @@ typedef struct {
   bool initialized;
 } UartPortData;
 
-static UartPortQueue queue_port_1;
-static UartPortQueue queue_port_2;
-static UartPortQueue queue_port_3;
-static UartPortQueue queue_port_4;
-
-static UartPortQueue *s_port_queues[NUM_UART_PORTS] = {
-  [UART_PORT_1] = &queue_port_1,
-  [UART_PORT_2] = &queue_port_2,
-  [UART_PORT_3] = &queue_port_3,
-  [UART_PORT_4] = &queue_port_4,
-};
+static UartPortQueue s_port_queues[NUM_UART_PORTS];
 
 static UartPortData s_port[] = {
   [UART_PORT_1] = { .rcc_cmd = RCC_APB2PeriphClockCmd,
@@ -61,15 +51,15 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
 
   s_port[uart].rcc_cmd(s_port[uart].periph, ENABLE);
 
-  s_port_queues[uart]->tx_queue.item_size = sizeof(uint8_t);
-  s_port_queues[uart]->tx_queue.num_items = UART_MAX_BUFFER_LEN;
-  s_port_queues[uart]->tx_queue.storage_buf = s_port_queues[uart]->tx_buf;
-  queue_init(&s_port_queues[uart]->tx_queue);
+  s_port_queues[uart].tx_queue.item_size = sizeof(uint8_t);
+  s_port_queues[uart].tx_queue.num_items = UART_MAX_BUFFER_LEN;
+  s_port_queues[uart].tx_queue.storage_buf = s_port_queues[uart].tx_buf;
+  queue_init(&s_port_queues[uart].tx_queue);
 
-  s_port_queues[uart]->rx_queue.item_size = sizeof(uint8_t);
-  s_port_queues[uart]->rx_queue.num_items = UART_MAX_BUFFER_LEN;
-  s_port_queues[uart]->rx_queue.storage_buf = s_port_queues[uart]->rx_buf;
-  queue_init(&s_port_queues[uart]->rx_queue);
+  s_port_queues[uart].rx_queue.item_size = sizeof(uint8_t);
+  s_port_queues[uart].rx_queue.num_items = UART_MAX_BUFFER_LEN;
+  s_port_queues[uart].rx_queue.storage_buf = s_port_queues[uart].rx_buf;
+  queue_init(&s_port_queues[uart].rx_queue);
 
   GpioSettings gpio_settings = {
     .alt_function = settings->alt_fn,
@@ -106,9 +96,10 @@ StatusCode uart_tx(UartPort uart, uint8_t *data, size_t *len) {
   if (data == NULL || len == NULL) return STATUS_CODE_INVALID_ARGS;
   StatusCode status;
   for (uint8_t i = 0; i < *len; i++) {
-    status = queue_send(&s_port_queues[uart]->tx_queue, &data[i], 0);
+    status = queue_send(&s_port_queues[uart].tx_queue, &data[i], 0);
     if (status != STATUS_CODE_OK) {
       *len = i;
+      status = STATUS_CODE_INCOMPLETE;
       break;
     }
   }
@@ -123,14 +114,14 @@ StatusCode uart_rx(UartPort uart, uint8_t *data, size_t *len) {
   if (data == NULL || len == NULL) return STATUS_CODE_INVALID_ARGS;
   StatusCode status;
   for (uint8_t i = 0; i < *len; i++) {
-    status = queue_receive(&s_port_queues[uart]->rx_queue, &data[i], 0);
+    status = queue_receive(&s_port_queues[uart].rx_queue, &data[i], 0);
     if (status != STATUS_CODE_OK) {
       *len = i;
-      break;
+      return STATUS_CODE_INCOMPLETE;
     }
   }
 
-  return status;
+  return STATUS_CODE_OK;
 }
 
 static void prv_handle_irq(UartPort uart) {
@@ -138,7 +129,7 @@ static void prv_handle_irq(UartPort uart) {
   if (USART_GetITStatus(s_port[uart].base, USART_IT_TXE) == SET) {
     uint8_t tx_data = 0;
     // If tx queue is empty, disable tx interrupts and return
-    if (xQueueReceiveFromISR(&s_port_queues[uart]->tx_queue.handle, &tx_data, pdFALSE) == pdFALSE) {
+    if (xQueueReceiveFromISR(s_port_queues[uart].tx_queue.handle, &tx_data, pdFALSE) == pdFALSE) {
       // Disable TX Interrupts to end transmission
       USART_ITConfig(s_port[uart].base, USART_IT_TXE, DISABLE);
     } else {
@@ -150,12 +141,12 @@ static void prv_handle_irq(UartPort uart) {
   // Check that the receive data register is not empty
   if (USART_GetITStatus(s_port[uart].base, USART_IT_RXNE) == SET) {
     uint8_t rx_data = USART_ReceiveData(s_port[uart].base);
-    if (xQueueSendFromISR(&s_port_queues[uart]->rx_queue.handle, &rx_data, pdFALSE) ==
+    if (xQueueSendFromISR(s_port_queues[uart].rx_queue.handle, &rx_data, pdFALSE) ==
         errQUEUE_FULL) {
       // Drop oldest data if queue is full
       uint8_t buf = 0;
-      xQueueReceiveFromISR(&s_port_queues[uart]->tx_queue.handle, &buf, pdFALSE);
-      xQueueSendFromISR(&s_port_queues[uart]->rx_queue.handle, &rx_data, pdFALSE);
+      xQueueReceiveFromISR(s_port_queues[uart].tx_queue.handle, &buf, pdFALSE);
+      xQueueSendFromISR(s_port_queues[uart].rx_queue.handle, &rx_data, pdFALSE);
     }
   }
 
