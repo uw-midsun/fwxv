@@ -78,6 +78,7 @@ jobs:
 
       - name: Install Protobufs
         run: |
+          pip install --upgrade protobuf==3.20
           sudo add-apt-repository -y ppa:maarten-fonville/protobuf
           sudo apt-get -y install protobuf-compiler
           cd .. && git clone https://github.com/nanopb/nanopb.git && cd nanopb/generator/proto && make;
