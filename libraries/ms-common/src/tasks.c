@@ -4,6 +4,7 @@
 
 #include "FreeRTOS.h"
 #include "log.h"
+#include "semphr.h"
 #include "status.h"
 
 // Add any setup or teardown that needs to be done for every task here.
@@ -58,4 +59,13 @@ void tasks_start(void) {
 #ifndef MS_TEST
   LOG_CRITICAL("CRITICAL: scheduler stopped!\n");
 #endif
+}
+
+static SemaphoreHandle_t s_end_task_sem;
+
+static StaticSemaphore_t s_end_task_buffer;
+
+StatusCode tasks_init(void) {
+  s_end_task_sem = xSemaphoreCreateCountingStatic(10, 0, &s_end_task_buffer);
+  return STATUS_CODE_OK;
 }

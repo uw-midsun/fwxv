@@ -82,3 +82,5 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context);
 // Start the FreeRTOS scheduler to run the tasks that were previously initialized.
 // This function should not return!
 void tasks_start(void);
+
+StatusCode tasks_init(void);
