@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "FreeRTOS.h"
 #include "gpio.h"
 #include "interrupt_def.h"
 #include "notify.h"
@@ -22,7 +21,7 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge);
 // The task to notify needs to be initialized before calling register interrupt.
 // Register interrupt needs to be called before scheduler starts.
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
-                                      const Event event, const TaskHandle_t task);
+                                      const Event event, const Task *task);
 
 // Triggers an interrupt in software.
 StatusCode gpio_it_trigger_interrupt(const GpioAddress *address);

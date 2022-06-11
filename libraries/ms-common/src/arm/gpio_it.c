@@ -14,7 +14,7 @@ typedef struct GpioInterrupt {
   InterruptSettings settings;
   GpioAddress address;
   Event event;
-  TaskHandle_t task;
+  Task *task;
 } GpioInterrupt;
 
 static GpioInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
@@ -38,7 +38,7 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
 }
 
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
-                                      const Event event, const TaskHandle_t task) {
+                                      const Event event, const Task *task) {
   if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
     return STATUS_CODE_UNREACHABLE;
   } else if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT ||
