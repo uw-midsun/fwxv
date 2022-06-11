@@ -31,29 +31,4 @@
 #include "FreeRTOS.h"
 #include "tasks.h"
 
-// Define a task test with the given name and stack size.
-// |stack_size| is the depth of your task's stack - use your judgement to choose a size.
-// Usage:
-//   TASK_TEST(my_cool_test, TASK_STACK_512) {
-//     // run some tests, perform some assertions
-//   }
-#define TASK_TEST(test_name, stack_size)                                                  \
-  DECLARE_TASK(test_name);                                                                \
-  _TASK_TEST_IMPL(test_name);                                                             \
-  static void _prv_task_test_##test_name(void);                                           \
-  TASK(test_name, stack_size) {                                                           \
-    _prv_task_test_##test_name();                                                         \
-    vTaskEndScheduler(); /* Automagically stop FreeRTOS when the task function returns */ \
-  }                                                                                       \
-  static void _prv_task_test_##test_name(void)
-
-// We have an extra highest priority in test mode which we use for the test task.
-// This way, test tasks run at a higher priority than every other task.
-#define TASK_TEST_PRIORITY (configMAX_PRIORITIES - 1)
-
-// Implementation helper for TASK_TEST(), do not call directly.
-#define _TASK_TEST_IMPL(test_name)                        \
-  void test_##test_name(void) {                           \
-    tasks_init_task(test_name, TASK_TEST_PRIORITY, NULL); \
-    tasks_start();                                        \
-  }
+DECLARE_TASK(test_task);

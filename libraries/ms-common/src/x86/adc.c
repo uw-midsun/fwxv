@@ -18,7 +18,7 @@
 #define ADC_TEMP_RETURN 293
 #define ADC_VDDA_RETURN 3300
 
-#define ADC_PRIORITY 3
+#define ADC_PRIORITY 1
 
 enum {
   ADC_CHANNEL_BAT = 16,
@@ -72,7 +72,7 @@ TASK(periodic_callback, TASK_STACK_256) {
 
   while (true) {
     xTaskDelayUntil(&last_wake_time, ADC_CONTINUOUS_CB_FREQ_MS);
-
+    
     for (uint8_t i = 0; i < NUM_ADC_CHANNELS; ++i) {
       if (s_active_channels[i] && s_adc_stores[i].task != NULL) {
         notify(s_adc_stores[i].task->handle, s_adc_stores[i].event);
@@ -82,8 +82,8 @@ TASK(periodic_callback, TASK_STACK_256) {
 }
 
 void adc_init(AdcMode adc_mode) {
-  if (adc_mode == ADC_MODE_CONTINUOUS) {
-    tasks_init_task(periodic_callback, ADC_PRIORITY, NULL);
+  if (adc_mode == ADC_MODE_CONTINUOUS && periodic_callback->context == NULL) {
+    tasks_init_task(periodic_callback, ADC_PRIORITY, (int*)1);
   }
   for (size_t i = 0; i < NUM_ADC_CHANNELS; ++i) {
     s_adc_stores[i].reading = 0;

@@ -16,7 +16,9 @@ QueueHandle_t g_log_queue = NULL;
 
 void log_init(void) {
   g_log_queue = xQueueCreateStatic(QUEUE_LENGTH, ITEM_SIZE, s_log_array, &s_log_queue);
-  tasks_init_task(log_task, TASK_PRIORITY(tskIDLE_PRIORITY + 1), NULL);
+  if (log_task->context == NULL) {
+    tasks_init_task(log_task, TASK_PRIORITY(tskIDLE_PRIORITY + 1), (int *)1);
+  }
 }
 
 TASK(log_task, TASK_STACK_256) {

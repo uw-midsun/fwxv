@@ -25,15 +25,11 @@ static const GpioAddress s_address[] = {
 static const GpioAddress s_invalid_pin = { NUM_GPIO_PORTS, NUM_ADC_CHANNELS };
 static const GpioAddress s_empty_pin = { GPIO_PORT_A, 3 };
 
-void prv_callback_pin(GpioAddress address, void *context) {
-  s_callback_runs++;
-  s_callback_ran = true;
-}
-
 TASK(adc_notified, TASK_STACK_256) {
   while (true) {
     uint32_t notification;
-    notify_wait(&notification, BLOCK_INDEFINITELY);
+    notify_wait(&notification, 5000);
+    printf("timed out\n");
 
     s_callback_runs++;
     s_callback_ran = true;
@@ -75,7 +71,10 @@ void setup_test() {
   s_callback_ran = false;
 }
 
-void teardown_test(void) {}
+void teardown_test(void) {
+  // wait for end of configMAX_SYSCALL_INTERRUPT_PRIORITY
+  // clear
+}
 
 void test_adc_pin_to_channel_conversion() {
   GpioAddress address = {
@@ -141,6 +140,7 @@ void test_pin_set_notification(void) {
 }
 
 void test_pin_read_single(void) {
+  printf("resd\n");
   // Check that both the raw readings and converted readings are within the
   // expected range
   adc_init(ADC_MODE_SINGLE);
@@ -177,7 +177,7 @@ void test_adc_mock_reading() {
 //
 // ONLY ONE TASK TEST CAN WORK AT THE SAME TIME, COMMENT OUT TO TEST INDIVIDUALLY
 //
-TASK_TEST(test_pin_single, TASK_STACK_1024) {
+void test_pin_single() {
   uint16_t reading;
   // Initialize the ADC to single mode and configure the channels
   adc_init(ADC_MODE_SINGLE);
@@ -187,7 +187,7 @@ TASK_TEST(test_pin_single, TASK_STACK_1024) {
   }
 
   for (uint8_t i = 0; i < SIZEOF_ARRAY(s_address); i++) {
-    adc_register_event(s_address[i], test_pin_single, i);
+    adc_register_event(s_address[i], test_task, i);
   }
 
   // Callbacks must not run in single mode unless a read occurs
@@ -206,7 +206,7 @@ TASK_TEST(test_pin_single, TASK_STACK_1024) {
   TEST_ASSERT_TRUE(reading < 4095);
 }
 
-TASK_TEST(test_pin_continuous, TASK_STACK_1024) {
+void test_pin_continuous() {
   // Initialize ADC and check that adc_init() can properly reset the ADC
   adc_init(ADC_MODE_CONTINUOUS);
 
@@ -214,11 +214,12 @@ TASK_TEST(test_pin_continuous, TASK_STACK_1024) {
     adc_set_channel(s_address[i], true);
   }
   for (uint8_t i = 0; i < SIZEOF_ARRAY(s_address); i++) {
-    adc_register_event(s_address[i], adc_notified, i);
+    adc_register_event(s_address[i], test_task, i);
   }
 
-  vTaskDelay(50);
+  vTaskDelay(60);
 
-  TEST_ASSERT_TRUE(s_callback_ran);
-  TEST_ASSERT_TRUE(s_callback_runs > 0);
+  uint32_t notification = 0;
+  notify_get(&notification);
+  TEST_ASSERT_NOT_EQUAL(notification, 0);
 }

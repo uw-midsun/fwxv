@@ -4,7 +4,7 @@ import sys
 import subprocess
 import glob
 from scons.new_target import new_target
-from scons.preprocessor_filter import preprocessor_filter
+# from scons.preprocessor_filter import preprocessor_filter
 
 ###########################################################
 # Build arguments
@@ -334,26 +334,26 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         ccflags = env['CCFLAGS'] + config['cflags']
 
         # Preprocess the test source file so the runner generator sees expanded macros
-        prefix_with = lambda prefix, dir_lists: ' '.join(
-            prefix + dir_.path for dirs in dir_lists for dir_ in dirs)
-        preprocessed_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_preprocessed.c'))
-        orig_test_file_path = Dir(str(entry)).Dir('test').File(test_file)
-        preprocessed = env.Command(
-            target=preprocessed_file,
-            source=test_file,
-            action=[
-                # -E to preprocess only, -dI to keep #include directives, @ to suppress printing
-                '@$CC -dI -E {} $CCFLAGS $SOURCE > .tmp'.format(prefix_with('-I', cpppath)),
-                Action(
-                    preprocessor_filter(str(orig_test_file_path), '.tmp'),
-                    cmdstr='Preprocessing $TARGET'),
-            ],
-            CCFLAGS=ccflags,
-        )
+        # prefix_with = lambda prefix, dir_lists: ' '.join(
+        #     prefix + dir_.path for dirs in dir_lists for dir_ in dirs)
+        # preprocessed_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_preprocessed.c'))
+        # orig_test_file_path = Dir(str(entry)).Dir('test').File(test_file)
+        # preprocessed = env.Command(
+        #     target=preprocessed_file,
+        #     source=test_file,
+        #     action=[
+        #         # -E to preprocess only, -dI to keep #include directives, @ to suppress printing
+        #         '@$CC -dI -E {} $CCFLAGS $SOURCE > .tmp'.format(prefix_with('-I', cpppath)),
+        #         Action(
+        #             preprocessor_filter(str(orig_test_file_path), '.tmp'),
+        #             cmdstr='Preprocessing $TARGET'),
+        #     ],
+        #     CCFLAGS=ccflags,
+        # )
 
         # Create the test_*_runner.c file
         runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
-        test_runner = env.Command(runner_file, preprocessed,
+        test_runner = env.Command(runner_file, test_file,
             Action(
                 'ruby {} {} $SOURCE $TARGET'.format(GEN_RUNNER, GEN_RUNNER_CONFIG),
                 cmdstr='Generating test runner $TARGET'))
@@ -529,7 +529,6 @@ Alias('lint', lint)
 format = Command('format.txt', [], run_format)
 Alias('format', format)
 
-
 ###########################################################
 # Helper targets for x86
 ###########################################################
@@ -592,3 +591,4 @@ if PLATFORM == 'arm' and PROJECT:
     flash_smoke = Command('flash_smoke.txt', [], flash_run, smoke=True)
     Depends(flash_smoke, proj_bin(PROJECT, True))
     Alias('flash_smoke', flash_smoke)
+
