@@ -6,6 +6,10 @@
 #include "log.h"
 #include "status.h"
 
+// End task semaphore.
+StaticSemaphore_t s_end_task_sem;
+SemaphoreHandle_t s_end_task_handle;
+
 // Add any setup or teardown that needs to be done for every task here.
 static void prv_task(void *params) {
   Task *task = params;
@@ -61,7 +65,7 @@ void tasks_start(void) {
 }
 
 StatusCode tasks_init(void) {
-  // initialize semaphore
+  // Initialize end task semaphore.
   s_end_task_handle = xSemaphoreCreateCountingStatic(MAX_COUNT, INITIAL_COUNT, &s_end_task_sem);
 
   if (s_end_task_handle == NULL) {

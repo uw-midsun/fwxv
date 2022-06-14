@@ -63,7 +63,7 @@
 
 // Parameters that will be used to initialize the end semaphore.
 #define MAX_COUNT 10
-#define INITIAL_COUNT 10
+#define INITIAL_COUNT 0
 
 // Semaphore variables
 extern StaticSemaphore_t s_end_task_sem;
@@ -92,4 +92,5 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context);
 // This function should not return!
 void tasks_start(void);
 
+// Initialize the end task semaphore.
 StatusCode tasks_init(void);
