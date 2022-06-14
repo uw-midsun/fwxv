@@ -92,7 +92,7 @@ TASK(task2, TASK_STACK_512) {
   }
 }
 
-TASK_TEST(test_running_task, TASK_STACK_512) {
+void test_running_task(void) {
   // Start the task: note no need to call tasks_start() because we're inside a test task and
   // FreeRTOS is already running.
   tasks_init_task(task1, TASK_PRIORITY(2), NULL);  // higher priority

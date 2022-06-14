@@ -55,7 +55,7 @@ TASK(handler, TASK_MIN_STACK_SIZE) {
   }
 }
 
-TASK_TEST(gpio_it_test, TASK_MIN_STACK_SIZE) {
+void test_gpio_it(void) {
   tasks_init_task(handler, 2, NULL);
 
   interrupt_init();
@@ -77,7 +77,7 @@ TASK_TEST(gpio_it_test, TASK_MIN_STACK_SIZE) {
 // test for hardware, uncomment and test with tutorial boards. leds should toggle with the two
 // buttons
 
-// TASK_TEST(hardware_test, TASK_MIN_STACK_SIZE) {
+// void hardware_test() {
 //   tasks_init_task(handler, 2, NULL);
 
 //   interrupt_init();

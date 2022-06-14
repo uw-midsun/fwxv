@@ -53,7 +53,7 @@ TASK(receive_task, TASK_STACK_512) {
   }
 }
 
-TASK_TEST(test_notifications, TASK_MIN_STACK_SIZE) {
+void test_notifications() {
   tasks_init_task(notify_task, TASK_PRIORITY(1), NULL);
   tasks_init_task(receive_task, TASK_PRIORITY(1), NULL);
   delay_ms(20);

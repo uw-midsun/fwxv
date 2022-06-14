@@ -131,6 +131,6 @@ void setup_test(void) {
   TEST_ASSERT_OK(subscribe(sub_task7->handle, TOPIC_2, 1));
 }
 
-TASK_TEST(test_publish, TASK_MIN_STACK_SIZE) {
+void test_publish() {
   delay_ms(20);
 }

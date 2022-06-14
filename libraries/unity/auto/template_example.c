@@ -51,11 +51,9 @@ static void run_test(UnityTestFunction func, const char *name, UNITY_LINE_TYPE l
   UNITY_CLR_DETAILS();
 
   vTaskSuspendAll();
-
   setup_test();
   xTaskResumeAll();
 
-  // vTaskDelay(500);
   func();
 
   UnityConcludeTest();

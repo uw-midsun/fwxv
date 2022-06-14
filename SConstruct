@@ -297,7 +297,7 @@ Default([proj.name for proj in PROJ_DIRS])
 # Testing
 ###########################################################
 
-GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.rb'
+GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.py'
 GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
 
 # tests dict maps proj/lib -> list of their test executables
@@ -355,7 +355,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
         test_runner = env.Command(runner_file, test_file,
             Action(
-                'ruby {} {} $SOURCE $TARGET'.format(GEN_RUNNER, GEN_RUNNER_CONFIG),
+                'python3 {} {} $SOURCE $TARGET'.format(GEN_RUNNER, GEN_RUNNER_CONFIG),
                 cmdstr='Generating test runner $TARGET'))
 
         output = TEST_DIR.Dir(entry.name).Dir('test').File(test_file.name.replace('.c', ''))

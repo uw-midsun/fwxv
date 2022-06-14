@@ -11,7 +11,12 @@ static void prv_callback(SoftTimerId id) {
   callback_called = true;
 }
 
-TASK_TEST(watchdog, TASK_STACK_256) {
+
+void setup_test(void) {}
+
+void teardown_test(void) {}
+
+void test_watchdog() {
   callback_called = false;
   watchdog_start(&s_watchdog, 100, prv_callback);
 

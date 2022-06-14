@@ -33,7 +33,7 @@ TASK(my_task, TASK_STACK_512) {
   }
 }
 
-TASK_TEST(test_running_task, TASK_STACK_512) {
+void test_running_task() {
   LOG_DEBUG("started first test\n");
   // Start the task: note no need to call tasks_start() because we're inside a test task and
   // FreeRTOS is already running.
@@ -49,7 +49,7 @@ TASK_TEST(test_running_task, TASK_STACK_512) {
   TEST_ASSERT_TRUE(s_task_started);
 }
 
-TASK_TEST(test_running_task_2, TASK_STACK_512) {
+void test_running_task_2() {
   LOG_DEBUG("started second test\n");
   // Start the task: note no need to call tasks_start() because we're inside a test task and
   // FreeRTOS is already running.

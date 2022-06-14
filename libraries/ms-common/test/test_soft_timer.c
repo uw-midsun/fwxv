@@ -9,6 +9,10 @@
 static bool triggered = false;
 static SoftTimerId last_triggered_id;
 
+void setup_test(void) {}
+
+void teardown_test(void) {}
+
 void prv_set(SoftTimerId id) {
   triggered = true;
   last_triggered_id = id;
@@ -19,7 +23,7 @@ void prv_run_callback(SoftTimerId t) {}
 static SoftTimer s_timer;
 static SoftTimer s_timer_2;
 
-TASK_TEST(soft_timer_test, TASK_STACK_1024) {
+void test_soft_timer() {
   TickType_t last_wake = xTaskGetTickCount();
   for (int i = 0; i < 3; ++i) {
     triggered = false;
@@ -58,7 +62,7 @@ TASK_TEST(soft_timer_test, TASK_STACK_1024) {
   }
 }
 
-TASK_TEST(multiple_timer, TASK_STACK_1024) {
+void test_multiple_timer() {
   for (int i = 0; i < 3; ++i) {
     triggered = false;
     // test soft timer start and cancel
