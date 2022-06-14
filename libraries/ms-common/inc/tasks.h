@@ -29,6 +29,7 @@
 #include <stddef.h>
 
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include "status.h"
 #include "task.h"
 #include "tasks_impl.h"
@@ -59,6 +60,14 @@
 
 // A convenience macro for making declaring priorities more readable.
 #define TASK_PRIORITY(prio) ((TaskPriority)prio)
+
+// Parameters that will be used to initialize the end semaphore.
+#define MAX_COUNT 10
+#define INITIAL_COUNT 10
+
+// Semaphore variables
+extern StaticSemaphore_t s_end_task_sem;
+extern SemaphoreHandle_t s_end_task_handle;
 
 typedef UBaseType_t TaskPriority;
 
