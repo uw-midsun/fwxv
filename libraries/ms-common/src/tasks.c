@@ -74,3 +74,22 @@ StatusCode tasks_init(void) {
     return STATUS_CODE_OK;
   }
 }
+
+StatusCode wait_tasks(uint16_t num_tasks) {
+  for (uint16_t i = 0; i < num_tasks; ++i) {
+    if (xSemaphoreTake(s_end_task_sem, WAIT_TASK_TIMEOUT) != pdTRUE) {
+      // WAIT_TASK_TIMEOUT is set to max dealy, which should wait indefinitely
+      // We should never actually return a timeout status code
+      return STATUS_CODE_TIMEOUT;
+    }
+  }
+  return STATUS_CODE_OK;
+}
+
+StatusCode send_task_end() {
+  if (xSemaphoreGive(s_end_task_sem) != pdTRUE) {
+    // if giving to semaphore failed, we ran out of space in the buffer
+    return STATUS_CODE_RESOURCE_EXHAUSTED;
+  }
+  return STATUS_CODE_OK;
+}

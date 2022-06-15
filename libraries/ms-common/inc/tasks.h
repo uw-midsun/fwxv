@@ -64,6 +64,9 @@
 // Parameter that will be used to initialize the end task semaphore.
 #define MAX_NUM_TASKS 15
 
+// Define timeout as max delay, which waits indefinitely
+#define WAIT_TASK_TIMEOUT portMAX_DELAY
+
 typedef UBaseType_t TaskPriority;
 
 // Represents everything we need to know to initialize a task.
@@ -90,3 +93,11 @@ void tasks_start(void);
 // Initialize the task module. Must be called before tasks are initialized or the scheduler is
 // started.
 StatusCode tasks_init(void);
+
+// Waits for the defined number of tasks by repeatedly taking from semaphore that many times
+// When we take from the semaphore num_tasks amount of times, it means that many tasks
+// were completed
+StatusCode wait_tasks(uint16_t num_tasks);
+
+// A wrapper to give to the semaphore, to be called by tasks when they complete
+StatusCode send_task_end();
