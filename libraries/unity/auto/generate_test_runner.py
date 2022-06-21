@@ -22,11 +22,13 @@ static void run_test(UnityTestFunction func, const char *name, UNITY_LINE_TYPE l
   Unity.NumberOfTests++;
   UNITY_CLR_DETAILS();
 
-  vTaskSuspendAll();
-  setup_test();
-  xTaskResumeAll();
+  if (TEST_PROTECT()) @co@
+    vTaskSuspendAll();
+    setup_test();
+    xTaskResumeAll();
 
-  func();
+    func();
+  @cc@
 
   UnityConcludeTest();
 @cc@

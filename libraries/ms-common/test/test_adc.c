@@ -140,7 +140,6 @@ void test_pin_set_notification(void) {
 }
 
 void test_pin_read_single(void) {
-  printf("resd\n");
   // Check that both the raw readings and converted readings are within the
   // expected range
   adc_init(ADC_MODE_SINGLE);
