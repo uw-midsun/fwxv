@@ -65,8 +65,7 @@ void tasks_start(void) {
 }
 
 StatusCode tasks_init(void) {
-  // Initialize the task module. Must be called before tasks are initialized or the scheduler is
-  // started.
+  // Initialize the end task semaphore.
   s_end_task_handle = xSemaphoreCreateCountingStatic(MAX_NUM_TASKS, 0, &s_end_task_sem);
 
   if (s_end_task_handle == NULL) {

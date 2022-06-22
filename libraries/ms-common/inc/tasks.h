@@ -87,5 +87,6 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context);
 // This function should not return!
 void tasks_start(void);
 
-// Initialize the end task semaphore.
+// Initialize the task module. Must be called before tasks are initialized or the scheduler is
+// started.
 StatusCode tasks_init(void);
