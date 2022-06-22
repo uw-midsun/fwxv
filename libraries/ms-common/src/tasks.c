@@ -7,8 +7,8 @@
 #include "status.h"
 
 // End task semaphore.
-StaticSemaphore_t s_end_task_sem;
-SemaphoreHandle_t s_end_task_handle;
+static StaticSemaphore_t s_end_task_sem;
+static SemaphoreHandle_t s_end_task_handle;
 
 // Add any setup or teardown that needs to be done for every task here.
 static void prv_task(void *params) {
@@ -65,7 +65,8 @@ void tasks_start(void) {
 }
 
 StatusCode tasks_init(void) {
-  // Initialize end task semaphore.
+  // Initialize the task module. Must be called before tasks are initialized or the scheduler is
+  // started.
   s_end_task_handle = xSemaphoreCreateCountingStatic(MAX_NUM_TASKS, 0, &s_end_task_sem);
 
   if (s_end_task_handle == NULL) {

@@ -61,12 +61,8 @@
 // A convenience macro for making declaring priorities more readable.
 #define TASK_PRIORITY(prio) ((TaskPriority)prio)
 
-// Parameters that will be used to initialize the end semaphore.
+// Parameter that will be used to initialize the end task semaphore.
 #define MAX_NUM_TASKS 15
-
-// Semaphore variables
-extern StaticSemaphore_t s_end_task_sem;
-extern SemaphoreHandle_t s_end_task_handle;
 
 typedef UBaseType_t TaskPriority;
 
