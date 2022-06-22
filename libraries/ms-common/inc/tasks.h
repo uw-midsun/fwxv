@@ -62,8 +62,7 @@
 #define TASK_PRIORITY(prio) ((TaskPriority)prio)
 
 // Parameters that will be used to initialize the end semaphore.
-#define MAX_COUNT 10
-#define INITIAL_COUNT 0
+#define MAX_NUM_TASKS 15
 
 // Semaphore variables
 extern StaticSemaphore_t s_end_task_sem;
