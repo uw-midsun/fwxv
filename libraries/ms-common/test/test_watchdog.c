@@ -2,6 +2,7 @@
 #include "task_test_helpers.h"
 #include "unity.h"
 #include "watchdog.h"
+#include "log.h"
 
 static WatchDog s_watchdog;
 
@@ -11,8 +12,9 @@ static void prv_callback(SoftTimerId id) {
   callback_called = true;
 }
 
-
-void setup_test(void) {}
+void setup_test(void) {
+  log_init();
+}
 
 void teardown_test(void) {}
 

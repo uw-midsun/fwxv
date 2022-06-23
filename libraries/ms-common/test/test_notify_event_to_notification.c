@@ -1,8 +1,11 @@
 #include "notify.h"
 #include "test_helpers.h"
 #include "unity.h"
+#include "log.h"
 
-void setup_test(void) {}
+void setup_test(void) {
+  log_init();
+}
 void teardown_test(void) {}
 
 // 32 bits -> 32 possible enumerated events

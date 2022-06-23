@@ -5,6 +5,7 @@
 #include "task_test_helpers.h"
 #include "tasks.h"
 #include "unity.h"
+#include "log.h"
 
 #define LIST_SIZE 5
 #define ITEM_SIZE sizeof(uint8_t)
@@ -17,6 +18,8 @@ static uint8_t s_queue_buf[BUF_SIZE];
 static Queue queue;
 
 void setup_test(void) {
+  log_init();
+
   queue.item_size = sizeof(uint8_t);
   queue.num_items = LIST_SIZE;
   queue.storage_buf = s_queue_buf;
