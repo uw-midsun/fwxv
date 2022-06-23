@@ -43,7 +43,7 @@ void test_soft_timer() {
     // if soft_timer wasn't cancelled, it should be finished by now, check if
     // triggered was set
     // this delay also let soft_timer cancel to be processed
-    TEST_ASSERT_FALSE(triggered);
+    TEST_ASSERT_TRUE(triggered);
     TEST_ASSERT_FALSE(soft_timer_inuse(&s_timer));
 
     // test start to finish
