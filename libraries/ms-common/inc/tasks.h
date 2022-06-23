@@ -64,8 +64,8 @@
 // Parameter that will be used to initialize the end task semaphore.
 #define MAX_NUM_TASKS 15
 
-// Define timeout as max delay, which waits indefinitely
-#define WAIT_TASK_TIMEOUT portMAX_DELAY
+// Define wait timeout as 1 second, tasks cycle execution should not take longer than a second
+#define WAIT_TASK_TIMEOUT_MS 1000
 
 typedef UBaseType_t TaskPriority;
 
@@ -94,10 +94,10 @@ void tasks_start(void);
 // started.
 StatusCode tasks_init(void);
 
-// Waits for the defined number of tasks by repeatedly taking from semaphore that many times
-// When we take from the semaphore num_tasks amount of times, it means that many tasks
-// were completed
+// Attempts to take num_tasks items from end task semaphore, indicating the number of tasks
+// completed Returns STATUS_CODE_TIMEOUT if timeout occurs, STATUS_CODE_OK if num_tasks items taken
+// successfully
 StatusCode wait_tasks(uint16_t num_tasks);
 
 // A wrapper to give to the semaphore, to be called by tasks when they complete
-StatusCode send_task_end();
+StatusCode send_task_end(void);
