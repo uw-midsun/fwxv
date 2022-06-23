@@ -1,11 +1,11 @@
 #include <stdbool.h>
 
 #include "delay.h"
+#include "log.h"
 #include "queues.h"
 #include "task_test_helpers.h"
 #include "tasks.h"
 #include "unity.h"
-#include "log.h"
 
 #define LIST_SIZE 5
 #define ITEM_SIZE sizeof(uint8_t)

@@ -1,8 +1,8 @@
 #include "delay.h"
+#include "log.h"
 #include "task_test_helpers.h"
 #include "unity.h"
 #include "watchdog.h"
-#include "log.h"
 
 static WatchDog s_watchdog;
 

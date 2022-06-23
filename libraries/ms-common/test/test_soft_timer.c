@@ -5,7 +5,6 @@
 #include "task_test_helpers.h"
 #include "test_helpers.h"
 #include "unity.h"
-#include "log.h"
 
 static bool triggered = false;
 static SoftTimerId last_triggered_id;

@@ -5,7 +5,6 @@
 #include "task_test_helpers.h"
 #include "tasks.h"
 #include "unity.h"
-#include "log.h"
 
 enum test {
   T1,
@@ -20,7 +19,7 @@ static bool s_task_started;
 
 void setup_test(void) {
   s_task_started = false;
-  
+
   log_init();
 }
 

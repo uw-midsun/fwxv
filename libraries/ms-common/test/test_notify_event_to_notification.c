@@ -1,7 +1,7 @@
+#include "log.h"
 #include "notify.h"
 #include "test_helpers.h"
 #include "unity.h"
-#include "log.h"
 
 void setup_test(void) {
   log_init();
