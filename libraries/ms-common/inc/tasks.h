@@ -29,6 +29,7 @@
 #include <stddef.h>
 
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include "status.h"
 #include "task.h"
 #include "tasks_impl.h"
@@ -60,6 +61,9 @@
 // A convenience macro for making declaring priorities more readable.
 #define TASK_PRIORITY(prio) ((TaskPriority)prio)
 
+// Parameter that will be used to initialize the end task semaphore.
+#define MAX_NUM_TASKS 15
+
 typedef UBaseType_t TaskPriority;
 
 // Represents everything we need to know to initialize a task.
@@ -82,3 +86,7 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context);
 // Start the FreeRTOS scheduler to run the tasks that were previously initialized.
 // This function should not return!
 void tasks_start(void);
+
+// Initialize the task module. Must be called before tasks are initialized or the scheduler is
+// started.
+StatusCode tasks_init(void);

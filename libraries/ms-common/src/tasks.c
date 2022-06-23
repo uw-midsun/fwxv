@@ -6,6 +6,10 @@
 #include "log.h"
 #include "status.h"
 
+// End task semaphore.
+static StaticSemaphore_t s_end_task_sem;
+static SemaphoreHandle_t s_end_task_handle;
+
 // Add any setup or teardown that needs to be done for every task here.
 static void prv_task(void *params) {
   Task *task = params;
@@ -58,4 +62,15 @@ void tasks_start(void) {
 #ifndef MS_TEST
   LOG_CRITICAL("CRITICAL: scheduler stopped!\n");
 #endif
+}
+
+StatusCode tasks_init(void) {
+  // Initialize the end task semaphore.
+  s_end_task_handle = xSemaphoreCreateCountingStatic(MAX_NUM_TASKS, 0, &s_end_task_sem);
+
+  if (s_end_task_handle == NULL) {
+    return STATUS_CODE_UNINITIALIZED;
+  } else {
+    return STATUS_CODE_OK;
+  }
 }
