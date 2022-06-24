@@ -77,7 +77,7 @@ StatusCode tasks_init(void) {
 
 StatusCode wait_tasks(uint16_t num_tasks) {
   for (uint16_t i = 0; i < num_tasks; ++i) {
-    if (xSemaphoreTake(&s_end_task_sem, pdMS_TO_TICKS(WAIT_TASK_TIMEOUT_MS)) != pdTRUE) {
+    if (xSemaphoreTake(s_end_task_handle, pdMS_TO_TICKS(WAIT_TASK_TIMEOUT_MS)) != pdTRUE) {
       // Task took longer than 1 second for its execution cycle, return timeout
       return STATUS_CODE_TIMEOUT;
     }
@@ -86,7 +86,7 @@ StatusCode wait_tasks(uint16_t num_tasks) {
 }
 
 StatusCode send_task_end() {
-  if (xSemaphoreGive(&s_end_task_sem) != pdTRUE) {
+  if (xSemaphoreGive(s_end_task_handle) != pdTRUE) {
     // if giving to semaphore failed, we ran out of space in the buffer
     LOG_CRITICAL("CRITICAL: Out of buffer space in semaphore.");
     return STATUS_CODE_RESOURCE_EXHAUSTED;
