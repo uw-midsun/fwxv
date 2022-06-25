@@ -32,6 +32,24 @@ StatusCode event_from_notification(uint32_t *notification, Event *event) {
   }
 }
 
+bool notify_check_event(uint32_t *notification, Event event);
+  if (!notification || event >= INVALID_EVENT) {
+    LOG_DEBUG("Provided bad event\n");
+    return false;
+  }
+  // Check event bit in notification
+  if ((1u << event) & *notification) {
+    notification ~= (1u << event);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+
+    
+
 StatusCode notify_get(uint32_t *notification) {
   return notify_wait(notification, 0);
 }
