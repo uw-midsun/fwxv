@@ -17,7 +17,7 @@ typedef enum Fsm2StateId {
   FSM2_STATE_0 = 0,
   FSM2_STATE_1,
   FSM2_STATE_2,
-} Fsm1StateId;
+} Fsm2StateId;
 
 // Notifications to send to FSM 1
 typedef enum Fsm2OutputEvent {

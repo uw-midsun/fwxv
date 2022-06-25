@@ -20,11 +20,11 @@ typedef enum Fsm1StateId {
 } Fsm1StateId;
 
 // Notifications to send to FSM 2
-typedef enum Fsm2OutputEvent {
+typedef enum Fsm1OutputEvent {
   FSM1_STATE_0_CMPL = 0,
   FSM1_STATE_1_CMPL,
   FSM1_STATE_2_CMPL,
-};
+} Fsm1OutputEvent;
 
 typedef struct Fsm1Storage {
   GpioAddress start_btn_address;

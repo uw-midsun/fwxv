@@ -1,5 +1,6 @@
 #include "fsm2.h"
 
+#include "fsm1.h"
 #include "delay.h"
 #include "log.h"
 #include "notify.h"
@@ -13,7 +14,7 @@ void prv_fsm2_state0_input(Fsm *fsm, void *context) {
   uint32_t notif;
   // Only transition if FSM1 has finished state 0 and sent notification
   notify_get(&notif);
-  if (notify_check_event(&notif, FSM1_STATE_0_CMPL)) {
+  if (notify_check_event(&notif, FSM1_STATE_1_CMPL)) {
     fsm_transition(fsm, FSM2_STATE_1);
   }
 }
@@ -30,12 +31,12 @@ static void prv_fsm2_state1_input(Fsm *fsm, void *context) {
   // Only transition if FSM1 has finished state 1 and sent notification
   notify_get(&notif);
   if (notify_check_event(&notif, FSM1_STATE_2_CMPL)) {
-    fsm_transition(fsm, FSM2_STATE_0);
+    fsm_transition(fsm, FSM2_STATE_2);
   }
 }
  
 static void prv_fsm2_state1_output(void *context) {
-  LOG_DEBUG("Transitioned to FSM2 statej\n");
+  LOG_DEBUG("Transitioned to FSM2 state1\n");
   // Tell fsm1 that we've completed state1
   notify(fsm1, FSM2_STATE_1_CMPL);
 }
@@ -45,13 +46,13 @@ static void prv_fsm2_state2_input(Fsm *fsm, void *context) {
   uint32_t notif;
   // Only transition if FSM1 has finished state 1 and sent notification
   notify_get(&notif);
-  if (notify_check_event(&notif, FSM1_STATE_1_CMPL)) {
-    fsm_transition(fsm, FSM2_STATE_2);
+  if (notify_check_event(&notif, FSM1_STATE_0_CMPL)) {
+    fsm_transition(fsm, FSM2_STATE_0);
   }
 }
 
 static void prv_fsm2_state2_output(void *context) {
-  LOG_DEBUG("Transitioned to state2 inputs\n");
+  LOG_DEBUG("Transitioned to FSM2 state2\n");
   // Tell fsm1 that we've completed state2
   notify(fsm1, FSM2_STATE_2_CMPL);
 }

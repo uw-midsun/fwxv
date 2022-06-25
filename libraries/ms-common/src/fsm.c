@@ -24,7 +24,6 @@ StatusCode fsm_transition(Fsm *fsm, StateId to) {
 }
 
 void fsm_run_cycle(Task *fsm) {
-  LOG_DEBUG("Run fsm cycle\n");
   if (fsm == NULL || fsm->context == NULL || 
       ((Fsm*)fsm->context)->fsm_sem == NULL) {
     LOG_CRITICAL("No fsm configured, cannot run cycle\n");
@@ -38,7 +37,6 @@ void fsm_run_cycle(Task *fsm) {
 }
 
 void _fsm_task(void *context) {
-  LOG_DEBUG("FSM task enterd\n");
   Fsm *self = context;
   BaseType_t ret;
   while (true) {

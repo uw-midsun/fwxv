@@ -12,7 +12,7 @@
 
 #define FSM_PRIORITY 1
 #define FSM_TASK_STACK TASK_STACK_1024 // TODO: make user defined
-#define FSM_TIMEOUT_MS 100
+#define FSM_TIMEOUT_MS 1000
 #define CYCLE_RX_MAX 15 // TODO: make this defined as part of project API
 
 struct Fsm;
