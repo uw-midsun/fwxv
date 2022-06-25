@@ -75,7 +75,7 @@ TASK(periodic_callback, TASK_STACK_256) {
 
     for (uint8_t i = 0; i < NUM_ADC_CHANNELS; ++i) {
       if (s_active_channels[i] && s_adc_stores[i].task != NULL) {
-        notify(s_adc_stores[i].task->handle, s_adc_stores[i].event);
+        notify(s_adc_stores[i].task, s_adc_stores[i].event);
       }
     }
   }
