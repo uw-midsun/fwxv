@@ -19,6 +19,7 @@
 //    ...
 //      notify(callback_task->handle, event);
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +29,9 @@
 #include "tasks.h"
 
 // Each callback function must have the following signature.
-typedef void (*CallbackFn)(void *);
+// Return value indicates whether or not the callback
+//    should be unregistered immediately after invocation.
+typedef bool (*CallbackFn)(void *);
 
 DECLARE_TASK(callback_task);
 
@@ -42,5 +45,9 @@ void callback_init(TaskPriority priority);
 // This Event will be needed in order to trigger the callback.
 Event register_callback(CallbackFn cb, void *context);
 
-// Unregisters the callback. Frees up space
-StatusCode cancel_callback(Event event);
+// Manually unregisters the callback.
+// This does not need to be done with a "one-shot" callback
+//   - i.e a CallbackFn which returns true will cancel automatically after being invoked.
+//
+// Pass in same cb and context as when registering the callback.
+StatusCode cancel_callback(CallbackFn cb, void *context);

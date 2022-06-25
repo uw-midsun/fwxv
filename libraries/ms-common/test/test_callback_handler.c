@@ -2,6 +2,7 @@
 #include "delay.h"
 #include "log.h"
 #include "notify.h"
+#include "stdbool.h"
 #include "task_test_helpers.h"
 #include "tasks.h"
 #include "unity.h"
@@ -13,9 +14,12 @@ void setup_test(void) {
 
 void teardown_test(void) {}
 
-void print_num(void *context) {
+bool print_num(void *context) {
   uint8_t *num = context;
   LOG_DEBUG("%d has been printed.\n", *num);
+
+  // Do not cancel callback immediately after running
+  return false;
 }
 
 // Register maximum number of callbacks, then trigger all of them successively and unregister.
@@ -41,7 +45,7 @@ TASK(register_max_callbacks, TASK_STACK_512) {
   }
   delay_ms(5);
   for (uint8_t i = 0; i < MAX_CALLBACKS; ++i) {
-    TEST_ASSERT_EQUAL(cancel_callback(registered_events[i]), STATUS_CODE_OK);
+    TEST_ASSERT_EQUAL(cancel_callback(cb, test_numbers + i), STATUS_CODE_OK);
   }
 
   while (1) {
@@ -59,7 +63,7 @@ TASK(repeated_callback_trigger, TASK_STACK_512) {
     notify(callback_task->handle, event);
     delay_ms(1);
   }
-  TEST_ASSERT_EQUAL(cancel_callback(event), STATUS_CODE_OK);
+  TEST_ASSERT_EQUAL(cancel_callback(cb, num), STATUS_CODE_OK);
 
   free(num);
 

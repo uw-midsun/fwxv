@@ -1,9 +1,9 @@
 #include "callback_handler.h"
 
 #include "log.h"
-#include "tasks.h"
 #include "notify.h"
 #include "status.h"
+#include "tasks.h"
 
 typedef struct {
   CallbackFn callback_fn;
@@ -32,6 +32,15 @@ Event prv_find_next_event() {
   return event;
 }
 
+void prv_cancel_callback_helper(uint8_t callback_index) {
+  // Clear bit in bitmask
+  s_registered_callbacks &= ~(1u << callback_index);
+
+  // Clear Callback object
+  s_callback_storage[callback_index].callback_fn = NULL;
+  s_callback_storage[callback_index].context = NULL;
+}
+
 StatusCode prv_trigger_callback(Event event) {
   if (event >= MAX_CALLBACKS) {
     LOG_CRITICAL("Cannot trigger callback, event %d out of range \n", event);
@@ -46,25 +55,27 @@ StatusCode prv_trigger_callback(Event event) {
 
   // Run callback
   void *context = s_callback_storage[event].context;
-  s_callback_storage[event].callback_fn(context);
+  bool is_cancel = s_callback_storage[event].callback_fn(context);
+
+  if (is_cancel) {
+    prv_cancel_callback_helper((uint8_t)event);
+  }
 
   return STATUS_CODE_OK;
 }
 
-StatusCode cancel_callback(Event event) {
-  // Callback has not been registered
-  if (!(s_registered_callbacks & (1u << event))) {
-    return STATUS_CODE_INVALID_ARGS;
+StatusCode cancel_callback(CallbackFn cb, void *context) {
+  for (uint8_t i = 0; i < MAX_CALLBACKS; i++) {
+    if (s_registered_callbacks & (1u << i) && s_callback_storage[i].callback_fn == cb &&
+        s_callback_storage[i].context == context) {
+      prv_cancel_callback_helper(i);
+
+      return STATUS_CODE_OK;
+    }
   }
 
-  // Clear bit in bitmask
-  s_registered_callbacks &= ~(1u << event);
-
-  // Clear Callback object
-  s_callback_storage[event].callback_fn = NULL;
-  s_callback_storage[event].context = NULL;
-
-  return STATUS_CODE_OK;
+  // Callback has not been registered
+  return STATUS_CODE_INVALID_ARGS;
 }
 
 Event register_callback(CallbackFn cb, void *context) {
