@@ -40,7 +40,7 @@ TASK(register_max_callbacks, TASK_STACK_512) {
   delay_ms(50);
 
   for (uint8_t i = 0; i < MAX_CALLBACKS; ++i) {
-    notify(callback_task->handle, registered_events[i]);
+    notify(callback_task, registered_events[i]);
     // TEST_ASSERT(result);
   }
   delay_ms(5);
@@ -60,7 +60,7 @@ TASK(repeated_callback_trigger, TASK_STACK_512) {
   Event event = register_callback(cb, num);
 
   for (uint8_t i = 0; i < 10; ++i) {
-    notify(callback_task->handle, event);
+    notify(callback_task, event);
     delay_ms(1);
   }
   TEST_ASSERT_EQUAL(cancel_callback(cb, num), STATUS_CODE_OK);
@@ -80,7 +80,7 @@ TASK(callback_overflow, TASK_STACK_512) {
   TEST_ASSERT_EQUAL(event, INVALID_EVENT);
 
   // Try notifying callback task with invalid event
-  StatusCode status = notify(callback_task->handle, event);
+  StatusCode status = notify(callback_task, event);
   TEST_ASSERT_EQUAL(status, STATUS_CODE_INVALID_ARGS);
 
   free(num);
