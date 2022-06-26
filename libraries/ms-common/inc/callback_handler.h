@@ -5,7 +5,10 @@
 //
 // Define a callback to register.
 //
-//    void example_fn(void *context);
+//    bool example_fn(void *context);
+//
+// If the callback returns true, it will unregister immediately after being called.
+// Otherwise, it will stay registered.
 //
 // Register the callback with any arguments passed as a context pointer.
 //
@@ -17,12 +20,11 @@
 // Pass the event returned by |register_callback| in the notification.
 //    #include "notify.h"
 //    ...
-//      notify(callback_task->handle, event);
+//      notify(callback_task, event);
+//
+// To manually unregister a callback, use the cancel_callback function.
 
 #include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "FreeRTOS.h"
 #include "notify.h"
