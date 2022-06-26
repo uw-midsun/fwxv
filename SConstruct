@@ -333,24 +333,6 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         cpppath = env['CPPPATH'] + [inc_dirs, lib_incs]
         ccflags = env['CCFLAGS'] + config['cflags']
 
-        # Preprocess the test source file so the runner generator sees expanded macros
-        # prefix_with = lambda prefix, dir_lists: ' '.join(
-        #     prefix + dir_.path for dirs in dir_lists for dir_ in dirs)
-        # preprocessed_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_preprocessed.c'))
-        # orig_test_file_path = Dir(str(entry)).Dir('test').File(test_file)
-        # preprocessed = env.Command(
-        #     target=preprocessed_file,
-        #     source=test_file,
-        #     action=[
-        #         # -E to preprocess only, -dI to keep #include directives, @ to suppress printing
-        #         '@$CC -dI -E {} $CCFLAGS $SOURCE > .tmp'.format(prefix_with('-I', cpppath)),
-        #         Action(
-        #             preprocessor_filter(str(orig_test_file_path), '.tmp'),
-        #             cmdstr='Preprocessing $TARGET'),
-        #     ],
-        #     CCFLAGS=ccflags,
-        # )
-
         # Create the test_*_runner.c file
         runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
         test_runner = env.Command(runner_file, test_file,
