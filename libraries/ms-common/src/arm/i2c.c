@@ -56,32 +56,7 @@ static void prv_recover_lockup(I2CPort port) {
   I2C_SoftwareResetCmd(s_port[port].base);
 }
 
-static StatusCode prv_transfer(I2CPort port, uint8_t addr, bool read, uint8_t *data, size_t len,
-                               uint32_t end_mode) {
-  I2C_TypeDef *i2c = s_port[port].base;
-
-  I2C_TransferHandling(i2c, addr << 1, len, end_mode,
-                       read ? I2C_Generate_Start_Read : I2C_Generate_Start_Write);
-
-  if (read) {
-    for (size_t i = 0; i < len; i++) {
-      I2C_TIMEOUT_WHILE_FLAG(port, I2C_FLAG_RXNE, RESET);
-      data[i] = I2C_ReceiveData(i2c);
-    }
-  } else {
-    for (size_t i = 0; i < len; i++) {
-      I2C_TIMEOUT_WHILE_FLAG(port, I2C_FLAG_TXIS, RESET);
-      I2C_SendData(i2c, data[i]);
-    }
-    if (end_mode == I2C_SoftEnd_Mode) {
-      I2C_TIMEOUT_WHILE_FLAG(port, I2C_FLAG_TC, RESET);
-    }
-  }
-
-  return STATUS_CODE_OK;
-}
-
-static StatusCode prv_i2c_timeout_while_flag(i2c_port, flag, status) {
+static StatusCode prv_i2c_timeout_while_flag(I2CPort i2c_port, uint32_t flag, FlagStatus status) {
   uint32_t timeout = (I2C_TIMEOUT);
   while (I2C_GetFlagStatus(s_port[i2c_port].base, flag) == status) {
     timeout--;
@@ -94,11 +69,36 @@ static StatusCode prv_i2c_timeout_while_flag(i2c_port, flag, status) {
   return STATUS_CODE_OK;
 }
 
-static StatusCode prv_i2c_stop(i2c_port) {
+static StatusCode prv_i2c_stop(I2CPort i2c_port) {
   StatusCode status;
   status = prv_i2c_timeout_while_flag(i2c_port, I2C_FLAG_STOPF, RESET);
   I2C_ClearFlag(s_port[i2c_port].base, I2C_FLAG_STOPF);
   return status;
+}
+
+static StatusCode prv_transfer(I2CPort port, uint8_t addr, bool read, uint8_t *data, size_t len,
+                               uint32_t end_mode) {
+  I2C_TypeDef *i2c = s_port[port].base;
+
+  I2C_TransferHandling(i2c, addr << 1, len, end_mode,
+                       read ? I2C_Generate_Start_Read : I2C_Generate_Start_Write);
+
+  if (read) {
+    for (size_t i = 0; i < len; i++) {
+      prv_i2c_timeout_while_flag(port, I2C_FLAG_RXNE, RESET);
+      data[i] = I2C_ReceiveData(i2c);
+    }
+  } else {
+    for (size_t i = 0; i < len; i++) {
+      prv_i2c_timeout_while_flag(port, I2C_FLAG_TXIS, RESET);
+      I2C_SendData(i2c, data[i]);
+    }
+    if (end_mode == I2C_SoftEnd_Mode) {
+      prv_i2c_timeout_while_flag(port, I2C_FLAG_TC, RESET);
+    }
+  }
+
+  return STATUS_CODE_OK;
 }
 
 StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
@@ -166,7 +166,7 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   if (ret == STATUS_CODE_OK) ret = prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
   if (ret == STATUS_CODE_OK)
     ret = prv_transfer(i2c, addr, false, tx_data, tx_len, I2C_AutoEnd_Mode);
-  if (ret == STATUS_CODE_OK) ret = pev_i2c_stop(i2c);
+  if (ret == STATUS_CODE_OK) ret = prv_i2c_stop(i2c);
 
   mutex_unlock(&i2c_mutex);
   return ret;
@@ -186,7 +186,7 @@ StatusCode i2c_read_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *rx_d
   if (ret == STATUS_CODE_OK) prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
   if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode);
   if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode);
-  if (ret == STATUS_CODE_OK) I2C_STOP(i2c);
+  if (ret == STATUS_CODE_OK) prv_i2c_stop(i2c);
 
   mutex_unlock(&i2c_mutex);
   return ret;
