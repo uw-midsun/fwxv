@@ -141,10 +141,10 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  StatusCode ret;
-  ret = mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS);
+  status_ok_or_return(mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS));
 
-  // Proceed if mutex is unlocked
+  // Proceed if mutex lock was successful
+  StatusCode ret = STATUS_CODE_OK;
   if (ret == STATUS_CODE_OK) ret = prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
   if (ret == STATUS_CODE_OK) ret = prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode);
   if (ret == STATUS_CODE_OK) ret = prv_i2c_stop(i2c);
@@ -159,10 +159,10 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  StatusCode ret;
-  ret = mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS);
+  status_ok_or_return(mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS));
 
-  // Proceed if mutex is unlocked
+  // Proceed if mutex lock was successful
+  StatusCode ret = STATUS_CODE_OK;
   if (ret == STATUS_CODE_OK) ret = prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
   if (ret == STATUS_CODE_OK)
     ret = prv_transfer(i2c, addr, false, tx_data, tx_len, I2C_AutoEnd_Mode);
@@ -179,10 +179,10 @@ StatusCode i2c_read_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *rx_d
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  StatusCode ret;
-  ret = mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS);
+  status_ok_or_return(mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS));
 
-  // Proceed if mutex is unlocked
+  // Proceed if mutex lock was successful
+  StatusCode ret = STATUS_CODE_OK;
   if (ret == STATUS_CODE_OK) prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
   if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode);
   if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode);
@@ -199,10 +199,10 @@ StatusCode i2c_write_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *tx_
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  StatusCode ret;
-  ret = mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS);
+  status_ok_or_return(mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS));
 
-  // Proceed if mutex is unlocked
+  // Proceed if mutex lock was successful
+  StatusCode ret = STATUS_CODE_OK;
   if (ret == STATUS_CODE_OK) prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
   if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode);
   if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, false, tx_data, tx_len, I2C_AutoEnd_Mode);
