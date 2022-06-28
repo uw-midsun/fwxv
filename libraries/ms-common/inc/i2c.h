@@ -10,6 +10,8 @@
 #include "i2c_mcu.h"
 #include "status.h"
 
+#define I2C_MUTEX_WAIT_MS 0
+
 typedef uint8_t I2CAddress;
 
 typedef enum {

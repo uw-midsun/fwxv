@@ -18,7 +18,6 @@ static SpiPortData s_port[NUM_SPI_PORTS] = {
   [SPI_PORT_2] = { .rcc_cmd = RCC_APB1PeriphClockCmd, .periph = RCC_APB1Periph_SPI2, .base = SPI2 },
 };
 
-#define SPI_MUTEX_WAIT_MS 0
 static Mutex spi_mutex;
 
 StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
@@ -75,17 +74,12 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
 
   SPI_Cmd(s_port[spi].base, ENABLE);
 
-  mutex_init(&spi_mutex);
+  status_ok_or_return(mutex_init(&spi_mutex));
 
   return STATUS_CODE_OK;
 }
 
 StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
-  // Proceed if mutex is intialized
-  if (spi_mutex.handle == NULL) {
-    return status_msg(STATUS_CODE_UNINITIALIZED, "Mutex is not intialized");
-  }
-
   // Proceed if mutex is unlocked
   if (mutex_lock(&spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
     for (size_t i = 0; i < tx_len; i++) {
@@ -98,6 +92,7 @@ StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
       SPI_ReceiveData8(s_port[spi].base);
     }
 
+    mutex_unlock(&spi_mutex);
     return STATUS_CODE_OK;
   } else {
     return STATUS_CODE_RESOURCE_EXHAUSTED;
@@ -105,11 +100,6 @@ StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
 }
 
 StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placeholder) {
-  // Proceed if mutex is intialized
-  if (spi_mutex.handle == NULL) {
-    return status_msg(STATUS_CODE_UNINITIALIZED, "Mutex is not intialized");
-  }
-
   // Proceed if mutex is unlocked
   if (mutex_lock(&spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
     for (size_t i = 0; i < rx_len; i++) {
@@ -122,6 +112,7 @@ StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placehol
       rx_data[i] = SPI_ReceiveData8(s_port[spi].base);
     }
 
+    mutex_unlock(&spi_mutex);
     return STATUS_CODE_OK;
   } else {
     return STATUS_CODE_RESOURCE_EXHAUSTED;
@@ -129,31 +120,11 @@ StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placehol
 }
 
 StatusCode spi_cs_set_state(SpiPort spi, GpioState state) {
-  // Proceed if mutex is intialized
-  if (spi_mutex.handle == NULL) {
-    return status_msg(STATUS_CODE_UNINITIALIZED, "Mutex is not intialized");
-  }
-
-  // Proceed if mutex is unlocked
-  if (mutex_lock(&spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
-    return gpio_set_state(&s_port[spi].cs, state);
-  } else {
-    return STATUS_CODE_RESOURCE_EXHAUSTED;
-  }
+  return gpio_set_state(&s_port[spi].cs, state);
 }
 
 StatusCode spi_cs_get_state(SpiPort spi, GpioState *input_state) {
-  // Proceed if mutex is intialized
-  if (spi_mutex.handle == NULL) {
-    return status_msg(STATUS_CODE_UNINITIALIZED, "Mutex is not intialized");
-  }
-
-  // Proceed if mutex is unlocked
-  if (mutex_lock(&spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
-    return gpio_get_state(&s_port[spi].cs, input_state);
-  } else {
-    return STATUS_CODE_RESOURCE_EXHAUSTED;
-  }
+  return gpio_get_state(&s_port[spi].cs, input_state);
 }
 
 StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,

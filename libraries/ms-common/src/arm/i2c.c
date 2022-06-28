@@ -14,24 +14,6 @@
 
 // Arbitrary timeout
 #define I2C_TIMEOUT 100000
-#define I2C_TIMEOUT_WHILE_FLAG(i2c_port, flag, status)                      \
-  do {                                                                      \
-    uint32_t timeout = (I2C_TIMEOUT);                                       \
-    while (I2C_GetFlagStatus(s_port[i2c_port].base, flag) == status) {      \
-      timeout--;                                                            \
-      if (timeout == 0) {                                                   \
-        LOG_DEBUG("Timeout: %lu waiting for %d to change\n", flag, status); \
-        prv_recover_lockup(i2c_port);                                       \
-        return status_code(STATUS_CODE_TIMEOUT);                            \
-      }                                                                     \
-    }                                                                       \
-  } while (0)
-
-#define I2C_STOP(i2c_port)                                   \
-  do {                                                       \
-    I2C_TIMEOUT_WHILE_FLAG(i2c_port, I2C_FLAG_STOPF, RESET); \
-    I2C_ClearFlag(s_port[i2c_port].base, I2C_FLAG_STOPF);    \
-  } while (0)
 
 typedef struct {
   uint32_t periph;
@@ -39,7 +21,6 @@ typedef struct {
   I2CSettings settings;
 } I2CPortData;
 
-#define I2C_MUTEX_WAIT_MS 0
 static Mutex i2c_mutex;
 
 static I2CPortData s_port[NUM_I2C_PORTS] = {
@@ -100,6 +81,26 @@ static StatusCode prv_transfer(I2CPort port, uint8_t addr, bool read, uint8_t *d
   return STATUS_CODE_OK;
 }
 
+static StatusCode prv_i2c_timeout_while_flag(i2c_port, flag, status) {
+  uint32_t timeout = (I2C_TIMEOUT);
+  while (I2C_GetFlagStatus(s_port[i2c_port].base, flag) == status) {
+    timeout--;
+    if (timeout == 0) {
+      LOG_DEBUG("Timeout: %lu waiting for %d to change\n", flag, status);
+      prv_recover_lockup(i2c_port);
+      return STATUS_CODE_TIMEOUT;
+    }
+  }
+  return STATUS_CODE_OK;
+}
+
+static StatusCode prv_i2c_stop(i2c_port) {
+  StatusCode status;
+  status = prv_i2c_timeout_while_flag(i2c_port, I2C_FLAG_STOPF, RESET);
+  I2C_ClearFlag(s_port[i2c_port].base, I2C_FLAG_STOPF);
+  return status;
+}
+
 StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   if (i2c >= NUM_I2C_PORTS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
@@ -129,7 +130,7 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
 
   I2C_Cmd(s_port[i2c].base, ENABLE);
 
-  mutex_init(&i2c_mutex);
+  status_ok_or_return(mutex_init(&i2c_mutex));
 
   return STATUS_CODE_OK;
 }
@@ -140,25 +141,16 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  // Proceed if mutex is intialized
-  if (i2c_mutex.handle == NULL) {
-    return status_msg(STATUS_CODE_UNINITIALIZED, "Mutex is not intialized");
-  }
+  StatusCode ret;
+  ret = mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS);
 
   // Proceed if mutex is unlocked
-  if (mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
-    I2C_TIMEOUT_WHILE_FLAG(i2c, I2C_FLAG_BUSY, SET);
+  if (ret == STATUS_CODE_OK) ret = prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
+  if (ret == STATUS_CODE_OK) ret = prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode);
+  if (ret == STATUS_CODE_OK) ret = prv_i2c_stop(i2c);
 
-    status_ok_or_return(prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode));
-
-    I2C_STOP(i2c);
-
-    mutex_unlock(&i2c_mutex);
-
-    return STATUS_CODE_OK;
-  } else {
-    return STATUS_CODE_RESOURCE_EXHAUSTED;
-  }
+  mutex_unlock(&i2c_mutex);
+  return ret;
 }
 
 StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_len) {
@@ -167,25 +159,17 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  // Proceed if mutex is intialized
-  if (i2c_mutex.handle == NULL) {
-    return status_msg(STATUS_CODE_UNINITIALIZED, "Mutex is not intialized");
-  }
+  StatusCode ret;
+  ret = mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS);
 
   // Proceed if mutex is unlocked
-  if (mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
-    I2C_TIMEOUT_WHILE_FLAG(i2c, I2C_FLAG_BUSY, SET);
+  if (ret == STATUS_CODE_OK) ret = prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
+  if (ret == STATUS_CODE_OK)
+    ret = prv_transfer(i2c, addr, false, tx_data, tx_len, I2C_AutoEnd_Mode);
+  if (ret == STATUS_CODE_OK) ret = pev_i2c_stop(i2c);
 
-    status_ok_or_return(prv_transfer(i2c, addr, false, tx_data, tx_len, I2C_AutoEnd_Mode));
-
-    I2C_STOP(i2c);
-
-    mutex_unlock(&i2c_mutex);
-
-    return STATUS_CODE_OK;
-  } else {
-    return STATUS_CODE_RESOURCE_EXHAUSTED;
-  }
+  mutex_unlock(&i2c_mutex);
+  return ret;
 }
 
 StatusCode i2c_read_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *rx_data,
@@ -195,26 +179,17 @@ StatusCode i2c_read_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *rx_d
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  // Proceed if mutex is intialized
-  if (i2c_mutex.handle == NULL) {
-    return status_msg(STATUS_CODE_UNINITIALIZED, "Mutex is not intialized");
-  }
+  StatusCode ret;
+  ret = mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS);
 
   // Proceed if mutex is unlocked
-  if (mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
-    I2C_TIMEOUT_WHILE_FLAG(i2c, I2C_FLAG_BUSY, SET);
+  if (ret == STATUS_CODE_OK) prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
+  if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode);
+  if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode);
+  if (ret == STATUS_CODE_OK) I2C_STOP(i2c);
 
-    status_ok_or_return(prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode));
-    status_ok_or_return(prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode));
-
-    I2C_STOP(i2c);
-
-    mutex_unlock(&i2c_mutex);
-
-    return STATUS_CODE_OK;
-  } else {
-    return STATUS_CODE_RESOURCE_EXHAUSTED;
-  }
+  mutex_unlock(&i2c_mutex);
+  return ret;
 }
 
 StatusCode i2c_write_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *tx_data,
@@ -224,24 +199,15 @@ StatusCode i2c_write_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *tx_
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  // Proceed if mutex is intialized
-  if (i2c_mutex.handle == NULL) {
-    return status_msg(STATUS_CODE_UNINITIALIZED, "Mutex is not intialized");
-  }
+  StatusCode ret;
+  ret = mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS);
 
   // Proceed if mutex is unlocked
-  if (mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
-    I2C_TIMEOUT_WHILE_FLAG(i2c, I2C_FLAG_BUSY, SET);
+  if (ret == STATUS_CODE_OK) prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
+  if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode);
+  if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, false, tx_data, tx_len, I2C_AutoEnd_Mode);
+  if (ret == STATUS_CODE_OK) prv_i2c_stop(i2c);
 
-    status_ok_or_return(prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode));
-    status_ok_or_return(prv_transfer(i2c, addr, false, tx_data, tx_len, I2C_AutoEnd_Mode));
-
-    I2C_STOP(i2c);
-
-    mutex_unlock(&i2c_mutex);
-
-    return STATUS_CODE_OK;
-  } else {
-    return STATUS_CODE_RESOURCE_EXHAUSTED;
-  }
+  mutex_unlock(&i2c_mutex);
+  return ret;
 }
