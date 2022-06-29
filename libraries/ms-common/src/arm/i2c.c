@@ -21,7 +21,7 @@ typedef struct {
   I2CSettings settings;
 } I2CPortData;
 
-static Mutex i2c_mutex;
+static Mutex s_i2c_mutex;
 
 static I2CPortData s_port[NUM_I2C_PORTS] = {
   [I2C_PORT_1] = { .periph = RCC_APB1Periph_I2C1, .base = I2C1 },
@@ -85,16 +85,16 @@ static StatusCode prv_transfer(I2CPort port, uint8_t addr, bool read, uint8_t *d
 
   if (read) {
     for (size_t i = 0; i < len; i++) {
-      prv_i2c_timeout_while_flag(port, I2C_FLAG_RXNE, RESET);
+      status_ok_or_return(prv_i2c_timeout_while_flag(port, I2C_FLAG_RXNE, RESET));
       data[i] = I2C_ReceiveData(i2c);
     }
   } else {
     for (size_t i = 0; i < len; i++) {
-      prv_i2c_timeout_while_flag(port, I2C_FLAG_TXIS, RESET);
+      status_ok_or_return(prv_i2c_timeout_while_flag(port, I2C_FLAG_TXIS, RESET));
       I2C_SendData(i2c, data[i]);
     }
     if (end_mode == I2C_SoftEnd_Mode) {
-      prv_i2c_timeout_while_flag(port, I2C_FLAG_TC, RESET);
+      status_ok_or_return(prv_i2c_timeout_while_flag(port, I2C_FLAG_TC, RESET));
     }
   }
 
@@ -130,7 +130,7 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
 
   I2C_Cmd(s_port[i2c].base, ENABLE);
 
-  status_ok_or_return(mutex_init(&i2c_mutex));
+  status_ok_or_return(mutex_init(&s_i2c_mutex));
 
   return STATUS_CODE_OK;
 }
@@ -141,15 +141,21 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  status_ok_or_return(mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS));
+  status_ok_or_return(mutex_lock(&s_i2c_mutex, I2C_MUTEX_WAIT_MS));
 
   // Proceed if mutex lock was successful
   StatusCode ret = STATUS_CODE_OK;
-  if (ret == STATUS_CODE_OK) ret = prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
-  if (ret == STATUS_CODE_OK) ret = prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode);
-  if (ret == STATUS_CODE_OK) ret = prv_i2c_stop(i2c);
+  if (ret == STATUS_CODE_OK) {
+    ret = prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
+  }
+  if (ret == STATUS_CODE_OK) {
+    ret = prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode);
+  }
+  if (ret == STATUS_CODE_OK) {
+    ret = prv_i2c_stop(i2c);
+  }
 
-  mutex_unlock(&i2c_mutex);
+  mutex_unlock(&s_i2c_mutex);
   return ret;
 }
 
@@ -159,16 +165,21 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  status_ok_or_return(mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS));
+  status_ok_or_return(mutex_lock(&s_i2c_mutex, I2C_MUTEX_WAIT_MS));
 
   // Proceed if mutex lock was successful
   StatusCode ret = STATUS_CODE_OK;
-  if (ret == STATUS_CODE_OK) ret = prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
-  if (ret == STATUS_CODE_OK)
+  if (ret == STATUS_CODE_OK) {
+    ret = prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
+  }
+  if (ret == STATUS_CODE_OK) {
     ret = prv_transfer(i2c, addr, false, tx_data, tx_len, I2C_AutoEnd_Mode);
-  if (ret == STATUS_CODE_OK) ret = prv_i2c_stop(i2c);
+  }
+  if (ret == STATUS_CODE_OK) {
+    ret = prv_i2c_stop(i2c);
+  }
 
-  mutex_unlock(&i2c_mutex);
+  mutex_unlock(&s_i2c_mutex);
   return ret;
 }
 
@@ -179,16 +190,24 @@ StatusCode i2c_read_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *rx_d
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  status_ok_or_return(mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS));
+  status_ok_or_return(mutex_lock(&s_i2c_mutex, I2C_MUTEX_WAIT_MS));
 
   // Proceed if mutex lock was successful
   StatusCode ret = STATUS_CODE_OK;
-  if (ret == STATUS_CODE_OK) prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
-  if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode);
-  if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode);
-  if (ret == STATUS_CODE_OK) prv_i2c_stop(i2c);
+  if (ret == STATUS_CODE_OK) {
+    prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
+  }
+  if (ret == STATUS_CODE_OK) {
+    prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode);
+  }
+  if (ret == STATUS_CODE_OK) {
+    prv_transfer(i2c, addr, true, rx_data, rx_len, I2C_AutoEnd_Mode);
+  }
+  if (ret == STATUS_CODE_OK) {
+    prv_i2c_stop(i2c);
+  }
 
-  mutex_unlock(&i2c_mutex);
+  mutex_unlock(&s_i2c_mutex);
   return ret;
 }
 
@@ -199,15 +218,23 @@ StatusCode i2c_write_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *tx_
   }
   // CRITICAL_SECTION_AUTOEND;
 
-  status_ok_or_return(mutex_lock(&i2c_mutex, I2C_MUTEX_WAIT_MS));
+  status_ok_or_return(mutex_lock(&s_i2c_mutex, I2C_MUTEX_WAIT_MS));
 
   // Proceed if mutex lock was successful
   StatusCode ret = STATUS_CODE_OK;
-  if (ret == STATUS_CODE_OK) prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
-  if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode);
-  if (ret == STATUS_CODE_OK) prv_transfer(i2c, addr, false, tx_data, tx_len, I2C_AutoEnd_Mode);
-  if (ret == STATUS_CODE_OK) prv_i2c_stop(i2c);
+  if (ret == STATUS_CODE_OK) {
+    prv_i2c_timeout_while_flag(i2c, I2C_FLAG_BUSY, SET);
+  }
+  if (ret == STATUS_CODE_OK) {
+    prv_transfer(i2c, addr, false, &reg, sizeof(reg), I2C_SoftEnd_Mode);
+  }
+  if (ret == STATUS_CODE_OK) {
+    prv_transfer(i2c, addr, false, tx_data, tx_len, I2C_AutoEnd_Mode);
+  }
+  if (ret == STATUS_CODE_OK) {
+    prv_i2c_stop(i2c);
+  }
 
-  mutex_unlock(&i2c_mutex);
+  mutex_unlock(&s_i2c_mutex);
   return ret;
 }

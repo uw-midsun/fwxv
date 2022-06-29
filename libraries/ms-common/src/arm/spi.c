@@ -18,7 +18,7 @@ static SpiPortData s_port[NUM_SPI_PORTS] = {
   [SPI_PORT_2] = { .rcc_cmd = RCC_APB1PeriphClockCmd, .periph = RCC_APB1Periph_SPI2, .base = SPI2 },
 };
 
-static Mutex spi_mutex;
+static Mutex s_spi_mutex;
 
 StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   if (spi >= NUM_SPI_PORTS) {
@@ -74,14 +74,14 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
 
   SPI_Cmd(s_port[spi].base, ENABLE);
 
-  status_ok_or_return(mutex_init(&spi_mutex));
+  status_ok_or_return(mutex_init(&s_spi_mutex));
 
   return STATUS_CODE_OK;
 }
 
 StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
   // Proceed if mutex is unlocked
-  if (mutex_lock(&spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
+  if (mutex_lock(&s_spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
     for (size_t i = 0; i < tx_len; i++) {
       while (SPI_I2S_GetFlagStatus(s_port[spi].base, SPI_I2S_FLAG_TXE) == RESET) {
       }
@@ -92,7 +92,7 @@ StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
       SPI_ReceiveData8(s_port[spi].base);
     }
 
-    mutex_unlock(&spi_mutex);
+    mutex_unlock(&s_spi_mutex);
     return STATUS_CODE_OK;
   } else {
     return STATUS_CODE_RESOURCE_EXHAUSTED;
@@ -101,7 +101,7 @@ StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
 
 StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placeholder) {
   // Proceed if mutex is unlocked
-  if (mutex_lock(&spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
+  if (mutex_lock(&s_spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
     for (size_t i = 0; i < rx_len; i++) {
       while (SPI_I2S_GetFlagStatus(s_port[spi].base, SPI_I2S_FLAG_TXE) == RESET) {
       }
@@ -112,7 +112,7 @@ StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placehol
       rx_data[i] = SPI_ReceiveData8(s_port[spi].base);
     }
 
-    mutex_unlock(&spi_mutex);
+    mutex_unlock(&s_spi_mutex);
     return STATUS_CODE_OK;
   } else {
     return STATUS_CODE_RESOURCE_EXHAUSTED;
