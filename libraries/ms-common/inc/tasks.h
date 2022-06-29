@@ -93,3 +93,15 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context);
 // Start the FreeRTOS scheduler to run the tasks that were previously initialized.
 // This function should not return!
 void tasks_start(void);
+
+// Initialize the task module. Must be called before tasks are initialized or the scheduler is
+// started.
+StatusCode tasks_init(void);
+
+// Attempts to take num_tasks items from end task semaphore, indicating the number of tasks
+// completed Returns STATUS_CODE_TIMEOUT if timeout occurs, STATUS_CODE_OK if num_tasks items taken
+// successfully
+StatusCode wait_tasks(uint16_t num_tasks);
+
+// A wrapper to give to the semaphore, to be called by tasks when they complete
+StatusCode send_task_end(void);

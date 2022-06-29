@@ -19,12 +19,12 @@ DECLARE_TASK(receive_task);
 TASK(notify_task, TASK_STACK_512) {
   // Delay, then send first message
   delay_ms(1);
-  TEST_ASSERT_OK(notify(receive_task->handle, s_notify_events[0]));
+  TEST_ASSERT_OK(notify(receive_task, s_notify_events[0]));
   // Allow receive to catch up
   delay_ms(1);
   // Send all above notification in one fell swoop
   for (uint8_t i = 0; i < NUM_TEST_EVENTS; i++) {
-    TEST_ASSERT_OK(notify(receive_task->handle, s_notify_events[i]));
+    TEST_ASSERT_OK(notify(receive_task, s_notify_events[i]));
   }
 }
 

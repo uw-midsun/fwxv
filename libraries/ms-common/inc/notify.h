@@ -42,15 +42,15 @@ StatusCode notify_get(uint32_t *notification);
 StatusCode notify_wait(uint32_t *notification, uint32_t ms_to_wait);
 
 // Sends an event notification to a specific task
-StatusCode notify(TaskHandle_t task, Event event);
+StatusCode notify(Task *task, Event event);
 
 // ISR specific notify method
-void notify_from_isr(TaskHandle_t task, Event event);
+void notify_from_isr(Task *task, Event event);
 
 // Subscribes a task to a topic via its task handle
 // The event is what the task will receive when the topic is published to
 // Subscribes should happen before the scheduler is started, and are not mutable
-StatusCode subscribe(TaskHandle_t task, Topic topic, Event event);
+StatusCode subscribe(Task *task, Topic topic, Event event);
 
 // Sends a notification to all tasks in a topic from calling task
 StatusCode publish(Topic topic);

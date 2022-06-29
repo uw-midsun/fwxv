@@ -62,8 +62,8 @@ void test_gpio_it(void) {
   interrupt_init();
   gpio_it_init();
 
-  gpio_it_register_interrupt(&buttons[0], &settings, BUTTON_0, handler->handle);
-  gpio_it_register_interrupt(&buttons[1], &settings, BUTTON_1, handler->handle);
+  gpio_it_register_interrupt(&buttons[0], &settings, BUTTON_0, handler);
+  gpio_it_register_interrupt(&buttons[1], &settings, BUTTON_1, handler);
 
   for (int i = 0; i < 5; ++i) {
     delay_ms(100);
@@ -84,8 +84,8 @@ void test_gpio_it(void) {
 //   interrupt_init();
 //   gpio_it_init();
 
-//   gpio_it_register_interrupt(&buttons[0], &settings, BUTTON_0, handler->handle);
-//   gpio_it_register_interrupt(&buttons[1], &settings, BUTTON_1, handler->handle);
+//   gpio_it_register_interrupt(&buttons[0], &settings, BUTTON_0, handler);
+//   gpio_it_register_interrupt(&buttons[1], &settings, BUTTON_1, handler);
 
 //   while (true) {
 //     vTaskDelay(portMAX_DELAY);

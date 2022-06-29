@@ -102,7 +102,7 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
   status_ok_or_return(tasks_init_task(CAN_TX, TASK_PRIORITY(2), NULL));
 
-  status_ok_or_return(subscribe(CAN_TX->handle, TOPIC_1, CAN_RX_EVENT));
+  status_ok_or_return(subscribe(CAN_TX, TOPIC_1, CAN_RX_EVENT));
 
   return STATUS_CODE_OK;
 }

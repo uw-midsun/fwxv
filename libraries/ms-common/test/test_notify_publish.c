@@ -117,21 +117,21 @@ void test_publish_setup() {
   tasks_init_task(sub_task6, TASK_PRIORITY(1), NULL);
   tasks_init_task(sub_task7, TASK_PRIORITY(1), NULL);
   // Subscribe all tasks to topic 1
-  TEST_ASSERT_OK(subscribe(sub_task1->handle, TOPIC_1, 0));
-  TEST_ASSERT_OK(subscribe(sub_task2->handle, TOPIC_1, 0));
-  TEST_ASSERT_OK(subscribe(sub_task3->handle, TOPIC_1, 0));
-  TEST_ASSERT_OK(subscribe(sub_task4->handle, TOPIC_1, 0));
-  TEST_ASSERT_OK(subscribe(sub_task5->handle, TOPIC_1, 0));
-  TEST_ASSERT_OK(subscribe(sub_task6->handle, TOPIC_1, 0));
-  TEST_ASSERT_OK(subscribe(sub_task7->handle, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task1, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task2, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task3, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task4, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task5, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task6, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task7, TOPIC_1, 0));
 
-  TEST_ASSERT_OK(subscribe(sub_task1->handle, TOPIC_2, 1));
-  TEST_ASSERT_OK(subscribe(sub_task2->handle, TOPIC_2, 1));
-  TEST_ASSERT_OK(subscribe(sub_task3->handle, TOPIC_2, 1));
-  TEST_ASSERT_OK(subscribe(sub_task4->handle, TOPIC_2, 1));
-  TEST_ASSERT_OK(subscribe(sub_task5->handle, TOPIC_2, 1));
-  TEST_ASSERT_OK(subscribe(sub_task6->handle, TOPIC_2, 1));
-  TEST_ASSERT_OK(subscribe(sub_task7->handle, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task1, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task2, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task3, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task4, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task5, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task6, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task7, TOPIC_2, 1));
 }
 
 TEST_IN_TASK
