@@ -18,6 +18,7 @@ void setup_test(void) {
 
 void teardown_test(void) {}
 
+TEST_IN_TASK
 void test_watchdog() {
   callback_called = false;
   watchdog_start(&s_watchdog, 100, prv_callback);

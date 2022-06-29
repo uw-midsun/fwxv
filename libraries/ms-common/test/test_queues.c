@@ -86,6 +86,7 @@ TASK(peekMessages, TASK_STACK_512) {
   }
 }
 
+TEST_IN_TASK
 void test_running_task() {
   // Send
   tasks_init_task(sendMessages, TASK_PRIORITY(3), NULL);

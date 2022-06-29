@@ -32,3 +32,9 @@
 #include "tasks.h"
 
 DECLARE_TASK(test_task);
+
+#ifndef TEST_PRE_TASK
+// define in-task/pre-task tests
+#define TEST_PRE_TASK
+#define TEST_IN_TASK
+#endif

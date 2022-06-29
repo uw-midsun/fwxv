@@ -45,6 +45,7 @@ typedef enum {
   NUM_T_EVENTS,
 } TestNotifyEvent;
 
+TEST_IN_TASK
 void test_invalid_args(void) {
   StatusCode result;
   Event event;
@@ -57,6 +58,7 @@ void test_invalid_args(void) {
   TEST_ASSERT_EQUAL(NUM_T_EVENTS, event);
 }
 
+TEST_IN_TASK
 void test_empty_notification(void) {
   StatusCode result;
   Event event;
@@ -71,6 +73,7 @@ void test_empty_notification(void) {
   TEST_ASSERT_EQUAL(0, notification);
 }
 
+TEST_IN_TASK
 void test_single_notification(void) {
   StatusCode result;
   Event event;
@@ -85,6 +88,7 @@ void test_single_notification(void) {
   TEST_ASSERT_EQUAL(0, notification);
 }
 
+TEST_IN_TASK
 void test_all_notifications(void) {
   StatusCode result;
   Event event;
@@ -109,6 +113,7 @@ void test_all_notifications(void) {
   TEST_ASSERT_EQUAL(0, notification);
 }
 
+TEST_IN_TASK
 void test_interspersed_notifications(void) {
   StatusCode result;
   Event event;

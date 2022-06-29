@@ -156,9 +156,7 @@ void test_adc_mock_reading() {
   TEST_ASSERT_TRUE(reading != 0);
 }
 
-//
-// ONLY ONE TASK TEST CAN WORK AT THE SAME TIME, COMMENT OUT TO TEST INDIVIDUALLY
-//
+TEST_IN_TASK
 void test_pin_single() {
   uint16_t reading;
   // Initialize the ADC to single mode and configure the channels
@@ -186,8 +184,10 @@ void test_pin_single() {
   TEST_ASSERT_EQUAL(STATUS_CODE_EMPTY, adc_read_raw(s_empty_pin, &reading));
 
   TEST_ASSERT_TRUE(reading < 4095);
+  TEST_ASSERT_TRUE(false);
 }
 
+TEST_IN_TASK
 void test_pin_continuous() {
   // Initialize ADC and check that adc_init() can properly reset the ADC
   adc_init(ADC_MODE_CONTINUOUS);
@@ -200,6 +200,8 @@ void test_pin_continuous() {
   }
 
   vTaskDelay(60);
+
+  vTaskEndScheduler();
 
   uint32_t notification = 0;
   notify_get(&notification);

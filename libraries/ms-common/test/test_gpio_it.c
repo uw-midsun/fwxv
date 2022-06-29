@@ -55,6 +55,7 @@ TASK(handler, TASK_MIN_STACK_SIZE) {
   }
 }
 
+TEST_IN_TASK
 void test_gpio_it(void) {
   tasks_init_task(handler, 2, NULL);
 

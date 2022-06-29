@@ -50,12 +50,14 @@ TASK(receive_task, TASK_STACK_512) {
   }
 }
 
+TEST_IN_TASK
 void test_invalid_args(void) {
   StatusCode result;
   result = notify_get(NULL);
   TEST_ASSERT_EQUAL(result, STATUS_CODE_INVALID_ARGS);
 }
 
+TEST_IN_TASK
 void test_notifications() {
   tasks_init_task(notify_task, TASK_PRIORITY(1), NULL);
   tasks_init_task(receive_task, TASK_PRIORITY(1), NULL);

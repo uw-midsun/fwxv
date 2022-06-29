@@ -102,42 +102,39 @@ TASK(sub_task7, TASK_STACK_512) {
 
 void teardown_test(void) {}
 
-bool inited = false;
 void setup_test(void) {
   log_init();
-
-  if (!inited) {
-    inited = true;
-    // Notify requires initialization before scheduler starts
-    tasks_init_task(pub_task, TASK_PRIORITY(1), NULL);
-
-    tasks_init_task(sub_task1, TASK_PRIORITY(1), NULL);
-    tasks_init_task(sub_task2, TASK_PRIORITY(1), NULL);
-    tasks_init_task(sub_task3, TASK_PRIORITY(1), NULL);
-    tasks_init_task(sub_task4, TASK_PRIORITY(1), NULL);
-    tasks_init_task(sub_task5, TASK_PRIORITY(1), NULL);
-    tasks_init_task(sub_task6, TASK_PRIORITY(1), NULL);
-    tasks_init_task(sub_task7, TASK_PRIORITY(1), NULL);
-
-    // Subscribe all tasks to topic 1
-    TEST_ASSERT_OK(subscribe(sub_task1->handle, TOPIC_1, 0));
-    TEST_ASSERT_OK(subscribe(sub_task2->handle, TOPIC_1, 0));
-    TEST_ASSERT_OK(subscribe(sub_task3->handle, TOPIC_1, 0));
-    TEST_ASSERT_OK(subscribe(sub_task4->handle, TOPIC_1, 0));
-    TEST_ASSERT_OK(subscribe(sub_task5->handle, TOPIC_1, 0));
-    TEST_ASSERT_OK(subscribe(sub_task6->handle, TOPIC_1, 0));
-    TEST_ASSERT_OK(subscribe(sub_task7->handle, TOPIC_1, 0));
-
-    TEST_ASSERT_OK(subscribe(sub_task1->handle, TOPIC_2, 1));
-    TEST_ASSERT_OK(subscribe(sub_task2->handle, TOPIC_2, 1));
-    TEST_ASSERT_OK(subscribe(sub_task3->handle, TOPIC_2, 1));
-    TEST_ASSERT_OK(subscribe(sub_task4->handle, TOPIC_2, 1));
-    TEST_ASSERT_OK(subscribe(sub_task5->handle, TOPIC_2, 1));
-    TEST_ASSERT_OK(subscribe(sub_task6->handle, TOPIC_2, 1));
-    TEST_ASSERT_OK(subscribe(sub_task7->handle, TOPIC_2, 1));
-  }
 }
 
+void test_publish_setup() {
+  tasks_init_task(pub_task, TASK_PRIORITY(1), NULL);
+
+  tasks_init_task(sub_task1, TASK_PRIORITY(1), NULL);
+  tasks_init_task(sub_task2, TASK_PRIORITY(1), NULL);
+  tasks_init_task(sub_task3, TASK_PRIORITY(1), NULL);
+  tasks_init_task(sub_task4, TASK_PRIORITY(1), NULL);
+  tasks_init_task(sub_task5, TASK_PRIORITY(1), NULL);
+  tasks_init_task(sub_task6, TASK_PRIORITY(1), NULL);
+  tasks_init_task(sub_task7, TASK_PRIORITY(1), NULL);
+  // Subscribe all tasks to topic 1
+  TEST_ASSERT_OK(subscribe(sub_task1->handle, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task2->handle, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task3->handle, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task4->handle, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task5->handle, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task6->handle, TOPIC_1, 0));
+  TEST_ASSERT_OK(subscribe(sub_task7->handle, TOPIC_1, 0));
+
+  TEST_ASSERT_OK(subscribe(sub_task1->handle, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task2->handle, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task3->handle, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task4->handle, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task5->handle, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task6->handle, TOPIC_2, 1));
+  TEST_ASSERT_OK(subscribe(sub_task7->handle, TOPIC_2, 1));
+}
+
+TEST_IN_TASK
 void test_publish() {
   delay_ms(20);
 }

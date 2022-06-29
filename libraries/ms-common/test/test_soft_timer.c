@@ -25,6 +25,7 @@ void prv_run_callback(SoftTimerId t) {}
 static SoftTimer s_timer;
 static SoftTimer s_timer_2;
 
+TEST_IN_TASK
 void test_soft_timer() {
   TickType_t last_wake = xTaskGetTickCount();
   for (int i = 0; i < 3; ++i) {
@@ -64,6 +65,7 @@ void test_soft_timer() {
   }
 }
 
+TEST_IN_TASK
 void test_multiple_timer() {
   for (int i = 0; i < 3; ++i) {
     triggered = false;

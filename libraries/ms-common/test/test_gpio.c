@@ -92,6 +92,7 @@ TASK(task2, TASK_STACK_512) {
   }
 }
 
+TEST_IN_TASK
 void test_running_task(void) {
   // Start the task: note no need to call tasks_start() because we're inside a test task and
   // FreeRTOS is already running.

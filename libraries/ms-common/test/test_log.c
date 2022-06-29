@@ -25,6 +25,7 @@ TASK(blink_task, TASK_STACK_512) {
   }
 }
 
+TEST_IN_TASK
 void test_log() {
   delay_ms(1);
 
@@ -80,9 +81,8 @@ void test_log() {
   delay_ms(8);
 }
 
-// Not testable
-// void test_log_no_scheduler() {
-//   LOG_DEBUG("this is a log debug \n");
-//   LOG_CRITICAL("This should be in between the log debugs \n");
-//   LOG_WARN("im afraid youre schedulerless\n");
-// }
+void test_log_no_scheduler() {
+  LOG_DEBUG("this is a log debug \n");
+  LOG_CRITICAL("This should be in between the log debugs \n");
+  LOG_WARN("im afraid youre schedulerless\n");
+}
