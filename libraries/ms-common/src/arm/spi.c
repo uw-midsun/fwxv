@@ -1,8 +1,10 @@
 #include "spi.h"
 
 #include "gpio.h"
+#include "mutex.h"
 #include "spi_mcu.h"
 #include "stm32f0xx.h"
+#include "stm32f0xx_spi.h"
 
 typedef struct {
   void (*rcc_cmd)(uint32_t periph, FunctionalState state);
@@ -15,6 +17,8 @@ static SpiPortData s_port[NUM_SPI_PORTS] = {
   [SPI_PORT_1] = { .rcc_cmd = RCC_APB2PeriphClockCmd, .periph = RCC_APB2Periph_SPI1, .base = SPI1 },
   [SPI_PORT_2] = { .rcc_cmd = RCC_APB1PeriphClockCmd, .periph = RCC_APB1Periph_SPI2, .base = SPI2 },
 };
+
+static Mutex s_spi_mutex;
 
 StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   if (spi >= NUM_SPI_PORTS) {
@@ -70,35 +74,49 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
 
   SPI_Cmd(s_port[spi].base, ENABLE);
 
+  status_ok_or_return(mutex_init(&s_spi_mutex));
+
   return STATUS_CODE_OK;
 }
 
 StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
-  for (size_t i = 0; i < tx_len; i++) {
-    while (SPI_I2S_GetFlagStatus(s_port[spi].base, SPI_I2S_FLAG_TXE) == RESET) {
-    }
-    SPI_SendData8(s_port[spi].base, tx_data[i]);
+  // Proceed if mutex is unlocked
+  if (mutex_lock(&s_spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
+    for (size_t i = 0; i < tx_len; i++) {
+      while (SPI_I2S_GetFlagStatus(s_port[spi].base, SPI_I2S_FLAG_TXE) == RESET) {
+      }
+      SPI_SendData8(s_port[spi].base, tx_data[i]);
 
-    while (SPI_I2S_GetFlagStatus(s_port[spi].base, SPI_I2S_FLAG_RXNE) == RESET) {
+      while (SPI_I2S_GetFlagStatus(s_port[spi].base, SPI_I2S_FLAG_RXNE) == RESET) {
+      }
+      SPI_ReceiveData8(s_port[spi].base);
     }
-    SPI_ReceiveData8(s_port[spi].base);
+
+    mutex_unlock(&s_spi_mutex);
+    return STATUS_CODE_OK;
+  } else {
+    return STATUS_CODE_RESOURCE_EXHAUSTED;
   }
-
-  return STATUS_CODE_OK;
 }
 
 StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placeholder) {
-  for (size_t i = 0; i < rx_len; i++) {
-    while (SPI_I2S_GetFlagStatus(s_port[spi].base, SPI_I2S_FLAG_TXE) == RESET) {
-    }
-    SPI_SendData8(s_port[spi].base, placeholder);
+  // Proceed if mutex is unlocked
+  if (mutex_lock(&s_spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
+    for (size_t i = 0; i < rx_len; i++) {
+      while (SPI_I2S_GetFlagStatus(s_port[spi].base, SPI_I2S_FLAG_TXE) == RESET) {
+      }
+      SPI_SendData8(s_port[spi].base, placeholder);
 
-    while (SPI_I2S_GetFlagStatus(s_port[spi].base, SPI_I2S_FLAG_RXNE) == RESET) {
+      while (SPI_I2S_GetFlagStatus(s_port[spi].base, SPI_I2S_FLAG_RXNE) == RESET) {
+      }
+      rx_data[i] = SPI_ReceiveData8(s_port[spi].base);
     }
-    rx_data[i] = SPI_ReceiveData8(s_port[spi].base);
+
+    mutex_unlock(&s_spi_mutex);
+    return STATUS_CODE_OK;
+  } else {
+    return STATUS_CODE_RESOURCE_EXHAUSTED;
   }
-
-  return STATUS_CODE_OK;
 }
 
 StatusCode spi_cs_set_state(SpiPort spi, GpioState state) {
