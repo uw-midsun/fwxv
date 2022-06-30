@@ -30,9 +30,9 @@ TASK(task1, TASK_STACK_512) {
   while (true) {
     // Your code goes here
     for (int i = 0; i < QUEUE_LEN; i++) {
-      queue_send(&s_queue1, &s_list[i], 100);
-      delay(100);
-      if (queue_init(&s_queue1); != STATUS_CODE_OK) {
+      ret = queue_send(&s_queue1, s_list[i], 1000);
+      delay_ms(100);
+      if (ret != STATUS_CODE_OK) {
         LOG_DEBUG("Write to queue failed.\n");
       }
     }
@@ -45,10 +45,9 @@ TASK(task2, TASK_STACK_512) {
   StatusCode ret;
   while (true) {
     // Your code goes here
-    queue_receive(&s_queue1, &outstr, 1000);
-    delay(1000);
-    if (queue_init(&s_queue1); == STATUS_CODE_OK) {
-      LOG_DEBUG("Out string:" + outstr + "\n");
+    ret = queue_receive(&s_queue1, outstr, 1000);
+    if (ret == STATUS_CODE_OK) {
+      LOG_DEBUG("%s\n", outstr);
     } else {
       LOG_DEBUG("Read from queue failed");
     }
@@ -63,7 +62,7 @@ int main(void) {
   tasks_init_task(task1, TASK_PRIORITY(2), NULL);
   tasks_init_task(task2, TASK_PRIORITY(2), NULL);
 
-  LOG_DEBUG("Program start...AAAA\n");
+  LOG_DEBUG("Program start...A\n");
   tasks_start();
 
   return 0;
