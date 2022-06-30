@@ -29,6 +29,7 @@
 #include <stddef.h>
 
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include "status.h"
 #include "task.h"
 
@@ -70,6 +71,12 @@
 
 // A convenience macro for making declaring priorities more readable.
 #define TASK_PRIORITY(prio) ((TaskPriority)prio)
+
+// Parameter that will be used to initialize the end task semaphore.
+#define MAX_NUM_TASKS 15
+
+// Define wait timeout as 1 second, tasks cycle execution should not take longer than a second
+#define WAIT_TASK_TIMEOUT_MS 1000
 
 typedef UBaseType_t TaskPriority;
 
