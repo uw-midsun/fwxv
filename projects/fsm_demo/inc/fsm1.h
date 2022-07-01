@@ -1,12 +1,11 @@
 #pragma once
 
-#include "fsm.h"
-
 #include "delay.h"
+#include "fsm.h"
+#include "gpio.h"
 #include "log.h"
 #include "notify.h"
 #include "task.h"
-#include "gpio.h"
 
 #define NUM_FSM1_STATES 3
 #define NUM_FSM1_TRANSITIONS 7

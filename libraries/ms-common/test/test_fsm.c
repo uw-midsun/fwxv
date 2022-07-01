@@ -1,9 +1,8 @@
-#include "fsm.h"
-
 #include <stdint.h>
 
 #include "FreeRTOS.h"
 #include "delay.h"
+#include "fsm.h"
 #include "log.h"
 #include "task.h"
 #include "test_helpers.h"
@@ -24,7 +23,6 @@ typedef enum TestStateId {
 } TestStateId;
 
 // Dummy input functions
-// We call 
 void prv_state0_input(Fsm *fsm, void *context) {
   return;
 }
@@ -96,7 +94,7 @@ void prv_init_fsm(uint8_t init_state) {
 // Test table logic
 void test_state_table_transitions_success(void) {
   // Test transitions for state 0
-  // No output functions will be executed, as 
+  // No output functions will be executed, as
   prv_init_fsm(TEST_STATE_0);
   // 0 -> 0
   TEST_ASSERT_OK(fsm_transition(test1_fsm, TEST_STATE_0));

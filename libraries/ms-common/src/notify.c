@@ -46,10 +46,6 @@ bool notify_check_event(uint32_t *notification, Event event) {
   }
 }
 
-
-
-    
-
 StatusCode notify_get(uint32_t *notification) {
   return notify_wait(notification, 0);
 }

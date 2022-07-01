@@ -1,13 +1,12 @@
 #include "fsm2.h"
 
-#include "fsm1.h"
 #include "delay.h"
+#include "fsm1.h"
 #include "log.h"
 #include "notify.h"
 #include "task.h"
 
 FSM(fsm2, NUM_FSM2_STATES);
-
 
 void prv_fsm2_state0_input(Fsm *fsm, void *context) {
   Fsm *fsm2 = context;
@@ -34,7 +33,7 @@ static void prv_fsm2_state1_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, FSM2_STATE_2);
   }
 }
- 
+
 static void prv_fsm2_state1_output(void *context) {
   LOG_DEBUG("Transitioned to FSM2 state1\n");
   // Tell fsm1 that we've completed state1
@@ -89,4 +88,3 @@ StatusCode init_fsm2(void) {
   fsm_init(fsm2, settings, NULL);
   return STATUS_CODE_OK;
 }
-

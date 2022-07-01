@@ -4,12 +4,11 @@
 // Use API defined in Fsm.h
 
 // Internal Implementation of FSM initialization
-// Declares a FSM state table, 
-
+// Creates a task which we can reference the fsm by
+// and forward declares the fsm object
 #define _DECLARE_FSM(name) \
   DECLARE_TASK(name);      \
   extern Fsm *name##_fsm
-
 
 // Internal fsm declaration
 // Creates square transition table and task with name given to FSM
@@ -25,11 +24,7 @@
   }
 
 #define _STATE(state_id, input_func, output_func) \
-  [state_id] = {  \
-    .id = state_id, .inputs = input_func, \
-    .outputs = output_func  \
-  }
-
+  [state_id] = { .id = state_id, .inputs = input_func, .outputs = output_func }
 
 // Internal Transition implementation
 #define _TRANSITION(from_state, to_state) \
@@ -38,7 +33,6 @@
 // Initialize the fsm task and fsm object
 // Named fsm object passed as context to task
 // Context above passed to _init_fsm, stored in FSM object
-#define _fsm_init(fsm, settings, context)            \
+#define _fsm_init(fsm, settings, context)                       \
   tasks_init_task(fsm, TASK_PRIORITY(FSM_PRIORITY), fsm##_fsm); \
   _init_fsm(fsm##_fsm, &settings, context)
-
