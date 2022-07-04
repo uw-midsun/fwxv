@@ -1,0 +1,17 @@
+#pragma once
+
+#include "can_boards_ids.h"
+#include "can_codegen.h"
+
+{% set board = data["Board"] -%}
+{% set messages = data["Messages"] -%}
+
+#include <stdint.h>
+
+void add_all_can_filters()
+{
+{%- for message, message_data in messages.items() -%} 
+  can_add_filter(SYSTEM_CAN_MESSAGE_{{board|upper}}_{{message|upper}});
+
+{% endfor %}
+} 

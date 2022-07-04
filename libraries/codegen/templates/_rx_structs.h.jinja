@@ -2,12 +2,17 @@
 
 {% set board = data["Board"] -%}
 {% set messages = data["Messages"] -%}
-
+{{messages}}
 #include <stdint.h>
 
 typedef struct
 {
 {%- for message, message_data in messages.items() -%}
+// Takes messages and turns into key value pairs 
+// Items() parses key-value pairs into the key and value
+// Message stores first entry 
+// Message_data stores second entry
+// Message holds the "transmit_msg1" and message_data holds the value
     {%- set signals = message_data['signals'] -%}
     {%- for signal, signal_data in signals.items() %}
     uint{{signal_data['length']}}_t {{message}}_{{signal}};
