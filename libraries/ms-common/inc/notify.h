@@ -33,6 +33,10 @@ typedef enum {
 // Notification value should be processed until all events are cleared
 StatusCode event_from_notification(uint32_t *notification, Event *event);
 
+// Checks if Notification is available in event
+// Clears event and returns true if it exists
+bool notify_check_event(uint32_t *notification, Event event);
+
 // Gets the current notification value for the calling task
 // Returns STATUS_CODE_OK if value was updated, STATUS_CODE_EMPTY otherwise
 StatusCode notify_get(uint32_t *notification);
