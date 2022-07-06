@@ -93,3 +93,7 @@ StatusCode send_task_end() {
   }
   return STATUS_CODE_OK;
 }
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
+  LOG_CRITICAL("CRITICAL: Task '%s' has overflowed its allocated stack space.\n", pcTaskName);
+}
