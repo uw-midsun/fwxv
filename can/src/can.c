@@ -96,14 +96,30 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
  
   // Initialize hardware settings
   status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, settings));
+  
+  //when running the can_one_shot_mode
+  //sudo modprobe can
+  //sudo modprobe can_raw
+  //sudo modprobe vcan
+  //sudo ip link add dev vcan0 type vcan
+  //sudo ip link set up vcan0
+  //scons --project=can_one_shot_mode --platform=x86
 
-  // Create RX and TX Tasks
-  // TODO: Figure out priorities
-  status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
-  status_ok_or_return(tasks_init_task(CAN_TX, TASK_PRIORITY(2), NULL));
 
-  status_ok_or_return(subscribe(CAN_TX->handle, TOPIC_1, CAN_RX_EVENT));
+  // Dsiable can tasks
+  // all needed functions are in the slides
+  if (settings->mode == 1){
+    LOG_DEBUG("\nIn can one shot mode\n");
+  }
 
+  else{
+    // Create RX and TX Tasks
+    // TODO: Figure out priorities
+    status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
+    status_ok_or_return(tasks_init_task(CAN_TX, TASK_PRIORITY(2), NULL));
+
+    status_ok_or_return(subscribe(CAN_TX->handle, TOPIC_1, CAN_RX_EVENT));
+  }
   return STATUS_CODE_OK;
 }
 
