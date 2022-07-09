@@ -9,7 +9,7 @@ void setup_test(void) {
   log_init();
 }
 
-TASK(blink_task, TASK_STACK_512) {
+TASK(blink_task, TASK_MIN_STACK_SIZE) {
   // should print
   // "Task blink_task starting."
   // "blink first"

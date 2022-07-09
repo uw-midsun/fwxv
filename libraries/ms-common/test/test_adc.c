@@ -13,7 +13,7 @@
 
 #define NUM_ADC_CHANNELS 19
 
-static const GpioAddress s_address[] = {
+static const GpioAddress s_address[3] = {
   { GPIO_PORT_A, 0 },
   { GPIO_PORT_A, 1 },
   { GPIO_PORT_A, 2 },
@@ -184,7 +184,6 @@ void test_pin_single() {
   TEST_ASSERT_EQUAL(STATUS_CODE_EMPTY, adc_read_raw(s_empty_pin, &reading));
 
   TEST_ASSERT_TRUE(reading < 4095);
-  TEST_ASSERT_TRUE(false);
 }
 
 TEST_IN_TASK
@@ -200,8 +199,6 @@ void test_pin_continuous() {
   }
 
   vTaskDelay(60);
-
-  vTaskEndScheduler();
 
   uint32_t notification = 0;
   notify_get(&notification);
