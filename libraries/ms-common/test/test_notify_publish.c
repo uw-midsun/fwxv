@@ -5,8 +5,6 @@
 #include "test_helpers.h"
 #include "unity.h"
 
-DECLARE_TASK(pub_task);
-
 DECLARE_TASK(sub_task1);
 DECLARE_TASK(sub_task2);
 DECLARE_TASK(sub_task3);
@@ -14,14 +12,6 @@ DECLARE_TASK(sub_task4);
 DECLARE_TASK(sub_task5);
 DECLARE_TASK(sub_task6);
 DECLARE_TASK(sub_task7);
-
-// Publishes to topics
-TASK(pub_task, TASK_STACK_512) {
-  delay_ms(5);
-  TEST_ASSERT_OK(publish(TOPIC_1));
-  delay_ms(10);
-  TEST_ASSERT_OK(publish(TOPIC_2));
-}
 
 TASK(sub_task1, TASK_STACK_512) {
   uint32_t notification;
@@ -107,8 +97,6 @@ void setup_test(void) {
 }
 
 void test_publish_setup() {
-  tasks_init_task(pub_task, TASK_PRIORITY(1), NULL);
-
   tasks_init_task(sub_task1, TASK_PRIORITY(1), NULL);
   tasks_init_task(sub_task2, TASK_PRIORITY(1), NULL);
   tasks_init_task(sub_task3, TASK_PRIORITY(1), NULL);
@@ -136,5 +124,9 @@ void test_publish_setup() {
 
 TEST_IN_TASK
 void test_publish() {
+  delay_ms(5);
+  TEST_ASSERT_OK(publish(TOPIC_1));
+  delay_ms(10);
+  TEST_ASSERT_OK(publish(TOPIC_2));
   delay_ms(20);
 }
