@@ -9,5 +9,5 @@ static SemaphoreHandle_t s_test_end_handle;
 #define MAX_NUM_TESTS 10
 
 void tests_init(void) {
-    s_test_end_handle = xSemaphoreCreateCountingStatic(MAX_NUM_TESTS, 0, &s_test_end_sem);
+  s_test_end_handle = xSemaphoreCreateCountingStatic(MAX_NUM_TESTS, 0, &s_test_end_sem);
 }
