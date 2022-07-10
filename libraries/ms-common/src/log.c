@@ -1,6 +1,7 @@
 #include "log.h"
 
 #define ITEM_SIZE MAX_LOG_SIZE
+#define QUEUE_LENGTH 10
 
 // Holds the output of snprintf
 char log_buffer[MAX_LOG_SIZE];

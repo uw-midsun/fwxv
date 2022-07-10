@@ -13,8 +13,7 @@
 
 DECLARE_TASK(log_task);
 
-#define QUEUE_LENGTH 10
-#define MAX_LOG_SIZE (size_t)100
+#define MAX_LOG_SIZE (size_t)200
 
 #ifndef IN_ORDER_LOGS
 #define IN_ORDER_LOGS 0

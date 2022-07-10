@@ -29,6 +29,13 @@ static uint8_t prv_get_irq_channel(uint8_t pin) {
   return 7;
 }
 
+void gpio_it_init(void) {
+  GpioInterrupt empty_interrupt = { 0 };
+  for (int16_t i = 0; i < GPIO_PINS_PER_PORT; i++) {
+    s_gpio_it_interrupts[i] = empty_interrupt;
+  }
+}
+
 StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
   if (s_gpio_it_interrupts[address->pin].task != NULL) {
     *edge = s_gpio_it_interrupts[address->pin].settings.edge;

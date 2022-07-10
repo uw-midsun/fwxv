@@ -1,6 +1,7 @@
 #include <stdbool.h>
 
 #include "delay.h"
+#include "log.h"
 #include "queues.h"
 #include "task_test_helpers.h"
 #include "tasks.h"
@@ -17,6 +18,8 @@ static uint8_t s_queue_buf[BUF_SIZE];
 static Queue queue;
 
 void setup_test(void) {
+  log_init();
+
   queue.item_size = sizeof(uint8_t);
   queue.num_items = LIST_SIZE;
   queue.storage_buf = s_queue_buf;
@@ -27,7 +30,7 @@ void setup_test(void) {
 
 void teardown_test(void) {}
 
-TASK(sendMessages, TASK_STACK_512) {
+TASK(sendMessages, TASK_MIN_STACK_SIZE) {
   BaseType_t status;
   uint8_t index = 0;
 
@@ -42,7 +45,7 @@ TASK(sendMessages, TASK_STACK_512) {
   }
 }
 
-TASK(receiveMessages, TASK_STACK_512) {
+TASK(receiveMessages, TASK_MIN_STACK_SIZE) {
   BaseType_t status;
   uint8_t outstr = 0;
   uint8_t prev_outstr = 0;
@@ -67,7 +70,7 @@ TASK(receiveMessages, TASK_STACK_512) {
   }
 }
 
-TASK(peekMessages, TASK_STACK_512) {
+TASK(peekMessages, TASK_MIN_STACK_SIZE) {
   BaseType_t status;
   uint8_t outstr = 0;
 
@@ -83,7 +86,8 @@ TASK(peekMessages, TASK_STACK_512) {
   }
 }
 
-TASK_TEST(test_running_task, TASK_STACK_512) {
+TEST_IN_TASK
+void test_running_task() {
   // Send
   tasks_init_task(sendMessages, TASK_PRIORITY(3), NULL);
 

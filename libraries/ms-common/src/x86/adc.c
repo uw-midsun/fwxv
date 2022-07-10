@@ -18,7 +18,7 @@
 #define ADC_TEMP_RETURN 293
 #define ADC_VDDA_RETURN 3300
 
-#define ADC_PRIORITY 3
+#define ADC_PRIORITY 1
 
 enum {
   ADC_CHANNEL_BAT = 16,

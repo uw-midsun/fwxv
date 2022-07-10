@@ -4,6 +4,8 @@
     [Released under MIT License. Please refer to license.txt for details]
 ========================================== */
 
+#define UNITY_EXCLUDE_SETJMP_H 1
+
 #ifndef UNITY_FRAMEWORK_H
 #define UNITY_FRAMEWORK_H
 #define UNITY

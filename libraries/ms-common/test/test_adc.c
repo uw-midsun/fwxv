@@ -13,10 +13,7 @@
 
 #define NUM_ADC_CHANNELS 19
 
-static volatile uint8_t s_callback_runs;
-static volatile bool s_callback_ran;
-
-static const GpioAddress s_address[] = {
+static const GpioAddress s_address[3] = {
   { GPIO_PORT_A, 0 },
   { GPIO_PORT_A, 1 },
   { GPIO_PORT_A, 2 },
@@ -24,21 +21,6 @@ static const GpioAddress s_address[] = {
 
 static const GpioAddress s_invalid_pin = { NUM_GPIO_PORTS, NUM_ADC_CHANNELS };
 static const GpioAddress s_empty_pin = { GPIO_PORT_A, 3 };
-
-void prv_callback_pin(GpioAddress address, void *context) {
-  s_callback_runs++;
-  s_callback_ran = true;
-}
-
-TASK(adc_notified, TASK_STACK_256) {
-  while (true) {
-    uint32_t notification;
-    notify_wait(&notification, BLOCK_INDEFINITELY);
-
-    s_callback_runs++;
-    s_callback_ran = true;
-  }
-}
 
 // Check multiple samples to ensure they are within the correct range
 void prv_adc_check_range_pin(GpioAddress address) {
@@ -70,12 +52,12 @@ void setup_test() {
   }
 
   adc_init(ADC_MODE_SINGLE);
-
-  s_callback_runs = 0;
-  s_callback_ran = false;
 }
 
-void teardown_test(void) {}
+void teardown_test(void) {
+  // wait for end of configMAX_SYSCALL_INTERRUPT_PRIORITY
+  // clear
+}
 
 void test_adc_pin_to_channel_conversion() {
   GpioAddress address = {
@@ -130,13 +112,13 @@ void test_pin_set_channel(void) {
 }
 
 void test_pin_set_notification(void) {
-  TEST_ASSERT_EQUAL(STATUS_CODE_INVALID_ARGS, adc_register_event(s_invalid_pin, adc_notified, 0));
+  TEST_ASSERT_EQUAL(STATUS_CODE_INVALID_ARGS, adc_register_event(s_invalid_pin, test_task, 0));
 
   TEST_ASSERT_OK(adc_set_channel(s_empty_pin, false));
-  TEST_ASSERT_EQUAL(STATUS_CODE_EMPTY, adc_register_event(s_empty_pin, adc_notified, 0));
+  TEST_ASSERT_EQUAL(STATUS_CODE_EMPTY, adc_register_event(s_empty_pin, test_task, 0));
 
   for (uint8_t i = 0; i < SIZEOF_ARRAY(s_address); i++) {
-    TEST_ASSERT_EQUAL(STATUS_CODE_OK, adc_register_event(s_address[i], adc_notified, i));
+    TEST_ASSERT_EQUAL(STATUS_CODE_OK, adc_register_event(s_address[i], test_task, i));
   }
 }
 
@@ -146,7 +128,7 @@ void test_pin_read_single(void) {
   adc_init(ADC_MODE_SINGLE);
 
   adc_set_channel(s_address[0], true);
-  adc_register_event(s_address[0], adc_notified, 0);
+  adc_register_event(s_address[0], test_task, 0);
 
   prv_adc_check_range_pin(s_address[0]);
 }
@@ -157,7 +139,7 @@ void test_pin_read_continuous(void) {
   adc_init(ADC_MODE_CONTINUOUS);
 
   adc_set_channel(s_address[0], true);
-  adc_register_event(s_address[0], adc_notified, 0);
+  adc_register_event(s_address[0], test_task, 0);
 
   prv_adc_check_range_pin(s_address[0]);
 }
@@ -174,10 +156,8 @@ void test_adc_mock_reading() {
   TEST_ASSERT_TRUE(reading != 0);
 }
 
-//
-// ONLY ONE TASK TEST CAN WORK AT THE SAME TIME, COMMENT OUT TO TEST INDIVIDUALLY
-//
-TASK_TEST(test_pin_single, TASK_STACK_1024) {
+TEST_IN_TASK
+void test_pin_single() {
   uint16_t reading;
   // Initialize the ADC to single mode and configure the channels
   adc_init(ADC_MODE_SINGLE);
@@ -187,7 +167,7 @@ TASK_TEST(test_pin_single, TASK_STACK_1024) {
   }
 
   for (uint8_t i = 0; i < SIZEOF_ARRAY(s_address); i++) {
-    adc_register_event(s_address[i], test_pin_single, i);
+    adc_register_event(s_address[i], test_task, i);
   }
 
   // Callbacks must not run in single mode unless a read occurs
@@ -206,7 +186,8 @@ TASK_TEST(test_pin_single, TASK_STACK_1024) {
   TEST_ASSERT_TRUE(reading < 4095);
 }
 
-TASK_TEST(test_pin_continuous, TASK_STACK_1024) {
+TEST_IN_TASK
+void test_pin_continuous() {
   // Initialize ADC and check that adc_init() can properly reset the ADC
   adc_init(ADC_MODE_CONTINUOUS);
 
@@ -214,11 +195,12 @@ TASK_TEST(test_pin_continuous, TASK_STACK_1024) {
     adc_set_channel(s_address[i], true);
   }
   for (uint8_t i = 0; i < SIZEOF_ARRAY(s_address); i++) {
-    adc_register_event(s_address[i], adc_notified, i);
+    adc_register_event(s_address[i], test_task, i);
   }
 
-  vTaskDelay(50);
+  vTaskDelay(60);
 
-  TEST_ASSERT_TRUE(s_callback_ran);
-  TEST_ASSERT_TRUE(s_callback_runs > 0);
+  uint32_t notification = 0;
+  notify_get(&notification);
+  TEST_ASSERT_NOT_EQUAL(notification, 0);
 }

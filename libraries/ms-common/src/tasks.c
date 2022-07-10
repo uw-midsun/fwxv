@@ -48,6 +48,11 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context) {
     task->stack_size = TASK_MIN_STACK_SIZE;
   }
 
+  // Task already created
+  if (task->handle != NULL) {
+    return STATUS_CODE_OK;
+  }
+
   task->context = context;
   task->handle = xTaskCreateStatic(prv_task, task->name, task->stack_size, task, priority,
                                    task->stack, &task->tcb);

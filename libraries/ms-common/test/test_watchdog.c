@@ -1,4 +1,5 @@
 #include "delay.h"
+#include "log.h"
 #include "task_test_helpers.h"
 #include "unity.h"
 #include "watchdog.h"
@@ -11,7 +12,14 @@ static void prv_callback(SoftTimerId id) {
   callback_called = true;
 }
 
-TASK_TEST(watchdog, TASK_STACK_256) {
+void setup_test(void) {
+  log_init();
+}
+
+void teardown_test(void) {}
+
+TEST_IN_TASK
+void test_watchdog() {
   callback_called = false;
   watchdog_start(&s_watchdog, 100, prv_callback);
 
