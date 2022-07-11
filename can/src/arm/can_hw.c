@@ -49,7 +49,7 @@ static void prv_add_filter(uint8_t filter_num, uint32_t mask, uint32_t filter) {
   CAN_FilterInit(&filter_cfg);
 }
 
-StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
+StatusCode can_hw_init(const CanQueue* rx_queue, const CanQueue* tx_queue, const CanSettings *settings) {
   memset(s_handlers, 0, sizeof(s_handlers));
   s_num_filters = 0;
 
@@ -87,21 +87,24 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   prv_add_filter(0, 0, 0);
   s_num_filters = 0;
 
-  return STATUS_CODE_OK;
-}
-
-StatusCode can_hw_register_callback(CanHwEvent event, CanHwEventHandlerCb callback, void *context) {
-  if (event >= NUM_CAN_HW_EVENTS) {
-    return status_code(STATUS_CODE_INVALID_ARGS);
-  }
-
-  s_handlers[event] = (CanHwEventHandler){
-    .callback = callback,  //
-    .context = context,    //
-  };
+  s_g_rx_queue = rx_queue;
+  s_g_tx_queue = tx_queue;
 
   return STATUS_CODE_OK;
 }
+
+// StatusCode can_hw_register_callback(CanHwEvent event, CanHwEventHandlerCb callback, void *context) {
+//   if (event >= NUM_CAN_HW_EVENTS) {
+//     return status_code(STATUS_CODE_INVALID_ARGS);
+//   }
+
+//   s_handlers[event] = (CanHwEventHandler){
+//     .callback = callback,  //
+//     .context = context,    //
+//   };
+
+//   return STATUS_CODE_OK;
+// }
 
 StatusCode can_hw_add_filter(uint32_t mask, uint32_t filter, bool extended) {
   if (s_num_filters >= CAN_HW_NUM_FILTER_BANKS) {
@@ -177,19 +180,21 @@ bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
 }
 
 void CEC_CAN_IRQHandler(void) {
-  bool run_cb[NUM_CAN_HW_EVENTS] = {
-    [CAN_HW_EVENT_TX_READY] = CAN_GetITStatus(CAN_HW_BASE, CAN_IT_TME) == SET,
-    [CAN_HW_EVENT_MSG_RX] = CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET ||
-                            CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET,
-    [CAN_HW_EVENT_BUS_ERROR] = CAN_GetITStatus(CAN_HW_BASE, CAN_IT_ERR) == SET,
-  };
-
-  for (int event = 0; event < NUM_CAN_HW_EVENTS; event++) {
-    CanHwEventHandler *handler = &s_handlers[event];
-    if (handler->callback != NULL && run_cb[event]) {
-      handler->callback(handler->context);
-      break;
+  if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_TME) == SET) {
+    CanMessage msg = { 0 };
+    StatusCode ret = can_queue_pop(s_g_tx_queue, &msg);
+    if (ret == STATUS_CODE_OK) {
+      CanId can_id = { .raw = msg.msg_id };
+      can_hw_transmit(can_id.raw, false, msg.data_u8, msg.dlc);
     }
+  } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET ||
+             CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
+      CanMessage rx_msg = { 0 };
+      bool extended = false;
+      can_hw_receive(&rx_msg.id, &extended, &rx_msg.data, &rx_msg.dlc);
+      can_queue_push(s_g_rx_queue, &rx_msg);
+  } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_ERR) == SET) {
+    LOG_DEBUG("Bus Unavailable");
   }
 
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_ERR);
