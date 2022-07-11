@@ -115,10 +115,10 @@ StatusCode can_receive(const CanMessage *msg, const CanAckRequest *ack_request)
 
   if (ret == STATUS_CODE_OK)
   {
-    LOG_DEBUG("Source Id: %d\n", msg->id);
-    LOG_DEBUG("Data: %lx\n", msg->data);
-    LOG_DEBUG("DLC: %ld\n", msg->dlc);
-    LOG_DEBUG("ret: %d\n", ret);
+    // LOG_DEBUG("Source Id: %d\n", msg->id);
+    // LOG_DEBUG("Data: %lx\n", msg->data);
+    // LOG_DEBUG("DLC: %ld\n", msg->dlc);
+    // LOG_DEBUG("ret: %d\n", ret);
   }
 
   return ret;
