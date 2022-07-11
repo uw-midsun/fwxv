@@ -188,9 +188,9 @@ void CEC_CAN_IRQHandler(void) {
     }
   } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET ||
              CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
-      CanRxMsg rx_msg = { 0 };
+      CanMessage rx_msg = { 0 };
       bool extended = false;
-      can_hw_receive(&rx_msg.StdId, &extended, &rx_msg.Data, rx_msg.DLC);
+      can_hw_receive(&rx_msg.id, &extended, &rx_msg.data, &rx_msg.dlc);
       can_queue_push(s_g_rx_queue, &rx_msg);
   } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_ERR) == SET) {
     printf("Bus Unavailable");
