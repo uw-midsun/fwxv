@@ -92,10 +92,11 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   configASSERT(s_rx_event_handle);
 
   status_ok_or_return(can_queue_init(&s_can_storage->rx_queue));
+  status_ok_or_return(can_queue_init(&s_can_storage->tx_queue));
   // status_ok_or_return(can_ack_init(&s_can_storage->ack_requests));
  
   // Initialize hardware settings
-  status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, settings));
+  status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, &s_can_storage->tx_queue, settings));
 
   // Create RX and TX Tasks
   // TODO: Figure out priorities

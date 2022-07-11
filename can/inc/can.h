@@ -20,7 +20,7 @@ typedef uint8_t CanAckRequest;
 // typedef CanAckRequest[8] CanAckRequests;
 
 typedef struct CanStorage {
-  // volatile CanFifo tx_fifo;
+  volatile CanQueue tx_queue;
   volatile CanQueue rx_queue;
   CanAckRequest ack_requests;
   uint16_t device_id;

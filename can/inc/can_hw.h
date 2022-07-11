@@ -44,8 +44,11 @@ typedef struct CanSettings {
   bool loopback;
 } CanSettings;
 
+static CanQueue *s_g_rx_queue;
+static CanQueue *s_g_tx_queue;
+
 // Initializes CAN using the specified settings.
-StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings);
+StatusCode can_hw_init(const CanQueue* rx_queue, const CanQueue* tx_queue, const CanSettings *settings);
 
 StatusCode can_hw_add_filter(uint32_t mask, uint32_t filter, bool extended);
 
