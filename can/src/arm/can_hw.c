@@ -180,11 +180,11 @@ bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
 
 void CEC_CAN_IRQHandler(void) {
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_TME) == SET) {
-    CanMessage *msg;
-    StatusCode ret = can_queue_pop(s_g_tx_queue, msg);
+    CanMessage msg = { 0 };
+    StatusCode ret = can_queue_pop(s_g_tx_queue, &msg);
     if (ret == STATUS_CODE_OK) {
-      CanId can_id = { .raw = msg->msg_id };
-      can_hw_transmit(can_id.raw, false, msg->data_u8, msg->dlc);
+      CanId can_id = { .raw = msg.msg_id };
+      can_hw_transmit(can_id.raw, false, msg.data_u8, msg.dlc);
     }
   } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET ||
              CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
