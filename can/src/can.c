@@ -92,10 +92,11 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   configASSERT(s_rx_event_handle);
 
   status_ok_or_return(can_queue_init(&s_can_storage->rx_queue));
+  status_ok_or_return(can_queue_init(&s_can_storage->tx_queue));
   // status_ok_or_return(can_ack_init(&s_can_storage->ack_requests));
  
   // Initialize hardware settings
-  status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, settings));
+  status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, &s_can_storage->tx_queue, settings));
 
   // Create RX and TX Tasks
   // TODO: Figure out priorities
@@ -114,10 +115,10 @@ StatusCode can_receive(const CanMessage *msg, const CanAckRequest *ack_request)
 
   if (ret == STATUS_CODE_OK)
   {
-    // LOG_DEBUG("Source Id: %d\n", msg->id);
-    // LOG_DEBUG("Data: %lx\n", msg->data);
-    // LOG_DEBUG("DLC: %ld\n", msg->dlc);
-    // LOG_DEBUG("ret: %d\n", ret);
+    LOG_DEBUG("Source Id: %d\n", msg->id);
+    LOG_DEBUG("Data: %lx\n", msg->data);
+    LOG_DEBUG("DLC: %ld\n", msg->dlc);
+    LOG_DEBUG("ret: %d\n", ret);
   }
 
   return ret;
@@ -144,10 +145,9 @@ StatusCode can_transmit(const CanMessage *msg, const CanAckRequest *ack_request)
   //   status_ok_or_return(ret);
   // }
 
-  CanId can_id = { .raw = msg->msg_id };
-
   // TODO: make CAN with extended
-  return can_hw_transmit(can_id.raw, false, msg->data_u8, msg->dlc);
+  can_queue_push(s_g_tx_queue, &msg);
+  return STATUS_CODE_OK;
 }
 
 StatusCode can_add_filter(CanMessageId msg_id) {
