@@ -145,10 +145,13 @@ StatusCode can_transmit(const CanMessage *msg, const CanAckRequest *ack_request)
   //   status_ok_or_return(ret);
   // }
 
-  CanId can_id = { .raw = msg->msg_id };
+  // CanId can_id = { .raw = msg->msg_id };
 
-  bool extended = (can_id.raw >= CAN_MSG_ID_STD_MAX);
-  return can_hw_transmit(can_id.raw, extended, msg->data_u8, msg->dlc);
+  // bool extended = (can_id.raw >= CAN_MSG_ID_STD_MAX);
+  // return can_hw_transmit(can_id.raw, extended, msg->data_u8, msg->dlc);
+  // TODO: make CAN with extended
+  can_queue_push(s_g_tx_queue, &msg);
+  return STATUS_CODE_OK;
 }
 
 StatusCode can_add_filter(CanMessageId msg_id) {
