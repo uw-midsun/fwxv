@@ -20,16 +20,18 @@ TASK(testing_task, TASK_MIN_STACK_SIZE) {
   CanMessage msg = { 0 };
   while (true) {
     if (can_receive(&msg, NULL) == STATUS_CODE_OK) {
-      LOG_DEBUG("can_one_received a message");
+      LOG_DEBUG("can_one_shot_mode received a message\n");
     }
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
+
 int main() {
   log_init();
   LOG_DEBUG("Welcome to CAN_ONE_SHOT_MODE!\n");
   can_init(&s_can_storage, &can_settings);
-  can_add_filter(SYSTEM_CAN_MESSAGE_NEW_CAN_TRANSMIT_MSG1);
+
+  // change hardware setting
 
   tasks_init_task(testing_task, TASK_PRIORITY(2), NULL);
 
