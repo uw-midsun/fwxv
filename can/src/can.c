@@ -109,7 +109,7 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   // Dsiable can tasks
   // all needed functions are in the slides
   if (settings->mode == 1){
-    LOG_DEBUG("\nIn can one shot mode\n");
+    LOG_DEBUG("In can one shot mode\n");
   }
 
   else{
