@@ -6,6 +6,10 @@
 #include "log.h"
 #include "status.h"
 
+// End task semaphore.
+static StaticSemaphore_t s_end_task_sem;
+static SemaphoreHandle_t s_end_task_handle;
+
 // Add any setup or teardown that needs to be done for every task here.
 static void prv_task(void *params) {
   Task *task = params;
@@ -44,6 +48,11 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context) {
     task->stack_size = TASK_MIN_STACK_SIZE;
   }
 
+  // Task already created
+  if (task->handle != NULL) {
+    return STATUS_CODE_OK;
+  }
+
   task->context = context;
   task->handle = xTaskCreateStatic(prv_task, task->name, task->stack_size, task, priority,
                                    task->stack, &task->tcb);
@@ -58,4 +67,38 @@ void tasks_start(void) {
 #ifndef MS_TEST
   LOG_CRITICAL("CRITICAL: scheduler stopped!\n");
 #endif
+}
+
+StatusCode tasks_init(void) {
+  // Initialize the end task semaphore.
+  s_end_task_handle = xSemaphoreCreateCountingStatic(MAX_NUM_TASKS, 0, &s_end_task_sem);
+
+  if (s_end_task_handle == NULL) {
+    return STATUS_CODE_UNINITIALIZED;
+  } else {
+    return STATUS_CODE_OK;
+  }
+}
+
+StatusCode wait_tasks(uint16_t num_tasks) {
+  for (uint16_t i = 0; i < num_tasks; ++i) {
+    if (xSemaphoreTake(s_end_task_handle, pdMS_TO_TICKS(WAIT_TASK_TIMEOUT_MS)) != pdTRUE) {
+      // Task took longer than 1 second for its execution cycle, return timeout
+      return STATUS_CODE_TIMEOUT;
+    }
+  }
+  return STATUS_CODE_OK;
+}
+
+StatusCode send_task_end() {
+  if (xSemaphoreGive(s_end_task_handle) != pdTRUE) {
+    // if giving to semaphore failed, we ran out of space in the buffer
+    LOG_CRITICAL("CRITICAL: Out of buffer space in semaphore.");
+    return STATUS_CODE_RESOURCE_EXHAUSTED;
+  }
+  return STATUS_CODE_OK;
+}
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
+  LOG_CRITICAL("CRITICAL: Task '%s' has overflowed its allocated stack space.\n", pcTaskName);
 }

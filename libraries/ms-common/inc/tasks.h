@@ -29,13 +29,13 @@
 #include <stddef.h>
 
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include "status.h"
 #include "task.h"
-#include "tasks_impl.h"
 
 // Forward declare a task. This should go in a header.
 // The task is accessible as a global variable of type Task * with the name passed in.
-#define DECLARE_TASK(name) _DECLARE_TASK(name)
+#define DECLARE_TASK(task_name) extern Task *task_name
 
 // Define a task function. This should go in a source file (.c).
 // |name| is the name of your task, which should match any previous DECLARE_TASK declarations.
@@ -43,7 +43,19 @@
 // The generated function has the following signature:
 //   void _prv_your_task_function(void *context)
 // where |context| is the context pointer passed to tasks_init_task.
-#define TASK(name, stack_size) _TASK(name, stack_size)
+#define TASK(task_name, task_stack_size)                           \
+  /* forward declaration so we can reference it in the Task */     \
+  static void _prv_task_impl_##task_name(void *);                  \
+  static StackType_t _s_stack_##task_name[task_stack_size];        \
+  /* use a compound literal so users can use it as a pointer */    \
+  Task *task_name = &((Task){                                      \
+      .task_func = _prv_task_impl_##task_name,                     \
+      .name = #task_name,                                          \
+      .stack = _s_stack_##task_name,                               \
+      .stack_size = task_stack_size,                               \
+      .handle = NULL, /* will be initialized by tasks_init_task */ \
+  });                                                              \
+  static void _prv_task_impl_##task_name(void *context)
 
 // The minimal stack size a task can have.
 // If you pass a smaller stack size to TASK(), tasks_init_task() will use this and issue a warning.
@@ -59,6 +71,12 @@
 
 // A convenience macro for making declaring priorities more readable.
 #define TASK_PRIORITY(prio) ((TaskPriority)prio)
+
+// Parameter that will be used to initialize the end task semaphore.
+#define MAX_NUM_TASKS 15
+
+// Define wait timeout as 1 second, tasks cycle execution should not take longer than a second
+#define WAIT_TASK_TIMEOUT_MS 1000
 
 typedef UBaseType_t TaskPriority;
 
@@ -82,3 +100,15 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context);
 // Start the FreeRTOS scheduler to run the tasks that were previously initialized.
 // This function should not return!
 void tasks_start(void);
+
+// Initialize the task module. Must be called before tasks are initialized or the scheduler is
+// started.
+StatusCode tasks_init(void);
+
+// Attempts to take num_tasks items from end task semaphore, indicating the number of tasks
+// completed Returns STATUS_CODE_TIMEOUT if timeout occurs, STATUS_CODE_OK if num_tasks items taken
+// successfully
+StatusCode wait_tasks(uint16_t num_tasks);
+
+// A wrapper to give to the semaphore, to be called by tasks when they complete
+StatusCode send_task_end(void);

@@ -55,14 +55,15 @@ TASK(handler, TASK_MIN_STACK_SIZE) {
   }
 }
 
-TASK_TEST(gpio_it_test, TASK_MIN_STACK_SIZE) {
+TEST_IN_TASK
+void test_gpio_it(void) {
   tasks_init_task(handler, 2, NULL);
 
   interrupt_init();
   gpio_it_init();
 
-  gpio_it_register_interrupt(&buttons[0], &settings, BUTTON_0, handler->handle);
-  gpio_it_register_interrupt(&buttons[1], &settings, BUTTON_1, handler->handle);
+  gpio_it_register_interrupt(&buttons[0], &settings, BUTTON_0, handler);
+  gpio_it_register_interrupt(&buttons[1], &settings, BUTTON_1, handler);
 
   for (int i = 0; i < 5; ++i) {
     delay_ms(100);
@@ -77,14 +78,14 @@ TASK_TEST(gpio_it_test, TASK_MIN_STACK_SIZE) {
 // test for hardware, uncomment and test with tutorial boards. leds should toggle with the two
 // buttons
 
-// TASK_TEST(hardware_test, TASK_MIN_STACK_SIZE) {
+// void hardware_test() {
 //   tasks_init_task(handler, 2, NULL);
 
 //   interrupt_init();
 //   gpio_it_init();
 
-//   gpio_it_register_interrupt(&buttons[0], &settings, BUTTON_0, handler->handle);
-//   gpio_it_register_interrupt(&buttons[1], &settings, BUTTON_1, handler->handle);
+//   gpio_it_register_interrupt(&buttons[0], &settings, BUTTON_0, handler);
+//   gpio_it_register_interrupt(&buttons[1], &settings, BUTTON_1, handler);
 
 //   while (true) {
 //     vTaskDelay(portMAX_DELAY);
