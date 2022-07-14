@@ -7,7 +7,7 @@ import yaml
 
 def read_yaml(yaml_file):
     """reads yaml file and returns information in data"""
-    with open(yaml_file, "r") as f:
+    with open(yaml_file, "r", encoding="utf-8") as f:
         data = yaml.load(f, Loader=yaml.FullLoader)
         return data
 
@@ -62,7 +62,7 @@ def write_template(env, template_name, file_path, data):
     """writes and creates a file from jinja template and yaml data"""
     template = env.get_template(template_name)
     output = template.render(data=data)
-    with open(file_path, "a") as f:
+    with open(file_path, "a", encoding="utf-8") as f:
         f.write(output)
 
 
