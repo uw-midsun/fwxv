@@ -1,7 +1,7 @@
 #include "spi.h"
 
 #include "gpio.h"
-#include "mutex.h"
+#include "semaphore.h"
 #include "spi_mcu.h"
 #include "stm32f0xx.h"
 #include "stm32f0xx_spi.h"

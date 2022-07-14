@@ -8,7 +8,7 @@
 #include <stdbool.h>
 // #include "critical_section.h"
 #include "log.h"
-#include "mutex.h"
+#include "semaphore.h"
 #include "stm32f0xx.h"
 #include "stm32f0xx_i2c.h"
 
