@@ -193,7 +193,7 @@ void CEC_CAN_IRQHandler(void) {
       can_hw_receive(&rx_msg.id, &extended, &rx_msg.data, &rx_msg.dlc);
       can_queue_push(s_g_rx_queue, &rx_msg);
   } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_ERR) == SET) {
-    printf("Bus Unavailable");
+    LOG_DEBUG("Bus Unavailable");
   }
 
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_ERR);
