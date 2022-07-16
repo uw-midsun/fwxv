@@ -35,6 +35,7 @@ cflags = [
     '-Wno-unused-parameter',
     '-Wsign-conversion',
     '-Wpointer-arith',
+    '-Wno-enum-conversion',
     '-ffunction-sections',
     '-fdata-sections',
     '-Wl,--gc-sections',
