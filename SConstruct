@@ -4,12 +4,7 @@ import sys
 import subprocess
 import glob
 from scons.new_target import new_target
-<<<<<<< HEAD
 # from scons.preprocessor_filter import preprocessor_filter
-=======
-from scons.preprocessor_filter import preprocessor_filter
-from subprocess import call
->>>>>>> Python script to generate memory info
 
 ###########################################################
 # Build arguments
@@ -565,10 +560,11 @@ if PLATFORM == 'x86' and PROJECT:
 ###########################################################
 
 if PLATFORM == 'arm' and PROJECT:
+    # display memory info for the project
     if MEM_REPORT == 'true':
-        get_mem_report = Action("python3 mem_report.py " + "build/arm/bin/projects/{}".format(PROJECT))
+        get_mem_report = Action("python3 scons/mem_report.py " + "build/arm/bin/projects/{}".format(PROJECT))
         env.AddPostAction(proj_bin(PROJECT, False), get_mem_report)
-        # call(["python3", "mem_report.py", "build/arm/bin/projects/{}".format(PROJECT)])
+        
     # flash the MCU using openocd
     def flash_run(target, source, env):
         OPENOCD = 'openocd'
@@ -594,4 +590,3 @@ if PLATFORM == 'arm' and PROJECT:
     flash_smoke = Command('flash_smoke.txt', [], flash_run, smoke=True)
     Depends(flash_smoke, proj_bin(PROJECT, True))
     Alias('flash_smoke', flash_smoke)
-

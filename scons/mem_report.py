@@ -20,9 +20,9 @@ print(size_info)
 # Size Info For Libraries With Top 5 Size Usage 
 ##########################################################
 
-try:
+if (os.path.isdir('build/arm/bin/libraries')):
   stream = os.popen('size build/arm/bin/libraries/*')
-  size_info = stream.readlines() 
+  size_info = stream.readlines()
 
   # remove the first element (columns)
   columns = size_info[0]
@@ -45,9 +45,8 @@ try:
   for i in range (0,5):
     size_info_bss[i][5] = size_info_bss[i][5].strip()
     print("\t".join(size_info_bss[i]))
-
-except:
-  print("No libaries info found")
+else:
+  print("\n\nNo libaries info found")
   
 ##########################################################
 # Display all bss objects with size >= 512  
@@ -56,7 +55,6 @@ except:
 def split_str(line):
   return line.split()
 
-print('\n\nBSS Object info with Greatest Total Size (>= 512 bytes):\n')
 bss_data = []
 
 with open('build/out.map') as file:
@@ -68,15 +66,20 @@ with open('build/out.map') as file:
       else:
         row.extend(next(rows))
         bss_data.append(row)
+      
+if (len(bss_data) != 0):
+  # sorts bss_data by size of the object 
+  def order_by_size(data):
+    return int(data[2], 16)
 
-# sorts bss_data by size of the object 
-def order_by_size(data):
-  return int(data[2], 16)
+  sorted_bss_data = sorted(bss_data, key=order_by_size, reverse=True)
 
-sorted_bss_data = sorted(bss_data, key=order_by_size, reverse=True)
-
-for row in sorted_bss_data:
-  size = row[2] = int(row[2], 16)
-  if (size >= 512):
-    print(row[0] + '\n')
-    print('\t\t\t\t' + row[1] + '      ' + str(row[2]) + ' ' + row[3] + '\n')
+  print('\n\nBSS Object info with Greatest Total Size (>= 512 bytes):\n')
+  for row in sorted_bss_data:
+    size = row[2] = int(row[2], 16)
+    if (size >= 512):
+      print(row[0] + '\n')
+      print('\t\t\t\t' + row[1] + '      ' + str(row[2]) + ' ' + row[3] + '\n')
+      
+else:
+  print("\nNo BSS data found\n")
