@@ -6,10 +6,20 @@ This module sets up the folder structure and config.json for a new project or li
 Usage: python3 new_target.py project|library name
 """
 import os
-import argparse
 import textwrap
 import json
+import sys
 from string import Template
+
+###########################################################
+# Variables setup
+###########################################################
+
+Import('CONSTS')
+
+PROJECT = CONSTS.get("PROJECT")
+LIBRARY = CONSTS.get("LIBRARY")
+PYTHON = CONSTS.get("PYTHON")
 
 README_TEMPLATE = Template("""\
     <!--
@@ -45,8 +55,6 @@ def generate_config(target_type):
 
     return {"libs": deps}
 
-
-
 def new_target(target_type, name):
     """Creates a new project or library.
 
@@ -64,7 +72,7 @@ def new_target(target_type, name):
     where config.json is required for the project or library to be valid.
 
     Args:
-        target_type: Either 'project' or 'library'.
+        target_type: Either 'project' or 'library' or 'python'.
         name: The new project or library's name.
 
     Returns:
@@ -73,6 +81,7 @@ def new_target(target_type, name):
     type_folders = {
         'project': 'projects',
         'library': 'libraries',
+        'python': 'py',
         'smoke': 'smoke'
     }
 
@@ -91,15 +100,25 @@ def new_target(target_type, name):
     print('Created new {0} {1}'.format(target_type, name))
 
 
-def main():
-    """Main entry point of program"""
-    parser = argparse.ArgumentParser(description='Creates new project/library')
-    parser.add_argument('type', choices=['project', 'library', 'smoke'])
-    parser.add_argument('name')
-    args = parser.parse_args()
+def make_new_target(target, source, env):
+    # No project or library option provided
+    if not PROJECT and not LIBRARY and not PYTHON:
+        print("Missing project or library name. Expected --project=..., or --library=..., or --python")
+        sys.exit(1)
+    
+    if env.get("smoke") and PROJECT:
+        target_type = 'smoke'
+    elif PROJECT:
+        target_type = 'project'
+    elif LIBRARY:
+        target_type = 'library'
+    elif PYTHON:
+        target_type = 'python'
 
-    new_target(args.type, args.name)
+    # Chain or's to select the first non-None value 
+    new_target(target_type, PROJECT or LIBRARY or PYTHON)
 
-
-if __name__ == '__main__':
-    main()
+new = Command('new_proj.txt', [], make_new_target)
+Alias('new', new)
+new = Command('new_smoke.txt', [], make_new_target, smoke=True)
+Alias('new_smoke', new)

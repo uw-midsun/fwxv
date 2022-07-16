@@ -1,7 +1,6 @@
 import os
 import sys
 import subprocess
-from scons.new_target import new_target
 from scons.common import parse_config
 # from scons.preprocessor_filter import preprocessor_filter
 
@@ -32,6 +31,13 @@ AddOption(
 )
 
 AddOption(
+    '--python',
+    dest='python',
+    type='string',
+    action='store'
+)
+
+AddOption(
     '--test',
     dest='testfile',
     type='string',
@@ -48,6 +54,14 @@ AddOption(
 PLATFORM = GetOption('platform')
 PROJECT = GetOption('project')
 LIBRARY = GetOption('library')
+PYTHON = GetOption('python')
+
+CONSTS = {
+    "PLATFORM": PLATFORM,
+    "PROJECT": PROJECT,
+    "LIBRARY": LIBRARY,
+    "PYTHON": PYTHON,
+}
 
 ###########################################################
 # Environment setup
@@ -85,11 +99,11 @@ elif SANITIZER == 'tsan':
     env['CXXFLAGS'] += ["-fsanitize=thread"]
     env['LINKFLAGS'] += ["-fsanitize=thread"]
 
-env['CCCOMSTR'] = "Compiling $TARGET"
-env['LINKCOMSTR'] = "Linking $TARGET"
-env['ARCOMSTR'] = "Archiving $TARGET"
-env['ASCOMSTR'] = "Assembling $TARGET"
-env['RANLIBCOMSTR'] = "Indexing $TARGET"
+env['CCCOMSTR']     = "Compiling  $TARGET"
+env['LINKCOMSTR']   = "Linking    $TARGET"
+env['ARCOMSTR']     = "Archiving  $TARGET"
+env['ASCOMSTR']     = "Assembling $TARGET"
+env['RANLIBCOMSTR'] = "Indexing   $TARGET"
 
 ###########################################################
 # Directory setup
@@ -373,28 +387,11 @@ Alias('test', test)
 ###########################################################
 # Helper targets
 ###########################################################
+SConscript('scons/new_target.scons', exports='CONSTS')
 
-def make_new_target(target, source, env):
-    # No project or library option provided
-    if not PROJECT and not LIBRARY:
-        print("Missing project or library name. Expected --project=..., or --library=...")
-        sys.exit(1)
-    
-    if env.get("smoke") and PROJECT:
-        target_type = 'smoke'
-    elif PROJECT:
-        target_type = 'project'
-    elif LIBRARY:
-        target_type = 'library'
-
-    # Chain or's to select the first non-None value 
-    new_target(target_type, PROJECT or LIBRARY)
-
-new = Command('new_proj.txt', [], make_new_target)
-Alias('new', new)
-new = Command('new_smoke.txt', [], make_new_target, smoke=True)
-Alias('new_smoke', new)
-
+###########################################################
+# Clean
+###########################################################
 # 'clean.txt' is a dummy file that doesn't get created
 # This is required for phony targets for scons to be happy
 clean = Command('clean.txt', [], 'rm -rf build/*')
@@ -403,7 +400,7 @@ Alias('clean', clean)
 ###########################################################
 # Linting and Formatting
 ###########################################################
-SConscript('scons/lint_format.scons', export='PROJECT LIBRARY PROJ_DIR SMOKE_DIR LIB_DIR PROJ_DIRS SMOKE_DIRS LIB_DIRS')
+SConscript('scons/lint_format.scons', exports='CONSTS')
 
 ###########################################################
 # Helper targets for x86
@@ -472,3 +469,4 @@ if PLATFORM == 'arm' and PROJECT:
 ###########################################################
 # Python
 ###########################################################
+SConscript('scons/py_project.scons', exports='CONSTS')

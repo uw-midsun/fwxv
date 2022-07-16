@@ -3,10 +3,24 @@ import glob
 import subprocess
 
 ###########################################################
-# Linting and Formatting
+# Variables setup
 ###########################################################
 
-Import('PROJECT LIBRARY PROJ_DIR SMOKE_DIR LIB_DIR PROJ_DIRS SMOKE_DIRS LIB_DIRS')
+Import('CONSTS')
+
+PROJECT = CONSTS.get("PROJECT")
+LIBRARY = CONSTS.get("LIBRARY")
+
+PROJ_DIR = Dir('#/projects')
+LIB_DIR = Dir('#/libraries')
+SMOKE_DIR = Dir("#/SMOKE_DIR")
+
+PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
+LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
+
+###########################################################
+# Linting and Formatting
+###########################################################
 
 # Convert a list of paths/Dirs to space-separated paths.
 def dirs_to_str(dir_list):

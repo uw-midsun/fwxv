@@ -1,0 +1,24 @@
+import subprocess
+import sys
+import os
+
+Import("CONSTS")
+
+PYTHON = CONSTS.get("PYTHON")
+
+def run_python(target, source, env):
+    py_env = os.environ.copy()
+    py_env["PYTHONPATH"] = os.path.abspath("py/")
+    subprocess.run(["python3", f"py/{PYTHON}/main.py"], env=py_env)
+    pass
+
+
+
+
+
+
+
+
+
+py = Command('py.txt', [], run_python)
+Alias('py', py)
