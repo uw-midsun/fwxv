@@ -1,6 +1,8 @@
 #include "uart.h"
+
 #include <string.h>
-#include "mutex.h"
+
+#include "semaphore.h"
 #include "stm32f0xx.h"
 #include "stm32f0xx_interrupt.h"
 #include "stm32f0xx_rcc.h"
@@ -75,7 +77,7 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
   USART_Init(s_port[uart].base, &usart_init);
 
   // ITPendingBit is cleared once a pending interrupt has been serviced
-  // Init with no pending intterupts
+  // Init with no pending interrupts
   USART_ClearITPendingBit(s_port[uart].base, USART_FLAG_TXE);
   // Init with disabled TX interrupts otherwise we will get TX
   // buffer empty continuously when there is no data to send
@@ -94,19 +96,28 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
 
 StatusCode uart_tx(UartPort uart, uint8_t *data, size_t *len) {
   if (data == NULL || len == NULL) return STATUS_CODE_INVALID_ARGS;
-  StatusCode status;
+  StatusCode status = STATUS_CODE_OK;
+  // Send all data to queue;
   for (uint8_t i = 0; i < *len; i++) {
-    status = queue_send(&s_port_queues[uart].tx_queue, &data[i], 0);
-    if (status != STATUS_CODE_OK) {
+    if (queue_send(&s_port_queues[uart].tx_queue, &data[i], 0) != STATUS_CODE_OK) {
       *len = i;
       status = STATUS_CODE_INCOMPLETE;
       break;
     }
   }
 
-  if (USART_GetFlagStatus(s_port[uart].base, USART_FLAG_TXE) == SET)
+  if (USART_GetFlagStatus(s_port[uart].base, USART_FLAG_TXE) == SET) {
+    uint8_t tx_data = 0;
+    StatusCode cmpl = queue_receive(&s_port_queues[uart].tx_queue, &tx_data, 0);
+
+    if (cmpl == STATUS_CODE_EMPTY) {
+      USART_ITConfig(s_port[uart].base, USART_IT_TXE, DISABLE);
+      return status;
+    }
+    USART_SendData(s_port[uart].base, tx_data);
     // Enable TX Interrupts to begin transmission
     USART_ITConfig(s_port[uart].base, USART_IT_TXE, ENABLE);
+  }
   return status;
 }
 

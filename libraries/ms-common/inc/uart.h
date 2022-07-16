@@ -1,11 +1,14 @@
 #pragma once
 
 #include <stdint.h>
+
 #include "gpio.h"
 #include "queues.h"
 #include "status.h"
 #include "uart_mcu.h"
 
+// STM32 UART interface module
+// Gpios and interrupts must be initialized to use
 // Module is not thread safe - do not access a single port from
 // two locations at the same time
 
