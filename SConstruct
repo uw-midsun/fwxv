@@ -46,9 +46,20 @@ AddOption(
     action='store'
 )
 
+# Adding Memory Report Argument to Environment Flags
+# Note platform needs to be explicitly set to arm
+
+AddOption(
+    '--mem-report',
+    dest='mem-report',
+    type='string',
+    action='store',
+)
+
 PLATFORM = GetOption('platform')
 PROJECT = GetOption('project')
 LIBRARY = GetOption('library')
+MEM_REPORT = GetOption('mem-report')
 
 ###########################################################
 # Environment setup
@@ -85,12 +96,13 @@ elif SANITIZER == 'tsan':
     env['CCFLAGS'] += ["-fsanitize=thread"]
     env['CXXFLAGS'] += ["-fsanitize=thread"]
     env['LINKFLAGS'] += ["-fsanitize=thread"]
+    
 
 env['CCCOMSTR'] = "Compiling $TARGET"
 env['LINKCOMSTR'] = "Linking $TARGET"
 env['ARCOMSTR'] = "Archiving $TARGET"
 env['ASCOMSTR'] = "Assembling $TARGET"
-env['RANLIBCOMSTR'] = "Indexing $TARGET"
+env['RANLIBCOMSTR'] = "Indexing $TARGET" 
 
 ###########################################################
 # Directory setup
@@ -277,7 +289,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         
         # .bin file only required for arm, not x86
         if PLATFORM == 'arm':
-            target = env.Bin(target=proj_bin(entry.name, is_smoke), source=target)
+            target = env.Bin(target=proj_bin(entry.name, is_smoke), source=target)  
     elif entry in LIB_DIRS:
         output = lib_bin(entry.name)
         target = env.Library(
@@ -286,7 +298,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
             CPPPATH=env['CPPPATH'] + [inc_dirs, lib_incs],
             CCFLAGS=env['CCFLAGS'] + config['cflags'],
         )
-
+                
     # Create an alias for the entry so we can do `scons leds` and it Just Works
     Alias(entry.name, target)
 
@@ -548,6 +560,11 @@ if PLATFORM == 'x86' and PROJECT:
 ###########################################################
 
 if PLATFORM == 'arm' and PROJECT:
+    # display memory info for the project
+    if MEM_REPORT == 'true':
+        get_mem_report = Action("python3 scons/mem_report.py " + "build/arm/bin/projects/{}".format(PROJECT))
+        env.AddPostAction(proj_bin(PROJECT, False), get_mem_report)
+        
     # flash the MCU using openocd
     def flash_run(target, source, env):
         OPENOCD = 'openocd'
@@ -573,4 +590,3 @@ if PLATFORM == 'arm' and PROJECT:
     flash_smoke = Command('flash_smoke.txt', [], flash_run, smoke=True)
     Depends(flash_smoke, proj_bin(PROJECT, True))
     Alias('flash_smoke', flash_smoke)
-

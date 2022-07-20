@@ -39,6 +39,7 @@ cflags = [
     '-ffunction-sections',
     '-fdata-sections',
     '-Wl,--gc-sections',
+    '-Wl,-Map=build/out.map',
     '--specs=nosys.specs',
     '--specs=nano.specs',
 ]
