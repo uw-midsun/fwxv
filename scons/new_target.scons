@@ -81,7 +81,6 @@ def new_target(target_type, name):
     type_folders = {
         'project': 'projects',
         'library': 'libraries',
-        'python': 'py',
         'smoke': 'smoke'
     }
 
@@ -99,6 +98,11 @@ def new_target(target_type, name):
 
     print('Created new {0} {1}'.format(target_type, name))
 
+def new_py_project(name):
+    os.makedirs(os.path.join('py', name), exist_ok=True)
+    open(os.path.join('py', name, '__init__.py'), 'a').close()
+    open(os.path.join('py', name, 'main.py'), 'a').close()
+
 
 def make_new_target(target, source, env):
     # No project or library option provided
@@ -107,16 +111,13 @@ def make_new_target(target, source, env):
         sys.exit(1)
     
     if env.get("smoke") and PROJECT:
-        target_type = 'smoke'
+        new_target('smoke', PROJECT)
     elif PROJECT:
-        target_type = 'project'
+        new_target('project', PROJECT)
     elif LIBRARY:
-        target_type = 'library'
+        new_target('library', LIBRARY)
     elif PYTHON:
-        target_type = 'python'
-
-    # Chain or's to select the first non-None value 
-    new_target(target_type, PROJECT or LIBRARY or PYTHON)
+        new_py_project(PYTHON)
 
 new = Command('new_proj.txt', [], make_new_target)
 Alias('new', new)
