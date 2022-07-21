@@ -35,17 +35,11 @@ static Queue s_queue1 = {
 TASK(task1, TASK_STACK_512) {
   LOG_DEBUG("Task 1 initialized!\n");
   StatusCode ret;
-  char word[ITEM_SZ];
 
   while (true) {
     for (int count = 0; count < QUEUE_LEN; count++)
     {
-      for (int count1 = 0; count1 < ITEM_SZ - 1; count1++)
-      {
-        word[count1] = s_list[count][count1];
-      }
-      
-      ret = queue_send(&s_queue1, &word, 1000);
+      ret = queue_send(&s_queue1, s_list[count], 1000);
 
       if (ret != STATUS_CODE_OK)
       {
@@ -57,12 +51,14 @@ TASK(task1, TASK_STACK_512) {
   }
 }
 
+
+
 TASK(task2, TASK_STACK_512) {
   LOG_DEBUG("Task 2 initialized!\n");
   const char outstr[ITEM_SZ];
   StatusCode ret;
   while (true) {
-    ret = queue_receive(&s_queue1, &s_queue1_buf, 1000);
+    ret = queue_receive(&s_queue1, outstr, 1000);
 
     if (ret != STATUS_CODE_OK)
     {
@@ -71,7 +67,7 @@ TASK(task2, TASK_STACK_512) {
 
     else 
     {
-      LOG_DEBUG("%s \n", s_queue1_buf);
+      LOG_DEBUG("%s \n", outstr);
     }
   }
 }
