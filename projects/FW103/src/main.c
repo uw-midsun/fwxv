@@ -35,16 +35,11 @@ static Queue s_queue1 = {
 TASK(task1, TASK_STACK_512) {
   LOG_DEBUG("Task 1 initialized!\n");
   StatusCode ret;
-  char list[ITEM_SZ];
   
   while (true) {
     for (int i = 0; i < QUEUE_LEN; i++)
     {
-      for (int j = 0; j < ITEM_SZ - 1; j++)
-      {
-        list[j] = s_list[i][j];
-      }
-      ret = queue_send(&s_queue1, &list, 1000);
+      ret = queue_send(&s_queue1, s_list[i], 1000);
 
       if(ret != STATUS_CODE_OK)
         LOG_DEBUG("Write to queue failed\n");
@@ -59,10 +54,10 @@ TASK(task2, TASK_STACK_512) {
   const char outstr[ITEM_SZ];
   StatusCode ret;
   while (true) {
-    ret = queue_receive(&s_queue1, s_queue1_buf, 1000);
+    ret = queue_receive(&s_queue1, outstr, 1000);
 
     if(ret == STATUS_CODE_OK)
-      LOG_DEBUG("%s\n", s_queue1_buf);
+      LOG_DEBUG("%s\n", outstr);
     else
       LOG_DEBUG("Read from queue failed\n");
   }
