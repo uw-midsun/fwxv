@@ -1,4 +1,5 @@
 #include "FreeRTOS.h"
+#include "projdefs.h"
 #include "semphr.h"
 #include "status.h"
 
@@ -35,17 +36,33 @@ uint8_t test_end_get(void) {
 }
 
 StatusCode test_start_give(void) {
-  return xSemaphoreGive(s_test_start_handle);
+  if (xSemaphoreGive(s_test_start_handle) == pdTRUE) {
+    return STATUS_CODE_OK;
+  } else {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
 }
 
 StatusCode test_end_give(void) {
-  return xSemaphoreGive(s_test_end_handle);
+  if (xSemaphoreGive(s_test_end_handle) == pdTRUE) {
+    return STATUS_CODE_OK;
+  } else {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
 }
 
 StatusCode test_start_take(void) {
-  return xSemaphoreTake(s_test_start_handle, TICKS_TO_DELAY);
+  if (xSemaphoreTake(s_test_start_handle, TICKS_TO_DELAY) == pdTRUE) {
+    return STATUS_CODE_OK;
+  } else {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
 }
 
 StatusCode test_end_take(void) {
-  return xSemaphoreTake(s_test_end_handle, TICKS_TO_DELAY);
+  if (xSemaphoreTake(s_test_end_handle, TICKS_TO_DELAY) == pdTRUE) {
+    return STATUS_CODE_OK;
+  } else {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
 }
