@@ -1,7 +1,4 @@
-#include "FreeRTOS.h"
-#include "projdefs.h"
-#include "semphr.h"
-#include "status.h"
+#include "tests.h"
 
 // Test start semaphore
 static StaticSemaphore_t s_test_start_sem;

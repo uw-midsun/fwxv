@@ -1,6 +1,7 @@
 #pragma once
 
 #include "FreeRTOS.h"
+#include "projdefs.h"
 #include "semphr.h"
 #include "status.h"
 
