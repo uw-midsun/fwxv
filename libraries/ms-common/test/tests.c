@@ -25,26 +25,26 @@ void tests_init(void) {
   s_test_end_handle = xSemaphoreCreateCountingStatic(MAX_NUM_TESTS, 0, &s_test_end_sem);
 }
 
-void test_start_get(void) {
+uint8_t test_start_get(void) {
   uxSemaphoreGetCount(s_test_start_handle);
 }
 
-void test_end_get(void) {
+uint8_t test_end_get(void) {
   uxSemaphoreGetCount(s_test_end_handle);
 }
 
-void test_start_give(void) {
-  xSemaphoreGive(s_test_start_handle);
+StatusCode test_start_give(void) {
+  return xSemaphoreGive(s_test_start_handle);
 }
 
-void test_end_give(void) {
-  xSemaphoreGive(s_test_end_handle);
+StatusCode test_end_give(void) {
+  return xSemaphoreGive(s_test_end_handle);
 }
 
-void test_start_take(void) {
-  xSemaphoreTake(s_test_start_handle, TICKS_TO_DELAY);
+StatusCode test_start_take(void) {
+  return xSemaphoreTake(s_test_start_handle, TICKS_TO_DELAY);
 }
 
-void test_end_take(void) {
-  xSemaphoreTake(s_test_end_handle, TICKS_TO_DELAY);
+StatusCode test_end_take(void) {
+  return xSemaphoreTake(s_test_end_handle, TICKS_TO_DELAY);
 }
