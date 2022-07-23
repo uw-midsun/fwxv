@@ -27,11 +27,11 @@ void tests_init(void) {
 }
 
 uint8_t test_start_get(void) {
-  uxSemaphoreGetCount(s_test_start_handle);
+  return uxSemaphoreGetCount(s_test_start_handle);
 }
 
 uint8_t test_end_get(void) {
-  uxSemaphoreGetCount(s_test_end_handle);
+  return uxSemaphoreGetCount(s_test_end_handle);
 }
 
 StatusCode test_start_give(void) {
