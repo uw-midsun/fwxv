@@ -2,6 +2,7 @@
 
 #include "FreeRTOS.h"
 #include "semphr.h"
+#include "status.h"
 
 // Initializes test end and test start semaphore
 void tests_init(void);

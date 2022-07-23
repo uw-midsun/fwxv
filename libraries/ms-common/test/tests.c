@@ -1,5 +1,6 @@
 #include "FreeRTOS.h"
 #include "semphr.h"
+#include "status.h"
 
 // Test start semaphore
 static StaticSemaphore_t s_test_start_sem;
