@@ -8,7 +8,7 @@
 #include "log.h"
 #include "semphr.h"
 #include "status.h"
-#include "stm32f0xx.h"
+#include "stm32f10x.h"
 
 enum {
   ADC_CHANNEL_BAT = 16,
@@ -156,7 +156,7 @@ void adc_init(AdcMode adc_mode) {
   ADC_AutoPowerOffCmd(ADC1, !adc_mode);
 
   // Enable interrupts for the end of each conversion
-  stm32f0xx_interrupt_nvic_enable(ADC1_COMP_IRQn, INTERRUPT_PRIORITY_HIGH);
+  stm32f10x_interrupt_nvic_enable(ADC1_COMP_IRQn, INTERRUPT_PRIORITY_HIGH);
   ADC_ITConfig(ADC1, ADC_IER_EOCIE, true);
   ADC_ITConfig(ADC1, ADC_IER_EOSEQIE, true);
 

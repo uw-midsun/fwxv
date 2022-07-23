@@ -5,9 +5,9 @@
 
 #include "FreeRTOS.h"
 #include "status.h"
-#include "stm32f0xx.h"
-#include "stm32f0xx_gpio.h"
-#include "stm32f0xx_rcc.h"
+#include "stm32f10x.h"
+#include "stm32f10x_gpio.h"
+#include "stm32f10x_rcc.h"
 #include "task.h"
 
 static GPIO_TypeDef *s_gpio_port_map[] = { GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF };

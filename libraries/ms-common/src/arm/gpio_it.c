@@ -7,8 +7,8 @@
 #include "interrupt_def.h"
 #include "notify.h"
 #include "status.h"
-#include "stm32f0xx_interrupt.h"
-#include "stm32f0xx_syscfg.h"
+#include "stm32f10x_interrupt.h"
+#include "stm32f10x_syscfg.h"
 
 typedef struct GpioInterrupt {
   InterruptSettings settings;
@@ -59,10 +59,10 @@ StatusCode gpio_it_register_interrupt(const GpioAddress *address, const Interrup
   // set.
   SYSCFG_EXTILineConfig(address->port, address->pin);
 
-  status_ok_or_return(stm32f0xx_interrupt_exti_enable(address->pin, settings));
+  status_ok_or_return(stm32f10x_interrupt_exti_enable(address->pin, settings));
 
   uint8_t irq_channel = prv_get_irq_channel(address->pin);
-  status_ok_or_return(stm32f0xx_interrupt_nvic_enable(irq_channel, settings->priority));
+  status_ok_or_return(stm32f10x_interrupt_nvic_enable(irq_channel, settings->priority));
 
   s_gpio_it_interrupts[address->pin].address = *address;
   s_gpio_it_interrupts[address->pin].settings = *settings;
@@ -77,7 +77,7 @@ StatusCode gpio_it_trigger_interrupt(const GpioAddress *address) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
-  return stm32f0xx_interrupt_exti_trigger(address->pin);
+  return stm32f10x_interrupt_exti_trigger(address->pin);
 }
 
 // Callback runner for GPIO which runs callbacks based on which callbacks are
@@ -86,11 +86,11 @@ StatusCode gpio_it_trigger_interrupt(const GpioAddress *address) {
 static void prv_run_gpio_callbacks(uint8_t lower_bound, uint8_t upper_bound) {
   uint8_t pending = 0;
   for (int i = lower_bound; i <= upper_bound; i++) {
-    stm32f0xx_interrupt_exti_get_pending(i, &pending);
+    stm32f10x_interrupt_exti_get_pending(i, &pending);
     if (pending && s_gpio_it_interrupts[i].task != NULL) {
       notify_from_isr(s_gpio_it_interrupts[i].task, s_gpio_it_interrupts[i].event);
     }
-    stm32f0xx_interrupt_exti_clear_pending(i);
+    stm32f10x_interrupt_exti_clear_pending(i);
   }
 }
 
@@ -113,5 +113,5 @@ StatusCode gpio_it_mask_interrupt(const GpioAddress *address, bool masked) {
   if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
-  return stm32f0xx_interrupt_exti_mask_set(address->pin, masked);
+  return stm32f10x_interrupt_exti_mask_set(address->pin, masked);
 }

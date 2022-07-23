@@ -1,10 +1,9 @@
 {
     "arm_libs": [
-        "CMSIS"
+        "STM32F10x_StdPeriph_Driver"
     ],
     "cflags": [
         "-ffreestanding",
         "-nostdlib"
-    ],
-    "no_lint": true
+    ]
 }

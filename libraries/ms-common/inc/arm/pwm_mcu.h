@@ -1,6 +1,6 @@
 #pragma once
 
-// Not all timers on the stm32f0xx support PWM mode these are the ones that do.
+// Not all timers on the stm32f10x support PWM mode these are the ones that do.
 // The number comes from the id of the hardware timer.
 typedef enum {
   PWM_TIMER_1 = 0,

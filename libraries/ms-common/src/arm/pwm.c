@@ -4,8 +4,8 @@
 
 #include "gpio.h"
 #include "pwm_mcu.h"
-#include "stm32f0xx_rcc.h"
-#include "stm32f0xx_tim.h"
+#include "stm32f10x_rcc.h"
+#include "stm32f10x_tim.h"
 
 static uint16_t s_period_us[NUM_PWM_TIMERS] = {
   [PWM_TIMER_1] = 0,   //

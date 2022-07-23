@@ -17,7 +17,7 @@ arch_cflags = [
 defines = [
     'MS_PLATFORM_ARM',
     'USE_STDPERIPH_DRIVER',
-    'STM32F072',
+    'STM32F10X_MD', # Medium-density devices are STM32F103xx with 64-128k flash
     'HSE_VALUE=32000000',
 ]
 define_flags = ['-D{}'.format(define) for define in defines]

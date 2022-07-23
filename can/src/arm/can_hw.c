@@ -2,7 +2,7 @@
 #include <string.h>
 #include "interrupt.h"
 #include "log.h"
-#include "stm32f0xx.h"
+#include "stm32f10x.h"
 
 #define CAN_HW_BASE CAN
 #define CAN_HW_NUM_FILTER_BANKS 14
@@ -79,7 +79,7 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   CAN_ITConfig(CAN_HW_BASE, CAN_IT_FMP0, ENABLE);
   CAN_ITConfig(CAN_HW_BASE, CAN_IT_FMP1, ENABLE);
   CAN_ITConfig(CAN_HW_BASE, CAN_IT_ERR, ENABLE);
-  stm32f0xx_interrupt_nvic_enable(CEC_CAN_IRQn, INTERRUPT_PRIORITY_HIGH);
+  stm32f10x_interrupt_nvic_enable(CEC_CAN_IRQn, INTERRUPT_PRIORITY_HIGH);
 
   // Allow all messages by default, but reset the filter count so it's
   // overwritten on the first filter

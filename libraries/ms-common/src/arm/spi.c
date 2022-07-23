@@ -3,8 +3,8 @@
 #include "gpio.h"
 #include "semaphore.h"
 #include "spi_mcu.h"
-#include "stm32f0xx.h"
-#include "stm32f0xx_spi.h"
+#include "stm32f10x.h"
+#include "stm32f10x_spi.h"
 
 typedef struct {
   void (*rcc_cmd)(uint32_t periph, FunctionalState state);
@@ -29,7 +29,7 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   RCC_ClocksTypeDef clocks;
   RCC_GetClocksFreq(&clocks);
 
-  // See stm32f0xx_spi.h or SPIx_CR1->BR for valid prescalers
+  // See stm32f10x_spi.h or SPIx_CR1->BR for valid prescalers
   // Since they must be powers of two with a minimum prescaler of /2,
   // we find the largest power of two in the requested divider and offset it
   // such that BR = f_PCLK / 2 = 0x00 and shift it to the correct position.

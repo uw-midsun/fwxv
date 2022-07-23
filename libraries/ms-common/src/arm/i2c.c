@@ -9,8 +9,8 @@
 // #include "critical_section.h"
 #include "log.h"
 #include "semaphore.h"
-#include "stm32f0xx.h"
-#include "stm32f0xx_i2c.h"
+#include "stm32f10x.h"
+#include "stm32f10x_i2c.h"
 
 // Arbitrary timeout
 #define I2C_TIMEOUT 100000

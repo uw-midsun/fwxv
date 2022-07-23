@@ -3,10 +3,10 @@
 #include <string.h>
 
 #include "semaphore.h"
-#include "stm32f0xx.h"
-#include "stm32f0xx_interrupt.h"
-#include "stm32f0xx_rcc.h"
-#include "stm32f0xx_usart.h"
+#include "stm32f10x.h"
+#include "stm32f10x_interrupt.h"
+#include "stm32f10x_rcc.h"
+#include "stm32f10x_usart.h"
 
 typedef struct UartPortQueue {
   uint8_t tx_buf[UART_MAX_BUFFER_LEN];
@@ -86,7 +86,7 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
   // when there is data to be received
   USART_ITConfig(s_port[uart].base, USART_IT_RXNE, ENABLE);
 
-  stm32f0xx_interrupt_nvic_enable(s_port[uart].irq, INTERRUPT_PRIORITY_NORMAL);
+  stm32f10x_interrupt_nvic_enable(s_port[uart].irq, INTERRUPT_PRIORITY_NORMAL);
 
   USART_Cmd(s_port[uart].base, ENABLE);
   s_port[uart].initialized = true;

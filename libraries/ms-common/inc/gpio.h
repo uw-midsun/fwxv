@@ -37,7 +37,7 @@ typedef enum {
 
 // For setting the alternate function on the pin. The specific meaning of each
 // depends on the architecture and platform refer to the datasheet for the
-// stm32f0xx for specifics. Not implemented on x86.
+// stm32f10x for specifics. Not implemented on x86.
 typedef enum {
   GPIO_ALTFN_NONE = 0,
   GPIO_ALTFN_0,

@@ -1,7 +1,7 @@
 #include "interrupt.h"
 
-#include "stm32f0xx_interrupt.h"
+#include "stm32f10x_interrupt.h"
 
 void interrupt_init(void) {
-  stm32f0xx_interrupt_init();
+  stm32f10x_interrupt_init();
 }
