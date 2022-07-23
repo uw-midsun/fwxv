@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 #include "retarget_cfg.h"
-#include "stm32f0xx.h"
+#include "stm32f10x.h"
 
 static void prv_init_gpio(void) {
   RETARGET_CFG_UART_GPIO_ENABLE_CLK();
