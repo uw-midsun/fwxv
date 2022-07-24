@@ -22,6 +22,7 @@ static StaticSemaphore_t s_can_tx_sem;
 bool CAN_FILTER_IN_EN = true;
 
 #define CAN_RX_EVENT (1 << 0)
+#define CAN_FILTER_IN_EN 0
 
 StatusCode run_can_rx_cycle()
 {
@@ -154,7 +155,7 @@ StatusCode can_add_filter_in(CanMessageId msg_id) {
 
   CanId can_id = { .raw = msg_id };
   CanId mask = { 0 };
-  mask.raw = ~mask.msg_id;
+  mask.raw = (uint32_t)~mask.msg_id;
 
   return can_hw_add_filter_in(mask.raw, can_id.raw, false);
 }
