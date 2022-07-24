@@ -97,13 +97,21 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   // Initialize hardware settings
   status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, settings));
 
-  // Create RX and TX Tasks
-  // TODO: Figure out priorities
-  status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
-  status_ok_or_return(tasks_init_task(CAN_TX, TASK_PRIORITY(2), NULL));
+  // Disable tasks when in can_one_shot_mode 
+  if (settings->mode == 1){
+    LOG_DEBUG("In can one shot mode\n");
+  }
 
-  status_ok_or_return(subscribe(CAN_TX, TOPIC_1, CAN_RX_EVENT));
+  else{
+    // Create RX and TX Tasks
+    // TODO: Figure out priorities
+    status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
+    status_ok_or_return(tasks_init_task(CAN_TX, TASK_PRIORITY(2), NULL));
 
+    status_ok_or_return(subscribe(CAN_TX, TOPIC_1, CAN_RX_EVENT));
+
+    //status_ok_or_return(subscribe(CAN_TX->handle, TOPIC_1, CAN_RX_EVENT));
+  }
   return STATUS_CODE_OK;
 }
 
@@ -150,7 +158,7 @@ StatusCode can_transmit(const CanMessage *msg, const CanAckRequest *ack_request)
   return can_hw_transmit(can_id.raw, false, msg->data_u8, msg->dlc);
 }
 
-StatusCode can_add_filter(CanMessageId msg_id) {
+StatusCode can_add_filter_in(CanMessageId msg_id) {
   if (s_can_storage == NULL) {
     return status_code(STATUS_CODE_UNINITIALIZED);
   } else if (msg_id >= CAN_MSG_MAX_IDS) {
@@ -161,5 +169,19 @@ StatusCode can_add_filter(CanMessageId msg_id) {
   CanId mask = { 0 };
   mask.raw = ~mask.msg_id;
 
-  return can_hw_add_filter(mask.raw, can_id.raw, false);
+  return can_hw_add_filter_in(mask.raw, can_id.raw, false);
+}
+
+StatusCode can_add_filter_out(CanMessageId msg_id) {
+  if (s_can_storage == NULL) {
+    return status_code(STATUS_CODE_UNINITIALIZED);
+  } else if (msg_id >= CAN_MSG_MAX_IDS) {
+    return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
+  }
+
+  CanId can_id = { .raw = msg_id };
+  CanId mask = { 0 };
+  mask.raw = ~mask.msg_id;
+
+  return can_hw_add_filter_out(mask.raw, can_id.raw, false);
 }

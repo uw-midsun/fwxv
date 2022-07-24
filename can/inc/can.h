@@ -29,8 +29,11 @@ typedef struct CanStorage {
 // Initializes the specified CAN configuration.
 StatusCode can_init(CanStorage *storage, const CanSettings *settings);
 
-// Adds a hardware filter for the specified message ID.
-StatusCode can_add_filter(CanMessageId msg_id);
+// Adds a hardware filter in for the specified message ID.
+StatusCode can_add_filter_in(CanMessageId msg_id);
+
+// Adds a hardware filter out for the specified message ID.
+StatusCode can_add_filter_out(CanMessageId msg_id);
 
 // Attempts to transmit the CAN message as soon as possible.
 StatusCode can_transmit(const CanMessage *msg, const CanAckRequest *ack_request);

@@ -1,0 +1,10 @@
+---
+  Messages:
+    bps_heartbeat:
+      id: 0
+      target:
+        - centre_console
+      critical: true
+      signals:
+        status:
+          length: 8
