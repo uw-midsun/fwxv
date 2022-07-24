@@ -96,18 +96,8 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
  
   // Initialize hardware settings
   status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, settings));
-  
-  //when running the can_one_shot_mode
-  //sudo modprobe can
-  //sudo modprobe can_raw
-  //sudo modprobe vcan
-  //sudo ip link add dev vcan0 type vcan
-  //sudo ip link set up vcan0
-  //scons --project=can_one_shot_mode --platform=x86
 
-
-  // Dsiable can tasks
-  // all needed functions are in the slides
+  // Disable tasks when in can_one_shot_mode 
   if (settings->mode == 1){
     LOG_DEBUG("In can one shot mode\n");
   }
