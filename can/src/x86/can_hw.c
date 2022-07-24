@@ -294,7 +294,7 @@ StatusCode can_hw_transmit(uint32_t id, bool extended, const uint8_t *data, size
     int bytes = write(s_socket_data.can_fd, &frame, sizeof(frame));
 
     s_socket_data.rx_frame_valid = true;
-     
+
     // TODO: Add back if getting rid of SocketCAN
     // Apply filters that would normally be applied within socketcan
     
@@ -306,7 +306,7 @@ StatusCode can_hw_transmit(uint32_t id, bool extended, const uint8_t *data, size
 
   return STATUS_CODE_OK;
 }
- 
+
 bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
 
   if (!s_socket_data.rx_frame_valid) {
@@ -324,5 +324,4 @@ bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
 
   return true;
 }
-
 
