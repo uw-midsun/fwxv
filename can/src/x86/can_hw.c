@@ -259,8 +259,8 @@ StatusCode can_hw_add_filter_out(uint32_t mask, uint32_t filter, bool extended) 
   }
 
   uint32_t reg_mask = extended ? CAN_EFF_MASK : CAN_SFF_MASK;
-  uint32_t ide = extended ? CAN_INV_FILTER : 0;
-  s_socket_data.filters[s_socket_data.num_filters].can_id = (filter & reg_mask) | CAN_INV_FILTER;
+  uint32_t ide = extended ? CAN_EFF_FLAG : CAN_INV_FILTER;
+  s_socket_data.filters[s_socket_data.num_filters].can_id = (filter & reg_mask) | ide;
   s_socket_data.filters[s_socket_data.num_filters].can_mask = (mask & reg_mask) | CAN_EFF_FLAG;
   s_socket_data.num_filters++;
 
