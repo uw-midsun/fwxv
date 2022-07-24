@@ -229,7 +229,7 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   return STATUS_CODE_OK;
 }
 
-StatusCode can_hw_add_filter(uint32_t mask, uint32_t filter, bool extended) {
+StatusCode can_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extended) {
   if (s_socket_data.num_filters >= CAN_HW_MAX_FILTERS) {
     return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "CAN HW: Ran out of filters.");
   }
@@ -237,6 +237,30 @@ StatusCode can_hw_add_filter(uint32_t mask, uint32_t filter, bool extended) {
   uint32_t reg_mask = extended ? CAN_EFF_MASK : CAN_SFF_MASK;
   uint32_t ide = extended ? CAN_EFF_FLAG : 0;
   s_socket_data.filters[s_socket_data.num_filters].can_id = (filter & reg_mask) | ide;
+  s_socket_data.filters[s_socket_data.num_filters].can_mask = (mask & reg_mask) | CAN_EFF_FLAG;
+  s_socket_data.num_filters++;
+
+  if (setsockopt(s_socket_data.can_fd, SOL_CAN_RAW, CAN_RAW_FILTER, s_socket_data.filters,
+                 sizeof(s_socket_data.filters[0]) * s_socket_data.num_filters) < 0) {
+    return status_msg(STATUS_CODE_INTERNAL_ERROR, "CAN HW: Failed to set raw filters");
+  }
+  // LOG_DEBUG("Set the filter\n");
+  // LOG_DEBUG("CAN ID: %u\n", s_socket_data.filters[s_socket_data.num_filters].can_id);
+  // LOG_DEBUG("filter: %u\n", filter);
+  // LOG_DEBUG("num_filters: %lu\n", s_socket_data.num_filters);
+
+  return STATUS_CODE_OK;
+}
+
+StatusCode can_hw_add_filter_out(uint32_t mask, uint32_t filter, bool extended) {
+  LOG_DEBUG("Set the filter\n");
+  if (s_socket_data.num_filters >= CAN_HW_MAX_FILTERS) {
+    return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "CAN HW: Ran out of filters.");
+  }
+
+  uint32_t reg_mask = extended ? CAN_EFF_MASK : CAN_SFF_MASK;
+  uint32_t ide = extended ? CAN_INV_FILTER : 0;
+  s_socket_data.filters[s_socket_data.num_filters].can_id = (filter & reg_mask) | CAN_INV_FILTER;
   s_socket_data.filters[s_socket_data.num_filters].can_mask = (mask & reg_mask) | CAN_EFF_FLAG;
   s_socket_data.num_filters++;
 
@@ -270,19 +294,10 @@ StatusCode can_hw_transmit(uint32_t id, bool extended, const uint8_t *data, size
     int bytes = write(s_socket_data.can_fd, &frame, sizeof(frame));
 
     s_socket_data.rx_frame_valid = true;
-
+     
     // TODO: Add back if getting rid of SocketCAN
     // Apply filters that would normally be applied within socketcan
-    // bool filter_match = !(bool)s_socket_data.num_filters;
-    // for (size_t i = 0; i < s_socket_data.num_filters; i++) {
-    //   struct can_filter filter = s_socket_data.filters[i];
-    //   uint32_t filt_id = extended ? id | CAN_EFF_FLAG : id;
-    //   if ((filt_id & filter.can_mask) == (filter.can_id & filter.can_mask)) {
-    //     filter_match = true;
-    //     break;
-    //   }
-    // }
-
+    
     // if (filter_match && s_socket_data.handlers[CAN_HW_EVENT_MSG_RX].callback != NULL) {
     //   s_socket_data.handlers[CAN_HW_EVENT_MSG_RX].callback(
     //       s_socket_data.handlers[CAN_HW_EVENT_TX_READY].context);
@@ -291,8 +306,9 @@ StatusCode can_hw_transmit(uint32_t id, bool extended, const uint8_t *data, size
 
   return STATUS_CODE_OK;
 }
-
+ 
 bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
+
   if (!s_socket_data.rx_frame_valid) {
     return false;
   }
@@ -308,3 +324,5 @@ bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
 
   return true;
 }
+
+

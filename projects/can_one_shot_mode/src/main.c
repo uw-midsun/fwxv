@@ -31,7 +31,7 @@ int main() {
   LOG_DEBUG("Welcome to CAN_ONE_SHOT_MODE!\n");
   can_init(&s_can_storage, &can_settings);
 
-  // change hardware setting
+  can_add_filter_out(0x01a);
 
   tasks_init_task(testing_task, TASK_PRIORITY(2), NULL);
 
