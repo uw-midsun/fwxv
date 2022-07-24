@@ -19,6 +19,8 @@ static StaticSemaphore_t s_tx_sem;
 static EventGroupHandle_t s_rx_event_handle;
 static StaticEventGroup_t s_rx_event;
 
+bool CAN_FILTER_IN_EN = true;
+
 #define CAN_RX_EVENT (1 << 0)
 
 TASK(CAN_RX, TASK_MIN_STACK_SIZE)
@@ -96,38 +98,16 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
  
   // Initialize hardware settings
   status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, settings));
-  
-  //when running the can_one_shot_mode
-  //sudo modprobe can
-  //sudo modprobe can_raw
-  //sudo modprobe vcan
-  //sudo ip link add dev vcan0 type vcan
-  //sudo ip link set up vcan0
-  //scons --project=can_one_shot_mode --platform=x86
 
-
-  // Dsiable can tasks
-  // all needed functions are in the slides
-  if (settings->mode == 1){
-    LOG_DEBUG("In can one shot mode\n");
-  }
-
-<<<<<<< HEAD
-  else{
-    // Create RX and TX Tasks
+  if (settings->mode == 0){
+    // Create RX and TX Tasks 
     // TODO: Figure out priorities
     status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
     status_ok_or_return(tasks_init_task(CAN_TX, TASK_PRIORITY(2), NULL));
-=======
-  // Create RX and TX Tasks
-  // TODO: Figure out priorities
-  status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
-  status_ok_or_return(tasks_init_task(CAN_TX, TASK_PRIORITY(2), NULL));
 
-  status_ok_or_return(subscribe(CAN_TX, TOPIC_1, CAN_RX_EVENT));
->>>>>>> main
+    status_ok_or_return(subscribe(CAN_TX, TOPIC_1, CAN_RX_EVENT));
 
-    status_ok_or_return(subscribe(CAN_TX->handle, TOPIC_1, CAN_RX_EVENT));
+    //status_ok_or_return(subscribe(CAN_TX->handle, TOPIC_1, CAN_RX_EVENT));
   }
   return STATUS_CODE_OK;
 }
@@ -175,16 +155,34 @@ StatusCode can_transmit(const CanMessage *msg, const CanAckRequest *ack_request)
   return can_hw_transmit(can_id.raw, false, msg->data_u8, msg->dlc);
 }
 
-StatusCode can_add_filter(CanMessageId msg_id) {
+StatusCode can_add_filter_in(CanMessageId msg_id) {
   if (s_can_storage == NULL) {
     return status_code(STATUS_CODE_UNINITIALIZED);
   } else if (msg_id >= CAN_MSG_MAX_IDS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
+  } else if (!CAN_FILTER_IN_EN) {
+    return status_msg(STATUS_CODE_UNINITIALIZED, "CAN: CAN filter in function is not enabled");
   }
 
   CanId can_id = { .raw = msg_id };
   CanId mask = { 0 };
   mask.raw = ~mask.msg_id;
 
-  return can_hw_add_filter(mask.raw, can_id.raw, false);
+  return can_hw_add_filter_in(mask.raw, can_id.raw, false);
+}
+
+StatusCode can_add_filter_out(CanMessageId msg_id) {
+  if (s_can_storage == NULL) {
+    return status_code(STATUS_CODE_UNINITIALIZED);
+  } else if (msg_id >= CAN_MSG_MAX_IDS) {
+    return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
+  } else if (CAN_FILTER_IN_EN) {
+    return status_msg(STATUS_CODE_UNINITIALIZED, "CAN: CAN filter out function is not enabled");
+  }
+
+  CanId can_id = { .raw = msg_id };
+  CanId mask = { 0 };
+  mask.raw = ~mask.msg_id;
+
+  return can_hw_add_filter_out(mask.raw, can_id.raw, false);
 }
