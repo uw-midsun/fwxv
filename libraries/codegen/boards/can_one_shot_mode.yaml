@@ -1,9 +1,8 @@
 ---
   Messages:
-    bps_heartbeat:
+    one_shot_msg:
       id: 0
       target:
-        - centre_console
       critical: true
       signals:
         status:
