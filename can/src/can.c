@@ -19,7 +19,10 @@ static StaticSemaphore_t s_can_rx_sem;
 static SemaphoreHandle_t s_can_tx_sem_handle;
 static StaticSemaphore_t s_can_tx_sem;
 
-<<<<<<< HEAD
+bool CAN_FILTER_IN_EN = true;
+
+#define CAN_RX_EVENT (1 << 0)
+
 StatusCode run_can_rx_cycle()
 {
   BaseType_t ret = xSemaphoreGive(s_can_rx_sem_handle);
@@ -41,11 +44,6 @@ StatusCode run_can_tx_cycle()
 
   return STATUS_CODE_OK;
 }
-=======
-bool CAN_FILTER_IN_EN = true;
-
-#define CAN_RX_EVENT (1 << 0)
->>>>>>> Fix error with can_hw_add_filter_out function
 
 TASK(CAN_RX, TASK_MIN_STACK_SIZE)
 {
