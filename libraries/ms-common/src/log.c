@@ -6,33 +6,33 @@
 // Holds the output of snprintf
 char log_buffer[MAX_LOG_SIZE];
 
-// s_log_queue will hold the queue structure.
-static StaticQueue_t s_log_queue;
-
-// Array to hold items
-static uint8_t s_log_array[QUEUE_LENGTH * ITEM_SIZE];
-
-// Queue handle definition
-QueueHandle_t g_log_queue = NULL;
+static UartSettings settings = {
+  .tx = { TX_PIN }, .rx = { RX_PIN }, .alt_fn = 1, .baudrate = 9600
+};
 
 void log_init(void) {
-  g_log_queue = xQueueCreateStatic(QUEUE_LENGTH, ITEM_SIZE, s_log_array, &s_log_queue);
-  if (log_task->context == NULL) {
-    tasks_init_task(log_task, TASK_PRIORITY(tskIDLE_PRIORITY), (int *)1);
-  }
+  #ifdef x86
+  uart_init(UARTPORT, &settings);
+  #endif
+  tasks_init_task(log_task, TASK_PRIORITY(tskIDLE_PRIORITY + 1), NULL);
 }
 
 TASK(log_task, TASK_STACK_256) {
   // Buffer to hold the received message from QueueReceive
-  static char rx_buffer[MAX_LOG_SIZE];
+  static uint8_t rx_buffer[MAX_LOG_SIZE];
+  static StatusCode status;
+  static size_t rx_size;
 
   // All tasks MUST loop forever and cannot return.
   while (true) {
-    if (xQueueReceive(g_log_queue, rx_buffer, portMAX_DELAY)) {
-      if (uxQueueSpacesAvailable(g_log_queue) <= 1) {
+    #ifdef x86
+    status = uart_rx(UARTPORT, rx_buffer, &rx_size);
+    if (status != STATUS_CODE_INVALID_ARGS) {
+      if (status == STATUS_CODE_INCOMPLETE) {
         printf("WARNING: Log queue is full\n");
       }
       printf("%s", rx_buffer);
     }
+    #endif
   }
 }
