@@ -48,8 +48,8 @@ AddOption(
 )
 
 AddOption(
-    '--yaml',
-    dest='yaml',
+    '--name',
+    dest='name',
     type='string',
     action='store'
 )
@@ -427,7 +427,7 @@ def make_new_task(target, source, env):
         target_type = 'library'
 
     # Chain or's to select the first non-None value 
-    new_task(target_type, PROJECT or LIBRARY, GetOption('yaml'))
+    new_task(target_type, PROJECT or LIBRARY, GetOption('name'))
 
 
 def make_new_target(target, source, env):

@@ -63,8 +63,7 @@ def write_template(env, template_name, file_path, data):
     with open(file_path, "a", encoding="utf-8") as f:
         f.write(output)
 
-def new_task(type, name, yaml_file):
-    print("MADE NEW TASK")
+def new_task(type, name, task_name):
     folder_choice = {
         'project' : 'projects',
         'library' : 'libraries'
@@ -76,7 +75,10 @@ def new_task(type, name, yaml_file):
     for folder in subfolders:
         os.makedirs(os.path.join(folder_path, folder), exist_ok=True)
 
-    DATA = read_yaml(yaml_file)
+    DATA = {
+        "task_name" : task_name,
+        "proj_name" : name
+    }
     src_path = os.path.join(folder_path, subfolders[0])
     inc_path = os.path.join(folder_path, subfolders[1])
 
@@ -89,8 +91,9 @@ def new_task(type, name, yaml_file):
         env = jinja2.Environment(loader=templateLoader)
         env.filters["format_function_length"] = format_function_length
 
+
         if ".h.jinja" in template_name:
-            file_path = inc_path + "/" + template_name[:-6]
+            file_path = inc_path + "/" + name + "_" + task_name + template_name[:-6]
         else:
             file_path = src_path + "/" + template_name[:-6]
 
@@ -99,8 +102,6 @@ def new_task(type, name, yaml_file):
 
 
 def main():
-    print("NEW TASK START")
-
     PARSER = argparse.ArgumentParser()
     PARSER.add_argument(
         "-y",
