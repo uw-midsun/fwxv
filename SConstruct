@@ -4,6 +4,7 @@ import sys
 import subprocess
 import glob
 from scons.new_target import new_target
+from scons.new_task import new_task
 # from scons.preprocessor_filter import preprocessor_filter
 
 ###########################################################
@@ -42,6 +43,13 @@ AddOption(
 AddOption(
     '--define',
     dest='define',
+    type='string',
+    action='store'
+)
+
+AddOption(
+    '--name',
+    dest='name',
     type='string',
     action='store'
 )
@@ -407,6 +415,21 @@ Alias('test', test)
 # Helper targets
 ###########################################################
 
+def make_new_task(target, source, env):
+    # No project or library option provided
+    if not PROJECT and not LIBRARY:
+        print("Missing project or library name. Expected --project=..., or --library=...")
+        sys.exit(1)
+    
+    if PROJECT:
+        target_type = 'project'
+    elif LIBRARY:
+        target_type = 'library'
+
+    # Chain or's to select the first non-None value 
+    new_task(target_type, PROJECT or LIBRARY, GetOption('name'))
+
+
 def make_new_target(target, source, env):
     # No project or library option provided
     if not PROJECT and not LIBRARY:
@@ -427,11 +450,14 @@ new = Command('new_proj.txt', [], make_new_target)
 Alias('new', new)
 new = Command('new_smoke.txt', [], make_new_target, smoke=True)
 Alias('new_smoke', new)
-
+new = Command('new_task.txt', [], make_new_task)
+Alias('new_task', new)
 # 'clean.txt' is a dummy file that doesn't get created
 # This is required for phony targets for scons to be happy
 clean = Command('clean.txt', [], 'rm -rf build/*')
 Alias('clean', clean)
+
+
 
 ###########################################################
 # Linting and Formatting
