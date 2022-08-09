@@ -95,7 +95,7 @@ def new_task(type, name, task_name):
         if ".h.jinja" in template_name:
             file_path = inc_path + "/" + name + "_" + task_name + template_name[:-6]
         else:
-            file_path = src_path + "/" + template_name[:-6]
+            file_path = src_path + "/" + name + "_" + task_name + template_name[:-6]
 
         write_template(env, template_name, file_path, DATA)
     
@@ -103,23 +103,11 @@ def new_task(type, name, task_name):
 
 def main():
     PARSER = argparse.ArgumentParser()
-    PARSER.add_argument(
-        "-y",
-        "--yaml_file",
-        dest="yaml_file",
-        help="yaml file to read",
-        metavar="FILE")
-    PARSER.add_argument(
-        "-t",
-        "--template",
-        dest="template",
-        default=[],
-        action="append",
-        help="template file to populate",
-        metavar="FILE")
     PARSER.add_argument("-c",'--type', choices=['project', 'library'], dest="type")
+    PARSER.add_argument("--task_name", dest="task_name")
     PARSER.add_argument("-n",'--name', dest="name")
     ARGPARSER = PARSER.parse_args()
+    new_task(ARGPARSER.type, ARGPARSER.name, ARGPARSER.task_name)
 
 if __name__ == '__main__':
     main()
