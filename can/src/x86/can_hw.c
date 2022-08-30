@@ -21,15 +21,7 @@ https://www.kernel.org/doc/Documentation/networking/can.txt
 // TODO: get rid of extra includes
 #include <errno.h>
 
-// #include "interrupt_def.h"
 #include "log.h"
-// #include "x86_interrupt.h"
-
-#ifdef CAN_HW_DEV_USE_CAN0
-#define CAN_HW_DEV_INTERFACE "can0"
-#else
-#define CAN_HW_DEV_INTERFACE "vcan0"
-#endif
 
 #define CAN_HW_MAX_FILTERS CAN_QUEUE_SIZE
 #define CAN_HW_TX_QUEUE_LEN 8
@@ -115,9 +107,8 @@ static void *prv_rx_thread(void *arg) {
         if (s_socket_data.rx_frame_valid)
         {
           // TODO: go through hw_filters here to get rid of messages
-          bool extended = false;
           // TODO: I should check if they return status code ok or not
-          can_hw_receive(&rx_msg.id, &extended, &rx_msg.data, &rx_msg.dlc);
+          can_hw_receive(&rx_msg.id.raw, (bool*) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc);
           can_queue_push(rx_queue, &rx_msg);
         }
 
@@ -130,7 +121,7 @@ static void *prv_rx_thread(void *arg) {
   return NULL;
 }
 
-StatusCode can_hw_init(const CanQueue* rx_queue, const CanQueue* tx_queue, const CanSettings *settings) {
+StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   // In case socket exists or function called twice
   if (s_socket_data.can_fd != -1) {
     // LOG_DEBUG("Exiting CAN HW\n");
@@ -205,7 +196,7 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanQueue* tx_queue, const
   snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", CAN_HW_DEV_INTERFACE);
   if (ioctl(s_socket_data.can_fd, SIOCGIFINDEX, &ifr) < 0)
   {
-    LOG_DEBUG("CAN HW: Device %s not found\n", CAN_HW_DEV_INTERFACE);
+    LOG_CRITICAL("CAN HW: Device %s not found\n", CAN_HW_DEV_INTERFACE);
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "CAN HW: Device not found");
   }
 
