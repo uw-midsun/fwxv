@@ -13,19 +13,25 @@ tx_struct g_tx_struct;
 
 static CanStorage *s_can_storage;
 
-static SemaphoreHandle_t s_tx_sem_handle;
-static StaticSemaphore_t s_tx_sem;
+static SemaphoreHandle_t s_can_rx_sem_handle;
+static StaticSemaphore_t s_can_rx_sem_handle;
 
 static EventGroupHandle_t s_rx_event_handle;
 static StaticEventGroup_t s_rx_event;
 
 #define CAN_RX_EVENT (1 << 0)
 
+void run_can_rx_cycle()
+{
+  xSemaphoreGive(s_can_rx_sem_handle);
+}
+
 TASK(CAN_RX, TASK_MIN_STACK_SIZE)
 {
   int counter = 0;
   while (true)
   {
+    xSemaphoreTake(s_can_rx_sem_handle, portMAX_DELAY);
     // TODO: Do we want to wait forever on a sem?
     xSemaphoreTake(s_tx_sem_handle, portMAX_DELAY);
     LOG_DEBUG("can_rx called: %d!\n", counter);
@@ -36,6 +42,7 @@ TASK(CAN_RX, TASK_MIN_STACK_SIZE)
     // xEventGroupSetBits(s_rx_event_handle, CAN_RX_EVENT);
     publish(TOPIC_1);
     vTaskDelay(pdMS_TO_TICKS(1000));
+    xSemaphoreGive(s_end_task_sem);
   }
 }
 
