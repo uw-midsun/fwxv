@@ -8,7 +8,7 @@
 
 // End task semaphore.
 static StaticSemaphore_t s_end_task_sem;
-static SemaphoreHandle_t s_end_task_handle;
+static SemaphoreHandle_t s_end_task_handle = NULL;
 
 // Add any setup or teardown that needs to be done for every task here.
 static void prv_task(void *params) {
@@ -61,6 +61,12 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context) {
 }
 
 void tasks_start(void) {
+  if (s_end_task_handle == NULL)
+  {
+    LOG_CRITICAL("s_end_task_sem not initialized!\n");
+    return;
+  }
+
   vTaskStartScheduler();
 
   // We expect the scheduler to stop in task tests, but it's a critical problem otherwise.
