@@ -96,8 +96,8 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
 
   LOG_DEBUG("CAN HW initialized on %s\n", CAN_HW_DEV_INTERFACE);
 
-  return STATUS_CODE_OK;
-}
+//   return STATUS_CODE_OK;
+// }
 
 StatusCode can_hw_add_filter(uint32_t mask, uint32_t filter, bool extended) {
   if (s_num_filters >= CAN_HW_NUM_FILTER_BANKS) {

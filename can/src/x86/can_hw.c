@@ -121,7 +121,7 @@ static void *prv_rx_thread(void *arg) {
   return NULL;
 }
 
-StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
+StatusCode can_hw_init(const CanQueue* rx_queue, const CanQueue* tx_queue, const CanSettings *settings) {
   // In case socket exists or function called twice
   if (s_socket_data.can_fd != -1) {
     // LOG_DEBUG("Exiting CAN HW\n");
