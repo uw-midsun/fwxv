@@ -159,6 +159,8 @@ StatusCode can_add_filter_in(CanMessageId msg_id) {
     return status_code(STATUS_CODE_UNINITIALIZED);
   } else if (msg_id >= CAN_MSG_MAX_IDS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
+  } else if (!CAN_FILTER_IN_EN) {
+    return status_msg(STATUS_CODE_UNINITIALIZED, "CAN: CAN filter in function is not enabled");
   }
 
   CanId can_id = { .raw = msg_id };
