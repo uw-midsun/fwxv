@@ -97,13 +97,8 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   // Initialize hardware settings
   status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, settings));
 
-  // Disable tasks when in can_one_shot_mode 
-  if (settings->mode == 1){
-    LOG_DEBUG("In can one shot mode\n");
-  }
-
-  else{
-    // Create RX and TX Tasks
+  if (settings->mode == 0){
+    // Create RX and TX Tasks 
     // TODO: Figure out priorities
     status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
     status_ok_or_return(tasks_init_task(CAN_TX, TASK_PRIORITY(2), NULL));
