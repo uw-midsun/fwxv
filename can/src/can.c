@@ -20,6 +20,7 @@ static EventGroupHandle_t s_rx_event_handle;
 static StaticEventGroup_t s_rx_event;
 
 #define CAN_RX_EVENT (1 << 0)
+#define CAN_FILTER_IN_EN 0
 
 TASK(CAN_RX, TASK_MIN_STACK_SIZE)
 {
@@ -172,6 +173,8 @@ StatusCode can_add_filter_out(CanMessageId msg_id) {
     return status_code(STATUS_CODE_UNINITIALIZED);
   } else if (msg_id >= CAN_MSG_MAX_IDS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
+  } else if (CAN_FILTER_IN_EN) {
+    return status_msg(STATUS_CODE_UNINITIALIZED, "CAN: CAN filter out function is not enabled")
   }
 
   CanId can_id = { .raw = msg_id };
