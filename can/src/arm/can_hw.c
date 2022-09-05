@@ -3,6 +3,7 @@
 #include "interrupt.h"
 #include "log.h"
 #include "stm32f0xx.h"
+#include "stm32f0xx_can.h"
 
 #define CAN_HW_BASE CAN
 #define CAN_HW_NUM_FILTER_BANKS 14
