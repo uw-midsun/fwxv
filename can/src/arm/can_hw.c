@@ -7,17 +7,14 @@
 
 #define CAN_HW_BASE CAN
 #define CAN_HW_NUM_FILTER_BANKS 14
+#define MAX_TX_RETRIES 3
+#define MAX_TX_MS_TIMEOUT 500 // CAN Messages should only be sent max every 1s
 
 typedef struct CanHwTiming {
   uint16_t prescaler;
   uint8_t bs1;
   uint8_t bs2;
 } CanHwTiming;
-
-typedef struct CanHwEventHandler {
-  CanHwEventHandlerCb callback;
-  void *context;
-} CanHwEventHandler;
 
 // Generated settings using http://www.bittiming.can-wiki.info/
 // Note that the BS1/BS2 register values are used +1, so we need to subtract 1
@@ -30,8 +27,12 @@ static CanHwTiming s_timing[NUM_CAN_HW_BITRATES] = {  // For 48MHz clock
   [CAN_HW_BITRATE_500KBPS] = { .prescaler = 6, .bs1 = 12, .bs2 = 1 },
   [CAN_HW_BITRATE_1000KBPS] = { .prescaler = 3, .bs1 = 12, .bs2 = 1 }
 };
-static CanHwEventHandler s_handlers[NUM_CAN_HW_EVENTS];
 static uint8_t s_num_filters;
+static CanQueue *s_g_rx_queue;
+
+static SemaphoreHandle_t s_can_tx_ready_sem_handle;
+static StaticSemaphore_t s_can_tx_ready_sem;
+static bool s_tx_full = false;
 
 static void prv_add_filter(uint8_t filter_num, uint32_t mask, uint32_t filter) {
   CAN_FilterInitTypeDef filter_cfg = {
@@ -50,7 +51,6 @@ static void prv_add_filter(uint8_t filter_num, uint32_t mask, uint32_t filter) {
 }
 
 StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
-  memset(s_handlers, 0, sizeof(s_handlers));
   s_num_filters = 0;
 
   GpioSettings gpio_settings = {
@@ -87,21 +87,17 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   prv_add_filter(0, 0, 0);
   s_num_filters = 0;
 
-  return STATUS_CODE_OK;
-}
+  s_g_rx_queue = rx_queue;
 
-StatusCode can_hw_register_callback(CanHwEvent event, CanHwEventHandlerCb callback, void *context) {
-  if (event >= NUM_CAN_HW_EVENTS) {
-    return status_code(STATUS_CODE_INVALID_ARGS);
-  }
+  // Create available mailbox sem
+  s_can_tx_ready_sem_handle = xSemaphoreCreateBinaryStatic(&s_can_tx_ready_sem);
+  configASSERT(s_can_tx_ready_sem_handle);
+  s_tx_full = false;
 
-  s_handlers[event] = (CanHwEventHandler){
-    .callback = callback,  //
-    .context = context,    //
-  };
+  LOG_DEBUG("CAN HW initialized on %s\n", CAN_HW_DEV_INTERFACE);
 
-  return STATUS_CODE_OK;
-}
+//   return STATUS_CODE_OK;
+// }
 
 StatusCode can_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extended) {
   if (s_num_filters >= CAN_HW_NUM_FILTER_BANKS) {
@@ -148,7 +144,22 @@ StatusCode can_hw_transmit(uint32_t id, bool extended, const uint8_t *data, size
 
   memcpy(tx_msg.Data, data, len);
 
-  uint8_t tx_mailbox = CAN_Transmit(CAN_HW_BASE, &tx_msg);
+  uint8_t tx_mailbox;
+  // Enabling 3 retries
+  for (size_t i = 0; i < MAX_TX_RETRIES; ++i)
+  {
+    tx_mailbox = CAN_Transmit(CAN_HW_BASE, &tx_msg);
+    if (tx_mailbox == CAN_TxStatus_NoMailBox) {
+      s_tx_full = true;
+      if (xSemaphoreTake(s_can_tx_ready_sem_handle, pdMS_TO_TICKS(MAX_TX_MS_TIMEOUT)) == pdFALSE)
+      {
+        LOG_WARN("CAN HW TX failed");
+      }
+    } else {
+      break;
+    }
+  }
+  // If still fails after 3 retries
   if (tx_mailbox == CAN_TxStatus_NoMailBox) {
     return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "CAN HW TX failed");
   }
@@ -182,19 +193,21 @@ bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
 }
 
 void CEC_CAN_IRQHandler(void) {
-  bool run_cb[NUM_CAN_HW_EVENTS] = {
-    [CAN_HW_EVENT_TX_READY] = CAN_GetITStatus(CAN_HW_BASE, CAN_IT_TME) == SET,
-    [CAN_HW_EVENT_MSG_RX] = CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET ||
-                            CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET,
-    [CAN_HW_EVENT_BUS_ERROR] = CAN_GetITStatus(CAN_HW_BASE, CAN_IT_ERR) == SET,
-  };
-
-  for (int event = 0; event < NUM_CAN_HW_EVENTS; event++) {
-    CanHwEventHandler *handler = &s_handlers[event];
-    if (handler->callback != NULL && run_cb[event]) {
-      handler->callback(handler->context);
-      break;
+  if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_TME) == SET) {
+    if (s_tx_full)
+    {
+      xSemaphoreGiveFromISR(s_can_tx_ready_sem_handle, NULL);
+      s_tx_full = false;
     }
+  } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET ||
+             CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
+      CanMessage rx_msg = { 0 };
+      if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc))
+      {
+        StatusCode ret = can_queue_push(s_g_rx_queue, &rx_msg);
+      }
+  } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_ERR) == SET) {
+    LOG_CRITICAL("Bus Unavailable");
   }
 
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_ERR);

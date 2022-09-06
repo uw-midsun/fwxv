@@ -16,13 +16,9 @@
 #include "can_hw.h"
 
 typedef uint8_t EventId;
-typedef uint8_t CanAckRequest;
-// typedef CanAckRequest[8] CanAckRequests;
 
 typedef struct CanStorage {
-  // volatile CanFifo tx_fifo;
   volatile CanQueue rx_queue;
-  CanAckRequest ack_requests;
   uint16_t device_id;
 } CanStorage;
 
@@ -36,7 +32,13 @@ StatusCode can_add_filter_in(CanMessageId msg_id);
 StatusCode can_add_filter_out(CanMessageId msg_id);
 
 // Attempts to transmit the CAN message as soon as possible.
-StatusCode can_transmit(const CanMessage *msg, const CanAckRequest *ack_request);
+StatusCode can_transmit(const CanMessage *msg);
 
 // Attempts to receive the CAN message as soon as possible.
-StatusCode can_receive(const CanMessage *msg, const CanAckRequest *ack_request);
+StatusCode can_receive(const CanMessage *msg);
+
+// Run the can rx cycle
+StatusCode run_can_rx_cycle();
+
+// Run the can tx cycle
+StatusCode run_can_tx_cycle();
