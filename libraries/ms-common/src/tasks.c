@@ -61,8 +61,7 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context) {
 }
 
 void tasks_start(void) {
-  if (s_end_task_handle == NULL)
-  {
+  if (s_end_task_handle == NULL) {
     LOG_CRITICAL("s_end_task_sem not initialized!\n");
     return;
   }

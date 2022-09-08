@@ -21,13 +21,9 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
-void run_fast_cycle()
-{
+void run_fast_cycle() {}
 
-}
-
-void run_medium_cycle()
-{
+void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
 
@@ -35,10 +31,7 @@ void run_medium_cycle()
   wait_tasks(1);
 }
 
-void run_slow_cycle()
-{
-
-}
+void run_slow_cycle() {}
 
 TASK(master_task, TASK_MIN_STACK_SIZE) {
   int counter = 0;
@@ -47,10 +40,8 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
     xSemaphoreTake(test_cycle_start_sem);
 #endif
     run_fast_cycle();
-    if (!(counter % 10))
-      run_medium_cycle();
-    if (!(counter % 100))
-      run_slow_cycle();
+    if (!(counter % 10)) run_medium_cycle();
+    if (!(counter % 100)) run_slow_cycle();
 
 #ifdef TEST
     xSemaphoreGive(test_cycle_end_sem);
@@ -63,7 +54,7 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
 int main() {
   tasks_init();
   log_init();
-  
+
   LOG_DEBUG("Welcome to CAN!\n");
   can_init(&s_can_storage, &can_settings);
   // can_add_filter(SYSTEM_CAN_MESSAGE_NEW_CAN_TRANSMIT_MSG1);
