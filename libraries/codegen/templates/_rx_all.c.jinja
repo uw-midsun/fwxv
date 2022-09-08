@@ -6,12 +6,12 @@
 
 void can_rx_all() {
     CanMessage msg = { 0 };
-    while (can_receive(&msg, NULL) == STATUS_CODE_OK) {
+    while (can_receive(&msg) == STATUS_CODE_OK) {
         // TODO: Not sure if for loop is best way
         // Might be O(n)
         // If store all functions in callback array may be better?
         // Or do some sort or binary search for O(lgn)
-        switch (msg.id) {
+        switch (msg.id.raw) {
 {%- for message, message_data in messages.items() %}
             case SYSTEM_CAN_MESSAGE_{{board | upper}}_{{message | upper}}:
 

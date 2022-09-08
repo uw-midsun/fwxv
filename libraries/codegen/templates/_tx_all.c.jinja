@@ -13,6 +13,6 @@ can_pack_{{message}}(&msg {%- for signal in signals %}, g_tx_struct.{{message}}_
     {%- endset %}
 
     {{function_parameters | format_function_length(4)}}
-    can_transmit(&msg, NULL);
+    can_transmit(&msg);
 {%- endfor %}
 }
