@@ -7,7 +7,13 @@ static StaticSemaphore_t s_{{data['proj_name']}}_{{data['task_name']}}_sem;
 
 void run_{{data['proj_name']}}_{{data['task_name']}}_cycle()
 {
-    xSemaphoreGive(s_{{data['proj_name']}}_{{data['task_name']}}_sem_handle);
+    BaseType_t ret = xSemaphoreGive(s_{{data['proj_name']}}_{{data['task_name']}}_sem_handle);
+
+    if (ret == pdFALSE) {
+        return STATUS_CODE_INTERNAL_ERROR;
+    }
+
+    return STATUS_CODE_OK;
 }
 
 TASK({{data['task_name']}}, TASK_MIN_STACK_SIZE)
