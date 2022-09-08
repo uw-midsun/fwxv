@@ -22,6 +22,7 @@ static StaticEventGroup_t s_rx_event;
 bool CAN_FILTER_IN_EN = true;
 
 #define CAN_RX_EVENT (1 << 0)
+#define CAN_FILTER_IN_EN 0
 
 TASK(CAN_RX, TASK_MIN_STACK_SIZE)
 {
