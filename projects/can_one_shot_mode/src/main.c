@@ -19,7 +19,7 @@ const CanSettings can_settings = {
 TASK(testing_task, TASK_MIN_STACK_SIZE) {
   CanMessage msg = { 0 };
   while (true) {
-    if (can_receive(&msg, NULL) == STATUS_CODE_OK) {
+    if (can_receive(&msg) == STATUS_CODE_OK) {
       LOG_DEBUG("can_one_shot_mode received a message\n");
     }
     vTaskDelay(pdMS_TO_TICKS(1000));
