@@ -6,10 +6,10 @@ import subprocess
 # Variables setup
 ###########################################################
 
-Import('CONSTS')
+Import('VARS')
 
-PROJECT = CONSTS.get("PROJECT")
-LIBRARY = CONSTS.get("LIBRARY")
+TYPE = VARS.get("TYPE")
+TARGET = VARS.get("TARGET")
 
 PROJ_DIR = Dir('#/projects')
 LIB_DIR = Dir('#/libraries')
@@ -40,11 +40,11 @@ def get_lint_files():
 
     # Get directories to lint based on PROJECT/LIBRARY args.
     # If no PROJECT/LIBRARY argument,lint all directories.
-    if PROJECT:
-        lint_dirs.append(PROJ_DIR.Dir(PROJECT))
-        lint_dirs.append(SMOKE_DIR.Dir(PROJECT))
-    elif LIBRARY:
-        lint_dirs.append(LIB_DIR.Dir(LIBRARY))
+    if TYPE == 'project':
+        lint_dirs.append(PROJ_DIR.Dir(TARGET))
+        lint_dirs.append(SMOKE_DIR.Dir(TARGET))
+    elif TYPE == 'library':
+        lint_dirs.append(LIB_DIR.Dir(TARGET))
     else:
         lint_dirs += PROJ_DIRS + LIB_DIRS
 
