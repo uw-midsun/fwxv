@@ -36,6 +36,12 @@ AddOption(
     type='string',
     action='store'
 )
+AddOption(
+    '--py',
+    dest='python',
+    type='string',
+    action='store'
+)
 
 AddOption(
     '--test',
@@ -298,7 +304,100 @@ if (TYPE != 'python'):
 ###########################################################
 # Testing
 ###########################################################
-SConscript('scons/testing.scons', exports='VARS')
+
+GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.py'
+GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
+
+# tests dict maps proj/lib -> list of their test executables
+tests = {}
+
+# Create the test executable targets
+for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
+    tests[entry.name] = []
+    for test_file in OBJ_DIR.Dir(str(entry)).Dir('test').glob('*.c'):
+        # Link runner object, test file object, and proj/lib objects
+        # into executable
+        config = parse_config(entry)
+        test_module_name = test_file.name.replace('test_', '').replace('.c', '')
+        mock_link_flags = []
+        if test_module_name in config['mocks']:
+            mocks = config['mocks'][test_module_name]
+            mock_link_flags = ['-Wl,-wrap,' + mock for mock in mocks]
+
+        objs = OBJ_DIR.Dir(str(entry)).Dir('src').glob('*.o')
+        objs += OBJ_DIR.Dir(str(entry)).Dir('src').Dir(PLATFORM).glob('*.o')
+        entry_objects = []
+        for obj in objs:
+            if 'main.o' not in obj.name:
+                entry_objects.append(obj)
+
+        inc_dirs = [entry.Dir('inc')]
+        inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
+        lib_incs = [lib_dir.Dir('inc') for lib_dir in LIB_DIRS]
+        lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
+        lib_deps = get_lib_deps(entry)
+
+        # Flags used for both preprocessing and compiling
+        cpppath = env['CPPPATH'] + [inc_dirs, lib_incs]
+        ccflags = env['CCFLAGS'] + config['cflags']
+
+        # Create the test_*_runner.c file
+        runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
+        test_runner = env.Command(runner_file, test_file,
+            Action(
+                'python3 {} {} $SOURCE $TARGET'.format(GEN_RUNNER, GEN_RUNNER_CONFIG),
+                cmdstr='Generating test runner $TARGET'))
+
+        output = TEST_DIR.Dir(entry.name).Dir('test').File(test_file.name.replace('.c', ''))
+        target = env.Program(
+            target=output,
+            source=[test_file, test_runner] + entry_objects,
+            # We do env['variable'] + [entry-specific variables] to avoid
+            # mutating the environment for other entries
+            CPPPATH=cpppath,
+            LIBS=env['LIBS'] + lib_deps * 2 + ['unity'],
+            LIBPATH=[LIB_BIN_DIR],
+            CCFLAGS=ccflags,
+            LINKFLAGS=env['LINKFLAGS'] + mock_link_flags,
+        )
+        if PLATFORM == 'arm':
+            target = env.Bin(target=output.File(test_file.name + '.bin'), source=target)
+
+        # Make test executable depend on the project / library final target
+        if entry in PROJ_DIRS:
+            Depends(target, proj_elf(entry.name, entry in SMOKE_DIRS))
+        elif entry in LIB_DIRS:
+            Depends(target, lib_bin(entry.name))
+
+        # Add to tests dict
+        tests[entry.name] += [node for node in target]
+
+def get_test_list():
+    # Based on the project/library and test in options,
+    # create a list of tests to run
+    proj = PROJECT if PROJECT else ''
+    lib = LIBRARY if LIBRARY else ''
+    # Assume only one of project or library is set
+    entry = proj + lib
+    if entry and tests.get(entry):
+        if GetOption('testfile'):
+            return [test for test in tests[entry] if test.name == 'test_' + GetOption('testfile')]
+        else:
+            return [test for test in tests[entry]]
+    else:
+        ret = []
+        for test_list in tests.values():
+            ret += test_list
+        return ret
+
+def test_runner(target, source, env):
+    test_list = get_test_list()
+    for test in test_list:
+        subprocess.run(test.get_path()).check_returncode()
+
+test = Command('test.txt', [], test_runner)
+Depends(test, get_test_list())
+Alias('test', test)
 
 ###########################################################
 # Helper targets

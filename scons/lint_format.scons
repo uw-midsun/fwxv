@@ -1,6 +1,7 @@
 from scons.common import parse_config
 import glob
 import subprocess
+import scons
 
 ###########################################################
 # Variables setup
