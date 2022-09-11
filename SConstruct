@@ -103,6 +103,7 @@ VARS = {
     "PLATFORM": PLATFORM,
     "TYPE": TYPE,
     "TARGET": TARGET,
+    "env": env
 }
 
 # Add flags when compiling a test
@@ -166,12 +167,63 @@ TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
 
 LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
 
-# Put object files in OBJ_DIR so they don't clog the source folders
-VariantDir(OBJ_DIR, Dir('.'), duplicate=0)
+###########################################################
+# Build
+###########################################################
+SConscript('scons/build.scons', exports='VARS', variant_dir='build', duplicate=0)
 
 ###########################################################
-# Targets
+# Testing
 ###########################################################
+SConscript('scons/test.scons', exports='VARS')
+
+###########################################################
+# Helper targets
+###########################################################
+SConscript('scons/new_target.scons', exports='VARS')
+
+###########################################################
+# Clean
+###########################################################
+# 'clean.txt' is a dummy file that doesn't get created
+# This is required for phony targets for scons to be happy
+clean = Command('clean.txt', [], 'rm -rf build/*')
+Alias('clean', clean)
+
+###########################################################
+# Linting and Formatting
+###########################################################
+SConscript('scons/lint_format.scons', exports='VARS')
+
+
+
+
+
+BUILD_DIR = Dir('#/build').Dir(PLATFORM)
+BIN_DIR = BUILD_DIR.Dir('bin')
+OBJ_DIR = BUILD_DIR.Dir('obj')
+TEST_DIR = BUILD_DIR.Dir('test')
+
+PROJ_DIR = Dir('#/projects')
+LIB_DIR = Dir('#/libraries')
+SMOKE_DIR = Dir('#/smoke')
+CAN_DIR = Dir('#/can')
+
+PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
+LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
+SMOKE_DIRS = [entry for entry in SMOKE_DIR.glob('*')]
+
+LIB_BIN_DIR = BIN_DIR.Dir('libraries')
+
+PLATFORM_DIR = Dir('platform')
+
+CODEGEN_DIR = LIB_DIR.Dir("codegen")
+BOARDS_DIR = CODEGEN_DIR.Dir("boards")
+GENERATOR = CODEGEN_DIR.File("generator.py")
+TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
+
+LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
+
 
 # Recursively get library dependencies for entry
 def get_lib_deps(entry):
@@ -193,264 +245,8 @@ def proj_bin(proj_name, is_smoke=False):
     return proj_elf(proj_name, is_smoke).File(proj_name + '.bin')
 
 ###########################################################
-# Header file generation from jinja templates
-###########################################################
-# TODO: Need to check if board has yaml and if board even needs CAN
-def generate_can_files(env, target=[], source=[], project=PROJECT):
-    source_yaml = BOARDS_DIR.File(project + ".yaml")
-    project_dir = OBJ_DIR.Dir("projects").Dir(project)
-    source_dir = project_dir.Dir("src").Dir("can_codegen")
-    header_dir = project_dir.Dir("inc").Dir("can_codegen")
-    source += [BOARDS_DIR, TEMPLATES_DIR, GENERATOR]
-    
-    templates = TEMPLATES_DIR.glob('*.jinja')
-    base_exec = "python3 {} -b {}".format(GENERATOR, project)
-    header_files = []
-    source_files = []
-    source_command = "{} -y {} -f {}".format(base_exec, source_yaml, source_dir)
-    header_command = "{} -y {} -f {}".format(base_exec, source_yaml, header_dir)
-
-    # TODO: Fix up system_can.dbc output directory
-    for template in templates:
-        if "can_board_ids" in template.name:
-            env.Command(
-                LIBRARIES_INC_DIR.File(template.name[:-6]),
-                source,
-                "{} -y {} -t {} -f {}".format(base_exec, BOARDS_DIR.File("boards.yaml"), template, LIBRARIES_INC_DIR)
-            )
-            target.append(LIBRARIES_INC_DIR.File(template.name[:-6]))
-        else:
-            if template.name.startswith("_"):
-                if ".c" in template.name:
-                    source_command += " -t {}".format(template)
-                    source_files.append(source_dir.File(project + template.name[:-6]))
-                else:
-                    header_command += " -t {}".format(template)
-                    header_files.append(header_dir.File(project + template.name[:-6]))
-            else:
-                # For can_codegen.h
-                env.Command(
-                    header_dir.File(template.name[:-6]),
-                    source,
-                    "{} -t {} -f {}".format(base_exec, template, header_dir)
-                )
-                target.append(header_dir.File(template.name[:-6]))
-    
-    source.append(source_yaml)
-    env.Command(header_files, source, header_command)
-    env.Command(source_files, source, source_command)
-
-    target += source_files + header_files
-    return source_files, header_dir
-
-env.AddMethod(generate_can_files, "GenerateCanFiles")
-
-# Create appropriate targets for all projects and libraries
-for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:    
-    # Glob the source files from OBJ_DIR because it's a variant dir
-    # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
-    # str(entry) is e.g. 'projects/example', so this is like build/obj/projects/example/src
-    srcs = OBJ_DIR.Dir(str(entry)).Dir('src').glob('*.[cs]')
-    srcs += OBJ_DIR.Dir(str(entry)).Dir('src').Dir(PLATFORM).glob('*.[cs]')
-    
-    inc_dirs = [entry.Dir('inc')]
-    inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
-    
-    config = parse_config(entry)
-    
-    if config["can"]:
-        # TODO: Current output files are like so
-        # - /build/x86
-        #     - obj
-        #         - can
-        #             - can.o
-        #         - projects
-        #             - new_can
-        # The CAN output should actually go into the projects/<project>
-        # Fine for now but will be an issue if ever trying to build multiple projects
-        srcs += OBJ_DIR.Dir(str(CAN_DIR)).Dir('src').glob('*.[cs]')
-        srcs += OBJ_DIR.Dir(str(CAN_DIR)).Dir('src').Dir(PLATFORM).glob('*.[cs]')
-        inc_dirs += [CAN_DIR.Dir('inc')]
-        inc_dirs += [CAN_DIR.Dir('inc').Dir(PLATFORM)]
-        # Add Autogenerated files
-        can_sources, can_header_dir = env.GenerateCanFiles(project=entry.name)
-        srcs += [t for t in can_sources]
-        inc_dirs += [can_header_dir]
-
-    # Just include all library headers
-    # This resolves dependency issues like ms-freertos including FreeRTOS headers
-    # even though FreeRTOS depends on ms-freertos, not the other way around
-    lib_incs = [lib_dir.Dir('inc') for lib_dir in LIB_DIRS]
-    lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
-
-    env.Append(CPPDEFINES=[GetOption('define')])
-    if entry in PROJ_DIRS or entry in SMOKE_DIRS:
-        is_smoke = entry in SMOKE_DIRS
-        lib_deps = get_lib_deps(entry)
-        output = proj_elf(entry.name, is_smoke)
-        # SCons automagically handles object creation and linking
-        target = env.Program(
-            target=output,
-            source=srcs,
-            CPPPATH=env['CPPPATH'] + [inc_dirs, lib_incs],
-            # link each library twice so that dependency cycles are resolved
-            # See: https://stackoverflow.com/questions/45135
-            LIBS=env['LIBS'] + lib_deps * 2,
-            LIBPATH=[LIB_BIN_DIR],
-            CCFLAGS=env['CCFLAGS'] + config['cflags'],
-        )
-        
-        # .bin file only required for arm, not x86
-        if PLATFORM == 'arm':
-            target = env.Bin(target=proj_bin(entry.name, is_smoke), source=target)  
-    elif entry in LIB_DIRS:
-        output = lib_bin(entry.name)
-        target = env.Library(
-            target=output,
-            source=srcs,
-            CPPPATH=env['CPPPATH'] + [inc_dirs, lib_incs],
-            CCFLAGS=env['CCFLAGS'] + config['cflags'],
-        )
-                
-    # Create an alias for the entry so we can do `scons leds` and it Just Works
-    Alias(entry.name, target)
-
-# Build all projects when you just run `scons`
-if (TYPE != 'python'):
-    Default([proj.name for proj in PROJ_DIRS])
-
-###########################################################
-# Testing
-###########################################################
-
-GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.py'
-GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
-
-# tests dict maps proj/lib -> list of their test executables
-tests = {}
-
-# Create the test executable targets
-for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
-    tests[entry.name] = []
-    for test_file in OBJ_DIR.Dir(str(entry)).Dir('test').glob('*.c'):
-        # Link runner object, test file object, and proj/lib objects
-        # into executable
-        config = parse_config(entry)
-        test_module_name = test_file.name.replace('test_', '').replace('.c', '')
-        mock_link_flags = []
-        if test_module_name in config['mocks']:
-            mocks = config['mocks'][test_module_name]
-            mock_link_flags = ['-Wl,-wrap,' + mock for mock in mocks]
-
-        objs = OBJ_DIR.Dir(str(entry)).Dir('src').glob('*.o')
-        objs += OBJ_DIR.Dir(str(entry)).Dir('src').Dir(PLATFORM).glob('*.o')
-        entry_objects = []
-        for obj in objs:
-            if 'main.o' not in obj.name:
-                entry_objects.append(obj)
-
-        inc_dirs = [entry.Dir('inc')]
-        inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
-        lib_incs = [lib_dir.Dir('inc') for lib_dir in LIB_DIRS]
-        lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
-        lib_deps = get_lib_deps(entry)
-
-        # Flags used for both preprocessing and compiling
-        cpppath = env['CPPPATH'] + [inc_dirs, lib_incs]
-        ccflags = env['CCFLAGS'] + config['cflags']
-
-        # Create the test_*_runner.c file
-        runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
-        test_runner = env.Command(runner_file, test_file,
-            Action(
-                'python3 {} {} $SOURCE $TARGET'.format(GEN_RUNNER, GEN_RUNNER_CONFIG),
-                cmdstr='Generating test runner $TARGET'))
-
-        output = TEST_DIR.Dir(entry.name).Dir('test').File(test_file.name.replace('.c', ''))
-        target = env.Program(
-            target=output,
-            source=[test_file, test_runner] + entry_objects,
-            # We do env['variable'] + [entry-specific variables] to avoid
-            # mutating the environment for other entries
-            CPPPATH=cpppath,
-            LIBS=env['LIBS'] + lib_deps * 2 + ['unity'],
-            LIBPATH=[LIB_BIN_DIR],
-            CCFLAGS=ccflags,
-            LINKFLAGS=env['LINKFLAGS'] + mock_link_flags,
-        )
-        if PLATFORM == 'arm':
-            target = env.Bin(target=output.File(test_file.name + '.bin'), source=target)
-
-        # Make test executable depend on the project / library final target
-        if entry in PROJ_DIRS:
-            Depends(target, proj_elf(entry.name, entry in SMOKE_DIRS))
-        elif entry in LIB_DIRS:
-            Depends(target, lib_bin(entry.name))
-
-        # Add to tests dict
-        tests[entry.name] += [node for node in target]
-
-def get_test_list():
-    # Based on the project/library and test in options,
-    # create a list of tests to run
-    proj = PROJECT if PROJECT else ''
-    lib = LIBRARY if LIBRARY else ''
-    # Assume only one of project or library is set
-    entry = proj + lib
-    if entry and tests.get(entry):
-        if GetOption('testfile'):
-            return [test for test in tests[entry] if test.name == 'test_' + GetOption('testfile')]
-        else:
-            return [test for test in tests[entry]]
-    else:
-        ret = []
-        for test_list in tests.values():
-            ret += test_list
-        return ret
-
-def test_runner(target, source, env):
-    test_list = get_test_list()
-    for test in test_list:
-        subprocess.run(test.get_path()).check_returncode()
-
-test = Command('test.txt', [], test_runner)
-Depends(test, get_test_list())
-Alias('test', test)
-
-###########################################################
-# Helper targets
-###########################################################
-SConscript('scons/new_target.scons', exports='VARS')
-
-###########################################################
-# Clean
-###########################################################
-# 'clean.txt' is a dummy file that doesn't get created
-# This is required for phony targets for scons to be happy
-clean = Command('clean.txt', [], 'rm -rf build/*')
-Alias('clean', clean)
-
-def make_new_task(target, source, env):
-    # No project or library option provided
-    if TYPE not in ["project", "library"]:
-        print("Missing project or library name. Expected --project=..., or --library=...")
-        sys.exit(1)
-
-    # Chain or's to select the first non-None value 
-    new_task(TYPE, TARGET, GetOption('name'))
-
-new = Command('new_task.txt', [], make_new_task)
-Alias('new_task', new)
-
-###########################################################
-# Linting and Formatting
-###########################################################
-SConscript('scons/lint_format.scons', exports='VARS')
-
-###########################################################
 # Helper targets for x86
 ###########################################################
-
 if PLATFORM == 'x86' and TYPE == 'project':
     # os.exec the x86 project ELF file to simulate it
     def sim_run(target, source, env):
@@ -482,7 +278,6 @@ if PLATFORM == 'x86' and TYPE == 'project':
 ###########################################################
 # Helper targets for arm
 ###########################################################
-
 if PLATFORM == 'arm' and TYPE == 'project':
     # display memory info for the project
     if MEM_REPORT == 'true':
@@ -514,10 +309,3 @@ if PLATFORM == 'arm' and TYPE == 'project':
     flash_smoke = Command('flash_smoke.txt', [], flash_run, smoke=True)
     Depends(flash_smoke, proj_bin(TARGET, True))
     Alias('flash_smoke', flash_smoke)
-
-
-###########################################################
-# Python
-###########################################################
-if (TYPE == 'python'):
-    SConscript('scons/python.scons', exports='VARS')
