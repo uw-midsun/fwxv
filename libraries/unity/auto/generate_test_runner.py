@@ -46,7 +46,7 @@ void test_pre_task(void) @co@
 
 { IF_TEST_IN_TASK(tests, f'''
 /*=======IN TASK TESTS=====*/
-TASK(test_task, TASK_STACK_4096) @co@
+TASK(test_task, TASK_STACK_1024) @co@
   UnityBegin("{ input_file }");
 
 { '@nl@'.join([ f'  run_test({ test[0] }, "{ test[0] }", { test[1] });' for test in tests if test[2] == "TEST_IN_TASK" ]) }

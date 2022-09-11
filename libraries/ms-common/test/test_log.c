@@ -9,7 +9,7 @@ void setup_test(void) {
   log_init();
 }
 
-TASK(blink_task, TASK_STACK_512) {
+TASK(blink_task, TASK_MIN_STACK_SIZE) {
   // should print
   // "Task blink_task starting."
   // "blink first"
@@ -63,16 +63,26 @@ void test_log() {
   LOG_DEBUG("The statement below me is true: %i \n", true);    // actually true
   LOG_DEBUG("The statement above me is false: %i \n", false);  // actually false
 
+  // pointer log
+  LOG_DEBUG("This is a pointer: %p \n", trash);
+
+#ifdef MS_PLATFORM_X86
   // long int log
   LOG_DEBUG("This is a positive long int log: %li \n", 69311489273489724);
   LOG_DEBUG("This is a negative long int log: %li \n", -69311489273489724);
 
-  // pointer log
-  LOG_DEBUG("This is a pointer: %p \n", trash);
-
   // testing multiple arguments
   LOG_DEBUG("This is everything: %s, %i, %.3f, %li, %p \n", trash, 69, 69.420, 69311489273489724,
             trash);
+#else
+  // long int log
+  LOG_DEBUG("This is a positive long int log: %lli \n", 69311489273489724);
+  LOG_DEBUG("This is a negative long int log: %lli \n", -69311489273489724);
+
+  // testing multiple arguments
+  LOG_DEBUG("This is everything: %s, %i, %.3f, %lli, %p \n", trash, 69, 69.420, 69311489273489724,
+            trash);
+#endif
 
   delay_ms(50);
 

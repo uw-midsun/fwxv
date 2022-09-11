@@ -59,7 +59,7 @@ extern uint32_t SystemCoreClock;
 // Hook function related definitions
 #define configUSE_IDLE_HOOK 0
 #define configUSE_TICK_HOOK 0
-#define configCHECK_FOR_STACK_OVERFLOW 0
+#define configCHECK_FOR_STACK_OVERFLOW 2
 #define configUSE_MALLOC_FAILED_HOOK 0
 #define configUSE_DAEMON_TASK_STARTUP_HOOK 0
 
@@ -96,7 +96,6 @@ extern uint32_t SystemCoreClock;
 #define INCLUDE_xTaskAbortDelay 0
 #define INCLUDE_xTaskGetHandle 0
 #define INCLUDE_xTaskResumeFromISR 1
-
 // Interrupt nesting behaviour configuration
 
 // Cortex-M specific definitions.
@@ -117,7 +116,7 @@ extern uint32_t SystemCoreClock;
 // DO NOT CALL INTERRUPT SAFE FREERTOS API FUNCTIONS FROM ANY INTERRUPT THAT
 // HAS A HIGHER PRIORITY THAN THIS! (higher priorities are lower numeric
 // values.)
-#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 3
+#define configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY 1
 
 // Interrupt priorities used by the kernel port layer itself. These are generic
 // to all Cortex-M ports, and do not rely on any particular library functions.

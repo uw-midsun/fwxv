@@ -13,7 +13,7 @@ DECLARE_TASK(sub_task5);
 DECLARE_TASK(sub_task6);
 DECLARE_TASK(sub_task7);
 
-TASK(sub_task1, TASK_STACK_512) {
+TASK(sub_task1, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
@@ -24,7 +24,7 @@ TASK(sub_task1, TASK_STACK_512) {
   TEST_ASSERT_EQUAL(1, e);
 }
 
-TASK(sub_task2, TASK_STACK_512) {
+TASK(sub_task2, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
@@ -35,7 +35,7 @@ TASK(sub_task2, TASK_STACK_512) {
   TEST_ASSERT_EQUAL(1, e);
 }
 
-TASK(sub_task3, TASK_STACK_512) {
+TASK(sub_task3, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
@@ -46,7 +46,7 @@ TASK(sub_task3, TASK_STACK_512) {
   TEST_ASSERT_EQUAL(1, e);
 }
 
-TASK(sub_task4, TASK_STACK_512) {
+TASK(sub_task4, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
@@ -57,7 +57,7 @@ TASK(sub_task4, TASK_STACK_512) {
   TEST_ASSERT_EQUAL(1, e);
 }
 
-TASK(sub_task5, TASK_STACK_512) {
+TASK(sub_task5, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
@@ -68,7 +68,7 @@ TASK(sub_task5, TASK_STACK_512) {
   TEST_ASSERT_EQUAL(1, e);
 }
 
-TASK(sub_task6, TASK_STACK_512) {
+TASK(sub_task6, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
@@ -79,7 +79,7 @@ TASK(sub_task6, TASK_STACK_512) {
   TEST_ASSERT_EQUAL(1, e);
 }
 
-TASK(sub_task7, TASK_STACK_512) {
+TASK(sub_task7, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
@@ -128,5 +128,4 @@ void test_publish() {
   TEST_ASSERT_OK(publish(TOPIC_1));
   delay_ms(10);
   TEST_ASSERT_OK(publish(TOPIC_2));
-  delay_ms(20);
 }

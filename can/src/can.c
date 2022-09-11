@@ -13,54 +13,61 @@ tx_struct g_tx_struct;
 
 static CanStorage *s_can_storage;
 
-static SemaphoreHandle_t s_tx_sem_handle;
-static StaticSemaphore_t s_tx_sem;
+static SemaphoreHandle_t s_can_rx_sem_handle;
+static StaticSemaphore_t s_can_rx_sem;
 
-static EventGroupHandle_t s_rx_event_handle;
-static StaticEventGroup_t s_rx_event;
+static SemaphoreHandle_t s_can_tx_sem_handle;
+static StaticSemaphore_t s_can_tx_sem;
 
-#define CAN_RX_EVENT (1 << 0)
+StatusCode run_can_rx_cycle()
+{
+  BaseType_t ret = xSemaphoreGive(s_can_rx_sem_handle);
+
+  if (ret == pdFALSE) {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
+  return STATUS_CODE_OK;
+}
+
+StatusCode run_can_tx_cycle()
+{
+  BaseType_t ret = xSemaphoreGive(s_can_tx_sem_handle);
+
+  if (ret == pdFALSE) {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
+  return STATUS_CODE_OK;
+}
 
 TASK(CAN_RX, TASK_MIN_STACK_SIZE)
 {
   int counter = 0;
   while (true)
   {
-    // TODO: Do we want to wait forever on a sem?
-    xSemaphoreTake(s_tx_sem_handle, portMAX_DELAY);
+    xSemaphoreTake(s_can_rx_sem_handle, portMAX_DELAY);
     LOG_DEBUG("can_rx called: %d!\n", counter);
     counter++;
 
     can_rx_all();
 
-    // xEventGroupSetBits(s_rx_event_handle, CAN_RX_EVENT);
-    publish(TOPIC_1);
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    send_task_end();
   }
 }
 
 TASK(CAN_TX, TASK_MIN_STACK_SIZE)
 {
   int counter = 0;
-  uint32_t notification;
-  Event e;
   while (true)
   {
-    // TODO: Need receive all module to get all tasks beforehand
-    notify_wait(&notification, BLOCK_INDEFINITELY);
-    event_from_notification(&notification, &e);
-    // TODO: Need to assert event
-    // assert(0, e);
-    // TODO: need to check return bits to see if function failed or not
-    // xEventGroupWaitBits(s_rx_event_handle, CAN_RX_EVENT, pdTRUE, pdFALSE, portMAX_DELAY);
+    xSemaphoreTake(s_can_tx_sem_handle, portMAX_DELAY);
     LOG_DEBUG("can_tx called: %d!\n", counter);
     counter++;
 
     can_tx_all();
 
-    // TODO: Technically this can fail if didn't get semaphore
-    // vTaskDelay(pdMS_TO_TICKS(1000));
-    xSemaphoreGive(s_tx_sem_handle);
+    send_task_end();
   }
 }
 
@@ -82,17 +89,12 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   memset(&g_tx_struct, 0, sizeof(g_tx_struct));
 
   // Create Semaphores
-  s_tx_sem_handle = xSemaphoreCreateBinaryStatic(&s_tx_sem);
-  configASSERT(s_tx_sem_handle);
-  // start off RX Task
-  xSemaphoreGive(s_tx_sem_handle);
-
-  // Create Event Group
-  s_rx_event_handle = xEventGroupCreateStatic(&s_rx_event);
-  configASSERT(s_rx_event_handle);
+  s_can_rx_sem_handle = xSemaphoreCreateBinaryStatic(&s_can_rx_sem);
+  configASSERT(s_can_rx_sem_handle);
+  s_can_tx_sem_handle = xSemaphoreCreateBinaryStatic(&s_can_tx_sem);
+  configASSERT(s_can_tx_sem_handle);
 
   status_ok_or_return(can_queue_init(&s_can_storage->rx_queue));
-  // status_ok_or_return(can_ack_init(&s_can_storage->ack_requests));
  
   // Initialize hardware settings
   status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, settings));
@@ -102,12 +104,10 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
   status_ok_or_return(tasks_init_task(CAN_TX, TASK_PRIORITY(2), NULL));
 
-  status_ok_or_return(subscribe(CAN_TX, TOPIC_1, CAN_RX_EVENT));
-
   return STATUS_CODE_OK;
 }
 
-StatusCode can_receive(const CanMessage *msg, const CanAckRequest *ack_request)
+StatusCode can_receive(const CanMessage *msg)
 {
   // TODO: Figure out the ack_request
   StatusCode ret = can_queue_pop(&s_can_storage->rx_queue, msg);
@@ -123,31 +123,15 @@ StatusCode can_receive(const CanMessage *msg, const CanAckRequest *ack_request)
   return ret;
 }
 
-StatusCode can_transmit(const CanMessage *msg, const CanAckRequest *ack_request)
+StatusCode can_transmit(const CanMessage *msg)
 {
-  // TODO: this is where autogenearted happens
-  // messages get packed and pushed onto transmit queue
-  // messages come off the queue and out can_hw_transmit
-
   if (s_can_storage == NULL) {
     return status_code(STATUS_CODE_UNINITIALIZED);
-  } else if (msg->msg_id >= CAN_MSG_MAX_IDS) {
+  } else if (msg->id.msg_id >= CAN_MSG_MAX_IDS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
   }
 
-  // if (ack_request != NULL) {
-  //   if (!CAN_MSG_IS_CRITICAL(msg)) {
-  //     return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: ACK requested for non-critical message");
-  //   }
-
-  //   StatusCode ret = can_ack_add_request(&s_can_storage->ack_requests, msg->msg_id, ack_request);
-  //   status_ok_or_return(ret);
-  // }
-
-  CanId can_id = { .raw = msg->msg_id };
-
-  // TODO: make CAN with extended
-  return can_hw_transmit(can_id.raw, false, msg->data_u8, msg->dlc);
+  return can_hw_transmit(msg->id.raw, msg->extended, msg->data_u8, msg->dlc);
 }
 
 StatusCode can_add_filter(CanMessageId msg_id) {
@@ -159,7 +143,7 @@ StatusCode can_add_filter(CanMessageId msg_id) {
 
   CanId can_id = { .raw = msg_id };
   CanId mask = { 0 };
-  mask.raw = ~mask.msg_id;
+  mask.raw = (uint32_t)~mask.msg_id;
 
   return can_hw_add_filter(mask.raw, can_id.raw, false);
 }

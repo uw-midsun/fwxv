@@ -2,7 +2,7 @@ import os
 import sys
 import subprocess
 from scons.common import parse_config
-# from scons.preprocessor_filter import preprocessor_filter
+from scons.new_task import new_task
 
 ###########################################################
 # Build arguments
@@ -57,10 +57,28 @@ AddOption(
     action='store'
 )
 
+AddOption(
+    '--name',
+    dest='name',
+    type='string',
+    action='store'
+)
+
+# Adding Memory Report Argument to Environment Flags
+# Note platform needs to be explicitly set to arm
+
+AddOption(
+    '--mem-report',
+    dest='mem-report',
+    type='string',
+    action='store',
+)
+
 PLATFORM = GetOption('platform')
 PROJECT = GetOption('project')
 LIBRARY = GetOption('library')
 PYTHON = GetOption('python')
+MEM_REPORT = GetOption('mem-report')
 
 ###########################################################
 # Environment setup
@@ -72,7 +90,7 @@ if PLATFORM == 'x86':
 elif PLATFORM == 'arm':
     env = SConscript('platform/arm.py')
 
-TYPE = 'none'
+TYPE = None
 if PROJECT:
     TYPE = 'project'
 elif LIBRARY:
@@ -284,7 +302,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         
         # .bin file only required for arm, not x86
         if PLATFORM == 'arm':
-            target = env.Bin(target=proj_bin(entry.name, is_smoke), source=target)
+            target = env.Bin(target=proj_bin(entry.name, is_smoke), source=target)  
     elif entry in LIB_DIRS:
         output = lib_bin(entry.name)
         target = env.Library(
@@ -293,7 +311,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
             CPPPATH=env['CPPPATH'] + [inc_dirs, lib_incs],
             CCFLAGS=env['CCFLAGS'] + config['cflags'],
         )
-
+                
     # Create an alias for the entry so we can do `scons leds` and it Just Works
     Alias(entry.name, target)
 
@@ -412,6 +430,18 @@ SConscript('scons/new_target.scons', exports='VARS')
 clean = Command('clean.txt', [], 'rm -rf build/*')
 Alias('clean', clean)
 
+def make_new_task(target, source, env):
+    # No project or library option provided
+    if TYPE not in ["project", "library"]:
+        print("Missing project or library name. Expected --project=..., or --library=...")
+        sys.exit(1)
+
+    # Chain or's to select the first non-None value 
+    new_task(TYPE, TARGET, GetOption('name'))
+
+new = Command('new_task.txt', [], make_new_task)
+Alias('new_task', new)
+
 ###########################################################
 # Linting and Formatting
 ###########################################################
@@ -421,39 +451,44 @@ SConscript('scons/lint_format.scons', exports='VARS')
 # Helper targets for x86
 ###########################################################
 
-if PLATFORM == 'x86' and PROJECT:
+if PLATFORM == 'x86' and TYPE == 'project':
     # os.exec the x86 project ELF file to simulate it
     def sim_run(target, source, env):
-        path = proj_elf(PROJECT, env.get("smoke")).path
+        path = proj_elf(TARGET, env.get("smoke")).path
         print('Simulating', path)
         os.execv(path, [path])
 
     sim = Command('sim.txt', [], sim_run)
-    Depends(sim, proj_elf(PROJECT))
+    Depends(sim, proj_elf(TARGET))
     Alias('sim', sim)
 
     sim_smoke = Command('sim_smoke.txt', [], sim_run, smoke=True)
-    Depends(sim_smoke, proj_elf(PROJECT, True))
+    Depends(sim_smoke, proj_elf(TARGET, True))
     Alias('sim_smoke', sim_smoke)
 
     # open gdb with the elf file
     def gdb_run(target, source, env):
-        path = proj_elf(PROJECT, env.get("smoke")).path
+        path = proj_elf(TARGET, env.get("smoke")).path
         os.execv('/usr/bin/gdb', ['/usr/bin/gdb', path])
 
     gdb = Command('gdb.txt', [], gdb_run)
-    Depends(gdb, proj_elf(PROJECT))
+    Depends(gdb, proj_elf(TARGET))
     Alias('gdb', gdb)
 
     gdb_smoke = Command('gdb_smoke.txt', [], gdb_run, smoke=True)
-    Depends(gdb_smoke, proj_elf(PROJECT, True))
+    Depends(gdb_smoke, proj_elf(TARGET, True))
     Alias('gdb_smoke', gdb_smoke)
 
 ###########################################################
 # Helper targets for arm
 ###########################################################
 
-if PLATFORM == 'arm' and PROJECT:
+if PLATFORM == 'arm' and TYPE == 'project':
+    # display memory info for the project
+    if MEM_REPORT == 'true':
+        get_mem_report = Action("python3 scons/mem_report.py " + "build/arm/bin/projects/{}".format(TARGET))
+        env.AddPostAction(proj_bin(TARGET, False), get_mem_report)
+        
     # flash the MCU using openocd
     def flash_run(target, source, env):
         OPENOCD = 'openocd'
@@ -466,18 +501,18 @@ if PLATFORM == 'arm' and PROJECT:
             '-f target/stm32f0x.cfg',
             '-f {}/stm32f0-openocd.cfg'.format(PLATFORM_DIR),
             '-c "stm32f0x.cpu configure -rtos FreeRTOS"',
-            '-c "stm_flash {}"'.format(proj_bin(PROJECT, env.get("smoke"))),
+            '-c "stm_flash {}"'.format(proj_bin(TARGET, env.get("smoke"))),
             '-c shutdown'
         ]
         cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
         subprocess.run(cmd, shell=True)
 
     flash = Command('flash.txt', [], flash_run)
-    Depends(flash, proj_bin(PROJECT))
+    Depends(flash, proj_bin(TARGET))
     Alias('flash', flash)
 
     flash_smoke = Command('flash_smoke.txt', [], flash_run, smoke=True)
-    Depends(flash_smoke, proj_bin(PROJECT, True))
+    Depends(flash_smoke, proj_bin(TARGET, True))
     Alias('flash_smoke', flash_smoke)
 
 

@@ -39,7 +39,10 @@ README_TEMPLATE = Template("""\
 
     """)
 
+
 DEFAULT_DEPS = ["FreeRTOS", "ms-common"]
+
+main_template_file = open(os.path.join('template', 'main_template.txt'), 'r')
 
 def generate_config(target_type):
     """Generates a new config.json file for a project/library.
@@ -97,6 +100,9 @@ def new_target(target_type, name):
 
     with open(os.path.join(proj_path, 'README.md'), 'w') as readme_file:
         readme_file.write(textwrap.dedent(README_TEMPLATE.substitute({'name': name})))
+
+    with open(os.path.join(proj_path, 'src', 'main.c'), 'w') as main_file:
+        main_file.write(textwrap.dedent(main_template_file.read()))
 
     print('Created new {0} {1}'.format(target_type, name))
 

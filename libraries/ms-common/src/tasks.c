@@ -8,7 +8,7 @@
 
 // End task semaphore.
 static StaticSemaphore_t s_end_task_sem;
-static SemaphoreHandle_t s_end_task_handle;
+static SemaphoreHandle_t s_end_task_handle = NULL;
 
 // Add any setup or teardown that needs to be done for every task here.
 static void prv_task(void *params) {
@@ -48,6 +48,11 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context) {
     task->stack_size = TASK_MIN_STACK_SIZE;
   }
 
+  // Task already created
+  if (task->handle != NULL) {
+    return STATUS_CODE_OK;
+  }
+
   task->context = context;
   task->handle = xTaskCreateStatic(prv_task, task->name, task->stack_size, task, priority,
                                    task->stack, &task->tcb);
@@ -56,6 +61,11 @@ StatusCode tasks_init_task(Task *task, TaskPriority priority, void *context) {
 }
 
 void tasks_start(void) {
+  if (s_end_task_handle == NULL) {
+    LOG_CRITICAL("s_end_task_sem not initialized!\n");
+    return;
+  }
+
   vTaskStartScheduler();
 
   // We expect the scheduler to stop in task tests, but it's a critical problem otherwise.
@@ -92,4 +102,8 @@ StatusCode send_task_end() {
     return STATUS_CODE_RESOURCE_EXHAUSTED;
   }
   return STATUS_CODE_OK;
+}
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName) {
+  LOG_CRITICAL("CRITICAL: Task '%s' has overflowed its allocated stack space.\n", pcTaskName);
 }

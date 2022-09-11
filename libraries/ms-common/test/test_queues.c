@@ -30,7 +30,7 @@ void setup_test(void) {
 
 void teardown_test(void) {}
 
-TASK(sendMessages, TASK_STACK_512) {
+TASK(sendMessages, TASK_MIN_STACK_SIZE) {
   BaseType_t status;
   uint8_t index = 0;
 
@@ -45,7 +45,7 @@ TASK(sendMessages, TASK_STACK_512) {
   }
 }
 
-TASK(receiveMessages, TASK_STACK_512) {
+TASK(receiveMessages, TASK_MIN_STACK_SIZE) {
   BaseType_t status;
   uint8_t outstr = 0;
   uint8_t prev_outstr = 0;
@@ -70,7 +70,7 @@ TASK(receiveMessages, TASK_STACK_512) {
   }
 }
 
-TASK(peekMessages, TASK_STACK_512) {
+TASK(peekMessages, TASK_MIN_STACK_SIZE) {
   BaseType_t status;
   uint8_t outstr = 0;
 

@@ -13,22 +13,9 @@ void teardown_test(void) {}
 #define NUM_TEST_EVENTS 7
 static Event s_notify_events[NUM_TEST_EVENTS] = { 0, 1, 2, 4, 8, 16, 31 };
 
-DECLARE_TASK(notify_task);
 DECLARE_TASK(receive_task);
-// Notifies task under test
-TASK(notify_task, TASK_STACK_512) {
-  // Delay, then send first message
-  delay_ms(1);
-  TEST_ASSERT_OK(notify(receive_task, s_notify_events[0]));
-  // Allow receive to catch up
-  delay_ms(1);
-  // Send all above notification in one fell swoop
-  for (uint8_t i = 0; i < NUM_TEST_EVENTS; i++) {
-    TEST_ASSERT_OK(notify(receive_task, s_notify_events[i]));
-  }
-}
 
-TASK(receive_task, TASK_STACK_512) {
+TASK(receive_task, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   // First notify call, nothing should have arrived
@@ -59,8 +46,15 @@ void test_invalid_args(void) {
 
 TEST_IN_TASK
 void test_notifications() {
-  tasks_init_task(notify_task, TASK_PRIORITY(1), NULL);
   tasks_init_task(receive_task, TASK_PRIORITY(1), NULL);
-
+  // Delay, then send first message
+  delay_ms(1);
+  TEST_ASSERT_OK(notify(receive_task, s_notify_events[0]));
+  // Allow receive to catch up
+  delay_ms(1);
+  // Send all above notification in one fell swoop
+  for (uint8_t i = 0; i < NUM_TEST_EVENTS; i++) {
+    TEST_ASSERT_OK(notify(receive_task, s_notify_events[i]));
+  }
   delay_ms(20);
 }
