@@ -1,14 +1,10 @@
 #include "log.h"
 
 #define ITEM_SIZE MAX_LOG_SIZE
-<<<<<<< HEAD
-#define QUEUE_LENGTH 32
-=======
 #define QUEUE_LENGTH 10
->>>>>>> main
 
-    // Holds the output of snprintf
-    char log_buffer[MAX_LOG_SIZE];
+// Holds the output of snprintf
+char log_buffer[MAX_LOG_SIZE];
 
 // s_log_queue will hold the queue structure.
 static StaticQueue_t s_log_queue;
