@@ -4,6 +4,7 @@
 #include "log.h"
 #include "soft_timer.h"
 #include "task_test_helpers.h"
+#include "tasks.h"
 #include "test_helpers.h"
 #include "unity.h"
 
@@ -201,12 +202,7 @@ void test_pin_continuous() {
 
   vTaskDelay(60);
 
-<<<<<<< HEAD
-  vTaskEndScheduler();
-
-  == == == =
->>>>>>> main
-               uint32_t notification = 0;
+  uint32_t notification = 0;
   notify_get(&notification);
   TEST_ASSERT_NOT_EQUAL(notification, 0);
 }
