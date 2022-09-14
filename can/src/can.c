@@ -19,10 +19,8 @@ static StaticSemaphore_t s_can_rx_sem;
 static SemaphoreHandle_t s_can_tx_sem_handle;
 static StaticSemaphore_t s_can_tx_sem;
 
-bool CAN_FILTER_IN_EN = true;
-
-#define CAN_RX_EVENT (1 << 0)
-#define CAN_FILTER_IN_EN 0
+//takes 1 for filter_in, 2 for filter_out and other values are no filter 
+static int s_can_filter_in_en = 0;
 
 StatusCode run_can_rx_cycle()
 {
@@ -110,8 +108,6 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
     status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
     status_ok_or_return(tasks_init_task(CAN_TX, TASK_PRIORITY(2), NULL));
 
-    status_ok_or_return(subscribe(CAN_TX, TOPIC_1, CAN_RX_EVENT));
-
     //status_ok_or_return(subscribe(CAN_TX->handle, TOPIC_1, CAN_RX_EVENT));
   }
   return STATUS_CODE_OK;
@@ -149,7 +145,7 @@ StatusCode can_add_filter_in(CanMessageId msg_id) {
     return status_code(STATUS_CODE_UNINITIALIZED);
   } else if (msg_id >= CAN_MSG_MAX_IDS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
-  } else if (!CAN_FILTER_IN_EN) {
+  } else if (s_can_filter_in_en == 1) {
     return status_msg(STATUS_CODE_UNINITIALIZED, "CAN: CAN filter in function is not enabled");
   }
 
@@ -165,7 +161,7 @@ StatusCode can_add_filter_out(CanMessageId msg_id) {
     return status_code(STATUS_CODE_UNINITIALIZED);
   } else if (msg_id >= CAN_MSG_MAX_IDS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
-  } else if (CAN_FILTER_IN_EN) {
+  } else if (s_can_filter_in_en == 2) {
     return status_msg(STATUS_CODE_UNINITIALIZED, "CAN: CAN filter out function is not enabled");
   }
 
