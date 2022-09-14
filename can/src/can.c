@@ -20,7 +20,7 @@ static SemaphoreHandle_t s_can_tx_sem_handle;
 static StaticSemaphore_t s_can_tx_sem;
 
 //takes 1 for filter_in, 2 for filter_out and default is unset
-static int s_can_filter_in_en;
+static int s_can_filter_in_en = 0;
 
 StatusCode run_can_rx_cycle()
 {
