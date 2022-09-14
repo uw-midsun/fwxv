@@ -34,6 +34,7 @@ int main() {
   can_add_filter_out(0x01a);
 
   tasks_init_task(testing_task, TASK_PRIORITY(2), NULL);
+  tasks_init();
 
   tasks_start();
 
