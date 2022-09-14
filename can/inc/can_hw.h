@@ -12,15 +12,11 @@
 #include "status.h"
 #include "can_queue.h"
 
-// Used to process HW events within the CAN ISR, ideally as short as possible.
-typedef void (*CanHwEventHandlerCb)(void *context);
-
-typedef enum {
-  CAN_HW_EVENT_TX_READY = 0,
-  CAN_HW_EVENT_MSG_RX,
-  CAN_HW_EVENT_BUS_ERROR,
-  NUM_CAN_HW_EVENTS
-} CanHwEvent;
+#ifdef CAN_HW_DEV_USE_CAN0
+#define CAN_HW_DEV_INTERFACE "can0"
+#else
+#define CAN_HW_DEV_INTERFACE "vcan0"
+#endif
 
 typedef enum {
   CAN_HW_BUS_STATUS_OK = 0,

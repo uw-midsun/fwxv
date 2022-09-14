@@ -1,0 +1,51 @@
+#include "log.h"
+#include "tasks.h"
+#include "{{data['proj_name']}}_{{data['task_name']}}_task.h"
+
+static SemaphoreHandle_t s_{{data['proj_name']}}_{{data['task_name']}}_sem_handle;
+static StaticSemaphore_t s_{{data['proj_name']}}_{{data['task_name']}}_sem;
+
+void run_{{data['proj_name']}}_{{data['task_name']}}_cycle()
+{
+    BaseType_t ret = xSemaphoreGive(s_{{data['proj_name']}}_{{data['task_name']}}_sem_handle);
+
+    if (ret == pdFALSE) {
+        return STATUS_CODE_INTERNAL_ERROR;
+    }
+
+    return STATUS_CODE_OK;
+}
+
+TASK({{data['task_name']}}, TASK_MIN_STACK_SIZE)
+{
+    int counter = 0;
+    while (true)
+    {
+        xSemaphoreTake(s_{{data['proj_name']}}_{{data['task_name']}}_sem_handle, portMAX_DELAY);
+        counter++;
+        run_{{data['proj_name']}}_{{data['task_name']}}_fast_cycle();
+        if ((counter % 10) == 0)
+            run_{{data['proj_name']}}_{{data['task_name']}}_medium_cycle();
+        if ((counter % 100) == 0)
+            run_{{data['proj_name']}}_{{data['task_name']}}_slow_cycle();
+        xSemaphoreGive(s_end_task_sem);
+    }
+}
+
+void run_{{data['proj_name']}}_{{data['task_name']}}_fast_cycle()
+{
+}
+
+void run_{{data['proj_name']}}_{{data['task_name']}}_medium_cycle()
+{
+}
+
+void run_{{data['proj_name']}}_{{data['task_name']}}_slow_cycle()
+{
+}
+
+StatusCode init_{{data['proj_name']}}_{{data['task_name']}}()
+{
+    status_ok_or_return(tasks_init_task({{data['task_name']}}, TASK_PRIORITY(2), NULL));
+    return STATUS_CODE_OK;
+}

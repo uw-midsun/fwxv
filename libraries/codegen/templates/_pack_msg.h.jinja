@@ -17,7 +17,7 @@ void can_pack_{{message}}(CanMessage* msg_ptr {%- for signal in signals -%}, uin
 {%- endset -%}
 
 {%- set function_body -%}
-can_pack_impl_u{{size}}(msg_ptr, SYSTEM_CAN_DEVICE_{{data["Board"] | upper}}, SYSTEM_CAN_MESSAGE_{{data["Board"] | upper}}_{{message|upper}}, {{(signals | count) * size // 8 }}
+can_pack_impl_u{{size}}(msg_ptr, SYSTEM_CAN_MESSAGE_{{data["Board"] | upper}}_{{message|upper}}, {{(signals | count) * size // 8 }}
     {%- for signal in signals -%}, {{signal}}_u{{size}}{%- endfor -%}
     {%- for empty in range(signals | length, num_of_params) -%}, CAN_PACK_IMPL_EMPTY{%- endfor -%}); 
 {%- endset %}
