@@ -34,7 +34,6 @@ TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
 
 LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
 
-
 # Recursively get library dependencies for entry
 def get_lib_deps(entry):
     config = parse_config(entry)
@@ -105,6 +104,12 @@ def generate_can_files(env, target=[], source=[], project=TARGET):
     target += source_files + header_files
     return source_files, header_dir
 
+def addBuildPath(string: str):
+    if (not string.startswith(f"build/{PLATFORM}")):
+        return f"#/build/{PLATFORM}/{string}"
+    else:
+        return f"#/{string}"
+
 # Create appropriate targets for all projects and libraries
 for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:    
     # Glob the source files from OBJ_DIR because it's a variant dir
@@ -143,12 +148,16 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     lib_incs = [lib_dir.Dir('inc') for lib_dir in LIB_DIRS]
     lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
 
+    # Add #/build/{PLATFORM} to srcs path so that .o files stays in build
+    srcs = [addBuildPath(x.path) for x in srcs]
+
     env.Append(CPPDEFINES=[GetOption('define')])
     if entry in PROJ_DIRS or entry in SMOKE_DIRS:
         is_smoke = entry in SMOKE_DIRS
         lib_deps = get_lib_deps(entry)
         output = proj_elf(entry.name, is_smoke)
         # SCons automagically handles object creation and linking
+
         target = env.Program(
             target=output,
             source=srcs,
@@ -185,7 +194,7 @@ def run_python(target, source, env):
 
 # Build all projects when you just run `scons`
 if (TYPE != 'python'):
-    Default([proj.name for proj in PROJ_DIRS])
+    Default(TARGET or [proj.name for proj in PROJ_DIRS])
 else:
     py = Command('py.txt', [], run_python)
     Default(py)

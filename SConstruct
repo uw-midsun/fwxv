@@ -90,6 +90,9 @@ if PLATFORM == 'x86':
 elif PLATFORM == 'arm':
     env = SConscript('platform/arm.py')
 
+
+# env.VariantDir('build', '.', duplicate=0)
+
 TYPE = None
 if PROJECT:
     TYPE = 'project'
@@ -124,12 +127,12 @@ AddOption(
 SANITIZER = GetOption('sanitizer')
 
 if SANITIZER == 'asan':
-    env['CCFLAGS'] += ["-fsanitize=address"]
-    env['CXXFLAGS'] += ["-fsanitize=address"]
+    env['CCFLAGS']   += ["-fsanitize=address"]
+    env['CXXFLAGS']  += ["-fsanitize=address"]
     env['LINKFLAGS'] += ["-fsanitize=address"]
 elif SANITIZER == 'tsan':
-    env['CCFLAGS'] += ["-fsanitize=thread"]
-    env['CXXFLAGS'] += ["-fsanitize=thread"]
+    env['CCFLAGS']   += ["-fsanitize=thread"]
+    env['CXXFLAGS']  += ["-fsanitize=thread"]
     env['LINKFLAGS'] += ["-fsanitize=thread"]
 
 env['CCCOMSTR']     = "Compiling  $TARGET"
@@ -142,15 +145,15 @@ env['RANLIBCOMSTR'] = "Indexing   $TARGET"
 # Directory setup
 ###########################################################
 
-BUILD_DIR = Dir('build').Dir(PLATFORM)
+BUILD_DIR = Dir('#/build').Dir(PLATFORM)
 BIN_DIR = BUILD_DIR.Dir('bin')
 OBJ_DIR = BUILD_DIR.Dir('obj')
 TEST_DIR = BUILD_DIR.Dir('test')
 
-PROJ_DIR = Dir('projects')
-LIB_DIR = Dir('libraries')
-SMOKE_DIR = Dir('smoke')
-CAN_DIR = Dir('can')
+PROJ_DIR = Dir('#/projects')
+LIB_DIR = Dir('#/libraries')
+SMOKE_DIR = Dir('#/smoke')
+CAN_DIR = Dir('#/can')
 
 PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
 LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
@@ -158,7 +161,7 @@ SMOKE_DIRS = [entry for entry in SMOKE_DIR.glob('*')]
 
 LIB_BIN_DIR = BIN_DIR.Dir('libraries')
 
-PLATFORM_DIR = Dir('platform')
+PLATFORM_DIR = Dir('#/platform')
 
 CODEGEN_DIR = LIB_DIR.Dir("codegen")
 BOARDS_DIR = CODEGEN_DIR.Dir("boards")
@@ -167,10 +170,12 @@ TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
 
 LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
 
+VariantDir('build/arm', '.', duplicate=0)
+
 ###########################################################
 # Build
 ###########################################################
-SConscript('scons/build.scons', exports='VARS', variant_dir='build', duplicate=0)
+SConscript('scons/build.scons', exports='VARS')
 
 ###########################################################
 # Testing
@@ -194,36 +199,6 @@ Alias('clean', clean)
 # Linting and Formatting
 ###########################################################
 SConscript('scons/lint_format.scons', exports='VARS')
-
-
-
-
-
-BUILD_DIR = Dir('#/build').Dir(PLATFORM)
-BIN_DIR = BUILD_DIR.Dir('bin')
-OBJ_DIR = BUILD_DIR.Dir('obj')
-TEST_DIR = BUILD_DIR.Dir('test')
-
-PROJ_DIR = Dir('#/projects')
-LIB_DIR = Dir('#/libraries')
-SMOKE_DIR = Dir('#/smoke')
-CAN_DIR = Dir('#/can')
-
-PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
-LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
-SMOKE_DIRS = [entry for entry in SMOKE_DIR.glob('*')]
-
-LIB_BIN_DIR = BIN_DIR.Dir('libraries')
-
-PLATFORM_DIR = Dir('platform')
-
-CODEGEN_DIR = LIB_DIR.Dir("codegen")
-BOARDS_DIR = CODEGEN_DIR.Dir("boards")
-GENERATOR = CODEGEN_DIR.File("generator.py")
-TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
-
-LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
-
 
 # Recursively get library dependencies for entry
 def get_lib_deps(entry):
