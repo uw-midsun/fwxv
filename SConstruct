@@ -208,9 +208,10 @@ def generate_can_files(env, target=[], source=[], project=PROJECT):
     # TODO: Fix up system_can.dbc output directory
     for template in templates:
         if "can_board_ids" in template.name:
+            # TODO: Need to fix for multiple projects that depend on can_codegen.h
             env.Command(
                 LIBRARIES_INC_DIR.File(template.name[:-6]),
-                source,
+                [BOARDS_DIR, TEMPLATES_DIR, GENERATOR], # TODO: Fix this part
                 "{} -y {} -t {} -f {}".format(base_exec, BOARDS_DIR.File("boards.yaml"), template, LIBRARIES_INC_DIR)
             )
             target.append(LIBRARIES_INC_DIR.File(template.name[:-6]))
@@ -241,7 +242,7 @@ def generate_can_files(env, target=[], source=[], project=PROJECT):
 env.AddMethod(generate_can_files, "GenerateCanFiles")
 
 # Create appropriate targets for all projects and libraries
-for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:    
+for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     # Glob the source files from OBJ_DIR because it's a variant dir
     # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
     # str(entry) is e.g. 'projects/example', so this is like build/obj/projects/example/src
@@ -252,7 +253,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
     
     config = parse_config(entry)
-    
+
     if config["can"]:
         # TODO: Current output files are like so
         # - /build/x86

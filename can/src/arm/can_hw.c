@@ -99,7 +99,7 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   return STATUS_CODE_OK;
 }
 
-StatusCode can_hw_add_filter(uint32_t mask, uint32_t filter, bool extended) {
+StatusCode can_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extended) {
   if (s_num_filters >= CAN_HW_NUM_FILTER_BANKS) {
     return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "CAN HW: Ran out of filter banks.");
   }
@@ -114,6 +114,11 @@ StatusCode can_hw_add_filter(uint32_t mask, uint32_t filter, bool extended) {
 
   prv_add_filter(s_num_filters, mask_val, filter_val);
   s_num_filters++;
+  return STATUS_CODE_OK;
+}
+
+StatusCode can_hw_add_filter_out(uint32_t mask, uint32_t filter, bool extended) {
+  //Empty function so scons build doesn't fail
   return STATUS_CODE_OK;
 }
 
