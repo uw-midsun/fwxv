@@ -201,12 +201,7 @@ void test_pin_continuous() {
 
   vTaskDelay(60);
 
-<<<<<<< HEAD
-  vTaskEndScheduler();
-
-  == == == =
->>>>>>> main
-               uint32_t notification = 0;
+  uint32_t notification = 0;
   notify_get(&notification);
   TEST_ASSERT_NOT_EQUAL(notification, 0);
 }

@@ -170,7 +170,7 @@ TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
 
 LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
 
-VariantDir('build/arm', '.', duplicate=0)
+VariantDir(f'build/{PLATFORM}', '.', duplicate=0)
 
 ###########################################################
 # Build
