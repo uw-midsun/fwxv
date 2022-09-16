@@ -6,8 +6,7 @@
 #include "FreeRTOS.h"
 #include "gpio.h"
 #include "log.h"
-#include "semphr.h"
-#include "status.h"
+#include "semphr.h" #include "status.h"
 #include "stm32f0xx.h"
 
 enum {

@@ -122,18 +122,7 @@ def make_new_target(target, source, env):
     else:
         new_target(TYPE, TARGET)
 
-def make_new_task(target, source, env):
-    # No project or library option provided
-    if TYPE not in ["project", "library"]:
-        print("Missing project or library name. Expected --project=..., or --library=...")
-        sys.exit(1)
-
-    # Chain or's to select the first non-None value 
-    new_task(TYPE, TARGET, GetOption('name'))
-
 new = Command('new_proj.txt', [], make_new_target)
 Alias('new', new)
 new = Command('new_smoke.txt', [], make_new_target, smoke=True)
 Alias('new_smoke', new)
-new = Command('new_task.txt', [], make_new_task)
-Alias('new_task', new)

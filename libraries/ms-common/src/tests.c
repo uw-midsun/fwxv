@@ -9,8 +9,7 @@ static StaticSemaphore_t s_test_end_sem;
 static SemaphoreHandle_t s_test_end_handle;
 
 // Maximum number of tests that can take from test end semaphore
-// and the max number of tests that we begin with for test start semaphore
-#define MAX_NUM_TESTS 10
+// and the max number of tests that we begin with for test start semaphore#define MAX_NUM_TESTS 10
 
 // The number of ticks to delay for take functions
 TickType_t TICKS_TO_DELAY = 100;
