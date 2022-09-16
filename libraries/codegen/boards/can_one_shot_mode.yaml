@@ -1,0 +1,10 @@
+---
+  Messages:
+    one_shot_msg:
+      id: 0
+      target:
+       - empty
+      critical: true
+      signals:
+        status:
+          length: 8

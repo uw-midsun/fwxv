@@ -259,4 +259,3 @@ if PLATFORM == 'arm' and TYPE == 'project':
     flash_smoke = Command('flash_smoke.txt', [], flash_run, smoke=True)
     Depends(flash_smoke, proj_bin(TARGET, True))
     Alias('flash_smoke', flash_smoke)
-
