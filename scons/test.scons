@@ -59,8 +59,8 @@ GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
 tests = {}
 
 def addBuildPath(string: str):
-    if (not string.startswith(f"build/{PLATFORM}")):
-        return f"#/build/{PLATFORM}/{string}"
+    if (not string.startswith('build')):
+        return f"#/{OBJ_DIR.path}/{string}"
     else:
         return f"#/{string}"
 
@@ -77,8 +77,8 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
             mocks = config['mocks'][test_module_name]
             mock_link_flags = ['-Wl,-wrap,' + mock for mock in mocks]
 
-        objs = OBJ_DIR.Dir(str(entry)).Dir('src').glob('*.o')
-        objs += OBJ_DIR.Dir(str(entry)).Dir('src').Dir(PLATFORM).glob('*.o')
+        objs = OBJ_DIR.Dir(str(entry.path)).Dir('src').glob('*.o')
+        objs += OBJ_DIR.Dir(str(entry.path)).Dir('src').Dir(PLATFORM).glob('*.o')
         entry_objects = []
         for obj in objs:
             if 'main.o' not in obj.name:
@@ -105,6 +105,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
 
         srcs = [test_file] + test_runner + entry_objects
         srcs = [addBuildPath(x.path) for x in srcs]
+
         target = env.Program(
             target=output,
             source=srcs,

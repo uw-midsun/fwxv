@@ -105,8 +105,8 @@ def generate_can_files(env, target=[], source=[], project=TARGET):
     return source_files, header_dir
 
 def addBuildPath(string: str):
-    if (not string.startswith(f"build/{PLATFORM}")):
-        return f"#/build/{PLATFORM}/{string}"
+    if (not string.startswith('build')):
+        return f"#/{OBJ_DIR.path}/{string}"
     else:
         return f"#/{string}"
 

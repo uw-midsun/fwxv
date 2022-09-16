@@ -148,29 +148,13 @@ env['RANLIBCOMSTR'] = "Indexing   $TARGET"
 BUILD_DIR = Dir('#/build').Dir(PLATFORM)
 BIN_DIR = BUILD_DIR.Dir('bin')
 OBJ_DIR = BUILD_DIR.Dir('obj')
-TEST_DIR = BUILD_DIR.Dir('test')
 
 PROJ_DIR = Dir('#/projects')
-LIB_DIR = Dir('#/libraries')
 SMOKE_DIR = Dir('#/smoke')
-CAN_DIR = Dir('#/can')
-
-PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
-LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
-SMOKE_DIRS = [entry for entry in SMOKE_DIR.glob('*')]
-
-LIB_BIN_DIR = BIN_DIR.Dir('libraries')
 
 PLATFORM_DIR = Dir('#/platform')
 
-CODEGEN_DIR = LIB_DIR.Dir("codegen")
-BOARDS_DIR = CODEGEN_DIR.Dir("boards")
-GENERATOR = CODEGEN_DIR.File("generator.py")
-TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
-
-LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
-
-VariantDir(f'build/{PLATFORM}', '.', duplicate=0)
+VariantDir(OBJ_DIR, '.', duplicate=0)
 
 ###########################################################
 # Build
@@ -200,16 +184,7 @@ Alias('clean', clean)
 ###########################################################
 SConscript('scons/lint_format.scons', exports='VARS')
 
-# Recursively get library dependencies for entry
-def get_lib_deps(entry):
-    config = parse_config(entry)
-    deps = config['libs'] + config['{}_libs'.format(PLATFORM)]
-    for dep in deps:
-        deps += get_lib_deps(LIB_DIR.Dir(dep))
-    return deps
 
-def lib_bin(lib_name):
-    return BIN_DIR.Dir(LIB_DIR.name).File('lib{}.a'.format(lib_name))
 
 # ELFs are used for gdb and x86
 def proj_elf(proj_name, is_smoke=False):
@@ -284,3 +259,4 @@ if PLATFORM == 'arm' and TYPE == 'project':
     flash_smoke = Command('flash_smoke.txt', [], flash_run, smoke=True)
     Depends(flash_smoke, proj_bin(TARGET, True))
     Alias('flash_smoke', flash_smoke)
+
