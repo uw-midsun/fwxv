@@ -1,5 +1,5 @@
 ---
-variables: # Replace with variable names and corresponding types
+variables: # Replace with the names and corresponding types of the variables to be set
   var_1: type_1
   var_2: type_2
   var_3: type_3
