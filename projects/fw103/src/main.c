@@ -3,46 +3,74 @@
 
 #include "FreeRTOS.h"
 #include "tasks.h"
-
-#include "gpio.h"
-#include "log.h"
-#include "misc.h"
+#include "queues.h"
+#include "status.h"
 #include "delay.h"
 
-// Non blocking delay. Simply consumes cpu cycles until a given time has passed
-static void prv_delay(const TickType_t delay_ms) {
-  TickType_t curr_tick = xTaskGetTickCount();
-  while(xTaskGetTickCount() - curr_tick < pdMS_TO_TICKS(delay_ms))
-  {}
-}
+#include "log.h"
+#include "misc.h"
+
+
+#define ITEM_SZ 6
+#define QUEUE_LEN 5
+#define BUF_SIZE (QUEUE_LEN * ITEM_SZ)
+
+static const char s_list[QUEUE_LEN][ITEM_SZ] = {
+	"Item1",
+	"Item2",
+	"Item3",
+	"Item4",
+	"Item5"
+};
+
+// Task static entities
+static uint8_t s_queue1_buf[BUF_SIZE];
+static Queue s_queue1 = {
+  .item_size = ITEM_SZ,
+  .num_items = QUEUE_LEN,
+  .storage_buf = s_queue1_buf,
+};
+
 
 TASK(task1, TASK_STACK_512) {
-  int counter1 = 0;
+  LOG_DEBUG("Task 1 initialized!\n");
+  StatusCode ret;
   while (true) {
-    LOG_DEBUG("counter1=%d\n", counter1);
-    counter1++;
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    for(u_int8_t i = 0; i < QUEUE_LEN; i++){
+      StatusCode ret = queue_send(&s_queue1, s_list[i], 0);
+      if(ret != STATUS_CODE_OK){
+        LOG_DEBUG("write to queue failed");
+      }
+      delay_ms(100);
+    }
   }
 }
 
 TASK(task2, TASK_STACK_512) {
-  int counter2 = 0;
+  LOG_DEBUG("Task 2 initialized!\n");
+  const char outstr[ITEM_SZ];
+  StatusCode ret;
   while (true) {
-    LOG_DEBUG("counter2=%d\n", counter2);
-    counter2++;
-    prv_delay(1000);
+    StatusCode ret = queue_receive(&s_queue1, outstr, 200);
+    if(ret != STATUS_CODE_OK){
+      LOG_DEBUG("read from queue failed");
+    }else{
+      LOG_DEBUG("received %s from queue\n", outstr);
+    }
+
   }
 }
 
 int main(void) {
-    log_init();
-    // Create tasks here
-    tasks_init();
-    tasks_init_task(task1, TASK_PRIORITY(1), NULL);
-    tasks_init_task(task2, TASK_PRIORITY(0), NULL);
-    LOG_DEBUG("Program start...\n");
-    // Start the scheduler
-    tasks_start();
-    return 0;
-}
+  log_init();
+  tasks_init();
+  // Initialize queues here
+  queue_init(&s_queue1);
+  tasks_init_task(task1, TASK_PRIORITY(2), NULL);
+  tasks_init_task(task2, TASK_PRIORITY(2), NULL);
 
+  LOG_DEBUG("Program start...\n");
+  tasks_start();
+
+  return 0;
+}
