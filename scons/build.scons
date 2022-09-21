@@ -74,6 +74,7 @@ def generate_can_files(env, target=[], source=[], project=TARGET):
     # TODO: Fix up system_can.dbc output directory
     for template in templates:
         if "can_board_ids" in template.name:
+            print(template.name)
             env.Command(
                 LIBRARIES_INC_DIR.File(template.name[:-6]),
                 source,
