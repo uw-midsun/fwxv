@@ -57,7 +57,7 @@ int main() {
 
   LOG_DEBUG("Welcome to CAN!\n");
   can_init(&s_can_storage, &can_settings);
-  // can_add_filter(SYSTEM_CAN_MESSAGE_NEW_CAN_TRANSMIT_MSG1);
+  can_add_filter_in(SYSTEM_CAN_MESSAGE_NEW_CAN_TRANSMIT_MSG1);
 
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
