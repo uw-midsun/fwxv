@@ -1,0 +1,9 @@
+{% set variables = data["variables"]}
+#ifdef MS_TEST
+{% for var, type in variables.items() %}
+void set_{{var}}({{type}} val)
+{
+    {{var}} = val;
+}
+{% endfor %}
+#endif MS_TEST
