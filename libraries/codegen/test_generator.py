@@ -93,7 +93,7 @@ if __name__ == "__main__":
     DATA = read_yaml(ARGPARSER.yaml_file)
 
     for template_iterable in ARGPARSER.template:
-        template_dir = template_iterable.split('/')[:-1]
+        template_dir = '/'.join(template_iterable.split('/')[:-1])
         template_name = template_iterable.split('/')[-1]
         templateLoader = jinja2.FileSystemLoader(searchpath=template_dir)
         env = jinja2.Environment(loader=templateLoader)
