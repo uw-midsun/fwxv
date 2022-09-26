@@ -6,8 +6,14 @@
 #include "test_helpers.h"
 #include "unity.h"
 
-static bool triggered = false;
+static volatile bool triggered = false;
 static SoftTimerId last_triggered_id;
+
+void setup_test(void) {
+  log_init();
+}
+
+void teardown_test(void) {}
 
 void prv_set(SoftTimerId id) {
   triggered = true;
@@ -19,7 +25,8 @@ void prv_run_callback(SoftTimerId t) {}
 static SoftTimer s_timer;
 static SoftTimer s_timer_2;
 
-TASK_TEST(soft_timer_test, TASK_STACK_1024) {
+TEST_IN_TASK
+void test_soft_timer() {
   TickType_t last_wake = xTaskGetTickCount();
   for (int i = 0; i < 3; ++i) {
     triggered = false;
@@ -53,12 +60,13 @@ TASK_TEST(soft_timer_test, TASK_STACK_1024) {
 
     xTaskDelayUntil(&last_wake, 5);  // soft timer should be finished
 
-    // TEST_ASSERT_TRUE(triggered);
+    TEST_ASSERT_TRUE(triggered);
     TEST_ASSERT_FALSE(soft_timer_inuse(&s_timer));
   }
 }
 
-TASK_TEST(multiple_timer, TASK_STACK_1024) {
+TEST_IN_TASK
+void test_multiple_timer() {
   for (int i = 0; i < 3; ++i) {
     triggered = false;
     // test soft timer start and cancel

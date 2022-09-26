@@ -4,7 +4,8 @@ import sys
 import subprocess
 import glob
 from scons.new_target import new_target
-from scons.preprocessor_filter import preprocessor_filter
+from scons.new_task import new_task
+# from scons.preprocessor_filter import preprocessor_filter
 
 ###########################################################
 # Build arguments
@@ -46,9 +47,27 @@ AddOption(
     action='store'
 )
 
+AddOption(
+    '--name',
+    dest='name',
+    type='string',
+    action='store'
+)
+
+# Adding Memory Report Argument to Environment Flags
+# Note platform needs to be explicitly set to arm
+
+AddOption(
+    '--mem-report',
+    dest='mem-report',
+    type='string',
+    action='store',
+)
+
 PLATFORM = GetOption('platform')
 PROJECT = GetOption('project')
 LIBRARY = GetOption('library')
+MEM_REPORT = GetOption('mem-report')
 
 ###########################################################
 # Environment setup
@@ -65,11 +84,33 @@ TEST_CFLAGS = ['-DMS_TEST']
 if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
     env['CCFLAGS'] += TEST_CFLAGS
 
+# Parse asan / tsan and Adding Sanitizer Argument to Environment Flags
+# Note platform needs to be explicitly set to x86
+
+AddOption(
+    '--sanitizer',
+    dest='sanitizer',
+    type='string',
+    action='store',
+    default="none"
+)
+SANITIZER = GetOption('sanitizer')
+
+if SANITIZER == 'asan':
+    env['CCFLAGS'] += ["-fsanitize=address"]
+    env['CXXFLAGS'] += ["-fsanitize=address"]
+    env['LINKFLAGS'] += ["-fsanitize=address"]
+elif SANITIZER == 'tsan':
+    env['CCFLAGS'] += ["-fsanitize=thread"]
+    env['CXXFLAGS'] += ["-fsanitize=thread"]
+    env['LINKFLAGS'] += ["-fsanitize=thread"]
+    
+
 env['CCCOMSTR'] = "Compiling $TARGET"
 env['LINKCOMSTR'] = "Linking $TARGET"
 env['ARCOMSTR'] = "Archiving $TARGET"
 env['ASCOMSTR'] = "Assembling $TARGET"
-env['RANLIBCOMSTR'] = "Indexing $TARGET"
+env['RANLIBCOMSTR'] = "Indexing $TARGET" 
 
 ###########################################################
 # Directory setup
@@ -167,9 +208,10 @@ def generate_can_files(env, target=[], source=[], project=PROJECT):
     # TODO: Fix up system_can.dbc output directory
     for template in templates:
         if "can_board_ids" in template.name:
+            # TODO: Need to fix for multiple projects that depend on can_codegen.h
             env.Command(
                 LIBRARIES_INC_DIR.File(template.name[:-6]),
-                source,
+                [BOARDS_DIR, TEMPLATES_DIR, GENERATOR], # TODO: Fix this part
                 "{} -y {} -t {} -f {}".format(base_exec, BOARDS_DIR.File("boards.yaml"), template, LIBRARIES_INC_DIR)
             )
             target.append(LIBRARIES_INC_DIR.File(template.name[:-6]))
@@ -200,7 +242,7 @@ def generate_can_files(env, target=[], source=[], project=PROJECT):
 env.AddMethod(generate_can_files, "GenerateCanFiles")
 
 # Create appropriate targets for all projects and libraries
-for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:    
+for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     # Glob the source files from OBJ_DIR because it's a variant dir
     # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
     # str(entry) is e.g. 'projects/example', so this is like build/obj/projects/example/src
@@ -211,7 +253,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
     
     config = parse_config(entry)
-    
+
     if config["can"]:
         # TODO: Current output files are like so
         # - /build/x86
@@ -238,7 +280,6 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
 
     env.Append(CPPDEFINES=[GetOption('define')])
-
     if entry in PROJ_DIRS or entry in SMOKE_DIRS:
         is_smoke = entry in SMOKE_DIRS
         lib_deps = get_lib_deps(entry)
@@ -257,7 +298,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         
         # .bin file only required for arm, not x86
         if PLATFORM == 'arm':
-            target = env.Bin(target=proj_bin(entry.name, is_smoke), source=target)
+            target = env.Bin(target=proj_bin(entry.name, is_smoke), source=target)  
     elif entry in LIB_DIRS:
         output = lib_bin(entry.name)
         target = env.Library(
@@ -266,7 +307,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
             CPPPATH=env['CPPPATH'] + [inc_dirs, lib_incs],
             CCFLAGS=env['CCFLAGS'] + config['cflags'],
         )
-
+                
     # Create an alias for the entry so we can do `scons leds` and it Just Works
     Alias(entry.name, target)
 
@@ -277,7 +318,7 @@ Default([proj.name for proj in PROJ_DIRS])
 # Testing
 ###########################################################
 
-GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.rb'
+GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.py'
 GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
 
 # tests dict maps proj/lib -> list of their test executables
@@ -313,29 +354,11 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         cpppath = env['CPPPATH'] + [inc_dirs, lib_incs]
         ccflags = env['CCFLAGS'] + config['cflags']
 
-        # Preprocess the test source file so the runner generator sees expanded macros
-        prefix_with = lambda prefix, dir_lists: ' '.join(
-            prefix + dir_.path for dirs in dir_lists for dir_ in dirs)
-        preprocessed_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_preprocessed.c'))
-        orig_test_file_path = Dir(str(entry)).Dir('test').File(test_file)
-        preprocessed = env.Command(
-            target=preprocessed_file,
-            source=test_file,
-            action=[
-                # -E to preprocess only, -dI to keep #include directives, @ to suppress printing
-                '@$CC -dI -E {} $CCFLAGS $SOURCE > .tmp'.format(prefix_with('-I', cpppath)),
-                Action(
-                    preprocessor_filter(str(orig_test_file_path), '.tmp'),
-                    cmdstr='Preprocessing $TARGET'),
-            ],
-            CCFLAGS=ccflags,
-        )
-
         # Create the test_*_runner.c file
         runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
-        test_runner = env.Command(runner_file, preprocessed,
+        test_runner = env.Command(runner_file, test_file,
             Action(
-                'ruby {} {} $SOURCE $TARGET'.format(GEN_RUNNER, GEN_RUNNER_CONFIG),
+                'python3 {} {} $SOURCE $TARGET'.format(GEN_RUNNER, GEN_RUNNER_CONFIG),
                 cmdstr='Generating test runner $TARGET'))
 
         output = TEST_DIR.Dir(entry.name).Dir('test').File(test_file.name.replace('.c', ''))
@@ -383,7 +406,7 @@ def get_test_list():
 def test_runner(target, source, env):
     test_list = get_test_list()
     for test in test_list:
-        subprocess.run(test.get_path())
+        subprocess.run(test.get_path()).check_returncode()
 
 test = Command('test.txt', [], test_runner)
 Depends(test, get_test_list())
@@ -392,6 +415,21 @@ Alias('test', test)
 ###########################################################
 # Helper targets
 ###########################################################
+
+def make_new_task(target, source, env):
+    # No project or library option provided
+    if not PROJECT and not LIBRARY:
+        print("Missing project or library name. Expected --project=..., or --library=...")
+        sys.exit(1)
+    
+    if PROJECT:
+        target_type = 'project'
+    elif LIBRARY:
+        target_type = 'library'
+
+    # Chain or's to select the first non-None value 
+    new_task(target_type, PROJECT or LIBRARY, GetOption('name'))
+
 
 def make_new_target(target, source, env):
     # No project or library option provided
@@ -413,11 +451,14 @@ new = Command('new_proj.txt', [], make_new_target)
 Alias('new', new)
 new = Command('new_smoke.txt', [], make_new_target, smoke=True)
 Alias('new_smoke', new)
-
+new = Command('new_task.txt', [], make_new_task)
+Alias('new_task', new)
 # 'clean.txt' is a dummy file that doesn't get created
 # This is required for phony targets for scons to be happy
 clean = Command('clean.txt', [], 'rm -rf build/*')
 Alias('clean', clean)
+
+
 
 ###########################################################
 # Linting and Formatting
@@ -509,7 +550,6 @@ Alias('lint', lint)
 format = Command('format.txt', [], run_format)
 Alias('format', format)
 
-
 ###########################################################
 # Helper targets for x86
 ###########################################################
@@ -547,6 +587,11 @@ if PLATFORM == 'x86' and PROJECT:
 ###########################################################
 
 if PLATFORM == 'arm' and PROJECT:
+    # display memory info for the project
+    if MEM_REPORT == 'true':
+        get_mem_report = Action("python3 scons/mem_report.py " + "build/arm/bin/projects/{}".format(PROJECT))
+        env.AddPostAction(proj_bin(PROJECT, False), get_mem_report)
+        
     # flash the MCU using openocd
     def flash_run(target, source, env):
         OPENOCD = 'openocd'

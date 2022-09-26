@@ -1,9 +1,10 @@
 #include "notify.h"
+
 #include "log.h"
 
 typedef struct Subscription {
   Event e;
-  TaskHandle_t task;
+  Task *task;
 } Subscription;
 
 static uint8_t s_topic_indices[NUM_TOPICS];
@@ -31,6 +32,20 @@ StatusCode event_from_notification(uint32_t *notification, Event *event) {
   }
 }
 
+bool notify_check_event(uint32_t *notification, Event event) {
+  if (!notification || event >= INVALID_EVENT) {
+    LOG_DEBUG("Provided bad event\n");
+    return false;
+  }
+  // Check event bit in notification
+  if ((1u << event) & *notification) {
+    *notification &= ~(1u << event);
+    return true;
+  } else {
+    return false;
+  }
+}
+
 StatusCode notify_get(uint32_t *notification) {
   return notify_wait(notification, 0);
 }
@@ -54,11 +69,11 @@ StatusCode notify_wait(uint32_t *notification, uint32_t ms_to_wait) {
   }
 }
 
-StatusCode notify(TaskHandle_t task, Event event) {
+StatusCode notify(Task *task, Event event) {
   if (event >= INVALID_EVENT) {
     return STATUS_CODE_INVALID_ARGS;
   }
-  BaseType_t result = xTaskNotify(task, 1u << event, eSetBits);
+  BaseType_t result = xTaskNotify(task->handle, 1u << event, eSetBits);
   // Should always return true
   if (result) {
     return STATUS_CODE_OK;
@@ -67,13 +82,13 @@ StatusCode notify(TaskHandle_t task, Event event) {
   }
 }
 
-void notify_from_isr(TaskHandle_t task, Event event) {
+void notify_from_isr(Task *task, Event event) {
   BaseType_t task_woken = 0;
-  xTaskNotifyFromISR(task, 1u << event, eSetBits, &task_woken);
+  xTaskNotifyFromISR(task->handle, 1u << event, eSetBits, &task_woken);
   portYIELD_FROM_ISR(task_woken);
 }
 
-StatusCode subscribe(TaskHandle_t task, Topic topic, Event event) {
+StatusCode subscribe(Task *task, Topic topic, Event event) {
   // Subscribes must happen before scheduler start
   if (!(xTaskGetSchedulerState() == taskSCHEDULER_NOT_STARTED)) {
     return STATUS_CODE_UNREACHABLE;
@@ -103,7 +118,6 @@ StatusCode publish(Topic topic) {
   // task at its specified event
   for (uint8_t sub = 0; sub < s_topic_indices[topic]; sub++) {
     Subscription *pub = &s_task_publish_table[topic][sub];
-    struct tskTaskControlBlock *t = pub->task;
     status_ok_or_return(notify(pub->task, pub->e));
   }
   return STATUS_CODE_OK;

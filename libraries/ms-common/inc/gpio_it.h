@@ -6,9 +6,9 @@
 
 #include "gpio.h"
 #include "interrupt_def.h"
+#include "notify.h"
 #include "status.h"
-
-typedef void (*GpioItCallback)(const GpioAddress *address, void *context);
+#include "task.h"
 
 // Initializes the interrupt handler for GPIO.
 void gpio_it_init(void);
@@ -17,9 +17,11 @@ void gpio_it_init(void);
 StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge);
 
 // Registers a new callback on a given port pin combination with the desired
-// settings.
+// settings. Set the notify value bit of the task when a gpio_it occurs.
+// The task to notify needs to be initialized before calling register interrupt.
+// Register interrupt needs to be called before scheduler starts.
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
-                                      InterruptEdge edge, GpioItCallback callback, void *context);
+                                      const Event event, const Task *task);
 
 // Triggers an interrupt in software.
 StatusCode gpio_it_trigger_interrupt(const GpioAddress *address);

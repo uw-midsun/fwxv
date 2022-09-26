@@ -2,7 +2,7 @@
 #ifdef MS_TEST
 {% for var, type in variables.items() %}
 {{type}} get_{{var}}() {
-    return {{var}} 
+    return {{var}};
 }
 {% endfor %}
 #endif MS_TEST

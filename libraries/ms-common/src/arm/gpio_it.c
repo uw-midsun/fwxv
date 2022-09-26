@@ -5,25 +5,19 @@
 
 #include "gpio.h"
 #include "interrupt_def.h"
+#include "notify.h"
 #include "status.h"
 #include "stm32f0xx_interrupt.h"
 #include "stm32f0xx_syscfg.h"
 
-typedef struct GpioItInterrupt {
-  InterruptEdge edge;
+typedef struct GpioInterrupt {
+  InterruptSettings settings;
   GpioAddress address;
-  GpioItCallback callback;
-  void *context;
-} GpioItInterrupt;
+  Event event;
+  Task *task;
+} GpioInterrupt;
 
-static GpioItInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
-
-void gpio_it_init(void) {
-  GpioItInterrupt empty_interrupt = { 0 };
-  for (int16_t i = 0; i < GPIO_PINS_PER_PORT; i++) {
-    s_gpio_it_interrupts[i] = empty_interrupt;
-  }
-}
+static GpioInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
 
 // Pins 0-1 are mapped to IRQ Channel 5, 2-3 to 6 and 4-15 to 7;
 static uint8_t prv_get_irq_channel(uint8_t pin) {
@@ -35,44 +29,45 @@ static uint8_t prv_get_irq_channel(uint8_t pin) {
   return 7;
 }
 
+void gpio_it_init(void) {
+  GpioInterrupt empty_interrupt = { 0 };
+  for (int16_t i = 0; i < GPIO_PINS_PER_PORT; i++) {
+    s_gpio_it_interrupts[i] = empty_interrupt;
+  }
+}
+
 StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
-  if (s_gpio_it_interrupts[address->pin].callback != NULL) {
-    *edge = s_gpio_it_interrupts[address->pin].edge;
+  if (s_gpio_it_interrupts[address->pin].task != NULL) {
+    *edge = s_gpio_it_interrupts[address->pin].settings.edge;
     return STATUS_CODE_OK;
   }
   return STATUS_CODE_UNINITIALIZED;
 }
 
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
-                                      InterruptEdge edge, GpioItCallback callback, void *context) {
-  if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
+                                      const Event event, const Task *task) {
+  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
+    return STATUS_CODE_UNREACHABLE;
+  } else if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT ||
+             event >= INVALID_EVENT) {
     return status_code(STATUS_CODE_INVALID_ARGS);
-  } else if (s_gpio_it_interrupts[address->pin].callback) {
+  } else if (s_gpio_it_interrupts[address->pin].task != NULL) {
     return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Pin already used.");
   }
 
   // Try to register on NVIC and EXTI. Both must succeed for the callback to be
   // set.
-  s_gpio_it_interrupts[address->pin].edge = edge;
-  s_gpio_it_interrupts[address->pin].address = *address;
-  s_gpio_it_interrupts[address->pin].callback = callback;
-  s_gpio_it_interrupts[address->pin].context = context;
-
   SYSCFG_EXTILineConfig(address->port, address->pin);
-  StatusCode status = stm32f0xx_interrupt_exti_enable(address->pin, settings, edge);
-  // If the operation failed clean up by removing the callback and pass the
-  // error up the stack.
-  if (!status_ok(status)) {
-    s_gpio_it_interrupts[address->pin].callback = NULL;
-    return status;
-  }
-  status = stm32f0xx_interrupt_nvic_enable(prv_get_irq_channel(address->pin), settings->priority);
-  // If the operation failed clean up by removing the callback and pass the
-  // error up the stack.
-  if (!status_ok(status)) {
-    s_gpio_it_interrupts[address->pin].callback = NULL;
-    return status;
-  }
+
+  status_ok_or_return(stm32f0xx_interrupt_exti_enable(address->pin, settings));
+
+  uint8_t irq_channel = prv_get_irq_channel(address->pin);
+  status_ok_or_return(stm32f0xx_interrupt_nvic_enable(irq_channel, settings->priority));
+
+  s_gpio_it_interrupts[address->pin].address = *address;
+  s_gpio_it_interrupts[address->pin].settings = *settings;
+  s_gpio_it_interrupts[address->pin].event = event;
+  s_gpio_it_interrupts[address->pin].task = task;
 
   return STATUS_CODE_OK;
 }
@@ -92,9 +87,8 @@ static void prv_run_gpio_callbacks(uint8_t lower_bound, uint8_t upper_bound) {
   uint8_t pending = 0;
   for (int i = lower_bound; i <= upper_bound; i++) {
     stm32f0xx_interrupt_exti_get_pending(i, &pending);
-    if (pending && s_gpio_it_interrupts[i].callback != NULL) {
-      s_gpio_it_interrupts[i].callback(&s_gpio_it_interrupts[i].address,
-                                       s_gpio_it_interrupts[i].context);
+    if (pending && s_gpio_it_interrupts[i].task != NULL) {
+      notify_from_isr(s_gpio_it_interrupts[i].task, s_gpio_it_interrupts[i].event);
     }
     stm32f0xx_interrupt_exti_clear_pending(i);
   }
