@@ -52,7 +52,6 @@ extern Mutex s_log_mutex;
       if (xTaskGetSchedulerState() != taskSCHEDULER_RUNNING) {                                    \
         printf("%s", g_log_buffer);                                                               \
       } else {                                                                                    \
-        printf("%s", g_log_buffer);                                                               \
         uart_tx(UARTPORT, (uint8_t *)g_log_buffer, &msg_size);                                    \
       }                                                                                           \
       mutex_unlock(&s_log_mutex);                                                                 \
