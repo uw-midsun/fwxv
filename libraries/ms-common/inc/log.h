@@ -15,6 +15,7 @@
 DECLARE_TASK(log_task);
 
 #define MAX_LOG_SIZE (size_t)200
+#define LOG_TIMEOUT_MS 10
 
 #define UARTPORT UART_PORT_1
 #define TX_PIN 6
@@ -31,36 +32,30 @@ typedef enum {
   NUM_LOG_LEVELS,
 } LogLevel;
 
-static char log_buffer[MAX_LOG_SIZE];
-static Mutex s_log_mutex;
+extern char g_log_buffer[MAX_LOG_SIZE];
+extern Mutex s_log_mutex;
 
 #define LOG_DEBUG(fmt, ...) LOG(LOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__)
 #define LOG_WARN(fmt, ...) LOG(LOG_LEVEL_WARN, fmt, ##__VA_ARGS__)
 #define LOG_CRITICAL(fmt, ...) LOG(LOG_LEVEL_CRITICAL, fmt, ##__VA_ARGS__)
 
-#define log_init()                        \
-  do {                                    \
-    extern char log_buffer[MAX_LOG_SIZE]; \
-    extern Mutex s_log_mutex;             \
-    mutex_init(&s_log_mutex);             \
-  } while (0)
+#define log_init() mutex_init(&s_log_mutex)
 
 #ifdef MS_PLATFORM_X86
-#define LOG(level, fmt, ...)                                                \
-  do {                                                                      \
-    printf("[%u] %s:%u: " fmt, (level), __FILE__, __LINE__, ##__VA_ARGS__); \
-  } while (0)
+#define LOG(level, fmt, ...) printf("[%u] %s:%u: " fmt, (level), __FILE__, __LINE__, ##__VA_ARGS__)
 #else
-#define LOG(level, fmt, ...)                                                                  \
-  do {                                                                                        \
-    mutex_lock(&s_log_mutex, 0);                                                              \
-    size_t msg_size = (size_t)snprintf(log_buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, (level), \
-                                       __FILE__, __LINE__, ##__VA_ARGS__);                    \
-    if (xTaskGetSchedulerState() != taskSCHEDULER_RUNNING) {                                  \
-      printf("%s", log_buffer);                                                               \
-    } else {                                                                                  \
-      uart_tx(UARTPORT, (uint8_t *)log_buffer, &msg_size);                                    \
-    }                                                                                         \
-    mutex_unlock(&s_log_mutex);                                                               \
+#define LOG(level, fmt, ...)                                                                      \
+  do {                                                                                            \
+    if (mutex_lock(&s_log_mutex, LOG_TIMEOUT_MS) == STATUS_CODE_OK) {                             \
+      size_t msg_size = (size_t)snprintf(g_log_buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, (level), \
+                                         __FILE__, __LINE__, ##__VA_ARGS__);                      \
+      if (xTaskGetSchedulerState() != taskSCHEDULER_RUNNING) {                                    \
+        printf("%s", g_log_buffer);                                                               \
+      } else {                                                                                    \
+        printf("%s", g_log_buffer);                                                               \
+        uart_tx(UARTPORT, (uint8_t *)g_log_buffer, &msg_size);                                    \
+      }                                                                                           \
+      mutex_unlock(&s_log_mutex);                                                                 \
+    }                                                                                             \
   } while (0)
 #endif
