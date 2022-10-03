@@ -37,6 +37,10 @@ TASK(leds_task, TASK_STACK_512) {
 }
 
 int main(void) {
+<<<<<<< Updated upstream
+=======
+  tasks_init();
+>>>>>>> Stashed changes
   gpio_init();
   log_init();
 
