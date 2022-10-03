@@ -12,9 +12,11 @@ Import('VARS')
 TYPE = VARS.get("TYPE")
 TARGET = VARS.get("TARGET")
 
-PROJ_DIR = Dir('#/projects')
-LIB_DIR = Dir('#/libraries')
-SMOKE_DIR = Dir("#/SMOKE_DIR")
+ROOT = Dir('#')
+
+PROJ_DIR = ROOT.Dir('projects')
+LIB_DIR = ROOT.Dir('libraries')
+SMOKE_DIR = ROOT.Dir("SMOKE_DIR")
 
 PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
 LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
@@ -62,7 +64,7 @@ def get_lint_files():
 
 def run_lint(target, source, env):
     C_LINT_CMD = 'cpplint --quiet'
-    PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(Dir('#').abspath) # '#' is the root dir
+    PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(ROOT.abspath)
 
     c_lint_files, py_lint_files = get_lint_files()
 

@@ -9,15 +9,17 @@ TARGET = VARS.get("TARGET")
 PLATFORM = VARS.get("PLATFORM")
 env = VARS.get("env")
 
-BUILD_DIR = Dir('#/build').Dir(PLATFORM)
+ROOT = Dir('#')
+
+BUILD_DIR = ROOT.Dir('build').Dir(PLATFORM)
 BIN_DIR = BUILD_DIR.Dir('bin')
 OBJ_DIR = BUILD_DIR.Dir('obj')
 TEST_DIR = BUILD_DIR.Dir('test')
 
-PROJ_DIR = Dir('#/projects')
-LIB_DIR = Dir('#/libraries')
-SMOKE_DIR = Dir('#/smoke')
-CAN_DIR = Dir('#/can')
+PROJ_DIR = ROOT.Dir('projects')
+LIB_DIR = ROOT.Dir('libraries')
+SMOKE_DIR = ROOT.Dir('smoke')
+CAN_DIR = ROOT.Dir('can')
 
 PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
 LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
@@ -25,7 +27,7 @@ SMOKE_DIRS = [entry for entry in SMOKE_DIR.glob('*')]
 
 LIB_BIN_DIR = BIN_DIR.Dir('libraries')
 
-PLATFORM_DIR = Dir('#/platform')
+PLATFORM_DIR = ROOT.Dir('platform')
 
 CODEGEN_DIR = LIB_DIR.Dir("codegen")
 BOARDS_DIR = CODEGEN_DIR.Dir("boards")
