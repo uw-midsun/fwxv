@@ -49,7 +49,7 @@ TASK(task2, TASK_STACK_512) {
       LOG_DEBUG("%s\n", outstr);
     } else {
       LOG_DEBUG("read from queue failed\n");
-    };
+    }
     delay_ms(100);
   }
 }
