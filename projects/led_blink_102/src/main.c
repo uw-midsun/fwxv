@@ -72,7 +72,6 @@ int main() {
   LOG_DEBUG("Welcome to led_blink_102!\n");
 
   tasks_start();
-
   LOG_DEBUG("done!\n");
 
   return 0;
