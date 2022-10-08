@@ -31,7 +31,9 @@ TASK(leds_task, TASK_STACK_512) {
 #endif
     for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
       gpio_toggle_state(&leds[i]);
+      // LOG_DEBUG("blink count %d\n", i);
       delay_ms(50);
+      // vTaskDelay(pdMS_TO_TICKS(50));
     }
   }
 }
@@ -39,10 +41,11 @@ TASK(leds_task, TASK_STACK_512) {
 int main(void) {
   gpio_init();
   log_init();
+  tasks_init();
 
   tasks_init_task(leds_task, TASK_PRIORITY(2), NULL);
+  LOG_DEBUG("Blinking LEDs3...\n");
 
-  LOG_DEBUG("Blinking LEDs...\n");
   tasks_start();
 
   return 0;
