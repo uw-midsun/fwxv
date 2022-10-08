@@ -9,19 +9,12 @@
 #include "log.h"
 #include "misc.h"
 
-// static void prv_delay(const TickType_t delay_ms) {
-//    TickType_t curr_tick = xTaskGetTickCount();
-//    while((xTaskGetTickCount() - curr_tick)   < pdMS_TO_TICKS(delay_ms))
-//    {}
-// }
-
 TASK(task1, TASK_STACK_512) {
   int counter1 = 0;
   while (true) {
     LOG_DEBUG("task1 %i\n", counter1);
     ++counter1;
     delay_ms(1000);
-    // prv_delay(1000);
   }
 }
 
@@ -31,7 +24,6 @@ TASK(task2, TASK_STACK_512) {
     LOG_DEBUG("task2 %i\n", counter2);
     ++counter2;
     delay_ms(1000);
-    // prv_delay(1000);
   }
 }
 
