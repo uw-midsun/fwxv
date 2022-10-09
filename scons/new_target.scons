@@ -6,10 +6,19 @@ This module sets up the folder structure and config.json for a new project or li
 Usage: python3 new_target.py project|library name
 """
 import os
-import argparse
 import textwrap
 import json
+import sys
 from string import Template
+
+###########################################################
+# Variables setup
+###########################################################
+
+Import('VARS')
+
+TYPE = VARS.get("TYPE")
+TARGET = VARS.get("TARGET")
 
 README_TEMPLATE = Template("""\
     <!--
@@ -33,7 +42,7 @@ README_TEMPLATE = Template("""\
 
 DEFAULT_DEPS = ["FreeRTOS", "ms-common"]
 
-main_template_file = open(os.path.join('scons', 'template', 'main_template.txt'), 'r');
+main_template_file = open(os.path.join('template', 'main_template.txt'), 'r')
 
 def generate_config(target_type):
     """Generates a new config.json file for a project/library.
@@ -47,8 +56,6 @@ def generate_config(target_type):
     deps = DEFAULT_DEPS if target_type == 'project' or target_type == 'smoke' else []
 
     return {"libs": deps}
-
-
 
 def new_target(target_type, name):
     """Creates a new project or library.
@@ -67,12 +74,15 @@ def new_target(target_type, name):
     where config.json is required for the project or library to be valid.
 
     Args:
-        target_type: Either 'project' or 'library'.
+        target_type: Either 'project' or 'library' or 'python'.
         name: The new project or library's name.
 
     Returns:
         None
     """
+    if (target_type == 'python'):
+        return new_py_project(name)
+
     type_folders = {
         'project': 'projects',
         'library': 'libraries',
@@ -96,16 +106,23 @@ def new_target(target_type, name):
 
     print('Created new {0} {1}'.format(target_type, name))
 
+def new_py_project(name):
+    os.makedirs(os.path.join('py', name), exist_ok=True)
+    open(os.path.join('py', name, '__init__.py'), 'a').close()
+    open(os.path.join('py', name, 'main.py'), 'a').close()
 
-def main():
-    """Main entry point of program"""
-    parser = argparse.ArgumentParser(description='Creates new project/library')
-    parser.add_argument('type', choices=['project', 'library', 'smoke'])
-    parser.add_argument('name')
-    args = parser.parse_args()
+def make_new_target(target, source, env):
+    # No project or library option provided
+    if not TYPE:
+        print("Missing project or library name. Expected --project=..., or --library=..., or --python")
+        sys.exit(1)
+    
+    if env.get("smoke") and TYPE == 'project':
+        new_target('smoke', TARGET)
+    else:
+        new_target(TYPE, TARGET)
 
-    new_target(args.type, args.name)
-
-
-if __name__ == '__main__':
-    main()
+new = Command('new_proj.txt', [], make_new_target)
+Alias('new', new)
+new = Command('new_smoke.txt', [], make_new_target, smoke=True)
+Alias('new_smoke', new)

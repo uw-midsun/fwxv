@@ -5,7 +5,7 @@ if [ "$GIT_AUTHOR_NAME" = "vagrant" ] || [ "$GIT_AUTHOR_EMAIL" = "vagrant@midsun
 fi
 
 echo "Automatically formatting and linting"
-scons format && scons lint && git add .
+scons format lint && git add .
 
 if [ $? -ne 0 ]; then
  echo "Code must be properly formatted before commiting!"
