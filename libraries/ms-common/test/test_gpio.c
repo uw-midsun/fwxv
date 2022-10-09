@@ -18,6 +18,7 @@ static GpioSettings s_gpio_settings = {
 };
 
 void setup_test(void) {
+  log_init();
   gpio_init();
   gpio_init_pin(&s_gpio_addr, &s_gpio_settings);
 }
