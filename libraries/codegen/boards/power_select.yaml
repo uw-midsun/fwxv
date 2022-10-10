@@ -10,8 +10,18 @@
 
 ---
   Messages:
-    aux_meas_main_voltage:
-      id: 42
+    power_select_status:
+      id: 1
+      target:
+        - centre_console
+      critical: true
+      signals:
+        status:
+          length: 8
+        fault:
+          length: 8
+    power_select_aux_measurements:
+      id: 2
       target:
         - centre_console
       signals:
@@ -21,11 +31,10 @@
           length: 16
         aux_temp:
           length: 16
-        main_voltage:
+        power_supply_current:
           length: 16
-
-    dcdc_meas_main_current:
-      id: 43
+    power_select_dcdc_measurements:
+      id: 3
       target:
         - centre_console
       signals:
@@ -35,19 +44,5 @@
           length: 16
         dcdc_temp:
           length: 16
-        main_current:
-          length: 16
-
-    power_select_status:
-      id: 44
-      target:
-        - centre_console
-      signals:
-        fault_bitset:
-          length: 16
-        warning_bitset:
-          length: 16
-        valid_bitset:
-          length: 16
-        cell_voltage:
+        power_supply_voltage:
           length: 16

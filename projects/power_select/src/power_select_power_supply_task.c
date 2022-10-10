@@ -1,6 +1,9 @@
 #include "power_select_power_supply_task.h"
 
-PowerSupplyStorage s_storage;
+#define PWR_SUP_STATUS g_tx_struct.power_select_status_status
+#define PWR_SUP_FAULT g_tx_struct.power_select_status_fault
+#define PWR_SUP_V g_tx_struct.power_select_dcdc_measurements_power_supply_voltage
+#define PWR_SUP_C g_tx_struct.power_select_aux_measurements_power_supply_current
 
 const GpioAddress g_power_select_valid_pin = POWER_SELECT_PWR_SUP_VALID_ADDR;
 const GpioAddress g_power_select_voltage_pin = POWER_SELECT_PWR_SUP_VSENSE_ADDR;
@@ -16,10 +19,10 @@ static void prv_power_supply_inactive_input(Fsm *fsm, void *context) {
   }
   // should we be logging valid pin value or if its valid?
   LOG_DEBUG("power_supply: valid=%d", state == GPIO_STATE_HIGH);
-  // should we be setting over* to false
-  s_storage.valid = false;
-  s_storage.overvoltage = false;
-  s_storage.overcurrent = false;
+  // set power supply bits to 0
+  PWR_SUP_STATUS &= ~POWER_SELECT_PWR_SUP_STATUS_MASK;
+  PWR_SUP_FAULT &= ~(POWER_SELECT_PWR_SUP_FAULT_OC_MASK |
+                     POWER_SELECT_PWR_SUP_FAULT_OV_MASK);
 }
 
 static void prv_power_supply_inactive_output(void *context) {
@@ -34,20 +37,20 @@ static void prv_power_supply_active_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, POWER_SUPPLY_INACTIVE);
     return;
   }
-  adc_read_converted(g_power_select_voltage_pin, &s_storage.voltage);
-  if (s_storage.voltage > POWER_SELECT_PWR_SUP_MAX_VOLTAGE_MV) {
+  adc_read_converted(g_power_select_voltage_pin, &PWR_SUP_V);
+  if (PWR_SUP_V > POWER_SELECT_PWR_SUP_MAX_VOLTAGE_MV) {
     LOG_WARN("power_supply: overvoltage");
-    s_storage.overvoltage = true;
+    PWR_SUP_FAULT |= POWER_SELECT_PWR_SUP_FAULT_OV_MASK;
   }
-  adc_read_converted(g_power_select_current_pin, &s_storage.current);
-  if (s_storage.current > POWER_SELECT_PWR_SUP_MAX_CURRENT_MA) {
+  adc_read_converted(g_power_select_current_pin, &PWR_SUP_C);
+  if (PWR_SUP_C > POWER_SELECT_PWR_SUP_MAX_CURRENT_MA) {
     LOG_WARN("power_supply: overcurrent");
-    s_storage.overcurrent = true;
+    PWR_SUP_FAULT |= POWER_SELECT_PWR_SUP_FAULT_OC_MASK;
   }
   // logging format?
   LOG_DEBUG("power_supply: valid=%d, voltage=%d, current=%d", state == GPIO_STATE_HIGH,
-            s_storage.voltage, s_storage.current);
-  s_storage.valid = true;
+            PWR_SUP_V, PWR_SUP_C);
+  PWR_SUP_STATUS |= POWER_SELECT_PWR_SUP_STATUS_MASK;
 }
 
 static void prv_power_supply_active_output(void *context) {
