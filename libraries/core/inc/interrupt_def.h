@@ -6,10 +6,11 @@
 typedef enum {
   INTERRUPT_TYPE_INTERRUPT = 0,
   INTERRUPT_TYPE_EVENT,
-  NUM_INTERRUPT_TYPES,
-} InterruptType;
+  NUM_INTERRUPT_CLASSES,
+} InterruptClass;
 
 // Start counting at 1, as needs to be <= configMAX_SYSCALL_INTERRUPT_PRIORITY
+// Priorities decrease with greater value (0 is highest priority, but is reserved)
 typedef enum {
   INTERRUPT_PRIORITY_HIGH = 1,
   INTERRUPT_PRIORITY_NORMAL,
@@ -28,7 +29,7 @@ typedef enum {
 } InterruptEdge;
 
 typedef struct InterruptSettings {
-  InterruptType type;
+  InterruptClass type;
   InterruptPriority priority;
   InterruptEdge edge;
 } InterruptSettings;
