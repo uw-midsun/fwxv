@@ -4,24 +4,20 @@
 #include <stdio.h>
 
 #include "retarget_cfg.h"
-#include "stm32f0xx.h"
+#include "stm32f10x.h"
 
 static void prv_init_gpio(void) {
   RETARGET_CFG_UART_GPIO_ENABLE_CLK();
 
-  GPIO_PinAFConfig(RETARGET_CFG_UART_GPIO_PORT, RETARGET_CFG_UART_GPIO_TX,
-                   RETARGET_CFG_UART_GPIO_ALTFN);
-  GPIO_PinAFConfig(RETARGET_CFG_UART_GPIO_PORT, RETARGET_CFG_UART_GPIO_RX,
-                   RETARGET_CFG_UART_GPIO_ALTFN);
-
   GPIO_InitTypeDef gpio_init = {
-    .GPIO_Pin = (1 << RETARGET_CFG_UART_GPIO_TX) | (1 << RETARGET_CFG_UART_GPIO_RX),
-    .GPIO_Mode = GPIO_Mode_AF,
+    .GPIO_Pin = (1 << RETARGET_CFG_UART_GPIO_TX),
     .GPIO_Speed = GPIO_Speed_10MHz,
-    .GPIO_OType = GPIO_OType_PP,
-    .GPIO_PuPd = GPIO_PuPd_UP,
+    .GPIO_Mode = GPIO_Mode_AF_PP,
   };
+  GPIO_Init(RETARGET_CFG_UART_GPIO_PORT, &gpio_init);
 
+  gpio_init.GPIO_Pin = (1 << RETARGET_CFG_UART_GPIO_RX);
+  gpio_init.GPIO_Mode = GPIO_Mode_IN_FLOATING;
   GPIO_Init(RETARGET_CFG_UART_GPIO_PORT, &gpio_init);
 }
 
