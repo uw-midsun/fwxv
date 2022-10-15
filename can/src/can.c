@@ -155,7 +155,7 @@ StatusCode can_add_filter_in(CanMessageId msg_id) {
   CanId can_id = { .raw = msg_id };
   CanId mask = { 0 };
   mask.raw = (uint32_t)~mask.msg_id;
-
+  
   return can_hw_add_filter_in(mask.raw, can_id.raw, false);
 }
 
