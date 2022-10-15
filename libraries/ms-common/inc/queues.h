@@ -29,5 +29,8 @@ StatusCode queue_receive(Queue *queue, void *buf, uint32_t delay_ms);
 // delay_ms in ms before timing out.
 StatusCode queue_peek(Queue *queue, void *buf, uint32_t delay_ms);
 
+// Empties all items from a queue
+void queue_reset(Queue *queue);
+
 // Return number of items the queue can hold.
 uint32_t queue_get_num_items(Queue *queue);
