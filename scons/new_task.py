@@ -82,15 +82,11 @@ def new_task(type, name, task_name):
     src_path = os.path.join(folder_path, subfolders[0])
     inc_path = os.path.join(folder_path, subfolders[1])
 
-    templates = os.listdir('task_gen')
-
-    for template_iterable in templates:
-        template_dir = "task_gen"
+    for template_iterable in ["_task.c.jinja", "_task.h.jinja"]:
         template_name = template_iterable
-        templateLoader = jinja2.FileSystemLoader(searchpath=template_dir)
+        templateLoader = jinja2.FileSystemLoader(searchpath="scons/template")
         env = jinja2.Environment(loader=templateLoader)
         env.filters["format_function_length"] = format_function_length
-
 
         if ".h.jinja" in template_name:
             file_path = inc_path + "/" + name + "_" + task_name + template_name[:-6]
@@ -111,4 +107,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

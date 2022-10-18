@@ -82,8 +82,8 @@ TASK(periodic_callback, TASK_STACK_256) {
 }
 
 void adc_init(AdcMode adc_mode) {
-  if (adc_mode == ADC_MODE_CONTINUOUS) {
-    tasks_init_task(periodic_callback, ADC_PRIORITY, NULL);
+  if (adc_mode == ADC_MODE_CONTINUOUS && periodic_callback->context == NULL) {
+    tasks_init_task(periodic_callback, ADC_PRIORITY, (int *)1);
   }
   for (size_t i = 0; i < NUM_ADC_CHANNELS; ++i) {
     s_adc_stores[i].reading = 0;
