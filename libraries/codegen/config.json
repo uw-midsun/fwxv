@@ -1,3 +1,4 @@
 {
-  "no_lint": true
+  "no_lint": true,
+  "can": true
 }

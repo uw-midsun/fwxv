@@ -28,7 +28,8 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
 
 int main() {
   tasks_init();
-  log_init();
+  log_init(); 
+  
   LOG_DEBUG("Welcome to TEST!");
 
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
