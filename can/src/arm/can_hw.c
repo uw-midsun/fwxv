@@ -244,6 +244,7 @@ void CEC_CAN_IRQHandler(void) {
         for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++){
           if (can_filters[i] == rx_msg.id.raw){
             s_filter_id_match = true;
+            break;
           }
         }
         if (s_filter_id_match){
