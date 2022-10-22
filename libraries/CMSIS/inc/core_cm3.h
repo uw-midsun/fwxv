@@ -1501,7 +1501,7 @@ static __INLINE uint32_t NVIC_GetPriorityGrouping(void)
  */
 static __INLINE void NVIC_EnableIRQ(IRQn_Type IRQn)
 {
-  NVIC->ISER[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F)); /* enable interrupt */
+  NVIC->ISER[((uint32_t)(IRQn) >> 5)] = (1u << ((uint32_t)(IRQn) & 0x1F)); /* enable interrupt */
 }
 
 /**
@@ -1514,7 +1514,7 @@ static __INLINE void NVIC_EnableIRQ(IRQn_Type IRQn)
  */
 static __INLINE void NVIC_DisableIRQ(IRQn_Type IRQn)
 {
-  NVIC->ICER[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F)); /* disable interrupt */
+  NVIC->ICER[((uint32_t)(IRQn) >> 5)] = (1u << ((uint32_t)(IRQn) & 0x1F)); /* disable interrupt */
 }
 
 /**
@@ -1528,7 +1528,7 @@ static __INLINE void NVIC_DisableIRQ(IRQn_Type IRQn)
  */
 static __INLINE uint32_t NVIC_GetPendingIRQ(IRQn_Type IRQn)
 {
-  return((uint32_t) ((NVIC->ISPR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn) & 0x1F)))?1:0)); /* Return 1 if pending else 0 */
+  return((uint32_t) ((NVIC->ISPR[(uint32_t)(IRQn) >> 5] & (1u << ((uint32_t)(IRQn) & 0x1F)))?1:0)); /* Return 1 if pending else 0 */
 }
 
 /**
@@ -1541,7 +1541,7 @@ static __INLINE uint32_t NVIC_GetPendingIRQ(IRQn_Type IRQn)
  */
 static __INLINE void NVIC_SetPendingIRQ(IRQn_Type IRQn)
 {
-  NVIC->ISPR[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F)); /* set interrupt pending */
+  NVIC->ISPR[((uint32_t)(IRQn) >> 5)] = (1u << ((uint32_t)(IRQn) & 0x1F)); /* set interrupt pending */
 }
 
 /**
@@ -1554,7 +1554,7 @@ static __INLINE void NVIC_SetPendingIRQ(IRQn_Type IRQn)
  */
 static __INLINE void NVIC_ClearPendingIRQ(IRQn_Type IRQn)
 {
-  NVIC->ICPR[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F)); /* Clear pending interrupt */
+  NVIC->ICPR[((uint32_t)(IRQn) >> 5)] = (1u << ((uint32_t)(IRQn) & 0x1F)); /* Clear pending interrupt */
 }
 
 /**
@@ -1568,7 +1568,7 @@ static __INLINE void NVIC_ClearPendingIRQ(IRQn_Type IRQn)
  */
 static __INLINE uint32_t NVIC_GetActive(IRQn_Type IRQn)
 {
-  return((uint32_t)((NVIC->IABR[(uint32_t)(IRQn) >> 5] & (1 << ((uint32_t)(IRQn) & 0x1F)))?1:0)); /* Return 1 if active else 0 */
+  return((uint32_t)((NVIC->IABR[(uint32_t)(IRQn) >> 5] & (1u << ((uint32_t)(IRQn) & 0x1F)))?1:0)); /* Return 1 if active else 0 */
 }
 
 /**

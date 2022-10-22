@@ -45,8 +45,6 @@ static AdcStatus s_adc_status;
 typedef struct AdcStore {
   uint8_t channel;
   uint16_t reading;
-  Task *task;
-  Event event;
 } AdcStore;
 
 // Store of information about each possible channel
@@ -121,6 +119,7 @@ static StatusCode prv_check_channel_enabled(uint8_t channel) {
   for (uint8_t index = 0; index < s_adc_status.active_channels; index++) {
     if (s_adc_sequence[index] == &s_adc_stores[channel]) {
       found = true;
+      break;
     }
   }
   if (found) {
@@ -154,15 +153,6 @@ StatusCode adc_add_channel(GpioAddress address) {
   } else {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Number of possible channels exceeded");
   }
-  return STATUS_CODE_OK;
-}
-
-StatusCode adc_register_event(GpioAddress address, Task *task, Event event) {
-  uint8_t channel;
-  status_ok_or_return(adc_get_channel(address, &channel));
-  status_ok_or_return(prv_check_channel_enabled(channel));
-  s_adc_stores[channel].task = task;
-  s_adc_stores[channel].event = event;
   return STATUS_CODE_OK;
 }
 
@@ -252,14 +242,6 @@ void ADC1_COMP_IRQHandler() {
   // Values generated in order of sequence, so we store them at channel pointed to by sequence index
   if (ADC_GetITStatus(ADC1, ADC_IT_EOC)) {
     s_adc_sequence[s_adc_status.sequence]->reading = ADC_GetConversionValue(ADC1);
-    if (s_adc_sequence[s_adc_status.sequence]->task != NULL) {
-      // cannot use notify here because we need additional processing after notify
-      // YIELD_FROM_ISR should be at the end of the function
-      // even though it has same behaviour on stm32 as using notify_from_isr
-      xTaskNotifyFromISR(s_adc_sequence[s_adc_status.sequence]->task->handle,
-                         1u << s_adc_sequence[s_adc_status.sequence]->event, eSetBits,
-                         &xHigherPriorityTaskWoken);
-    }
     // If we've converted all the registered channels, start over
     if (++s_adc_status.sequence >= s_adc_status.active_channels) {
       s_adc_status.sequence = 0;
