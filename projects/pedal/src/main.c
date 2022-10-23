@@ -1,7 +1,8 @@
 #include <stdio.h>
-
 #include "gpio.h"
+#include "i2c.h"
 #include "interrupt.h"
+#include "gpio_it.h"
 #include "soft_timer.h"
 #include "adc.h"
 //#include "event_queue.h"
@@ -9,7 +10,6 @@
 #include "can_msg.h"
 #include "can_board_ids.h"
 #include "log.h"
-//#include "new_can_setters.h"
 #include "tasks.h"
 
 #ifdef MS_PLATFORM_X86
@@ -27,26 +27,14 @@ const CanSettings can_settings = {
    .loopback = true,
 };
 
-// Initialize the GPIOs needed for the throttle
-// Initialize ADC for ADC readings
-// Calibrate the pedal upon initialization (set what we consider max value and min value for each pedal)
-void init_pedal_controls() { 
-   gpio_init();
-   interrupt_init();
-   soft_timer_init();
-   adc_init(ADC_MODE_SINGLE);
-
-   pedal_calibrate();
-}
-
 // Read any GPIOs and the ADC for throttle
 bool read_pedal_throttle() {
-
+   return false;
 }
 
 // Read any GPIOs and the ADC for brake
 bool read_pedal_brake() {
-
+   return false;
 }
 
 // Read the ADC when the throttle and brake are pressed down/let go, and use that reading to set the upper and lower bounds of the pedal
@@ -56,52 +44,50 @@ void pedal_calibrate() {
 
 void run_fast_cycle()
 {
-
+   return;
 }
 
+// Initialize the GPIOs needed for the throttle
+// Initialize ADC for ADC readings
+// Calibrate the pedal upon initialization (set what we consider max value and min value for each pedal)
+void init_pedal_controls() { 
+   interrupt_init();
+   gpio_init(); 
+   gpio_it_init();
+   //soft_timer_init();
 
-// Should read whether the brake is pressed, and if so, disable the throttle
-// 3 Cases when we transmit data:
-   // 1. Throttle is pressed, brake is not pressed (pedal not pressed) - send throttle data as normal
-   // 2. Throttle is pressed, brake is pressed (pedal pressed) - send throttle as 0
-   // 3. Brake pressed - send throttle as 0
+   // setup ADC readings
+   I2CSettings i2c_settings = {
+      .speed = I2C_SPEED_FAST,
+      .scl = { .port = GPIO_PORT_B, .pin = 10 },
+      .sda = { .port = GPIO_PORT_B, .pin = 11 },
+   };
+   i2c_init(I2C_PORT_2, &i2c_settings);
+   GpioAddress ready_pin = { .port = GPIO_PORT_B, .pin = 2 };   
+   adc_init(ADC_MODE_SINGLE);
 
+   pedal_calibrate();
+}
 
-// const CanMessage can_msg = {
-//    .id = 0x1,
-//    .type = CAN_MSG_TYPE_DATA, // uint32_t?
-//    .data = throttle_output(), // ?
-//    // .target = motor_interface
-// };
 void run_medium_cycle()
 {
-   run_can_rx_cycle();
-   wait_tasks(1);
-
    run_can_tx_cycle();
    wait_tasks(1);
 
-   // Runs pedal_controls
-   // Runs can_tx_task
-   init_pedal_controls();
-   tasks_init(CAN_TX, TASK_PRIORITY(1), NULL);
+   if (read_pedal_brake()) {
+      // Edit message to send 1 for brake, 0 for throttle (if brake is pressed, disable the throttle)
+   } else if (read_pedal_throttle()) {
+      // Edit message to send 1 for throttle (send throttle data as normal)
+   } else {
+      // Edit message to send 0 for both
+   }
 
-
-   //  if (read_pedal_throttle() && !read_pedal_brake()) {
-   //     // Send throttle data as normal
-   //     can_transmit(can_msg);
-   //  } else if (read_pedal_throttle() && read_pedal_brake()) {
-   //     // Send throttle as 0
-   //     can_transmit(NULL);
-   //  } else if (read_pedal_brake()) {
-   //     // Send throttle as 0
-   //     can_transmit(NULL);
-   //  }
+    // transmit message: use pedal_can_setters.h file to set the correct data for the can message instead of using the struct
 }
 
 void run_slow_cycle()
 {
-
+   return;
 }
 
 TASK(master_task, TASK_MIN_STACK_SIZE) {
@@ -127,13 +113,12 @@ int main() {
    log_init();
 
    LOG_DEBUG("Welcome to CAN!");
+   init_pedal_controls();
    can_init(&s_can_storage, &can_settings);
-   can_add_filter_in(SYSTEM_CAN_MESSAGE_NEW_CAN_TRANSMIT_MSG1);
-   
+   can_add_filter_in(SYSTEM_CAN_MESSAGE_PEDAL_PEDAL_OUTPUT);
+
    tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
-   
    tasks_start();
-   
    LOG_DEBUG("exiting main?\n");
    return 0;
 }
