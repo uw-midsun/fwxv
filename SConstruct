@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 from scons.common import parse_config
-from scons.new_task import new_task
 
 ###########################################################
 # Build arguments
@@ -170,6 +169,8 @@ SConscript('scons/test.scons', exports='VARS')
 # Helper targets
 ###########################################################
 SConscript('scons/new_target.scons', exports='VARS')
+SConscript('scons/new_task.scons', exports='VARS')
+
 
 ###########################################################
 # Clean
