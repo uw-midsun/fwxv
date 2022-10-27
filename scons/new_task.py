@@ -5,12 +5,6 @@ import yaml
 import argparse
 import re
 
-Import('VARS')
-
-TYPE = VARS.get("TYPE")
-TARGET = VARS.get("TARGET")
-NAME = GetOption('name')
-
 def read_yaml(yaml_file):
     """reads yaml file and returns information in data"""
     with open(yaml_file, "r", encoding="utf-8") as f:
@@ -103,6 +97,9 @@ def new_task(type, name, task_name):
         write_template(env, template_name, file_path, DATA)
 
 def make_new_task(target, source, env):
+    TYPE = env["VARS"]["TYPE"]
+    TARGET = env["VARS"]["TARGET"]
+    NAME = env["VARS"]["NAME"]
     # No project or library option provided
     if TYPE not in ['project', 'libray']:
         print("Missing project or library name. Expected --project=..., or --library=...")
@@ -110,9 +107,6 @@ def make_new_task(target, source, env):
 
     # Chain or's to select the first non-None value 
     new_task(TYPE, TARGET, NAME)
-
-new = Command('new_task.txt', [], make_new_task)
-Alias('new_task', new)
 
 def main():
     PARSER = argparse.ArgumentParser()

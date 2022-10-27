@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 from scons.common import parse_config
+from scons.new_task import make_new_task
 
 ###########################################################
 # Build arguments
@@ -78,6 +79,7 @@ PROJECT = GetOption('project')
 LIBRARY = GetOption('library')
 PYTHON = GetOption('python')
 MEM_REPORT = GetOption('mem-report')
+NAME = GetOption('name')
 
 ###########################################################
 # Environment setup
@@ -105,8 +107,11 @@ VARS = {
     "PLATFORM": PLATFORM,
     "TYPE": TYPE,
     "TARGET": TARGET,
-    "env": env
+    "NAME": NAME,
+    "env": env,
 }
+
+env["VARS"] = VARS
 
 # Add flags when compiling a test
 TEST_CFLAGS = ['-DMS_TEST']
@@ -169,8 +174,7 @@ SConscript('scons/test.scons', exports='VARS')
 # Helper targets
 ###########################################################
 SConscript('scons/new_target.scons', exports='VARS')
-SConscript('scons/new_task.scons', exports='VARS')
-
+Alias('new_task', env.Command('new_task.txt', [], make_new_task))
 
 ###########################################################
 # Clean
