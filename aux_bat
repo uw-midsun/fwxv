@@ -1,0 +1,15 @@
+
+Taskmaster: Looking for a node to evaluate
+Taskmaster:     Considering node <no_state   0   'new_task'> and its children:
+Taskmaster: Evaluating <pending    0   'new_task'>
+
+Task.make_ready_current(): node <pending    0   'new_task'>
+Task.prepare():      node <up_to_date 0   'new_task'>
+Task.failed_stop():  node <up_to_date 0   'new_task'>
+Taskmaster:        removing node <up_to_date 0   'new_task'> from the pending children set
+
+Task.postprocess():  node <failed     0   'new_task'>
+
+Taskmaster: Looking for a node to evaluate
+Taskmaster: No candidate anymore.
+

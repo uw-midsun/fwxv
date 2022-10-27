@@ -1,4 +1,3 @@
-// Create aux_bat task using main.c
 #include <stdbool.h>
 #include <stdint.h>
 #include "adc.h"
@@ -8,69 +7,50 @@
 #include "gpio_mcu.h"
 #include "delay.h"
 #include "main.c"
-#include ""
+#include "new_can_setters.h"
+#include "log.h"
+#include "tasks.h"
 
-void init_aux_bat() {
-    run_medium_cycle();
-    GpioAddress voltage_addr = {
-        .port = GPIO_PORT_A,
-        .pin = 1,
-    };
-    GpioAddress current_addr = {
-        .port = GPIO_PORT_B,
-        .pin = 1,
-    };
-    GpioAddress temp_addr = {
-        .port = GPIO_PORT_C,
-        .pin = 1,
-    };
-    GpioAddress valid_addr = {
-        .port = GPIO_PORT_D,
-        .pin = 1,
-    };
-    GpioAddress adc_current_addr = {
-        .port = GPIO_PORT_E,
-        .pin = 1,
-    };
-    GpioAddress adc_temp_addr = {
-        .port = GPIO_PORT_F,
-        .pin = 1,
-    };
-    GpioAddress adc_voltage_addr = {
-        .port = GPIO_PORT_A,
-        .pin = 2,
-    };
-    GpioSettings gpio_settings = {
-    GPIO_DIR_IN,
-    GPIO_STATE_HIGH,
-    GPIO_RES_NONE,
-    GPIO_ALTFN_NONE,
-    };
-    GpioSettings adc_settings = {
-    GPIO_DIR_IN,
-    GPIO_STATE_HIGH,
-    GPIO_RES_NONE,
-    GPIO_ALTFN_ANALOG,
-    };
-    gpio_init_pin(&voltage_addr, &gpio_settings);
-    gpio_init_pin(&current_addr, &gpio_settings);
-    gpio_init_pin(&temp_addr, &gpio_settings);
-    gpio_init_pin(&valid_addr, &gpio_settings);
-    gpio_init_pin(&adc_current_addr, &adc_settings);
-    gpio_init_pin(&adc_temp_addr, &adc_settings);
-    gpio_init_pin(&adc_voltage_addr, &adc_settings);
-    adc_init(ADC_MODE_SINGLE);
-    
-    uint16_t *adc_current_channel;
-    adc_read_converted(adc_current_addr, &adc_current_channel);
-    uint16_t *adc_temp_channel;
-    adc_read_converted(adc_temp_addr, &adc_temp_channel);
-    uint16_t *adc_voltage_channel;
-    adc_read_converted(adc_voltage_addr, &adc_voltage_channel);
-}
-
-
-// Write FSM that changes states based on the values returned from ADC/GPIOs
+GpioAddress voltage_addr = {
+    .port = GPIO_PORT_A,
+    .pin = 1,
+};
+GpioAddress current_addr = {
+    .port = GPIO_PORT_B,
+    .pin = 1,
+};
+GpioAddress temp_addr = {
+    .port = GPIO_PORT_C,
+    .pin = 1,
+};
+GpioAddress valid_addr = {
+    .port = GPIO_PORT_D,
+    .pin = 1,
+};
+GpioAddress adc_current_addr = {
+    .port = GPIO_PORT_E,
+    .pin = 1,
+};
+GpioAddress adc_temp_addr = {
+    .port = GPIO_PORT_F,
+    .pin = 1,
+};
+GpioAddress adc_voltage_addr = {
+    .port = GPIO_PORT_A,
+    .pin = 2,
+};
+GpioSettings gpio_settings = {
+GPIO_DIR_IN,
+GPIO_STATE_HIGH,
+GPIO_RES_NONE,
+GPIO_ALTFN_NONE,
+};
+GpioSettings adc_settings = {
+GPIO_DIR_IN,
+GPIO_STATE_HIGH,
+GPIO_RES_NONE,
+GPIO_ALTFN_ANALOG,
+};
 
 #define NUM_AUX_BAT_STATES 2
 #define NUM_AUX_BAT_TRANSITIONS 4
@@ -85,49 +65,78 @@ typedef enum Aux_BatId {
     NUM_STATES,
 } Aux_BatId;
 
+void init_aux_bat() {
+    gpio_init();
+    gpio_init_pin(&voltage_addr, &gpio_settings);
+    gpio_init_pin(&current_addr, &gpio_settings);
+    gpio_init_pin(&temp_addr, &gpio_settings);
+    gpio_init_pin(&valid_addr, &gpio_settings);
+    gpio_init_pin(&adc_current_addr, &adc_settings);
+    gpio_init_pin(&adc_temp_addr, &adc_settings);
+    gpio_init_pin(&adc_voltage_addr, &adc_settings);
+    adc_set_channel(&adc_current_addr, &adc_settings);
+    adc_set_channel(&adc_temp_addr, &adc_settings);
+    adc_set_channel(&adc_voltage_addr, &adc_settings);
+    adc_init(ADC_MODE_SINGLE);
+}
+
 // Input Functions for the Two States
 void prv_state0_input(Fsm *fsm, void *context) {
     Fsm *fsm1 = context;
-    StatusCode gpio_get_state(const GpioAddress *voltage_addr, GpioState *voltage_channel) {
-        if (*voltage_channel == HIGH) {
+    GpioState valid_channel;
+    gpio_get_state(&valid_addr, &valid_channel);
+        if (valid_channel == GPIO_STATE_HIGH) {
             fsm_transition(fsm, ACTIVE);
         }
-    }
 }
 
 void prv_state1_input(Fsm *fsm, void *context) {
     Fsm *fsm1 = context;
-    StatusCode gpio_get_state(const GpioAddress *voltage_addr, GpioState *voltage_channel) {
-        if (*voltage_channel == LOW) {
+    GpioState valid_channel;
+    gpio_get_state(&valid_addr, &valid_channel);
+        if (valid_channel == GPIO_STATE_LOW) {
             fsm_transition(fsm, INACTIVE);
-        }
-    }    
+        } 
 }
 
 // Output Functions for the Two States
 void prv_state0_output(void *context) {
-
+    uint16_t *current_val;
+    // This is supposed to access the value already there and reset it using AND
+    set_power_select_status_fault_bitset(&current_val & ~(1 << 7));
+    set_power_select_status_fault_bitset(&current_val & ~(1 << 6));
+    set_power_select_status_fault_bitset(&current_val & ~(1 << 5));
+    set_power_select_status_valid_bitset(&current_val & ~(1 << 2));
 }
 
 void prv_state1_output(void *context) {
     uint16_t *adc_voltage_channel;
-    adc_read_converted(*adc_voltage_addr, &adc_voltage_channel);
+    adc_read_converted(adc_voltage_addr, &adc_voltage_channel);
     if (*adc_voltage_channel > threshold) {
     // Set Fault Status to High
     // Set Aux Voltage
+    set_power_select_status_fault_bitset(7);
+    set_aux_meas_main_voltage_aux_voltage(*adc_voltage_channel);
     }
     uint16_t *adc_current_channel;
-    adc_read_converted(*adc_current_addr, &adc_current_channel);
+    adc_read_converted(&adc_current_addr, &adc_current_channel);
     if (*adc_current_channel > threshold) {
     // Set Fault Status to High
     // Set Aux Current
+    set_power_select_status_fault_bitset(6);
+    set_aux_meas_main_current_aux_current(*adc_current_channel);
     }
     uint16_t *adc_temp_channel;
-    adc_read_converted(*adc_temp_addr, &adc_temp_channel);
+    adc_read_converted(&adc_temp_addr, &adc_temp_channel);
     if (*adc_temp_channel > threshold) {
-    // Modify CAN Message
+    // Set Fault Status to High
     // Set Aux Temp
-    }    
+    set_power_select_status_fault_bitset(5);
+    set_aux_meas_main_temp_current_aux_current(*adc_temp_channel);
+    }
+    uint16_t *current_val;   
+    // Using XOR to toggle the bit 
+    set_power_select_status_valid_bitset(&current_val ^ (1 << 2));
 }
 
 // Declare states in state list
@@ -155,4 +164,10 @@ StatusCode init_fsm1(void) {
   };
   fsm_init(aux_bat, settings, NULL);
   return STATUS_CODE_OK;
+}
+
+StatusCode init_power_select_aux_bat()
+{
+    status_ok_or_return(tasks_init_task(init_aux_bat, TASK_PRIORITY(2), NULL));
+    return STATUS_CODE_OK;
 }
