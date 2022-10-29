@@ -1,11 +1,10 @@
 #pragma once
 
 #include "adc.h"
+#include "can_codegen.h"
 #include "fsm.h"
 #include "gpio.h"
 #include "log.h"
-
-#include "can_codegen.h"
 
 #define NUM_POWER_SUPPLY_STATES 2
 #define NUM_POWER_SUPPLY_TRANSITIONS 2

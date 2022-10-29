@@ -21,8 +21,7 @@ static void prv_power_supply_inactive_input(Fsm *fsm, void *context) {
   LOG_DEBUG("power_supply: valid=%d", state == GPIO_STATE_HIGH);
   // set power supply bits to 0
   PWR_SUP_STATUS &= ~POWER_SELECT_PWR_SUP_STATUS_MASK;
-  PWR_SUP_FAULT &= ~(POWER_SELECT_PWR_SUP_FAULT_OC_MASK |
-                     POWER_SELECT_PWR_SUP_FAULT_OV_MASK);
+  PWR_SUP_FAULT &= ~(POWER_SELECT_PWR_SUP_FAULT_OC_MASK | POWER_SELECT_PWR_SUP_FAULT_OV_MASK);
 }
 
 static void prv_power_supply_inactive_output(void *context) {
@@ -48,8 +47,8 @@ static void prv_power_supply_active_input(Fsm *fsm, void *context) {
     PWR_SUP_FAULT |= POWER_SELECT_PWR_SUP_FAULT_OC_MASK;
   }
   // logging format?
-  LOG_DEBUG("power_supply: valid=%d, voltage=%d, current=%d", state == GPIO_STATE_HIGH,
-            PWR_SUP_V, PWR_SUP_C);
+  LOG_DEBUG("power_supply: valid=%d, voltage=%d, current=%d", state == GPIO_STATE_HIGH, PWR_SUP_V,
+            PWR_SUP_C);
   PWR_SUP_STATUS |= POWER_SELECT_PWR_SUP_STATUS_MASK;
 }
 
