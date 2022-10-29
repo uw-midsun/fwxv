@@ -9,8 +9,8 @@
 
 #define NUM_MCI_FSM_STATES 4
 #define NUM_MCI_FSM_TRANSITIONS 9
-#define CRUISE_MAX_SPEED 45  // TODO: update these with actual numbers
-#define CRUISE_MIN_SPEED 12  // TODO: update these with actual numbers
+#define CRUISE_MAX_SPEED 45  // TODO(devAdhiraj): update these with actual numbers
+#define CRUISE_MIN_SPEED 12  // TODO(devAdhiraj): update these with actual numbers
 DECLARE_FSM(mci_fsm);
 
 typedef enum MciFsmStateId {
