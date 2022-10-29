@@ -1,40 +1,26 @@
-#include <stdio.h>
-
+#include "delay.h"
+#include "fsm.h"
 #include "log.h"
+#include "mci_fsm.h"
+#include "misc.h"
+#include "soft_timer.h"
 #include "tasks.h"
 
-#ifdef MS_PLATFORM_X86
-#define MASTER_MS_CYCLE_TIME 100
-#else
-#define MASTER_MS_CYCLE_TIME 1000
-#endif
-
-void run_fast_cycle() {}
-
-void run_medium_cycle() {}
-
-void run_slow_cycle() {}
-
-TASK(master_task, TASK_MIN_STACK_SIZE) {
-  int counter = 0;
+TASK(master_task, TASK_STACK_512) {
   while (true) {
-    run_fast_cycle();
-    if (!(counter % 10)) run_medium_cycle();
-    if (!(counter % 100)) run_slow_cycle();
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    ++counter;
+    fsm_run_cycle(mci_fsm);
+    delay_ms(100);
   }
 }
 
-int main() {
+int main(void) {
   tasks_init();
   log_init();
-  LOG_DEBUG("Welcome to TEST!");
-
+  init_mci_fsm();
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
+  LOG_DEBUG("MCI FSM...\n");
   tasks_start();
 
-  LOG_DEBUG("exiting main?");
   return 0;
 }

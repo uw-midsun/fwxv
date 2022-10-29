@@ -12,15 +12,13 @@ MciFsmStorage s_storage;
 void prv_mci_fsm_off_input(Fsm *fsm, void *context) {
   uint32_t notif;
   notify_get(&notif);
-  // Can it be possible that both Drive event and Reverse event happen at once?
-  // Do we need to check fsm storage to make sure velocity, rpm is 0 in off state?
   if (notify_check_event(&notif, MCI_FSM_GOTO_DRIVE)) {
     fsm_transition(fsm, MCI_FSM_STATE_DRIVE);
   } else if (notify_check_event(&notif, MCI_FSM_GOTO_REVERSE)) {
     fsm_transition(fsm, MCI_FSM_STATE_REVERSE);
   }
 }
-void prv_mci_fsm_off_output(Fsm *fsm, void *context) {
+void prv_mci_fsm_off_output(void *context) {
   LOG_DEBUG("MCI FSM OFF STATE\n");
 }
 
@@ -29,17 +27,22 @@ void prv_mci_fsm_drive_input(Fsm *fsm, void *context) {
   notify_get(&notif);
   if (notify_check_event(&notif, MCI_FSM_GOTO_OFF)) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
-  }
-  // should we check event first or if it valid to transition to event?
-  else if (s_storage.velocity == 0 && (&notif, MCI_FSM_GOTO_REVERSE)) {
-    fsm_transition(MCI_FSM_STATE_OFF, MCI_FSM_STATE_REVERSE);
-  } else if (s_storage.velocity <= CRUISE_MAX_SPEED && s_storage.velocity >= CRUISE_MIN_SPEED &&
-             (&notif, MCI_FSM_GOTO_CRUISE)) {
-    fsm_transition(fsm, MCI_FSM_STATE_CRUISE);
+  } else if (notify_check_event(&notif, MCI_FSM_GOTO_REVERSE)) {
+    if (s_storage.velocity == 0) {
+      fsm_transition(MCI_FSM_STATE_OFF, MCI_FSM_STATE_REVERSE);
+    } else {
+      LOG_DEBUG("didn't go to reverse\n");
+    }
+  } else if (notify_check_event(&notif, MCI_FSM_GOTO_CRUISE)) {
+    if (s_storage.velocity <= CRUISE_MAX_SPEED && s_storage.velocity >= CRUISE_MIN_SPEED) {
+      fsm_transition(fsm, MCI_FSM_STATE_CRUISE);
+    } else {
+      LOG_DEBUG("didn't go to drive\n");
+    }
   }
 }
-void prv_mci_fsm_drive_output(Fsm *fsm, void *context) {
-  LOG_DEBUG("MCI DRIVE CRUISE STATE\n");
+void prv_mci_fsm_drive_output(void *context) {
+  LOG_DEBUG("MCI FSM DRIVE STATE\n");
 }
 
 void prv_mci_fsm_reverse_input(Fsm *fsm, void *context) {
@@ -47,11 +50,15 @@ void prv_mci_fsm_reverse_input(Fsm *fsm, void *context) {
   notify_get(&notif);
   if (notify_check_event(&notif, MCI_FSM_GOTO_OFF)) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
-  } else if (s_storage.velocity == 0 && notify_check_event(&notif, MCI_FSM_GOTO_DRIVE)) {
-    fsm_transition(fsm, MCI_FSM_STATE_DRIVE);
+  } else if (notify_check_event(&notif, MCI_FSM_GOTO_DRIVE)) {
+    if (s_storage.velocity == 0) {
+      fsm_transition(fsm, MCI_FSM_STATE_DRIVE);
+    } else {
+      LOG_DEBUG("didn't go to drive\n");
+    }
   }
 }
-void prv_mci_fsm_reverse_output(Fsm *fsm, void *context) {
+void prv_mci_fsm_reverse_output(void *context) {
   LOG_DEBUG("MCI FSM REVERSE STATE\n");
 }
 
@@ -64,7 +71,7 @@ void prv_mci_fsm_cruise_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, MCI_FSM_STATE_DRIVE);
   }
 }
-void prv_mci_fsm_cruise_output(Fsm *fsm, void *context) {
+void prv_mci_fsm_cruise_output(void *context) {
   LOG_DEBUG("MCI FSM CRUISE STATE\n");
 }
 
@@ -76,7 +83,7 @@ static FsmState s_test1_state_list[NUM_MCI_FSM_STATES] = {
   STATE(MCI_FSM_STATE_CRUISE, prv_mci_fsm_cruise_input, prv_mci_fsm_cruise_output),
 };
 
-// Declares transition for state machine, must match those in input functions
+// Declares transition for state machine
 static FsmTransition s_test1_transitions[NUM_MCI_FSM_TRANSITIONS] = {
   // Transitions for OFF state
   TRANSITION(MCI_FSM_STATE_OFF, MCI_FSM_STATE_DRIVE),
