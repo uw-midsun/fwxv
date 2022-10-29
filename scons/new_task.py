@@ -1,4 +1,5 @@
 import os
+import sys
 import jinja2
 import yaml
 import argparse
@@ -94,8 +95,18 @@ def new_task(type, name, task_name):
             file_path = src_path + "/" + name + "_" + task_name + template_name[:-6]
 
         write_template(env, template_name, file_path, DATA)
-    
 
+def make_new_task(target, source, env):
+    TYPE = env["VARS"]["TYPE"]
+    TARGET = env["VARS"]["TARGET"]
+    NAME = env["VARS"]["NAME"]
+    # No project or library option provided
+    if TYPE not in ['project', 'libray']:
+        print("Missing project or library name. Expected --project=..., or --library=...")
+        sys.exit(1)
+
+    # Chain or's to select the first non-None value 
+    new_task(TYPE, TARGET, NAME)
 
 def main():
     PARSER = argparse.ArgumentParser()
