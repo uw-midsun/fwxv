@@ -29,15 +29,15 @@ void prv_mci_fsm_drive_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
   } else if (notify_check_event(&notif, MCI_FSM_GOTO_REVERSE)) {
     if (s_storage.velocity == 0) {
-      fsm_transition(MCI_FSM_STATE_OFF, MCI_FSM_STATE_REVERSE);
+      fsm_transition(fsm, MCI_FSM_STATE_REVERSE);
     } else {
-      LOG_DEBUG("didn't go to reverse\n");
+      LOG_DEBUG("reverse requirement not met, didn't transition\n");
     }
   } else if (notify_check_event(&notif, MCI_FSM_GOTO_CRUISE)) {
     if (s_storage.velocity <= CRUISE_MAX_SPEED && s_storage.velocity >= CRUISE_MIN_SPEED) {
       fsm_transition(fsm, MCI_FSM_STATE_CRUISE);
     } else {
-      LOG_DEBUG("didn't go to drive\n");
+      LOG_DEBUG("cruise requirement not met, didn't transition\n");
     }
   }
 }
@@ -54,7 +54,7 @@ void prv_mci_fsm_reverse_input(Fsm *fsm, void *context) {
     if (s_storage.velocity == 0) {
       fsm_transition(fsm, MCI_FSM_STATE_DRIVE);
     } else {
-      LOG_DEBUG("didn't go to drive\n");
+      LOG_DEBUG("drive requirement not met, didn't transition\n");
     }
   }
 }
