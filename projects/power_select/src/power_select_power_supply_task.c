@@ -1,4 +1,5 @@
 #include "power_select_power_supply_task.h"
+
 #include "power_select_setters.h"
 
 #define PWR_SUP_STATUS g_tx_struct.power_select_status_status
@@ -20,12 +21,10 @@ static void prv_power_supply_inactive_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, POWER_SUPPLY_ACTIVE);
   }
   LOG_DEBUG("power_supply: valid=%d", state == GPIO_STATE_HIGH);
-  set_power_select_status_status(PWR_SUP_STATUS & ~POWER_SELECT_PWR_SUP_STATUS_MASK);
-  set_power_select_status_fault(
-      PWR_SUP_FAULT & ~(POWER_SELECT_PWR_SUP_FAULT_OC_MASK | POWER_SELECT_PWR_SUP_FAULT_OV_MASK));
 }
 
 static void prv_power_supply_inactive_output(void *context) {
+  set_power_select_status_status(PWR_SUP_STATUS & ~POWER_SELECT_PWR_SUP_STATUS_MASK);
   LOG_DEBUG("Transitioned to POWER_SUPPLY_INACTIVE\n");
 }
 
@@ -36,24 +35,26 @@ static void prv_power_supply_active_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, POWER_SUPPLY_INACTIVE);
     return;
   }
+  set_power_select_status_fault(
+      PWR_SUP_FAULT & ~(POWER_SELECT_PWR_SUP_FAULT_OC_MASK | POWER_SELECT_PWR_SUP_FAULT_OV_MASK));
   adc_read_converted(g_power_select_voltage_pin, &adc_reading_voltage);
   set_power_select_dcdc_measurements_power_supply_voltage(adc_reading_voltage);
   if (adc_reading_voltage > POWER_SELECT_PWR_SUP_MAX_VOLTAGE_MV) {
     LOG_WARN("power_supply: overvoltage");
-    PWR_SUP_FAULT |= POWER_SELECT_PWR_SUP_FAULT_OV_MASK;
+    set_power_select_status_fault(PWR_SUP_FAULT | POWER_SELECT_PWR_SUP_FAULT_OV_MASK);
   }
   adc_read_converted(g_power_select_current_pin, &adc_reading_current);
   set_power_select_aux_measurements_power_supply_current(adc_reading_current);
   if (adc_reading_current > POWER_SELECT_PWR_SUP_MAX_CURRENT_MA) {
     LOG_WARN("power_supply: overcurrent");
-    PWR_SUP_FAULT |= POWER_SELECT_PWR_SUP_FAULT_OC_MASK;
+    set_power_select_status_fault(PWR_SUP_FAULT | POWER_SELECT_PWR_SUP_FAULT_OC_MASK);
   }
   LOG_DEBUG("power_supply: valid=%d, voltage=%d, current=%d", state == GPIO_STATE_HIGH,
             adc_reading_voltage, adc_reading_current);
-  PWR_SUP_STATUS |= POWER_SELECT_PWR_SUP_STATUS_MASK;
 }
 
 static void prv_power_supply_active_output(void *context) {
+  set_power_select_status_status(PWR_SUP_STATUS | POWER_SELECT_PWR_SUP_STATUS_MASK);
   LOG_DEBUG("Transitioned to POWER_SUPPLY_ACTIVE\n");
 }
 
