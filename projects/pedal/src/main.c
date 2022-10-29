@@ -12,7 +12,7 @@
 #include "can_board_ids.h"
 #include "log.h"
 #include "tasks.h"
-// #include "pedal_setters.h"
+#include "pedal_setters.h"
 
 #ifdef MS_PLATFORM_X86
 #define MASTER_MS_CYCLE_TIME 100
@@ -28,9 +28,6 @@ const CanSettings can_settings = {
    .rx = { GPIO_PORT_A, 11 },
    .loopback = true,
 };
-
-// static Ads1015Storage s_ads1015_storage = { 0 };
-// static PedalCalibBlob s_calib_blob = { 0 };
 
 // Read any GPIOs and the ADC for throttle
 bool read_pedal_throttle() {
@@ -68,7 +65,6 @@ void init_pedal_controls() {
    };
    i2c_init(I2C_PORT_2, &i2c_settings);
    GpioAddress ready_pin = { .port = GPIO_PORT_B, .pin = 2 };
-   //ads1015_init(&s_ads1015_storage, I2C_PORT_2, ADS1015_ADDRESS_GND, &ready_pin);
    adc_init(ADC_MODE_SINGLE);
 
    pedal_calibrate();
@@ -79,23 +75,20 @@ void run_medium_cycle()
    run_can_tx_cycle();
    wait_tasks(1);
 
-   // msg1 - brake
-   // msg2 - throttle
+   // Sending messages
    if (read_pedal_brake()) {
-      // Edit message to send 1 for brake, 0 for throttle (if brake is pressed, disable the throttle)
-      // set_transmit_msg1_status(1);
-      // set_transmit_msg2_signal(0);
+      // Send 1 for brake, 0 for throttle (if brake is pressed, disable the throttle)
+      set_pedal_output_brake_output(1);
+      set_pedal_output_throttle_output(0);
    } else if (read_pedal_throttle()) {
-      // Edit message to send 1 for throttle (send throttle data as normal)
-      // set_transmit_msg1_status(0);
-      // set_transmit_msg2_signal(1);
+      // Send 1 for throttle (send throttle data as normal)
+      set_pedal_output_brake_output(0);
+      set_pedal_output_throttle_output(1);
    } else {
-      // Edit message to send 0 for both
-      // set_transmit_msg1_status(0);
-      // set_transmit_msg2_signal(0);
+      // Send 0 for both throttle and brake
+      set_pedal_output_brake_output(0);
+      set_pedal_output_throttle_output(0);
    }
-
-    // transmit message: use pedal_can_setters.h file to set the correct data for the can message instead of using the struct
 }
 
 void run_slow_cycle()
