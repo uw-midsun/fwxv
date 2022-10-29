@@ -74,11 +74,12 @@ def write_template(env, template_name, file_path, data):
     with open(file_path, "w") as f:
         f.write(output)
 
-def process_setter_data(board, data, master_data):
+def process_setter_data(board, src_board, data, master_data):
     for message, message_data in data["Messages"].items():
         if board in message_data.get("target", []) and \
            message_data.get("signals", False): # extra check to make sure there's signals
             master_data["Messages"][message] = message_data
+            master_data["Messages"][message]["src"] = src_board
 
 def get_dbc_data():
     yaml_files = get_yaml_files()
@@ -142,10 +143,10 @@ def get_boards():
 
 def parse_board_yaml_files(board):
     master_data = {"Board": board, "Messages": {}}
-    yaml_files = list(get_yaml_files().values())
-    for file in yaml_files:
+    yaml_files = get_yaml_files()
+    for src_board, file in yaml_files.items():
         data = read_yaml(file)
-        process_setter_data(board, data, master_data)
+        process_setter_data(board, src_board, data, master_data)
 
     return master_data
 
