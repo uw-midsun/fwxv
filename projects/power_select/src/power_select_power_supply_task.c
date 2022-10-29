@@ -1,13 +1,15 @@
 #include "power_select_power_supply_task.h"
+#include "power_select_setters.h"
 
 #define PWR_SUP_STATUS g_tx_struct.power_select_status_status
 #define PWR_SUP_FAULT g_tx_struct.power_select_status_fault
-#define PWR_SUP_V g_tx_struct.power_select_dcdc_measurements_power_supply_voltage
-#define PWR_SUP_C g_tx_struct.power_select_aux_measurements_power_supply_current
 
 const GpioAddress g_power_select_valid_pin = POWER_SELECT_PWR_SUP_VALID_ADDR;
 const GpioAddress g_power_select_voltage_pin = POWER_SELECT_PWR_SUP_VSENSE_ADDR;
 const GpioAddress g_power_select_current_pin = POWER_SELECT_PWR_SUP_ISENSE_ADDR;
+
+static uint16_t adc_reading_voltage;
+static uint16_t adc_reading_current;
 
 FSM(power_supply, NUM_POWER_SUPPLY_STATES);
 
@@ -17,15 +19,13 @@ static void prv_power_supply_inactive_input(Fsm *fsm, void *context) {
   if (state == GPIO_STATE_LOW) {
     fsm_transition(fsm, POWER_SUPPLY_ACTIVE);
   }
-  // should we be logging valid pin value or if its valid?
   LOG_DEBUG("power_supply: valid=%d", state == GPIO_STATE_HIGH);
-  // set power supply bits to 0
-  PWR_SUP_STATUS &= ~POWER_SELECT_PWR_SUP_STATUS_MASK;
-  PWR_SUP_FAULT &= ~(POWER_SELECT_PWR_SUP_FAULT_OC_MASK | POWER_SELECT_PWR_SUP_FAULT_OV_MASK);
+  set_power_select_status_status(PWR_SUP_STATUS & ~POWER_SELECT_PWR_SUP_STATUS_MASK);
+  set_power_select_status_fault(
+      PWR_SUP_FAULT & ~(POWER_SELECT_PWR_SUP_FAULT_OC_MASK | POWER_SELECT_PWR_SUP_FAULT_OV_MASK));
 }
 
 static void prv_power_supply_inactive_output(void *context) {
-  // is this logging necessary
   LOG_DEBUG("Transitioned to POWER_SUPPLY_INACTIVE\n");
 }
 
@@ -36,19 +36,20 @@ static void prv_power_supply_active_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, POWER_SUPPLY_INACTIVE);
     return;
   }
-  adc_read_converted(g_power_select_voltage_pin, &PWR_SUP_V);
-  if (PWR_SUP_V > POWER_SELECT_PWR_SUP_MAX_VOLTAGE_MV) {
+  adc_read_converted(g_power_select_voltage_pin, &adc_reading_voltage);
+  set_power_select_dcdc_measurements_power_supply_voltage(adc_reading_voltage);
+  if (adc_reading_voltage > POWER_SELECT_PWR_SUP_MAX_VOLTAGE_MV) {
     LOG_WARN("power_supply: overvoltage");
     PWR_SUP_FAULT |= POWER_SELECT_PWR_SUP_FAULT_OV_MASK;
   }
-  adc_read_converted(g_power_select_current_pin, &PWR_SUP_C);
-  if (PWR_SUP_C > POWER_SELECT_PWR_SUP_MAX_CURRENT_MA) {
+  adc_read_converted(g_power_select_current_pin, &adc_reading_current);
+  set_power_select_aux_measurements_power_supply_current(adc_reading_current);
+  if (adc_reading_current > POWER_SELECT_PWR_SUP_MAX_CURRENT_MA) {
     LOG_WARN("power_supply: overcurrent");
     PWR_SUP_FAULT |= POWER_SELECT_PWR_SUP_FAULT_OC_MASK;
   }
-  // logging format?
-  LOG_DEBUG("power_supply: valid=%d, voltage=%d, current=%d", state == GPIO_STATE_HIGH, PWR_SUP_V,
-            PWR_SUP_C);
+  LOG_DEBUG("power_supply: valid=%d, voltage=%d, current=%d", state == GPIO_STATE_HIGH,
+            adc_reading_voltage, adc_reading_current);
   PWR_SUP_STATUS |= POWER_SELECT_PWR_SUP_STATUS_MASK;
 }
 
