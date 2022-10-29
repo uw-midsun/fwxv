@@ -13,7 +13,7 @@ void can_rx_all() {
         // Or do some sort or binary search for O(lgn)
         switch (msg.id.raw) {
 {%- for message, message_data in messages.items() %}
-            case SYSTEM_CAN_MESSAGE_{{board | upper}}_{{message | upper}}:
+            case SYSTEM_CAN_MESSAGE_{{message_data["src"] | upper}}_{{message | upper}}:
 
     {%- set signals = message_data["signals"].keys() -%}
     {%- set function_parameters -%}
