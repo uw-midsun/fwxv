@@ -1,19 +1,22 @@
 #include "spi.h"
 
 #include "log.h"
+#include "queues.h"
 #include "semaphore.h"
 #include "spi_mcu.h"
 
 #define SPI_BUF_SIZE 32
+#define SPI_QUEUE_DELAY_MS 0
 
-static Mutex s_spi_mutex;
+typedef struct {
+  uint8_t tx_buf[SPI_BUF_SIZE];
+  Queue tx_queue;
+  uint8_t rx_buf[SPI_BUF_SIZE];
+  Queue rx_queue;
+  Mutex mutex;
+} SPIBuffer;
 
-typedef struct SpiBuffer {
-  uint8_t tx_buffer[SPI_BUF_SIZE];
-  uint8_t rx_buffer[SPI_BUF_SIZE];
-} SpiBuffer;
-
-static SpiBuffer s_buf[NUM_SPI_PORTS];
+static SPIBuffer s_buf[NUM_SPI_PORTS];
 
 StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   if (spi >= NUM_SPI_PORTS) {
@@ -22,43 +25,56 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI mode.");
   }
 
-  status_ok_or_return(mutex_init(&s_spi_mutex));
+  s_buf[spi].tx_queue.num_items = SPI_BUF_SIZE;
+  s_buf[spi].tx_queue.item_size = sizeof(uint8_t);
+  s_buf[spi].tx_queue.storage_buf = s_buf[spi].tx_buf;
+  s_buf[spi].rx_queue.num_items = SPI_BUF_SIZE;
+  s_buf[spi].rx_queue.item_size = sizeof(uint8_t);
+  s_buf[spi].rx_queue.storage_buf = s_buf[spi].rx_buf;
+
+  status_ok_or_return(mutex_init(&s_buf[spi].mutex));
+  status_ok_or_return(queue_init(&s_buf[spi].rx_queue));
+  status_ok_or_return(queue_init(&s_buf[spi].tx_queue));
 
   return STATUS_CODE_OK;
 }
 
 StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
-  if (mutex_lock(&s_spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
-    if (tx_len > SPI_BUF_SIZE) {
-      return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid tx_len.");
-    }
-
-    for (size_t i = 0; i < tx_len; i++) {
-      s_buf[spi].tx_buffer[i] = tx_data[i];
-    }
-
-    mutex_unlock(&s_spi_mutex);
-    return STATUS_CODE_OK;
-  } else {
-    return STATUS_CODE_RESOURCE_EXHAUSTED;
+  if (spi >= NUM_SPI_PORTS) {
+    return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI port.");
   }
+
+  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_MUTEX_WAIT_MS));
+
+  for (size_t tx = 0; tx < tx_len; tx++) {
+    if (queue_send(&s_buf[spi].tx_queue, &tx_data[tx], SPI_QUEUE_DELAY_MS)) {
+      queue_reset(&s_buf[spi].tx_queue);
+      mutex_unlock(&s_buf[spi].mutex);
+      return STATUS_CODE_RESOURCE_EXHAUSTED;
+    }
+  }
+
+  mutex_unlock(&s_buf[spi].mutex);
+  return STATUS_CODE_OK;
 }
 
 StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placeholder) {
-  if (mutex_lock(&s_spi_mutex, SPI_MUTEX_WAIT_MS) == STATUS_CODE_OK) {
-    if (rx_len > SPI_BUF_SIZE) {
-      return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid rx_len.");
-    }
-
-    for (size_t i = 0; i < rx_len; i++) {
-      rx_data[i] = s_buf[spi].rx_buffer[i];
-    }
-
-    mutex_unlock(&s_spi_mutex);
-    return STATUS_CODE_OK;
-  } else {
-    return STATUS_CODE_RESOURCE_EXHAUSTED;
+  if (spi >= NUM_SPI_PORTS) {
+    return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI port.");
   }
+
+  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_MUTEX_WAIT_MS));
+
+  for (size_t rx = 0; rx < rx_len; rx++) {
+    if (queue_receive(&s_buf[spi].rx_queue, &rx_data[rx], SPI_QUEUE_DELAY_MS)) {
+      queue_reset(&s_buf[spi].rx_queue);
+      mutex_unlock(&s_buf[spi].mutex);
+      return STATUS_CODE_EMPTY;
+    }
+  }
+
+  mutex_unlock(&s_buf[spi].mutex);
+  return STATUS_CODE_OK;
 }
 
 StatusCode spi_cs_set_state(SpiPort spi, GpioState state) {
@@ -86,15 +102,31 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
 }
 
 StatusCode spi_get_tx(SpiPort spi, uint8_t *data, uint8_t len) {
-  for (size_t i = 0; i < len; i++) {
-    data[i] = s_buf[spi].tx_buffer[i];
+  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_MUTEX_WAIT_MS));
+
+  for (size_t tx = 0; tx < len; tx++) {
+    if (queue_receive(&s_buf[spi].tx_queue, &data[tx], SPI_QUEUE_DELAY_MS)) {
+      queue_reset(&s_buf[spi].tx_queue);
+      mutex_unlock(&s_buf[spi].mutex);
+      return STATUS_CODE_EMPTY;
+    }
   }
+
+  mutex_unlock(&s_buf[spi].mutex);
   return STATUS_CODE_OK;
 }
 
 StatusCode spi_set_rx(SpiPort spi, uint8_t *data, uint8_t len) {
-  for (size_t i = 0; i < len; i++) {
-    s_buf[spi].rx_buffer[i] = data[i];
+  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_MUTEX_WAIT_MS));
+
+  for (size_t rx = 0; rx < len; rx++) {
+    if (queue_send(&s_buf[spi].rx_queue, &data[rx], SPI_QUEUE_DELAY_MS)) {
+      queue_reset(&s_buf[spi].rx_queue);
+      mutex_unlock(&s_buf[spi].mutex);
+      return STATUS_CODE_RESOURCE_EXHAUSTED;
+    }
   }
+
+  mutex_unlock(&s_buf[spi].mutex);
   return STATUS_CODE_OK;
 }
