@@ -28,18 +28,18 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
-// TODO: Read any GPIOs and the ADC for throttle
+// TODO(Scrubpai): Read any GPIOs and the ADC for throttle
 uint16_t read_pedal_throttle() {
   return false;
 }
 
-// TODO: Read any GPIOs and the ADC for brake
+// TODO(Scrubpai): Read any GPIOs and the ADC for brake
 bool read_pedal_brake() {
   return false;
 }
 
-// TODO: Read the ADC when throttle and brake are pressed down or released, and use that reading to
-// set the upper (max value) and lower bounds (min value) of each pedal
+// TODO(Scrubpai): Read the ADC when throttle and brake are pressed down or released,
+// and use that reading to set the upper (max) and lower bounds (min) of each pedal
 void pedal_calibrate() {
   return;
 }
