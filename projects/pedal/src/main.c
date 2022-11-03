@@ -1,16 +1,16 @@
 #include <stdio.h>
 // #include "ads1015.h"
 #include "adc.h"
+#include "can.h"
+#include "can_board_ids.h"
+#include "can_msg.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "i2c.h"
 #include "interrupt.h"
-#include "soft_timer.h"
-#include "can.h"
-#include "can_board_ids.h"
-#include "can_msg.h"
 #include "log.h"
 #include "pedal_setters.h"
+#include "soft_timer.h"
 #include "tasks.h"
 
 #ifdef MS_PLATFORM_X86
@@ -38,7 +38,8 @@ bool read_pedal_brake() {
   return false;
 }
 
-// TODO: Read the ADC when throttle and brake are pressed down or released, and use that reading to set the upper (max value) and lower bounds (min value) of each pedal
+// TODO: Read the ADC when throttle and brake are pressed down or released, and use that reading to
+// set the upper (max value) and lower bounds (min value) of each pedal
 void pedal_calibrate() {
   return;
 }
@@ -72,10 +73,10 @@ void run_medium_cycle() {
   wait_tasks(1);
 
   // Sending messages
-  if (!read_pedal_brake()) { // Brake is not pressed - Send proper throttle data
+  if (!read_pedal_brake()) {  // Brake is not pressed - Send proper throttle data
     set_pedal_output_brake_output(0);
     set_pedal_output_throttle_output(read_pedal_throttle());
-  } else { // Brake is pressed - Send proper brake data with throttle as 0
+  } else {  // Brake is pressed - Send proper brake data with throttle as 0
     set_pedal_output_brake_output(1);
     set_pedal_output_throttle_output(0);
   }
