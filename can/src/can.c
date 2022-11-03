@@ -131,6 +131,8 @@ StatusCode can_transmit(const CanMessage *msg)
 {
   if (s_can_storage == NULL) {
     return status_code(STATUS_CODE_UNINITIALIZED);
+  } else if (msg->id.msg_id >= CAN_MSG_MAX_IDS) {
+    return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
   }
 
   return can_hw_transmit(msg->id.raw, msg->extended, msg->data_u8, msg->dlc);

@@ -6,7 +6,6 @@
 #include "i2c.h"
 #include "interrupt.h"
 #include "soft_timer.h"
-// #include "event_queue.h"
 #include "can.h"
 #include "can_board_ids.h"
 #include "can_msg.h"
@@ -22,43 +21,35 @@
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
-  .device_id = 0x1,
+  .device_id = SYSTEM_CAN_DEVICE_PEDAL,
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
   .loopback = true,
 };
 
-// Read any GPIOs and the ADC for throttle
-bool read_pedal_throttle() {
+// TODO: Read any GPIOs and the ADC for throttle
+uint16_t read_pedal_throttle() {
   return false;
 }
 
-// Read any GPIOs and the ADC for brake
+// TODO: Read any GPIOs and the ADC for brake
 bool read_pedal_brake() {
   return false;
 }
 
-// Read the ADC when the throttle and brake are pressed down/let go, and use that reading to set the
-// upper and lower bounds of the pedal
+// TODO: Read the ADC when throttle and brake are pressed down or released, and use that reading to set the upper (max value) and lower bounds (min value) of each pedal
 void pedal_calibrate() {
   return;
 }
 
-void run_fast_cycle() {
-  return;
-}
-
-// Initialize the GPIOs needed for the throttle
-// Initialize ADC for ADC readings
-// Calibrate the pedal upon initialization (set what we consider max value and min value for each
-// pedal)
 void init_pedal_controls() {
+  // Initialize GPIOs needed for the throttle
   interrupt_init();
   gpio_init();
   gpio_it_init();
 
-  // setup ADC readings
+  // Initializes ADC for ADC readings
   I2CSettings i2c_settings = {
     .speed = I2C_SPEED_FAST,
     .scl = { .port = GPIO_PORT_B, .pin = 10 },
@@ -68,7 +59,12 @@ void init_pedal_controls() {
   GpioAddress ready_pin = { .port = GPIO_PORT_B, .pin = 2 };
   adc_init(ADC_MODE_SINGLE);
 
+  // Calibrates the pedal upon initialization
   pedal_calibrate();
+}
+
+void run_fast_cycle() {
+  return;
 }
 
 void run_medium_cycle() {
@@ -76,17 +72,11 @@ void run_medium_cycle() {
   wait_tasks(1);
 
   // Sending messages
-  if (read_pedal_brake()) {
-    // Send 1 for brake, 0 for throttle (if brake is pressed, disable the throttle)
+  if (!read_pedal_brake()) { // Brake is not pressed - Send proper throttle data
+    set_pedal_output_brake_output(0);
+    set_pedal_output_throttle_output(read_pedal_throttle());
+  } else { // Brake is pressed - Send proper brake data with throttle as 0
     set_pedal_output_brake_output(1);
-    set_pedal_output_throttle_output(0);
-  } else if (read_pedal_throttle()) {
-    // Send 1 for throttle (send throttle data as normal)
-    set_pedal_output_brake_output(0);
-    set_pedal_output_throttle_output(1);
-  } else {
-    // Send 0 for both throttle and brake
-    set_pedal_output_brake_output(0);
     set_pedal_output_throttle_output(0);
   }
 }
