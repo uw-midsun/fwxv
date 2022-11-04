@@ -10,13 +10,13 @@
 
 ---
   Messages:
-    drive_state:
-      id: 22
-      target:
-        - motor_controller
-      signals:
-        drive_state:
-          length: 16
+    # drive_state:
+    #   id: 22
+    #   target:
+    #     - motor_controller
+    #   signals:
+    #     drive_state:
+    #       length: 16
 
     precharge_completed:
       id: 29

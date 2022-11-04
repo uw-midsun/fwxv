@@ -4,7 +4,6 @@
 #include "fsm.h"
 #include "gpio.h"
 #include "log.h"
-#include "notify.h"
 #include "task.h"
 
 #define NUM_MCI_FSM_STATES 4
@@ -20,13 +19,12 @@ typedef enum MciFsmStateId {
   MCI_FSM_STATE_CRUISE,
 } MciFsmStateId;
 
-// Events that MCI FSM Recieves?
-typedef enum MciFsmOutputEvent {
+typedef enum DriveOutputEvent {
   MCI_FSM_GOTO_OFF = 0,
   MCI_FSM_GOTO_DRIVE,
   MCI_FSM_GOTO_REVERSE,
   MCI_FSM_GOTO_CRUISE,
-} MciFsmOutputEvent;
+} DriveOutputEvent;
 
 typedef struct MciFsmStorage {
   // updated every 200ms

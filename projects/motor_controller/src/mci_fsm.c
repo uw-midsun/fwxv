@@ -2,38 +2,40 @@
 
 #include "delay.h"
 #include "log.h"
-#include "notify.h"
 #include "task.h"
+#include "motor_controller_getters.h"
+
+// #define get_drive_output()  get_drive_output_drive_output()
+
 
 FSM(mci_fsm, NUM_MCI_FSM_STATES);
 
-MciFsmStorage s_storage;
+static MciFsmStorage s_storage;
 
-void prv_mci_fsm_off_input(Fsm *fsm, void *context) {
-  uint32_t notif;
-  notify_get(&notif);
-  if (notify_check_event(&notif, MCI_FSM_GOTO_DRIVE)) {
+static void prv_mci_fsm_off_input(Fsm *fsm, void *context) {
+  DriveOutputEvent drive_event = get_drive_output_drive_output();
+  if (drive_event == MCI_FSM_GOTO_DRIVE) {
     fsm_transition(fsm, MCI_FSM_STATE_DRIVE);
-  } else if (notify_check_event(&notif, MCI_FSM_GOTO_REVERSE)) {
+  } else if (drive_event == MCI_FSM_GOTO_REVERSE) {
     fsm_transition(fsm, MCI_FSM_STATE_REVERSE);
   }
 }
-void prv_mci_fsm_off_output(void *context) {
+
+static void prv_mci_fsm_off_output(void *context) {
   LOG_DEBUG("MCI FSM OFF STATE\n");
 }
 
-void prv_mci_fsm_drive_input(Fsm *fsm, void *context) {
-  uint32_t notif;
-  notify_get(&notif);
-  if (notify_check_event(&notif, MCI_FSM_GOTO_OFF)) {
+static void prv_mci_fsm_drive_input(Fsm *fsm, void *context) {
+  DriveOutputEvent drive_event = get_drive_output_drive_output();
+  if (drive_event == MCI_FSM_GOTO_OFF) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
-  } else if (notify_check_event(&notif, MCI_FSM_GOTO_REVERSE)) {
+  } else if (drive_event == MCI_FSM_GOTO_REVERSE) {
     if (s_storage.velocity == 0) {
       fsm_transition(fsm, MCI_FSM_STATE_REVERSE);
     } else {
       LOG_DEBUG("reverse requirement not met, didn't transition\n");
     }
-  } else if (notify_check_event(&notif, MCI_FSM_GOTO_CRUISE)) {
+  } else if (drive_event == MCI_FSM_GOTO_CRUISE) {
     if (s_storage.velocity <= CRUISE_MAX_SPEED && s_storage.velocity >= CRUISE_MIN_SPEED) {
       fsm_transition(fsm, MCI_FSM_STATE_CRUISE);
     } else {
@@ -41,16 +43,16 @@ void prv_mci_fsm_drive_input(Fsm *fsm, void *context) {
     }
   }
 }
-void prv_mci_fsm_drive_output(void *context) {
+
+static void prv_mci_fsm_drive_output(void *context) {
   LOG_DEBUG("MCI FSM DRIVE STATE\n");
 }
 
-void prv_mci_fsm_reverse_input(Fsm *fsm, void *context) {
-  uint32_t notif;
-  notify_get(&notif);
-  if (notify_check_event(&notif, MCI_FSM_GOTO_OFF)) {
+static void prv_mci_fsm_reverse_input(Fsm *fsm, void *context) {
+  DriveOutputEvent drive_event = get_drive_output_drive_output();
+  if (drive_event == MCI_FSM_GOTO_OFF) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
-  } else if (notify_check_event(&notif, MCI_FSM_GOTO_DRIVE)) {
+  } else if (drive_event == MCI_FSM_GOTO_DRIVE) {
     if (s_storage.velocity == 0) {
       fsm_transition(fsm, MCI_FSM_STATE_DRIVE);
     } else {
@@ -58,20 +60,20 @@ void prv_mci_fsm_reverse_input(Fsm *fsm, void *context) {
     }
   }
 }
-void prv_mci_fsm_reverse_output(void *context) {
+
+static void prv_mci_fsm_reverse_output(void *context) {
   LOG_DEBUG("MCI FSM REVERSE STATE\n");
 }
 
-void prv_mci_fsm_cruise_input(Fsm *fsm, void *context) {
-  uint32_t notif;
-  notify_get(&notif);
-  if (notify_check_event(&notif, MCI_FSM_GOTO_OFF)) {
+static void prv_mci_fsm_cruise_input(Fsm *fsm, void *context) {
+  DriveOutputEvent drive_event = get_drive_output_drive_output();
+  if (drive_event == MCI_FSM_GOTO_OFF) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
-  } else if (notify_check_event(&notif, MCI_FSM_GOTO_DRIVE)) {
+  } else if (drive_event == MCI_FSM_GOTO_DRIVE) {
     fsm_transition(fsm, MCI_FSM_STATE_DRIVE);
   }
 }
-void prv_mci_fsm_cruise_output(void *context) {
+static void prv_mci_fsm_cruise_output(void *context) {
   LOG_DEBUG("MCI FSM CRUISE STATE\n");
 }
 

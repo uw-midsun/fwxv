@@ -73,6 +73,10 @@ def write_template(env, template_name, file_path, data):
     output = template.render(data=data)
     with open(file_path, "w") as f:
         f.write(output)
+    if "_rx_all.c.jinja" in template_name:
+        with open(file_path, "r") as f:
+            print("--------------- ADTEST -------------\n", f.read())
+            print("______________\n", data)
 
 def process_setter_data(board, data, master_data):
     for message, message_data in data["Messages"].items():
