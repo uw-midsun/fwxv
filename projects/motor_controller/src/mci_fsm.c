@@ -5,12 +5,15 @@
 #include "motor_controller_getters.h"
 #include "task.h"
 
+#define get_drive_output() get_drive_output_drive_output()
+
 FSM(mci_fsm, NUM_MCI_FSM_STATES);
 
 static MciFsmStorage s_storage;
 
 static void prv_mci_fsm_off_input(Fsm *fsm, void *context) {
-  DriveOutputEvent drive_event = get_drive_output_drive_output();
+  // TODO(devAdhiraj): added check if power state of MCI is precharged charged
+  DriveOutputEvent drive_event = get_drive_output();
   if (drive_event == MCI_FSM_GOTO_DRIVE) {
     fsm_transition(fsm, MCI_FSM_STATE_DRIVE);
   } else if (drive_event == MCI_FSM_GOTO_REVERSE) {
@@ -23,7 +26,7 @@ static void prv_mci_fsm_off_output(void *context) {
 }
 
 static void prv_mci_fsm_drive_input(Fsm *fsm, void *context) {
-  DriveOutputEvent drive_event = get_drive_output_drive_output();
+  DriveOutputEvent drive_event = get_drive_output();
   if (drive_event == MCI_FSM_GOTO_OFF) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
   } else if (drive_event == MCI_FSM_GOTO_REVERSE) {
@@ -46,7 +49,7 @@ static void prv_mci_fsm_drive_output(void *context) {
 }
 
 static void prv_mci_fsm_reverse_input(Fsm *fsm, void *context) {
-  DriveOutputEvent drive_event = get_drive_output_drive_output();
+  DriveOutputEvent drive_event = get_drive_output();
   if (drive_event == MCI_FSM_GOTO_OFF) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
   } else if (drive_event == MCI_FSM_GOTO_DRIVE) {
@@ -63,7 +66,7 @@ static void prv_mci_fsm_reverse_output(void *context) {
 }
 
 static void prv_mci_fsm_cruise_input(Fsm *fsm, void *context) {
-  DriveOutputEvent drive_event = get_drive_output_drive_output();
+  DriveOutputEvent drive_event = get_drive_output();
   if (drive_event == MCI_FSM_GOTO_OFF) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
   } else if (drive_event == MCI_FSM_GOTO_DRIVE) {

@@ -20,7 +20,7 @@ const CanSettings can_settings = {
 TASK(master_task, TASK_STACK_512) {
   while (true) {
     fsm_run_cycle(mci_fsm);
-    delay_ms(100);
+    delay_ms(250);
   }
 }
 
@@ -34,8 +34,7 @@ int main(void) {
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
   LOG_DEBUG("Motor Controller Task...\n");
+  tasks_start();
 
-  init_mci_fsm();
-  tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
   return 0;
 }
