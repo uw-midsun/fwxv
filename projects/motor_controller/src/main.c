@@ -29,13 +29,12 @@ int main(void) {
   log_init();
 
   can_init(&s_can_storage, &can_settings);
-  can_add_filter_in(SYSTEM_CAN_MESSAGE_NEW_CAN_TRANSMIT_MSG1);
 
   init_mci_fsm();
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
   LOG_DEBUG("Motor Controller Task...\n");
-  tasks_start();
 
-  return 0;
+  init_mci_fsm();
+  tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 }
