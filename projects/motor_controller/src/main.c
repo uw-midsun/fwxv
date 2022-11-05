@@ -37,4 +37,5 @@ int main(void) {
 
   init_mci_fsm();
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
+  return 0;
 }
