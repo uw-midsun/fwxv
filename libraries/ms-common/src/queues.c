@@ -43,6 +43,10 @@ StatusCode queue_peek(Queue *queue, void *buf, uint32_t delay_ms) {
   return STATUS_CODE_OK;
 }
 
+void queue_reset(Queue *queue) {
+  xQueueReset(queue->handle);
+}
+
 uint32_t queue_get_num_items(Queue *queue) {
   return queue->num_items;
 }
