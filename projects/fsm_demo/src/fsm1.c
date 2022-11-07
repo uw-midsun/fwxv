@@ -22,6 +22,7 @@ void prv_fsm1_state0_input(Fsm *fsm, void *context) {
   }
 }
 
+static void prv_fsm1_state0_output(void *context) {
   LOG_DEBUG("Transitioned to FSM1 state0\n");
   // Tell fsm1 that we've completed state0
   notify(fsm2, FSM1_STATE_0_CMPL);

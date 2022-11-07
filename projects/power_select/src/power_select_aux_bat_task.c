@@ -1,15 +1,13 @@
-#include <stdbool.h>
-#include <stdint.h>
 #include "adc.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "fsm.h"
-#include "gpio_mcu.h"
-#include "delay.h"
 #include "main.c"
 #include "new_can_setters.h"
 #include "log.h"
-#include "tasks.h"
+
+#define AUX_BAT_STATUS g_tx_struct.power_select_status_valid_bitset
+#define AUX_BAT_FAULT g_tx_struct.power_select_status_fault_bitset
 
 GpioAddress voltage_addr = {
     .port = GPIO_PORT_A,
@@ -53,7 +51,7 @@ GPIO_ALTFN_ANALOG,
 };
 
 #define NUM_AUX_BAT_STATES 2
-#define NUM_AUX_BAT_TRANSITIONS 4
+#define NUM_AUX_BAT_TRANSITIONS 2
 
 DECLARE_FSM(aux_bat);
 
@@ -65,7 +63,85 @@ typedef enum Aux_BatId {
     NUM_STATES,
 } Aux_BatId;
 
-void init_aux_bat() {
+// Input Functions for the Two States
+void prv_state0_input(Fsm *fsm, void *context) {
+    GpioState valid_channel;
+    gpio_get_state(&valid_addr, &valid_channel);
+        if (valid_channel == GPIO_STATE_HIGH) {
+            fsm_transition(fsm, ACTIVE);
+        }
+}
+
+// Output Functions for the Two States
+void prv_state0_output(void *context) {
+    // Using AND to clear the aux_bat fault and status bits
+    set_power_select_status_valid_bitset(AUX_BAT_STATUS & ~(1 << 2));
+    set_power_select_status_fault_bitset(AUX_BAT_FAULT & ~(1 << 7));
+    set_power_select_status_fault_bitset(AUX_BAT_FAULT & ~(1 << 6));
+    set_power_select_status_fault_bitset(AUX_BAT_FAULT & ~(1 << 5));
+}
+
+void prv_state1_input(Fsm *fsm, void *context) {
+    GpioState valid_channel;
+    gpio_get_state(&valid_addr, &valid_channel);
+        if (valid_channel == GPIO_STATE_LOW) {
+            fsm_transition(fsm, INACTIVE);
+        } 
+
+    GpioState adc_voltage_channel;
+    adc_read_converted(&adc_voltage_addr, &adc_voltage_channel);
+    if (adc_voltage_channel > threshold) {
+        // Set Fault Status to High
+        // Set Aux Voltage
+        set_power_select_status_fault_bitset(AUX_BAT_FAULT | (1 << 7));
+        set_aux_meas_main_voltage_aux_voltage(adc_voltage_channel);
+    }
+    GpioState adc_current_channel;
+    adc_read_converted(&adc_current_addr, &adc_current_channel);
+    if (adc_current_channel > threshold) {
+        // Set Fault Status to High
+        // Set Aux Current
+        set_power_select_status_fault_bitset(AUX_BAT_FAULT | (1 << 6));
+        set_aux_meas_main_current_aux_current(adc_current_channel);
+    }
+    GpioState adc_temp_channel;
+    adc_read_converted(&adc_temp_addr, &adc_temp_channel);
+    if (adc_temp_channel > threshold) {
+        // Set Fault Status to High
+        // Set Aux Temp
+        set_power_select_status_fault_bitset(AUX_BAT_FAULT | (1 << 5));
+        set_aux_meas_main_temp_current_aux_current(adc_temp_channel);
+    }
+}
+
+void prv_state1_output(void *context) {
+    // Using OR to set the aux_bat status bit 
+    set_power_select_status_valid_bitset(AUX_BAT_STATUS | (1 << 2));
+}
+
+// Declare states in state list
+static FsmState s_aux_bat_state_list[NUM_AUX_BAT_STATES] = {
+  STATE(INACTIVE, prv_state0_input, prv_state0_output),
+  STATE(ACTIVE, prv_state1_input, prv_state1_output),
+};
+
+// Declares transition for state machine, must match those in input functions
+static FsmTransition s_aux_bat_transitions[NUM_AUX_BAT_TRANSITIONS] = {
+  // Transitions for state 0
+  TRANSITION(INACTIVE, ACTIVE),
+  // Transitions for state 1
+  TRANSITION(ACTIVE, INACTIVE),
+};
+
+StatusCode init_power_select_aux_bat()
+{
+    status_ok_or_return(tasks_init_task(init_aux_bat, TASK_PRIORITY(2), NULL));
+    return STATUS_CODE_OK;
+}
+
+
+StatusCode init_aux_bat(void) {
+    // Initializations for gpio's, adc's, and the fsm
     gpio_init();
     gpio_init_pin(&voltage_addr, &gpio_settings);
     gpio_init_pin(&current_addr, &gpio_settings);
@@ -78,96 +154,13 @@ void init_aux_bat() {
     adc_set_channel(&adc_temp_addr, &adc_settings);
     adc_set_channel(&adc_voltage_addr, &adc_settings);
     adc_init(ADC_MODE_SINGLE);
-}
 
-// Input Functions for the Two States
-void prv_state0_input(Fsm *fsm, void *context) {
-    Fsm *fsm1 = context;
-    GpioState valid_channel;
-    gpio_get_state(&valid_addr, &valid_channel);
-        if (valid_channel == GPIO_STATE_HIGH) {
-            fsm_transition(fsm, ACTIVE);
-        }
-}
-
-void prv_state1_input(Fsm *fsm, void *context) {
-    Fsm *fsm1 = context;
-    GpioState valid_channel;
-    gpio_get_state(&valid_addr, &valid_channel);
-        if (valid_channel == GPIO_STATE_LOW) {
-            fsm_transition(fsm, INACTIVE);
-        } 
-}
-
-// Output Functions for the Two States
-void prv_state0_output(void *context) {
-    uint16_t *current_val;
-    // This is supposed to access the value already there and reset it using AND
-    set_power_select_status_fault_bitset(&current_val & ~(1 << 7));
-    set_power_select_status_fault_bitset(&current_val & ~(1 << 6));
-    set_power_select_status_fault_bitset(&current_val & ~(1 << 5));
-    set_power_select_status_valid_bitset(&current_val & ~(1 << 2));
-}
-
-void prv_state1_output(void *context) {
-    uint16_t *adc_voltage_channel;
-    adc_read_converted(adc_voltage_addr, &adc_voltage_channel);
-    if (*adc_voltage_channel > threshold) {
-    // Set Fault Status to High
-    // Set Aux Voltage
-    set_power_select_status_fault_bitset(7);
-    set_aux_meas_main_voltage_aux_voltage(*adc_voltage_channel);
-    }
-    uint16_t *adc_current_channel;
-    adc_read_converted(&adc_current_addr, &adc_current_channel);
-    if (*adc_current_channel > threshold) {
-    // Set Fault Status to High
-    // Set Aux Current
-    set_power_select_status_fault_bitset(6);
-    set_aux_meas_main_current_aux_current(*adc_current_channel);
-    }
-    uint16_t *adc_temp_channel;
-    adc_read_converted(&adc_temp_addr, &adc_temp_channel);
-    if (*adc_temp_channel > threshold) {
-    // Set Fault Status to High
-    // Set Aux Temp
-    set_power_select_status_fault_bitset(5);
-    set_aux_meas_main_temp_current_aux_current(*adc_temp_channel);
-    }
-    uint16_t *current_val;   
-    // Using XOR to toggle the bit 
-    set_power_select_status_valid_bitset(&current_val ^ (1 << 2));
-}
-
-// Declare states in state list
-static FsmState s_aux_bat_state_list[NUM_AUX_BAT_STATES] = {
-  STATE(INACTIVE, prv_state0_input, prv_state0_output),
-  STATE(INACTIVE, prv_state1_input, prv_state1_output),
-};
-
-// Declares transition for state machine, must match those in input functions
-static FsmTransition s_aux_bat_transitions[NUM_AUX_BAT_TRANSITIONS] = {
-  // Transitions for state 0
-  TRANSITION(INACTIVE, INACTIVE),
-  TRANSITION(INACTIVE, ACTIVE),
-  // Transitions for state 1
-  TRANSITION(ACTIVE, INACTIVE),
-  TRANSITION(ACTIVE, ACTIVE),
-};
-
-StatusCode init_fsm1(void) {
-  FsmSettings settings = {
-    .state_list = s_aux_bat_state_list,
-    .transitions = s_aux_bat_transitions,
-    .num_transitions = NUM_AUX_BAT_TRANSITIONS,
-    .initial_state = INACTIVE,
-  };
-  fsm_init(aux_bat, settings, NULL);
-  return STATUS_CODE_OK;
-}
-
-StatusCode init_power_select_aux_bat()
-{
-    status_ok_or_return(tasks_init_task(init_aux_bat, TASK_PRIORITY(2), NULL));
+    FsmSettings settings = {
+        .state_list = s_aux_bat_state_list,
+        .transitions = s_aux_bat_transitions,
+        .num_transitions = NUM_AUX_BAT_TRANSITIONS,
+        .initial_state = INACTIVE,
+    };
+    fsm_init(aux_bat, settings, NULL);
     return STATUS_CODE_OK;
 }
