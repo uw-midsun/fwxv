@@ -3,7 +3,6 @@
 #include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
-#include "main.c"
 #include "new_can_setters.h"
 
 #define AUX_BAT_STATUS g_tx_struct.power_select_status_valid_bitset
@@ -153,7 +152,7 @@ StatusCode init_aux_bat(void) {
   adc_set_channel(&adc_current_addr, &adc_settings);
   adc_set_channel(&adc_temp_addr, &adc_settings);
   adc_set_channel(&adc_voltage_addr, &adc_settings);
-  //   adc_init(ADC_MODE_SINGLE);
+  adc_init(ADC_MODE_SINGLE);
 
   FsmSettings settings = {
     .state_list = s_aux_bat_state_list,
