@@ -90,7 +90,9 @@ void prv_state1_input(Fsm *fsm, void *context) {
 
   GpioState adc_voltage_channel;
   adc_read_converted(&adc_voltage_addr, &adc_voltage_channel);
-  if (adc_voltage_channel > threshold) {
+  // This is a placeholder for different thresholds
+  uint16_t *threshold;
+  if (adc_voltage_channel > *threshold) {
     // Set Fault Status to High
     // Set Aux Voltage
     set_power_select_status_fault_bitset(AUX_BAT_FAULT | (1 << 7));
@@ -98,7 +100,7 @@ void prv_state1_input(Fsm *fsm, void *context) {
   }
   GpioState adc_current_channel;
   adc_read_converted(&adc_current_addr, &adc_current_channel);
-  if (adc_current_channel > threshold) {
+  if (adc_current_channel > *threshold) {
     // Set Fault Status to High
     // Set Aux Current
     set_power_select_status_fault_bitset(AUX_BAT_FAULT | (1 << 6));
@@ -106,7 +108,7 @@ void prv_state1_input(Fsm *fsm, void *context) {
   }
   GpioState adc_temp_channel;
   adc_read_converted(&adc_temp_addr, &adc_temp_channel);
-  if (adc_temp_channel > threshold) {
+  if (adc_temp_channel > *threshold) {
     // Set Fault Status to High
     // Set Aux Temp
     set_power_select_status_fault_bitset(AUX_BAT_FAULT | (1 << 5));
