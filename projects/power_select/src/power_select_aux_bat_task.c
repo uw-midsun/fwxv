@@ -4,9 +4,10 @@
 #include "gpio_it.h"
 #include "log.h"
 #include "new_can_setters.h"
+#include "new_can_tx_structs.h"
 
-#define AUX_BAT_STATUS g_tx_struct.power_select_status_valid_bitset
-#define AUX_BAT_FAULT g_tx_struct.power_select_status_fault_bitset
+#define AUX_BAT_STATUS new_can_tx_struct.power_select_status_valid_bitset
+#define AUX_BAT_FAULT new_can_tx_struct.power_select_status_fault_bitset
 
 GpioAddress voltage_addr = {
   .port = GPIO_PORT_A,
