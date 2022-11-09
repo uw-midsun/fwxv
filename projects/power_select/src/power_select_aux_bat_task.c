@@ -3,11 +3,12 @@
 #include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
-#include "new_can_setters.h"
-#include "new_can_tx_structs.h"
+// #include "new_can_tx_structs.h"
+#include "power_select_setters.h"
 
-#define AUX_BAT_STATUS new_can_tx_struct.power_select_status_valid_bitset
-#define AUX_BAT_FAULT new_can_tx_struct.power_select_status_fault_bitset
+#define AUX_BAT_STATUS g_tx_struct.power_select_status_status
+#define AUX_BAT_FAULT g_tx_struct.power_select_status_fault
+uint16_t threshold;
 
 GpioAddress voltage_addr = {
   .port = GPIO_PORT_A,
@@ -75,10 +76,10 @@ void prv_state0_input(Fsm *fsm, void *context) {
 // Output Functions for the Two States
 void prv_state0_output(void *context) {
   // Using AND to clear the aux_bat fault and status bits
-  set_power_select_status_valid_bitset(AUX_BAT_STATUS & ~(1 << 2));
-  set_power_select_status_fault_bitset(AUX_BAT_FAULT & ~(1 << 7));
-  set_power_select_status_fault_bitset(AUX_BAT_FAULT & ~(1 << 6));
-  set_power_select_status_fault_bitset(AUX_BAT_FAULT & ~(1 << 5));
+  set_power_select_status_status(AUX_BAT_STATUS & ~(1 << 2));
+  set_power_select_status_fault(AUX_BAT_FAULT & ~(1 << 7));
+  set_power_select_status_fault(AUX_BAT_FAULT & ~(1 << 6));
+  set_power_select_status_fault(AUX_BAT_FAULT & ~(1 << 5));
 }
 
 void prv_state1_input(Fsm *fsm, void *context) {
@@ -88,37 +89,37 @@ void prv_state1_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, INACTIVE);
   }
 
-  GpioState adc_voltage_channel;
-  adc_read_converted(&adc_voltage_addr, &adc_voltage_channel);
+  uint16_t adc_voltage_channel;
+  adc_read_converted(adc_voltage_addr, &adc_voltage_channel);
   // This is a placeholder for different thresholds
-  uint16_t *threshold;
-  if (adc_voltage_channel > *threshold) {
+  // uint16_t threshold;
+  if (adc_voltage_channel > threshold) {
     // Set Fault Status to High
     // Set Aux Voltage
-    set_power_select_status_fault_bitset(AUX_BAT_FAULT | (1 << 7));
-    set_aux_meas_main_voltage_aux_voltage(adc_voltage_channel);
+    set_power_select_status_fault(AUX_BAT_FAULT | (1 << 7));
+    set_power_select_aux_measurements_aux_voltage(adc_voltage_channel);
   }
-  GpioState adc_current_channel;
-  adc_read_converted(&adc_current_addr, &adc_current_channel);
-  if (adc_current_channel > *threshold) {
+  uint16_t adc_current_channel;
+  adc_read_converted(adc_current_addr, &adc_current_channel);
+  if (adc_current_channel > threshold) {
     // Set Fault Status to High
     // Set Aux Current
-    set_power_select_status_fault_bitset(AUX_BAT_FAULT | (1 << 6));
-    set_aux_meas_main_current_aux_current(adc_current_channel);
+    set_power_select_status_fault(AUX_BAT_FAULT | (1 << 6));
+    set_power_select_aux_measurements_aux_current(adc_current_channel);
   }
-  GpioState adc_temp_channel;
-  adc_read_converted(&adc_temp_addr, &adc_temp_channel);
-  if (adc_temp_channel > *threshold) {
+  uint16_t adc_temp_channel;
+  adc_read_converted(adc_temp_addr, &adc_temp_channel);
+  if (adc_temp_channel > threshold) {
     // Set Fault Status to High
     // Set Aux Temp
-    set_power_select_status_fault_bitset(AUX_BAT_FAULT | (1 << 5));
-    set_aux_meas_main_temp_current_aux_current(adc_temp_channel);
+    set_power_select_status_fault(AUX_BAT_FAULT | (1 << 5));
+    set_power_select_aux_measurements_aux_temp(adc_temp_channel);
   }
 }
 
 void prv_state1_output(void *context) {
   // Using OR to set the aux_bat status bit
-  set_power_select_status_valid_bitset(AUX_BAT_STATUS | (1 << 2));
+  set_power_select_status_status(AUX_BAT_STATUS | (1 << 2));
 }
 
 // Declare states in state list
@@ -136,7 +137,7 @@ static FsmTransition s_aux_bat_transitions[NUM_AUX_BAT_TRANSITIONS] = {
 };
 
 StatusCode init_power_select_aux_bat() {
-  status_ok_or_return(tasks_init_task(init_aux_bat, TASK_PRIORITY(2), NULL));
+  status_ok_or_return(tasks_init_task(aux_bat, TASK_PRIORITY(2), NULL));
   return STATUS_CODE_OK;
 }
 
@@ -150,9 +151,9 @@ StatusCode init_aux_bat(void) {
   gpio_init_pin(&adc_current_addr, &adc_settings);
   gpio_init_pin(&adc_temp_addr, &adc_settings);
   gpio_init_pin(&adc_voltage_addr, &adc_settings);
-  adc_set_channel(&adc_current_addr, &adc_settings);
-  adc_set_channel(&adc_temp_addr, &adc_settings);
-  adc_set_channel(&adc_voltage_addr, &adc_settings);
+  adc_set_channel(adc_current_addr, true);
+  adc_set_channel(adc_temp_addr, true);
+  adc_set_channel(adc_voltage_addr, true);
   adc_init(ADC_MODE_SINGLE);
 
   FsmSettings settings = {
