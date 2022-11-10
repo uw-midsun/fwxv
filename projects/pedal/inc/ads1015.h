@@ -9,6 +9,7 @@
 // it's possible for us to miss it during bus glitching. This forces an
 // interrupt if we haven't triggered within a few conversion periods.
 #include <stdbool.h>
+
 #include "gpio.h"
 #include "i2c.h"
 #include "soft_timer.h"

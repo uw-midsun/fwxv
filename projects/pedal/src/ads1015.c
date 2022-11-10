@@ -5,9 +5,10 @@
 // rotation of the channels is implemented using bitsets. The readings are just
 // a arbitrary value.
 #include "ads1015.h"
-#include <string.h>
-#include "FreeRTOS.h"
 
+#include <string.h>
+
+#include "FreeRTOS.h"
 #include "ads1015_def.h"
 #include "soft_timer.h"
 

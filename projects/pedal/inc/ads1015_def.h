@@ -86,7 +86,7 @@
 // Setup for the config register's upper byte
 #define ADS1015_CONFIG_REGISTER_MSB(channel)                                 \
   (ADS1015_START_SINGLE_CONV | ADS1015_AIN(channel) | ADS1015_PGA_FSR_4096 | \
-   ADS1015_CONVERSION_MODE_SINGLE)
+ADS1015_CONVERSION_MODE_SINGLE)
 
 #define ADS1015_CONFIG_REGISTER_MSB_IDLE \
   (ADS1015_IDLE | ADS1015_AIN_0 | ADS1015_PGA_FSR_4096 | ADS1015_CONVERSION_MODE_SINGLE)
@@ -94,7 +94,7 @@
 // Setup for the config register's lower byte
 #define ADS1015_CONFIG_REGISTER_LSB(datarate)                                                    \
   ((datarate) | ADS1015_COMP_MODE_TRAD | ADS1015_COMP_POL_HIGH | ADS1015_COMP_LAT_NON_LATCHING | \
-   ADS1015_COMP_QUE_1_CONV)
+ADS1015_COMP_QUE_1_CONV)
 
 // These represent the full-scale range of ADS1015 scaling in mVolts.
 // They are used for calculating the LSB size, corresponding to PGA settings.
