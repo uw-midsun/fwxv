@@ -16,7 +16,7 @@
 #define ADS1015_CHANNEL_ARBITRARY_READING 0
 
 static SoftTimer s_timer;
-static Ads1015Storage *context;
+static Ads1015Storage *s_context;
 
 // Checks if a channel is enabled (true) or disabled (false).
 static bool prv_channel_is_enabled(Ads1015Storage *storage, Ads1015Channel channel) {
@@ -44,7 +44,7 @@ static StatusCode prv_set_channel(Ads1015Storage *storage, Ads1015Channel channe
 
 // Periodically calls channels' callbacks imitating the interrupt behavior.
 static void prv_timer_callback(SoftTimerId id) {
-  Ads1015Storage *storage = context;
+  Ads1015Storage *storage = s_context;
   Ads1015Channel current_channel = storage->current_channel;
 
   if (prv_channel_is_enabled(storage, current_channel)) {
@@ -79,20 +79,20 @@ StatusCode ads1015_init(Ads1015Storage *storage, I2CPort i2c_port, Ads1015Addres
   for (Ads1015Channel channel = 0; channel < NUM_ADS1015_CHANNELS; channel++) {
     storage->channel_readings[channel] = ADS1015_DISABLED_CHANNEL_READING;
   }
-  context = storage;
+  s_context = storage;
   return soft_timer_start(ADS1015_CHANNEL_UPDATE_PERIOD_US, prv_timer_callback, &s_timer);
 }
 
 // Enable/disables a channel, and sets a callback for the channel.
 StatusCode ads1015_configure_channel(Ads1015Storage *storage, Ads1015Channel channel, bool enable,
-                                     Ads1015Callback callback, void *context) {
+                                     Ads1015Callback callback, void *s_context) {
   if (storage == NULL || channel >= NUM_ADS1015_CHANNELS) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
   prv_mark_channel_enabled(channel, enable, &storage->channel_bitset);
   storage->pending_channel_bitset = storage->channel_bitset;
   storage->channel_callback[channel] = callback;
-  storage->callback_context[channel] = context;
+  storage->callback_context[channel] = s_context;
 
   if (!enable) {
     storage->channel_readings[channel] = ADS1015_DISABLED_CHANNEL_READING;
