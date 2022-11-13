@@ -44,13 +44,13 @@ static void prv_power_supply_active_input(Fsm *fsm, void *context) {
   set_power_select_status_fault(
       PWR_SUP_FAULT & ~(POWER_SELECT_DCDC_FAULT_OC_MASK | POWER_SELECT_DCDC_FAULT_OV_MASK));
   adc_read_converted(g_power_select_voltage_pin, &adc_reading_voltage);
-  set_power_select_dcdc_measurements_power_supply_voltage(adc_reading_voltage);
+  set_power_select_dcdc_measurements_dcdc_voltage(adc_reading_voltage);
   if (adc_reading_voltage > POWER_SELECT_PWR_SUP_MAX_VOLTAGE_MV) {
     LOG_WARN("power_supply: overvoltage");
     set_power_select_status_fault(PWR_SUP_FAULT | POWER_SELECT_DCDC_FAULT_OV_MASK);
   }
   adc_read_converted(g_power_select_current_pin, &adc_reading_current);
-  set_power_select_aux_measurements_power_supply_current(adc_reading_current);
+  set_power_select_dcdc_measurements_dcdc_current(adc_reading_current);
   if (adc_reading_current > POWER_SELECT_PWR_SUP_MAX_CURRENT_MA) {
     LOG_WARN("power_supply: overcurrent");
     set_power_select_status_fault(PWR_SUP_FAULT | POWER_SELECT_DCDC_FAULT_OC_MASK);
