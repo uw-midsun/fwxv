@@ -1,42 +1,9 @@
+#include "power_select_dcdc_task.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
-
-#include "FreeRTOS.h"
-#include "adc.h"
-#include "delay.h"      // For real-time delays
-#include "gpio.h"       // General purpose I/O control.
-#include "interrupt.h"  // For enabling interrupts
-#include "log.h"        // For outputting to the terminal
-#include "tasks.h"      // For tasks
-
-/*
-Finally the function should also initialize the FSM task (dcdc_task).
-The dcdc_task will have 2 states: ACTIVE, INACTIVE
-
-In ACTIVE state:
-  1. Reads valid GPIO for valid measurements
-       Moves to INACTIVE if not valid
-  2. Reads the voltage
-      If overvoltage sets the FAULT_STATUS to HIGH. See CAN Message below for details
-      Sets DCDC_VOLTAGE in CAN message
-  3. Reads the current
-      If overcurrent sets the FAULT_STATUS to HIGH. See CAN Message below for details
-      Sets DCDC_CURRENT in CAN message
-  4. Reads the temperature
-      If overtemperature sets the FAULT_STATUS to HIGH. See CAN Message below for details
-      Sets DCDC_TEMP in CAN message
-  5. Sets STATUS to HIGH
-
-In INACTIVE state:
-1. Reads valid GPIO
-      Moves back to ACTIVE if valid
-2. Sets FAULT_STATUS and STATUS to LOW if not set. See CAN Message below for details
-*/
-
-#include "power_select_dcdc_task.h"
-// #include "power_select_setters.h"
 
 #define PWR_SUP_STATUS g_tx_struct.power_select_status_status
 #define PWR_SUP_FAULT g_tx_struct.power_select_status_fault
@@ -89,7 +56,7 @@ static void prv_power_supply_active_input(Fsm *fsm, void *context) {
     set_power_select_status_fault(PWR_SUP_FAULT | POWER_SELECT_DCDC_FAULT_OC_MASK);
   }
   adc_read_converted(g_power_select_temp_pin, &adc_reading_temp);
-  set_power_select_dcdc_measurements_power_supply_temp(adc_reading_temp);
+  set_power_select_dcdc_measurements_dcdc_temp(adc_reading_temp);
   if (adc_reading_temp > POWER_SELECT_PWR_SUP_MAX_TEMP_C) {
     LOG_WARN("power_supply: overtemperature");
     set_power_select_status_fault(PWR_SUP_FAULT | POWER_SELECT_DCDC_FAULT_OT_MASK);
@@ -118,11 +85,6 @@ static FsmTransition s_power_supply_transition_list[NUM_POWER_SUPPLY_STATES] = {
 };
 
 StatusCode init_dcdc(void) {
-  // Enable various peripherals
-  log_init();
-  interrupt_init();
-  gpio_init();
-
   // Initialize valid GPIO pin
   static GpioSettings valid_settings = {
     .direction = GPIO_DIR_IN,
