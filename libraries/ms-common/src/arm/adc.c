@@ -6,20 +6,13 @@
 #include "FreeRTOS.h"
 #include "gpio.h"
 #include "log.h"
-#include "semphr.h"
+#include "semaphore.h"
 #include "status.h"
 #include "stm32f10x.h"
 #include "stm32f10x_interrupt.h"
 
-// Mock Gpio addresses for internal channels
-const GpioAddress ADC_TEMP = {
-  .port = NUM_GPIO_PORTS,
-  .pin = ADC_Channel_TempSensor,  // Channel 16
-};
-const GpioAddress ADC_REF = {
-  .port = NUM_GPIO_PORTS,
-  .pin = ADC_Channel_Vrefint,  // Channel 17
-};
+// Sample rate for all ADC channels
+#define ADC_SAMPLE_RATE ADC_SampleTime_239Cycles5
 
 // TS_CAL addresses obtained from section 3.10.1 of the specific device
 // datasheet
@@ -36,8 +29,7 @@ typedef struct AdcStatus {
   uint8_t active_channels;    // Keeps track of how many channels have been registered with the ADC
   volatile uint8_t sequence;  // Indicates where next conversion will go
   bool continuous;            // Determines whether conversions are continuous or single-shot
-  SemaphoreHandle_t converting;
-  StaticSemaphore_t converting_buf;
+  Mutex converting;
 } AdcStatus;
 
 static AdcStatus s_adc_status;
@@ -46,6 +38,16 @@ typedef struct AdcStore {
   uint8_t channel;
   uint16_t reading;
 } AdcStore;
+
+// Mock Gpio addresses for internal channels
+const GpioAddress ADC_TEMP = {
+  .port = NUM_GPIO_PORTS,
+  .pin = ADC_Channel_TempSensor,  // Channel 16
+};
+const GpioAddress ADC_REF = {
+  .port = NUM_GPIO_PORTS,
+  .pin = ADC_Channel_Vrefint,  // Channel 17
+};
 
 // Store of information about each possible channel
 // Channels are stored at their relative index
@@ -76,7 +78,7 @@ StatusCode adc_get_channel(GpioAddress address, uint8_t *adc_channel) {
       *adc_channel += 10;
       break;
     case NUM_GPIO_PORTS:  // for special channels BAT/REF/TEMP
-      if (address.pin < ADC_Channel_Vrefint || address.pin > ADC_Channel_TempSensor) {
+      if (address.pin != ADC_Channel_Vrefint && address.pin != ADC_Channel_TempSensor) {
         return status_code(STATUS_CODE_INVALID_ARGS);
       }
       break;
@@ -179,7 +181,7 @@ StatusCode adc_init(AdcMode adc_mode) {
   for (uint8_t index = 0; index < s_adc_status.active_channels; index++) {
     // Each channel is configured with ascending rank, starting at one
     uint8_t rank = index + 1;
-    ADC_InjectedChannelConfig(ADC1, s_adc_sequence[index]->channel, rank, ADC_SAMPLE_RATE);
+    ADC_RegularChannelConfig(ADC1, s_adc_sequence[index]->channel, rank, ADC_SAMPLE_RATE);
   }
 
   // Initialize ADC1
@@ -212,11 +214,6 @@ StatusCode adc_init(AdcMode adc_mode) {
   stm32f10x_interrupt_nvic_enable(ADC1_2_IRQn, INTERRUPT_PRIORITY_HIGH);
   ADC_ITConfig(ADC1, ADC_IT_EOC, true);
 
-  // If we are in continuous mode, start the adc
-  if (adc_mode == ADC_MODE_CONTINUOUS) {
-    ADC_SoftwareStartConvCmd(ADC1, ENABLE);
-  }
-
   // By default, enable vref and temp sensor for voltage conversions
   ADC_TempSensorVrefintCmd(true);
   adc_add_channel(ADC_REF);
@@ -224,12 +221,12 @@ StatusCode adc_init(AdcMode adc_mode) {
   // Initialize static variables
   s_adc_status.continuous = adc_mode;
   s_adc_status.sequence = 0;
-  s_adc_status.converting = xSemaphoreCreateBinaryStatic(&s_adc_status.converting_buf);
+  mutex_init(&s_adc_status.converting);
   s_adc_status.initialized = true;
 
-  // If we are in continuous mode, start converting
+  // If we are in continuous mode, start the adc
   if (adc_mode == ADC_MODE_CONTINUOUS) {
-    ADC_SoftwareStartConvCmd(ADC1, true);
+    ADC_SoftwareStartConvCmd(ADC1, ENABLE);
   }
   return STATUS_CODE_OK;
 }
@@ -247,7 +244,7 @@ void ADC1_COMP_IRQHandler() {
       s_adc_status.sequence = 0;
       // If single-shot, signal that all values converted
       if (s_adc_status.continuous == ADC_MODE_SINGLE) {
-        xSemaphoreGiveFromISR(s_adc_status.converting, &xHigherPriorityTaskWoken);
+        xSemaphoreGiveFromISR(s_adc_status.converting.handle, &xHigherPriorityTaskWoken);
         ADC_SoftwareStartConvCmd(ADC1, DISABLE);
       }
     }
@@ -263,12 +260,12 @@ StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
 
   if (!s_adc_status.continuous) {
     // For Single-shot, we take semaphore and initiate a conversion
-    xSemaphoreTake(s_adc_status.converting, portMAX_DELAY);
+    ok_or_return(mutex_lock(&s_adc_status.converting, ADC_TIMEOUT_MS);
     ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 
     // Once conversion is finished, we will receive the semaphore from ISR
-    xSemaphoreTake(s_adc_status.converting, portMAX_DELAY);
-    xSemaphoreGive(s_adc_status.converting);
+    mutex_lock(&s_adc_status.converting, ADC_TIMEOUT_MS);
+    mutex_unlock(&s_adc_status.converting);
   }
 
   *reading = s_adc_stores[channel].reading;

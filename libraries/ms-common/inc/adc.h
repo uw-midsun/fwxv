@@ -36,11 +36,10 @@
 #include "status.h"
 #include "tasks.h"
 
-// Sample rate for all ADC channels
-#define ADC_SAMPLE_RATE ADC_SampleTime_239Cycles5
-
 // Total Number of ADC channels (16 external, 2 internal)
 #define NUM_ADC_CHANNELS 18
+
+#define ADC_TIMEOUT_MS 100
 
 typedef enum {
   ADC_MODE_SINGLE = 0,
@@ -58,12 +57,11 @@ StatusCode adc_init(AdcMode adc_mode);
 // Must be called for all pins in use before adc_init()
 StatusCode adc_add_channel(GpioAddress address);
 
-// Register a callback function to be called when the specified pin
-// completes a conversion
-StatusCode adc_register_event(GpioAddress address, Task *task, Event event);
-
 // Obtain the raw 12-bit value read by the specified pin
 StatusCode adc_read_raw(GpioAddress address, uint16_t *reading);
 
 // Obtain the converted value at the specified pin, in mV
 StatusCode adc_read_converted(GpioAddress address, uint16_t *reading);
+
+// Used to clear state
+void adc_deinit(void);

@@ -9,6 +9,17 @@
 #include "stm32f10x_rcc.h"
 #include "task.h"
 
+static int s_gpio_mode_map[] = {
+  [GPIO_ANALOG] = GPIO_Mode_AIN,
+  [GPIO_INPUT_FLOATING] = GPIO_Mode_IN_FLOATING,
+  [GPIO_INPUT_PULL_DOWN] = GPIO_Mode_IPD,
+  [GPIO_INPUT_PULL_UP] = GPIO_Mode_IPU,
+  [GPIO_OUTPUT_OPEN_DRAIN] = GPIO_Mode_Out_OD,
+  [GPIO_OUTPUT_PUSH_PULL] = GPIO_Mode_Out_PP,
+  [GPIO_ALFTN_OPEN_DRAIN] = GPIO_Mode_AF_OD,
+  [GPIO_ALTFN_PUSH_PULL] = GPIO_Mode_AF_PP,
+};
+
 static GPIO_TypeDef *s_gpio_port_map[NUM_GPIO_PORTS] = { GPIOA, GPIOB, GPIOC, GPIOD,
                                                          GPIOE, GPIOF, GPIOG };
 static uint32_t s_gpio_rcc_apb_timer_map[NUM_GPIO_PORTS] = {
@@ -37,7 +48,7 @@ StatusCode gpio_init_pin(const GpioAddress *address, const GpioMode pin_mode,
   GPIO_InitTypeDef init_struct = {
     .GPIO_Pin = pin,
     .GPIO_Speed = GPIO_Speed_50MHz,  // Default to fastes speed
-    .GPIO_Mode = pin_mode,
+    .GPIO_Mode = s_gpio_mode_map[pin_mode],
   };
 
   // Set the pin state.
