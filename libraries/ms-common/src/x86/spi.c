@@ -44,7 +44,7 @@ StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI port.");
   }
 
-  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_MUTEX_WAIT_MS));
+  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_TIMEOUT_MS));
 
   for (size_t tx = 0; tx < tx_len; tx++) {
     if (queue_send(&s_buf[spi].tx_queue, &tx_data[tx], SPI_QUEUE_DELAY_MS)) {
@@ -63,7 +63,7 @@ StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placehol
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI port.");
   }
 
-  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_MUTEX_WAIT_MS));
+  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_TIMEOUT_MS));
 
   for (size_t rx = 0; rx < rx_len; rx++) {
     if (queue_receive(&s_buf[spi].rx_queue, &rx_data[rx], SPI_QUEUE_DELAY_MS)) {
@@ -102,7 +102,7 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
 }
 
 StatusCode spi_get_tx(SpiPort spi, uint8_t *data, uint8_t len) {
-  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_MUTEX_WAIT_MS));
+  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_TIMEOUT_MS));
 
   for (size_t tx = 0; tx < len; tx++) {
     if (queue_receive(&s_buf[spi].tx_queue, &data[tx], SPI_QUEUE_DELAY_MS)) {
@@ -117,7 +117,7 @@ StatusCode spi_get_tx(SpiPort spi, uint8_t *data, uint8_t len) {
 }
 
 StatusCode spi_set_rx(SpiPort spi, uint8_t *data, uint8_t len) {
-  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_MUTEX_WAIT_MS));
+  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_TIMEOUT_MS));
 
   for (size_t rx = 0; rx < len; rx++) {
     if (queue_send(&s_buf[spi].rx_queue, &data[rx], SPI_QUEUE_DELAY_MS)) {

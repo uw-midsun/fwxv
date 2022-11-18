@@ -260,7 +260,7 @@ StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
 
   if (!s_adc_status.continuous) {
     // For Single-shot, we take semaphore and initiate a conversion
-    ok_or_return(mutex_lock(&s_adc_status.converting, ADC_TIMEOUT_MS);
+    status_ok_or_return(mutex_lock(&s_adc_status.converting, ADC_TIMEOUT_MS));
     ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 
     // Once conversion is finished, we will receive the semaphore from ISR
