@@ -1,6 +1,7 @@
 #include <stdio.h>
-// #include "ads1015.h"
+
 #include "adc.h"
+#include "ads1015.h"
 #include "can.h"
 #include "can_board_ids.h"
 #include "can_msg.h"
@@ -9,6 +10,7 @@
 #include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
+#include "pedal_calib.c"
 #include "pedal_setters.h"
 #include "soft_timer.h"
 #include "tasks.h"
@@ -36,12 +38,6 @@ uint16_t read_pedal_throttle() {
 // TODO(Scrubpai): Read any GPIOs and the ADC for brake
 bool read_pedal_brake() {
   return false;
-}
-
-// TODO(Scrubpai): Read the ADC when throttle and brake are pressed down or released,
-// and use that reading to set the upper (max) and lower bounds (min) of each pedal
-void pedal_calibrate() {
-  return;
 }
 
 void init_pedal_controls() {
