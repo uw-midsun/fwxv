@@ -37,7 +37,7 @@ void prv_callback_channel_brake(Ads1015Channel channel, void *context) {
   storage->min_reading = MIN(storage->min_reading, reading);
 }
 void pedal_calibrate() {
-  if (true || true) {
+  if (read_pedal_throttle || !read_pedal_throttle) {
     // Read ADC and update min/max on blob
     StatusCode pedal_calib_init(PedalCalibrationStorage * storage) {
       return STATUS_CODE_OK;
@@ -50,7 +50,7 @@ void pedal_calibrate() {
       ads1015_configure_channel(s_ads1015_storage_throttle, channel, false, NULL, NULL);
       ads1015_configure_channel(s_ads1015_storage_throttle, channel, true,
                                 prv_callback_channel_throttle, storage);
-      if (true) {
+      if (read_pedal_throttle) {
         blob->throttle_calib.upper_value =
             MAX(blob->throttle_calib.upper_value, storage->max_reading);
       } else {
@@ -60,7 +60,7 @@ void pedal_calibrate() {
       return STATUS_CODE_OK;
     }
   }
-  if (true || true) {
+  if (read_pedal_brake || !read_pedal_brake) {
     // Read ADC and update min/max on board
     StatusCode pedal_calib_init(PedalCalibrationStorage * storage) {
       return STATUS_CODE_OK;
@@ -74,7 +74,7 @@ void pedal_calibrate() {
 
       ads1015_configure_channel(s_ads1015_storage_brake, channel, true, prv_callback_channel_brake,
                                 storage);
-      if (true) {
+      if (read_pedal_brake) {
         blob->brake_calib.upper_value = MAX(blob->brake_calib.upper_value, storage->max_reading);
       } else {
         blob->brake_calib.upper_value = MAX(blob->brake_calib.upper_value, storage->max_reading);
@@ -82,15 +82,4 @@ void pedal_calibrate() {
       return STATUS_CODE_OK;
     }
   }
-}
-
-int main() {
-  PedalCalibrationStorage *storage;
-  pedal_calib_init(storage);
-  Ads1015Storage *ads1015_storage;
-  PedalCalibrationStorage *storage;
-  PedalCalibrationData *data;
-  Ads1015Channel channel;
-  PedalCalibBlob *blob;
-  pedal_calib_write(ads1015_storage, storage, data, channel, blob);
 }
