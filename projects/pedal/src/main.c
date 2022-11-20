@@ -57,7 +57,7 @@ void init_pedal_controls() {
   adc_init(ADC_MODE_SINGLE);
 
   // Calibrates the pedal upon initialization
-  pedal_calibrate();
+  // pedal_calibrate();
 }
 
 void run_fast_cycle() {
