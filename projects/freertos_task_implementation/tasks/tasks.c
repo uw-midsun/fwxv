@@ -1,4 +1,6 @@
 
+#include "tasks.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -7,7 +9,6 @@
 #include "gpio.h"
 #include "log.h"
 #include "misc.h"
-#include "tasks.h"
 
 // Non blocking delay. Simply consumes cpu cycles until a given time has passed
 static void prv_delay(const TickType_t delay_ms) {
