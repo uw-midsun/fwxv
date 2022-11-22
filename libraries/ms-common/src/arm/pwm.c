@@ -136,3 +136,7 @@ StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc) {
 
   return pwm_set_pulse(timer, pulse_width);
 }
+
+StatusCode pwm_get_dc(PwmTimer timer) {
+  return status_code(STATUS_CODE_UNIMPLEMENTED);
+}

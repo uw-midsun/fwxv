@@ -31,3 +31,6 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us);
 // pwm_set_pulse doing the necessary math to convert from 0-100% to the fraction
 // of the period.
 StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc);
+
+// Gets the duty cycle of the PWM timer.
+uint16_t pwm_get_dc(PwmTimer timer);
