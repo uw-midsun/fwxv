@@ -40,7 +40,7 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_ms) {
   }
 
   pwm[timer].duty = (pulse_width_ms / pwm[timer].period) * 100;
-  
+
   return STATUS_CODE_OK;
 }
 
@@ -68,4 +68,3 @@ uint16_t pwm_get_dc(PwmTimer timer) {
   }
   return pwm[timer].duty;
 }
-
