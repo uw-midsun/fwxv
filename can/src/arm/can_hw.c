@@ -34,7 +34,12 @@ static SemaphoreHandle_t s_can_tx_ready_sem_handle;
 static StaticSemaphore_t s_can_tx_ready_sem;
 static bool s_tx_full = false;
 
-static void prv_add_filter(uint8_t filter_num, uint32_t mask, uint32_t filter) {
+//takes 1 for filter_in, 2 for filter_out and default is 0
+static int s_can_filter_en = 0;         
+static uint32_t can_filters[CAN_HW_NUM_FILTER_BANKS];
+
+static void prv_add_filter_in(uint8_t filter_num, uint32_t mask, uint32_t filter) {
+
   CAN_FilterInitTypeDef filter_cfg = {
     .CAN_FilterNumber = filter_num,
     .CAN_FilterMode = CAN_FilterMode_IdMask,
@@ -48,6 +53,10 @@ static void prv_add_filter(uint8_t filter_num, uint32_t mask, uint32_t filter) {
   };
 
   CAN_FilterInit(&filter_cfg);
+}
+
+static void prv_add_filter_out(uint8_t filter_num, uint32_t mask, uint32_t filter) {
+  can_filters[filter_num] = filter;
 }
 
 StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
@@ -84,7 +93,7 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
 
   // Allow all messages by default, but reset the filter count so it's
   // overwritten on the first filter
-  prv_add_filter(0, 0, 0);
+  prv_add_filter_in(0, 0, 0);
   s_num_filters = 0;
 
   s_g_rx_queue = rx_queue;
@@ -100,8 +109,15 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
 }
 
 StatusCode can_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extended) {
+  //check if s_can_filter_en has been set
+  if (s_can_filter_en == 0){
+    s_can_filter_en = 1;
+  }
+
   if (s_num_filters >= CAN_HW_NUM_FILTER_BANKS) {
     return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "CAN HW: Ran out of filter banks.");
+  } else if (s_can_filter_en != 1) {
+    return status_msg(STATUS_CODE_UNINITIALIZED, "CAN: CAN filter out is enabled already");
   }
 
   // 32-bit Filter - Identifer Mask
@@ -112,13 +128,32 @@ StatusCode can_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extended) {
   uint32_t mask_val = (mask << offset) | (1 << 2);
   uint32_t filter_val = (filter << offset) | ((uint32_t)extended << 2);
 
-  prv_add_filter(s_num_filters, mask_val, filter_val);
+  prv_add_filter_in(s_num_filters, mask_val, filter_val);
   s_num_filters++;
   return STATUS_CODE_OK;
 }
 
 StatusCode can_hw_add_filter_out(uint32_t mask, uint32_t filter, bool extended) {
-  //Empty function so scons build doesn't fail
+  //check if s_can_filter_en has been set
+  if (s_can_filter_en == 0){
+    s_can_filter_en = 2;
+  }
+    if (s_num_filters >= CAN_HW_NUM_FILTER_BANKS) {
+    return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "CAN HW: Ran out of filter banks.");
+  } else if (s_can_filter_en != 2) {
+    return status_msg(STATUS_CODE_UNINITIALIZED, "CAN: CAN filter in is enabled already");
+  }
+
+  // 32-bit Filter - Identifer Mask
+  // STID[10:3] | STID[2:0] EXID[17:13] | EXID[12:5] | EXID[4:0] [IDE] [RTR] 0
+  size_t offset = extended ? 3 : 21;
+  // We always set the IDE bit for the mask so we distinguish between standard
+  // and extended
+  uint32_t mask_val = (mask << offset) | (1 << 2); 
+  uint32_t filter_val = (filter << offset) | ((uint32_t)extended << 2);
+
+  prv_add_filter_out(s_num_filters, mask_val, filter_val);
+  s_num_filters++;
   return STATUS_CODE_OK;
 }
 
@@ -204,7 +239,19 @@ void CEC_CAN_IRQHandler(void) {
       CanMessage rx_msg = { 0 };
       if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc))
       {
-        StatusCode ret = can_queue_push(s_g_rx_queue, &rx_msg);
+        //check id against filter out, if matches any filter in filter out then dont push
+        bool s_filter_id_match = false;
+        for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++){
+          if (can_filters[i] == rx_msg.id.raw){
+            s_filter_id_match = true;
+            break;
+          }
+        }
+        if (s_filter_id_match){
+          LOG_DEBUG("Message id exists in filter out, message will not be pushed.");
+        }else{
+          StatusCode ret = can_queue_push(s_g_rx_queue, &rx_msg);
+        }
       }
   } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_ERR) == SET) {
     LOG_CRITICAL("Bus Unavailable");

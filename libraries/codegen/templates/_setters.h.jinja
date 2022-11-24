@@ -1,15 +1,14 @@
 {% set board = data["Board"] -%}
 {% set messages = data["Messages"] -%}
 
+#pragma once
+
 #include "can_codegen.h"
 
-// TODO: Make these all #defines
 {% for message, message_data in messages.items() -%}    
     {%- set signals = message_data['signals'] -%}
-    {% for signal, signal_data in signals.items() -%}
-void set_{{message}}_{{signal}}(uint{{signal_data['length']}}_t val)
-{
-    g_tx_struct.{{message}}_{{signal}} = val;
-}
+    {% for signal, signal_data in signals.items() %}
+#define set_{{message}}_{{signal}}(val) \
+    g_tx_struct.{{message}}_{{signal}} = val
     {% endfor -%}
 {% endfor -%}
