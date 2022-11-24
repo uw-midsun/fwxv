@@ -10,28 +10,16 @@
 
 ---
   Messages:
-    lights:
-      id: 24
+    digital_signal:
+      id: 21  # or some number
       target:
-        - lights
-      signals:
-        lights_id:
+       - power_distribution_front
+       - power_distribution_rear
+       - motor_controller
+       signals:
+        horn_state:
           length: 8
-        state:
+        cruise_control_command:
           length: 8
-
-    horn:
-      id: 25
-      target:
-        - lights
-      signals:
-        state:
-          length: 8
-
-    cruise_control_command:
-      id: 41
-      target:
-        - telemetry
-      signals:
-        command:
+        regen_brake_toggle_command:
           length: 8
