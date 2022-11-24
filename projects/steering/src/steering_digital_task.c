@@ -19,6 +19,7 @@ void run_steering_digital_task() {
     gpio_get_state(&s_steering_lookup_table[i], &state);
     if (state != GPIO_prev_state[i]) {
       handle_state_change(i, state);
+      GPIO_prev_state[i] = state;
     }
   }
 }
