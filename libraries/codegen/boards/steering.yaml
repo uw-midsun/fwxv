@@ -13,10 +13,10 @@
     digital_signal:
       id: 21  # or some number
       target:
-       - power_distribution_front
-       - power_distribution_rear
-       - motor_controller
-       signals:
+        - power_distribution_front
+        - power_distribution_back
+        - motor_controller
+      signals:
         horn_state:
           length: 8
         cruise_control_command:

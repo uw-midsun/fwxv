@@ -1,6 +1,6 @@
 #include "steering_digital_task.h"
 
-#define CRUISE_CONTROL_COMMAND g_tx_struct.cruise_control_command_command
+#define CRUISE_CONTROL_COMMAND g_tx_struct.digital_signal_cruise_control_command
 
 static GpioState GPIO_prev_state[NUM_STEERING_DIGITAL_INPUTS];
 
@@ -12,19 +12,18 @@ static GpioAddress s_steering_lookup_table[NUM_STEERING_DIGITAL_INPUTS] = {
     [STEERING_DIGITAL_INPUT_CC_DECREASE_SPEED] = CC_DECREASE_SPEED_GPIO_ADDR,
 };
 
-static void run_steering_digital_task() {
+void run_steering_digital_task() {
     GpioState state = GPIO_STATE_LOW;
 
     for (int i = 0; i < NUM_STEERING_DIGITAL_INPUTS; i++) {
         gpio_get_state(&s_steering_lookup_table[i], &state); 
         if (state != GPIO_prev_state[i]) {
-            handle_state_change(i, &state);
+            handle_state_change(i, state);
         }   
-    }
-    
+    }  
 }
 
-void handle_state_change(const int digital_input, const GpioState *state) {
+void handle_state_change(const int digital_input, const GpioState state) {
     switch(digital_input) {
         case STEERING_DIGITAL_INPUT_HORN:
 
@@ -32,7 +31,6 @@ void handle_state_change(const int digital_input, const GpioState *state) {
                 set_digital_signal_horn_state(1);
             } else {
                 set_digital_signal_horn_state(0);
-                set_cruise_control_command_command(0);
             }
             break;
 
@@ -65,7 +63,7 @@ void handle_state_change(const int digital_input, const GpioState *state) {
             if (state == GPIO_STATE_HIGH) {
                 set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND | DIGITAL_SIGNAL_CC_DECREASE_MASK);
             } else {
-                set_digital_signal_cruise_contorl_command(CRUISE_CONTROL_COMMAND ^ DIGITAL_SIGNAL_CC_DECREASE_MASK);
+                set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND ^ DIGITAL_SIGNAL_CC_DECREASE_MASK);
             }
             break;
 

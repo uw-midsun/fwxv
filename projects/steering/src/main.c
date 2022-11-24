@@ -9,7 +9,7 @@
 #include "log.h"
 #include "tasks.h"
 // #include "steering_analog_task.h"
-// #include "steering_digital_task.h"
+#include "steering_digital_task.h"
 
 #ifdef MS_PLATFORM_X86
 #define MASTER_MS_CYCLE_TIME 100
