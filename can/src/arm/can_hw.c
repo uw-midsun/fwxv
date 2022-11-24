@@ -232,27 +232,6 @@ void USB_HP_CAN1_TX_IRQHandler(void) {
       xSemaphoreGiveFromISR(s_can_tx_ready_sem_handle, NULL);
       s_tx_full = false;
     }
-  } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET ||
-             CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
-      CanMessage rx_msg = { 0 };
-      if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc))
-      {
-        //check id against filter out, if matches any filter in filter out then dont push
-        bool s_filter_id_match = false;
-        for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++){
-          if (can_filters[i] == rx_msg.id.raw){
-            s_filter_id_match = true;
-            break;
-          }
-        }
-        if (s_filter_id_match){
-          LOG_DEBUG("Message id exists in filter out, message will not be pushed.");
-        }else{
-          StatusCode ret = can_queue_push(s_g_rx_queue, &rx_msg);
-        }
-      }
-  } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_ERR) == SET) {
-    LOG_CRITICAL("Bus Unavailable");
   }
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_TME);
 }
@@ -263,7 +242,18 @@ void USB_LP_CAN1_RX0_IRQHandler(void) {
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET) {
     CanMessage rx_msg = { 0 };
     if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
-      StatusCode ret = can_queue_push(s_g_rx_queue, &rx_msg);
+      //check id against filter out, if matches any filter in filter out then dont push
+      bool s_filter_id_match = false;
+      for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++){
+        if (can_filters[i] == rx_msg.id.raw){
+          s_filter_id_match = true;
+          break;
+        }
+      }
+      // If filter match, do not push to rx queue
+      if (!s_filter_id_match){
+        can_queue_push(s_g_rx_queue, &rx_msg);
+      }
     }
   }
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_FMP0);
@@ -275,16 +265,25 @@ void CAN1_RX1_IRQHandler(void) {
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
     CanMessage rx_msg = { 0 };
     if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
-      StatusCode ret = can_queue_push(s_g_rx_queue, &rx_msg);
+      //check id against filter out, if matches any filter in filter out then dont push
+      bool s_filter_id_match = false;
+      for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++){
+        if (can_filters[i] == rx_msg.id.raw){
+          s_filter_id_match = true;
+          break;
+        }
+      }
+      // If filter match, do not push to rx queue
+      if (!s_filter_id_match){
+        can_queue_push(s_g_rx_queue, &rx_msg);
+      }
     }
   }
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_FMP1);
 }
 
 void CAN1_SCE_IRQHandler(void) {
-  if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_ERR) == SET) {
-    LOG_CRITICAL("Bus Unavailable");
-  }
+  // TODO(Mitch) Add error notififcations
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_ERR);
 }
 
