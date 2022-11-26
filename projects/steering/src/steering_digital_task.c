@@ -25,6 +25,8 @@ void run_steering_digital_task() {
 }
 
 void handle_state_change(const int digital_input, const GpioState state) {
+  GpioState toggle_state;
+
   switch (digital_input) {
     case STEERING_DIGITAL_INPUT_HORN:
 
@@ -45,6 +47,7 @@ void handle_state_change(const int digital_input, const GpioState state) {
       break;
 
     case STEERING_DIGITAL_INPUT_CC_TOGGLE:
+
       if (state == GPIO_STATE_HIGH) {
         set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND |
                                                   DIGITAL_SIGNAL_CC_TOGGLE_MASK);
@@ -55,7 +58,10 @@ void handle_state_change(const int digital_input, const GpioState state) {
       break;
 
     case STEERING_DIGITAL_INPUT_CC_INCREASE_SPEED:
-      if (state == GPIO_STATE_HIGH) {
+      toggle_state =
+          gpio_get_state(&s_steering_lookup_table[STEERING_DIGITAL_INPUT_CC_TOGGLE], &toggle_state);
+
+      if ((state == GPIO_STATE_HIGH) && (toggle_state == GPIO_STATE_HIGH)) {
         set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND |
                                                   DIGITAL_SIGNAL_CC_INCREASE_MASK);
       } else {
@@ -65,7 +71,10 @@ void handle_state_change(const int digital_input, const GpioState state) {
       break;
 
     case STEERING_DIGITAL_INPUT_CC_DECREASE_SPEED:
-      if (state == GPIO_STATE_HIGH) {
+      toggle_state =
+          gpio_get_state(&s_steering_lookup_table[STEERING_DIGITAL_INPUT_CC_TOGGLE], &toggle_state);
+
+      if ((state == GPIO_STATE_HIGH) && (toggle_state == GPIO_STATE_HIGH)) {
         set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND |
                                                   DIGITAL_SIGNAL_CC_DECREASE_MASK);
       } else {
@@ -86,6 +95,10 @@ StatusCode steering_digital_input_init(void) {
     .resistor = GPIO_RES_NONE,
     .alt_function = GPIO_ALTFN_NONE,
   };
+
+  set_digital_signal_horn_state(0);
+  set_digital_signal_cruise_control_command(0);
+  set_digital_signal_regen_brake_toggle_command(0);
 
   GpioState state = GPIO_STATE_LOW;
 

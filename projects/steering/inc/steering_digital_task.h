@@ -7,7 +7,7 @@
 #include "status.h"
 #include "steering_setters.h"
 
-#define DIGITAL_SIGNAL_CC_TOGGLE_MASK 0x03
+#define DIGITAL_SIGNAL_CC_TOGGLE_MASK 0x04
 #define DIGITAL_SIGNAL_CC_INCREASE_MASK 0x02
 #define DIGITAL_SIGNAL_CC_DECREASE_MASK 0x01
 
