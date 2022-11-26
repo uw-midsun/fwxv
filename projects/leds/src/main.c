@@ -22,10 +22,12 @@ TASK(leds_task, TASK_STACK_512) {
 #ifdef MS_PLATFORM_X86
     LOG_DEBUG("blink\n");
 #endif
-    for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
-      gpio_toggle_state(&leds[i]);
+    // for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
+    //   gpio_toggle_state(&leds[i]);
+    //   delay_ms(500);
+    // }
+      gpio_toggle_state(&leds[0]);
       delay_ms(500);
-    }
   }
 }
 
