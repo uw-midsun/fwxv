@@ -24,19 +24,20 @@ TASK(leds_task, TASK_STACK_512) {
 #endif
     for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
       gpio_toggle_state(&leds[i]);
-      delay_ms(50);
+      delay_ms(500);
     }
   }
 }
 
 int main(void) {
+  tasks_init();
   gpio_init();
   log_init();
 
   tasks_init_task(leds_task, TASK_PRIORITY(2), NULL);
 
-  LOG_DEBUG("Blinking LEDs...\n");
   tasks_start();
+  LOG_DEBUG("Blinking LEDs...\n");
 
   return 0;
 }

@@ -7,7 +7,7 @@
 // vApplicationGetIdleTaskMemory and vApplicationGetTimerTaskMemory.
 // See https://www.freertos.org/a00110.html, configSUPPORT_STATIC_ALLOCATION section.
 
-#if (configSUPPORT_STATIC_ALLOCATION == 1)
+// #if (configSUPPORT_STATIC_ALLOCATION == 1)
 
 void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
                                    StackType_t **ppxIdleTaskStackBuffer,
@@ -25,7 +25,7 @@ void vApplicationGetIdleTaskMemory(StaticTask_t **ppxIdleTaskTCBBuffer,
   *pulIdleTaskStackSize = configMINIMAL_STACK_SIZE;
 }
 
-#if (configUSE_TIMERS == 1)
+// #if (configUSE_TIMERS == 1)
 
 void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
                                     StackType_t **ppxTimerTaskStackBuffer,
@@ -41,6 +41,6 @@ void vApplicationGetTimerTaskMemory(StaticTask_t **ppxTimerTaskTCBBuffer,
   *pulTimerTaskStackSize = configTIMER_TASK_STACK_DEPTH;
 }
 
-#endif
+// #endif
 
-#endif
+// #endif

@@ -1,1 +1,6 @@
-{}
+{
+    "libs": [
+        "FreeRTOS",
+        "ms-common"
+    ]
+}
