@@ -30,6 +30,7 @@ TASK(leds_task, TASK_STACK_512) {
 }
 
 int main(void) {
+  tasks_init();
   gpio_init();
   log_init();
 
