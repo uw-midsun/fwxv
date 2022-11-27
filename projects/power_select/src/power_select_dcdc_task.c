@@ -5,12 +5,14 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "power_select_power_supply_task.h"
+
 #define DCDC_STATUS g_tx_struct.power_select_status_status
 #define DCDC_FAULT g_tx_struct.power_select_status_fault
 
-const GpioAddress g_power_select_valid_pin = POWER_SELECT_DCDC_VALID_ADDR;
-const GpioAddress g_power_select_voltage_pin = POWER_SELECT_DCDC_VSENSE_ADDR;
-const GpioAddress g_power_select_current_pin = POWER_SELECT_DCDC_ISENSE_ADDR;
+// We already have
+// g_power_select_valid_pin, g_power_select_voltage_pin,
+// g_power_select_current_pin from header file
 const GpioAddress g_power_select_temp_pin = POWER_SELECT_DCDC_TSENSE_ADDR;
 
 static uint16_t adc_reading_voltage;
