@@ -14,15 +14,8 @@ static const GpioAddress leds[] = {
 };
 
 TASK(leds_task, TASK_STACK_512) {
-  const GpioSettings led_settings = {
-    .direction = GPIO_DIR_OUT,        //
-    .state = GPIO_STATE_HIGH,         //
-    .alt_function = GPIO_ALTFN_NONE,  //
-    .resistor = GPIO_RES_NONE,        //
-  };
-
   for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
-    gpio_init_pin(&leds[i], &led_settings);
+    gpio_init_pin(&leds[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
   }
 
   while (true) {

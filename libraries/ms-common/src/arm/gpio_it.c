@@ -7,8 +7,8 @@
 #include "interrupt_def.h"
 #include "notify.h"
 #include "status.h"
-#include "stm32f0xx_interrupt.h"
-#include "stm32f0xx_syscfg.h"
+#include "stm32f10x_exti.h"
+#include "stm32f10x_interrupt.h"
 
 typedef struct GpioInterrupt {
   InterruptSettings settings;
@@ -18,16 +18,6 @@ typedef struct GpioInterrupt {
 } GpioInterrupt;
 
 static GpioInterrupt s_gpio_it_interrupts[GPIO_PINS_PER_PORT];
-
-// Pins 0-1 are mapped to IRQ Channel 5, 2-3 to 6 and 4-15 to 7;
-static uint8_t prv_get_irq_channel(uint8_t pin) {
-  if (pin <= 1) {
-    return 5;
-  } else if (pin <= 3) {
-    return 6;
-  }
-  return 7;
-}
 
 void gpio_it_init(void) {
   GpioInterrupt empty_interrupt = { 0 };
@@ -55,14 +45,8 @@ StatusCode gpio_it_register_interrupt(const GpioAddress *address, const Interrup
     return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Pin already used.");
   }
 
-  // Try to register on NVIC and EXTI. Both must succeed for the callback to be
-  // set.
-  SYSCFG_EXTILineConfig(address->port, address->pin);
-
-  status_ok_or_return(stm32f0xx_interrupt_exti_enable(address->pin, settings));
-
-  uint8_t irq_channel = prv_get_irq_channel(address->pin);
-  status_ok_or_return(stm32f0xx_interrupt_nvic_enable(irq_channel, settings->priority));
+  // Register exti channel and enable interrupt
+  status_ok_or_return(stm32f10x_interrupt_exti_enable(address, settings));
 
   s_gpio_it_interrupts[address->pin].address = *address;
   s_gpio_it_interrupts[address->pin].settings = *settings;
@@ -77,7 +61,7 @@ StatusCode gpio_it_trigger_interrupt(const GpioAddress *address) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
-  return stm32f0xx_interrupt_exti_trigger(address->pin);
+  return stm32f10x_interrupt_exti_trigger(address->pin);
 }
 
 // Callback runner for GPIO which runs callbacks based on which callbacks are
@@ -86,11 +70,11 @@ StatusCode gpio_it_trigger_interrupt(const GpioAddress *address) {
 static void prv_run_gpio_callbacks(uint8_t lower_bound, uint8_t upper_bound) {
   uint8_t pending = 0;
   for (int i = lower_bound; i <= upper_bound; i++) {
-    stm32f0xx_interrupt_exti_get_pending(i, &pending);
+    stm32f10x_interrupt_exti_get_pending(i, &pending);
     if (pending && s_gpio_it_interrupts[i].task != NULL) {
       notify_from_isr(s_gpio_it_interrupts[i].task, s_gpio_it_interrupts[i].event);
     }
-    stm32f0xx_interrupt_exti_clear_pending(i);
+    stm32f10x_interrupt_exti_clear_pending(i);
   }
 }
 
@@ -113,5 +97,5 @@ StatusCode gpio_it_mask_interrupt(const GpioAddress *address, bool masked) {
   if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
-  return stm32f0xx_interrupt_exti_mask_set(address->pin, masked);
+  return stm32f10x_interrupt_exti_mask_set(address->pin, masked);
 }

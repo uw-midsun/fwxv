@@ -5,69 +5,54 @@
 
 #include "FreeRTOS.h"
 #include "status.h"
-#include "stm32f0xx.h"
-#include "stm32f0xx_gpio.h"
-#include "stm32f0xx_rcc.h"
+#include "stm32f10x.h"
+#include "stm32f10x_rcc.h"
 #include "task.h"
 
-static GPIO_TypeDef *s_gpio_port_map[] = { GPIOA, GPIOB, GPIOC, GPIOD, GPIOE, GPIOF };
-static uint32_t s_gpio_rcc_ahb_timer_map[] = { RCC_AHBPeriph_GPIOA, RCC_AHBPeriph_GPIOB,
-                                               RCC_AHBPeriph_GPIOC, RCC_AHBPeriph_GPIOD,
-                                               RCC_AHBPeriph_GPIOE, RCC_AHBPeriph_GPIOF };
+static int s_gpio_mode_map[] = {
+  [GPIO_ANALOG] = GPIO_Mode_AIN,
+  [GPIO_INPUT_FLOATING] = GPIO_Mode_IN_FLOATING,
+  [GPIO_INPUT_PULL_DOWN] = GPIO_Mode_IPD,
+  [GPIO_INPUT_PULL_UP] = GPIO_Mode_IPU,
+  [GPIO_OUTPUT_OPEN_DRAIN] = GPIO_Mode_Out_OD,
+  [GPIO_OUTPUT_PUSH_PULL] = GPIO_Mode_Out_PP,
+  [GPIO_ALFTN_OPEN_DRAIN] = GPIO_Mode_AF_OD,
+  [GPIO_ALTFN_PUSH_PULL] = GPIO_Mode_AF_PP,
+};
+
+static GPIO_TypeDef *s_gpio_port_map[NUM_GPIO_PORTS] = { GPIOA, GPIOB, GPIOC, GPIOD,
+                                                         GPIOE, GPIOF, GPIOG };
+static uint32_t s_gpio_rcc_apb_timer_map[NUM_GPIO_PORTS] = {
+  RCC_APB2Periph_GPIOA, RCC_APB2Periph_GPIOB, RCC_APB2Periph_GPIOC, RCC_APB2Periph_GPIOD,
+  RCC_APB2Periph_GPIOE, RCC_APB2Periph_GPIOF, RCC_APB2Periph_GPIOF
+};
 
 StatusCode gpio_init(void) {
   return STATUS_CODE_OK;
 }
 
-StatusCode gpio_init_pin(const GpioAddress *address, const GpioSettings *settings) {
+StatusCode gpio_init_pin(const GpioAddress *address, const GpioMode pin_mode,
+                         GpioState init_state) {
   taskENTER_CRITICAL();
 
   if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT ||
-      settings->direction >= NUM_GPIO_DIRS || settings->state >= NUM_GPIO_STATES ||
-      settings->resistor >= NUM_GPIO_RESES || settings->alt_function >= NUM_GPIO_ALTFNS) {
+      pin_mode >= NUM_GPIO_MODES) {
     taskEXIT_CRITICAL();
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
-  GPIO_InitTypeDef init_struct;
   uint16_t pin = 0x01 << address->pin;
+  RCC_APB2PeriphClockCmd(s_gpio_rcc_apb_timer_map[address->port], ENABLE);
 
-  RCC_AHBPeriphClockCmd(s_gpio_rcc_ahb_timer_map[address->port], ENABLE);
-
-  // Parse the GPIOAltFN settings which are used to modify the mode and Alt
-  // Function.
-  if (settings->alt_function == GPIO_ALTFN_ANALOG) {
-    init_struct.GPIO_Mode = GPIO_Mode_AN;
-  } else if (settings->alt_function == GPIO_ALTFN_NONE) {
-    if (settings->direction == GPIO_DIR_IN) {
-      init_struct.GPIO_Mode = GPIO_Mode_IN;
-    } else {
-      init_struct.GPIO_Mode = GPIO_Mode_OUT;
-    }
-  } else {
-    init_struct.GPIO_Mode = GPIO_Mode_AF;
-  }
-  init_struct.GPIO_PuPd = (GPIOPuPd_TypeDef)settings->resistor;
-  init_struct.GPIO_Pin = pin;
-
-  // Support open drain vs pullup-pulldown
-  if (settings->direction == GPIO_DIR_OUT_OD) {
-    init_struct.GPIO_OType = GPIO_OType_OD;
-  } else {
-    init_struct.GPIO_OType = GPIO_OType_PP;
-  }
-
-  // These are default values which are not intended to be changed.
-  init_struct.GPIO_Speed = GPIO_Speed_Level_3;  // Use fastest speed because the
-                                                // slew rate is quite slow.
-
-  if (init_struct.GPIO_Mode == GPIO_Mode_AF) {
-    // Subtract 1 due to the offset of the enum from the ALTFN_NONE entry
-    GPIO_PinAFConfig(s_gpio_port_map[address->port], address->pin, settings->alt_function - 1);
-  }
+  // Create init struct for stdperiph call to initialize pin
+  GPIO_InitTypeDef init_struct = {
+    .GPIO_Pin = pin,
+    .GPIO_Speed = GPIO_Speed_50MHz,  // Default to fastes speed
+    .GPIO_Mode = s_gpio_mode_map[pin_mode],
+  };
 
   // Set the pin state.
-  gpio_set_state(address, settings->state);
+  gpio_set_state(address, init_state);
 
   // Use the init_struct to set the pin.
   GPIO_Init(s_gpio_port_map[address->port], &init_struct);
