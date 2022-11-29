@@ -39,7 +39,7 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_ms) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Pulse width must be leq period.");
   }
 
-  pwm[timer].duty = (pulse_width_ms / pwm[timer].period) * 100;
+  pwm[timer].duty = dc;
 
   return STATUS_CODE_OK;
 }
