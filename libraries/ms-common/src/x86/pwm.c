@@ -38,9 +38,8 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_ms) {
   } else if (pulse_width_ms > pwm[timer].period) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Pulse width must be leq period.");
   }
-
-  pwm[timer].duty = dc;
-
+  // Store pulse width as a duty cycle
+  pwm[timer].duty = (pulse_width_ms * 100) / pwm[timer].period;
   return STATUS_CODE_OK;
 }
 
@@ -50,16 +49,9 @@ StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc) {
   } else if (dc > 100) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Duty Cycle must be leq 100%.");
   }
+  pwm[timer].duty = dc;
 
-  uint16_t pulse_width = 0;
-  if (dc != 0) {
-    pulse_width = ((pwm[timer].period + 1) * dc) / 100 - 1;
-    if (pulse_width == 0) {
-      return status_msg(STATUS_CODE_INVALID_ARGS, "Duty Cycle is not valid for given period.");
-    }
-  }
-
-  return pwm_set_pulse(timer, pulse_width);
+  return STATUS_CODE_OK;
 }
 
 uint16_t pwm_get_dc(PwmTimer timer) {
