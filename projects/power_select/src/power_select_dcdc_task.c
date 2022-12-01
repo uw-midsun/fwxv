@@ -88,7 +88,8 @@ static FsmTransition s_power_supply_transition_list[NUM_POWER_SUPPLY_STATES] = {
 
 StatusCode init_dcdc(void) {
   // Initialize valid GPIO pin
-  status_ok_or_return(gpio_init_pin(&g_power_select_valid_pin, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW));
+  status_ok_or_return(
+      gpio_init_pin(&g_power_select_valid_pin, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW));
 
   // Initialize voltage & current pins, and set adc channels
   status_ok_or_return(gpio_init_pin(&g_power_select_voltage_pin, GPIO_ANALOG, GPIO_STATE_LOW));
