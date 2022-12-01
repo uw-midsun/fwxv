@@ -73,7 +73,7 @@ void run_medium_cycle() {
   // Sending messages
   if (!brake_position) {  // Brake is not pressed - Send proper throttle data
     set_pedal_output_brake_output(0);
-    set_pedal_output_throttle_output(throttle_position);
+    set_pedal_output_throttle_output((uint32_t)throttle_position);
   } else {  // Brake is pressed - Send proper brake data with throttle as 0
     set_pedal_output_brake_output(1);
     set_pedal_output_throttle_output(0);
