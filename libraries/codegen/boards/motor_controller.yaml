@@ -29,31 +29,31 @@
     motor_controller_vc:
       id: 35
       target:
-        - telemetry
+        - centre_console
       signals:
-        mc_voltage_1:
+        mc_voltage_l:
           length: 16
-        mc_current_1:
+        mc_current_l:
           length: 16
-        mc_voltage_2:
+        mc_voltage_r:
           length: 16
-        mc_current_2:
+        mc_current_r:
           length: 16
 
     motor_velocity:
       id: 36
       target:
-        - telemetry
+        - centre_console
       signals:
-        vehicle_velocity_left:
+        velocity_l:
           length: 16
-        vehicle_velocity_right:
+        velocity_r:
           length: 16
 
     motor_status:
       id: 37
       target:
-        - telemetry
+        - centre_console
       signals:
         motor_status_l:
           length: 32
@@ -63,23 +63,42 @@
     motor_sink_temps:
       id: 38
       target:
-        - telemetry
+        - centre_console
       signals:
         motor_temp_l:
           length: 16
-        sink_temp_l:
+        heatsink_temp_l:
           length: 16
         motor_temp_r:
           length: 16
-        sink_temp_r:
+        heatsink_temp_r:
           length: 16
 
     dsp_board_temps:
       id: 39
       target:
-        - telemetry
+        - centre_console
       signals:
-        dsp_board_temp_l:
+        dsp_temp_l:
           length: 32
-        dsp_board_temp_r:
+        dsp_temp_r:
           length: 32
+
+    mc_status:
+      id: 40
+      target:
+        - centre_console
+      signals:
+        limit_bitset_left:
+          length: 8
+        error_bitset_left:
+          length: 8
+        limit_bitset_right:
+          length: 8
+        error_bitset_right:
+          length: 8
+        board_fault_bitset:
+          length: 8
+        overtemp_bitset:
+          length: 8
+        

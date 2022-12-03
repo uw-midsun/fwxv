@@ -26,20 +26,4 @@ typedef enum DriveOutputEvent {
   MCI_FSM_GOTO_CRUISE,
 } DriveOutputEvent;
 
-typedef struct MciFsmStorage {
-  // updated every 200ms
-  uint8_t velocity;  // (m/s)
-  int16_t rpm;
-  uint16_t bus_voltage_v;
-  uint16_t bus_current_a;
-  uint8_t mc_limit_bitset;
-  uint8_t mc_error_bitset;
-  // updated every second
-  int8_t motor_temp_c;
-  int8_t heatsink_temp_c;
-  int8_t dsp_temp_c;
-  float motor_temp;      // Celsius
-  float heat_sink_temp;  // Celsius
-} MciFsmStorage;
-
 StatusCode init_mci_fsm(void);
