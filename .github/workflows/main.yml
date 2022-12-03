@@ -116,7 +116,7 @@ jobs:
             exit 1;
           fi
 
-      - name: Build stm32f0xx
+      - name: Build stm32f10x
         id: build-stm32
         run: |
           scons --platform=arm --define="${DEFINES}"

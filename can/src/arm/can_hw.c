@@ -1,11 +1,10 @@
 #include "can_hw.h"
 #include <string.h>
-#include "interrupt.h"
+#include "stm32f10x_interrupt.h"
 #include "log.h"
-#include "stm32f0xx.h"
-#include "stm32f0xx_can.h"
+#include "stm32f10x.h"
 
-#define CAN_HW_BASE CAN
+#define CAN_HW_BASE CAN1
 #define CAN_HW_NUM_FILTER_BANKS 14
 #define MAX_TX_RETRIES 3
 #define MAX_TX_MS_TIMEOUT 500 // CAN Messages should only be sent max every 1s
@@ -62,15 +61,10 @@ static void prv_add_filter_out(uint8_t filter_num, uint32_t mask, uint32_t filte
 StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   s_num_filters = 0;
 
-  GpioSettings gpio_settings = {
-    .alt_function = GPIO_ALTFN_4,  //
-    .direction = GPIO_DIR_OUT,     //
-  };
-  gpio_init_pin(&settings->tx, &gpio_settings);
-  gpio_settings.direction = GPIO_DIR_IN;
-  gpio_init_pin(&settings->rx, &gpio_settings);
+  gpio_init_pin(&settings->tx, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&settings->rx, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
 
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN, ENABLE);
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);
 
   CAN_DeInit(CAN_HW_BASE);
 
@@ -89,7 +83,10 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   CAN_ITConfig(CAN_HW_BASE, CAN_IT_FMP0, ENABLE);
   CAN_ITConfig(CAN_HW_BASE, CAN_IT_FMP1, ENABLE);
   CAN_ITConfig(CAN_HW_BASE, CAN_IT_ERR, ENABLE);
-  stm32f0xx_interrupt_nvic_enable(CEC_CAN_IRQn, INTERRUPT_PRIORITY_HIGH);
+  stm32f10x_interrupt_nvic_enable(USB_HP_CAN1_TX_IRQn, INTERRUPT_PRIORITY_HIGH);
+  stm32f10x_interrupt_nvic_enable(USB_LP_CAN1_RX0_IRQn, INTERRUPT_PRIORITY_HIGH);
+  stm32f10x_interrupt_nvic_enable(CAN1_RX1_IRQn, INTERRUPT_PRIORITY_HIGH);
+  stm32f10x_interrupt_nvic_enable(CAN1_SCE_IRQn, INTERRUPT_PRIORITY_HIGH);
 
   // Allow all messages by default, but reset the filter count so it's
   // overwritten on the first filter
@@ -227,36 +224,66 @@ bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
   return true;
 }
 
-void CEC_CAN_IRQHandler(void) {
+// TX handler
+void USB_HP_CAN1_TX_IRQHandler(void) {
+  //TX Irq only called if Transmit Mailbox Empty IT flag set
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_TME) == SET) {
-    if (s_tx_full)
-    {
+    if (s_tx_full) {
       xSemaphoreGiveFromISR(s_can_tx_ready_sem_handle, NULL);
       s_tx_full = false;
     }
-  } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET ||
-             CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
-      CanMessage rx_msg = { 0 };
-      if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc))
-      {
-        //check id against filter out, if matches any filter in filter out then dont push
-        bool s_filter_id_match = false;
-        for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++){
-          if (can_filters[i] == rx_msg.id.raw){
-            s_filter_id_match = true;
-            break;
-          }
-        }
-        if (s_filter_id_match){
-          LOG_DEBUG("Message id exists in filter out, message will not be pushed.");
-        }else{
-          StatusCode ret = can_queue_push(s_g_rx_queue, &rx_msg);
-        }
-      }
-  } else if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_ERR) == SET) {
-    LOG_CRITICAL("Bus Unavailable");
   }
-
-  CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_ERR);
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_TME);
 }
+
+void USB_LP_CAN1_RX0_IRQHandler(void) {
+  // Handle Message Pending in RX0 Fifo
+  // TODO: Fifo RX 1/0 interrupts also trigger on FIFO full/Fifo overrun
+  if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET) {
+    CanMessage rx_msg = { 0 };
+    if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
+      //check id against filter out, if matches any filter in filter out then dont push
+      bool s_filter_id_match = false;
+      for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++){
+        if (can_filters[i] == rx_msg.id.raw){
+          s_filter_id_match = true;
+          break;
+        }
+      }
+      // If filter match, do not push to rx queue
+      if (!s_filter_id_match){
+        can_queue_push(s_g_rx_queue, &rx_msg);
+      }
+    }
+  }
+  CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_FMP0);
+}
+
+void CAN1_RX1_IRQHandler(void) {
+  // Handle Message Pending in RX1 Fifo
+  // ISRs will not cause issues
+  if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
+    CanMessage rx_msg = { 0 };
+    if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
+      //check id against filter out, if matches any filter in filter out then dont push
+      bool s_filter_id_match = false;
+      for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++){
+        if (can_filters[i] == rx_msg.id.raw){
+          s_filter_id_match = true;
+          break;
+        }
+      }
+      // If filter match, do not push to rx queue
+      if (!s_filter_id_match){
+        can_queue_push(s_g_rx_queue, &rx_msg);
+      }
+    }
+  }
+  CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_FMP1);
+}
+
+void CAN1_SCE_IRQHandler(void) {
+  // TODO(Mitch) Add error notififcations
+  CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_ERR);
+}
+

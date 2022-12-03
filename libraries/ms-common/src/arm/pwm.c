@@ -4,8 +4,14 @@
 
 #include "gpio.h"
 #include "pwm_mcu.h"
-#include "stm32f0xx_rcc.h"
-#include "stm32f0xx_tim.h"
+#include "stm32f10x_rcc.h"
+#include "stm32f10x_tim.h"
+
+typedef enum APBClk {
+  APB1 = 0,
+  APB2,
+  NUM_APB_CLK,
+} APBClk;
 
 static uint16_t s_period_us[NUM_PWM_TIMERS] = {
   [PWM_TIMER_1] = 0,   //
@@ -25,28 +31,28 @@ static TIM_TypeDef *s_timer_def[NUM_PWM_TIMERS] = {
   [PWM_TIMER_17] = TIM17,  //
 };
 
-static void prv_enable_periph_clock(PwmTimer timer) {
+static APBClk prv_enable_periph_clock(PwmTimer timer) {
   switch (timer) {
     case PWM_TIMER_1:
       RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
-      return;
+      return APB2;
     case PWM_TIMER_3:
       RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
-      return;
+      return APB1;
     case PWM_TIMER_14:
       RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, ENABLE);
-      return;
+      return APB1;
     case PWM_TIMER_15:
       RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM15, ENABLE);
-      return;
+      return APB2;
     case PWM_TIMER_16:
       RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM16, ENABLE);
-      return;
+      return APB2;
     case PWM_TIMER_17:
       RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM17, ENABLE);
-      return;
+      return APB2;
     default:
-      return;
+      return NUM_APB_CLK;
   }
 }
 
@@ -57,7 +63,7 @@ StatusCode pwm_init(PwmTimer timer, uint16_t period_us) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Period must be greater than 0");
   }
 
-  prv_enable_periph_clock(timer);
+  APBClk clk = prv_enable_periph_clock(timer);
 
   s_period_us[timer] = period_us;
 
@@ -65,12 +71,17 @@ StatusCode pwm_init(PwmTimer timer, uint16_t period_us) {
   RCC_GetClocksFreq(&clocks);
 
   TIM_TimeBaseInitTypeDef tim_init = {
-    .TIM_Prescaler = (clocks.PCLK_Frequency / 1000000) - 1,
     .TIM_CounterMode = TIM_CounterMode_Up,
     .TIM_Period = period_us,
     .TIM_ClockDivision = TIM_CKD_DIV1,
     .TIM_RepetitionCounter = 0,
   };
+
+  if (clk == APB1) {
+    tim_init.TIM_Prescaler = (clocks.PCLK1_Frequency / 1000000) - 1;
+  } else {
+    tim_init.TIM_Prescaler = (clocks.PCLK2_Frequency / 1000000) - 1;
+  }
 
   TIM_TimeBaseInit(s_timer_def[timer], &tim_init);
   TIM_Cmd(s_timer_def[timer], ENABLE);
