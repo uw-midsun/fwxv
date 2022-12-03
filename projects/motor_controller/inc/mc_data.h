@@ -11,9 +11,9 @@ typedef struct MotorData {
   uint8_t mc_limit_bitset;
   uint8_t mc_error_bitset;
   // updated every second
-  int8_t motor_temp_c;
-  int8_t heatsink_temp_c;
-  int8_t dsp_temp_c;
+  uint32_t motor_temp_c;
+  uint32_t heatsink_temp_c;
+  uint32_t dsp_temp_c;
 } MotorData;
 
 MotorData left_motor;
