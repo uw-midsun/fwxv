@@ -43,7 +43,7 @@ void run_motor_controller_transmit_can_msgs_medium_cycle() {
   set_mc_status_limit_bitset_left(left_motor.mc_limit_bitset);
   set_mc_status_limit_bitset_right(right_motor.mc_limit_bitset);
   // TODO(devAdhiraj): set_mc_status_board_fault_bitset();
-  // TODO(devAdhiraj: set_mc_status_overtemp_bitset();
+  // TODO(devAdhiraj): set_mc_status_overtemp_bitset();
 
   set_motor_sink_temps_motor_temp_l(left_motor.motor_temp_c);
   set_motor_sink_temps_motor_temp_r(right_motor.motor_temp_c);
