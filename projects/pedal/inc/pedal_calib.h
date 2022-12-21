@@ -1,6 +1,5 @@
 #pragma once
 #include "ads1015.h"
-#include "pedal_calib.h"
 
 typedef enum {
   PEDAL_PRESSED = 0,
@@ -28,8 +27,5 @@ typedef struct PedalCalibrationStorage {
 
 StatusCode pedal_calib_init(PedalCalibrationStorage *storage);
 
-StatusCode pedal_calib_write(Ads1015Storage *ads1015_storage, PedalCalibrationStorage *storage,
-                             PedalCalibrationData *data, Ads1015Channel channel,
-                             PedalCalibBlob *blob);
-
-void pedal_calibrate();
+StatusCode pedal_calib_sample(Ads1015Storage *ads1015_storage, PedalCalibrationStorage *storage,
+                              PedalCalibrationData *data, Ads1015Channel channel, PedalState state);
