@@ -10,7 +10,6 @@
 #include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
-// #include "pedal_calib.c"
 #include "pedal_setters.h"
 #include "soft_timer.h"
 #include "tasks.h"
