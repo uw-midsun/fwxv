@@ -10,17 +10,11 @@
 #include "unity.h"
 
 static GpioAddress s_gpio_addr = { .port = GPIO_PORT_A, .pin = 5 };
-static GpioSettings s_gpio_settings = {
-  .direction = GPIO_DIR_OUT,
-  .state = GPIO_STATE_HIGH,
-  .alt_function = GPIO_ALTFN_NONE,
-  .resistor = GPIO_RES_NONE,
-};
 
 void setup_test(void) {
   log_init();
   gpio_init();
-  gpio_init_pin(&s_gpio_addr, &s_gpio_settings);
+  gpio_init_pin(&s_gpio_addr, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW);
 }
 
 void teardown_test(void) {}

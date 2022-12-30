@@ -1,0 +1,11 @@
+{
+    "arm_libs": [
+        "CMSIS"
+    ],
+    "cflags": [
+        "-ffreestanding",
+        "-nostdlib",
+        "-Wno-sign-conversion"
+    ],
+    "no_lint": true
+}
