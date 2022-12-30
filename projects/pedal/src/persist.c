@@ -2,7 +2,6 @@
 
 #include <inttypes.h>
 
-// #include "crc32.h"
 #include "log.h"
 #include "soft_timer.h"
 
@@ -45,15 +44,7 @@ static void prv_periodic_commit(SoftTimerId timer_id) {
     // This is the first commit for a new page
     persist_commit(persist);
   }
-  //   else {
-  //     // Check if our data has changed from the stored copy
-  //     uint32_t new_hash = crc32_arr((const uint8_t *)persist->blob, persist->blob_size);
-  //     if (new_hash != persist->prev_hash) {
-  //       // Data has changed - commit
-  //       persist_commit(persist);
-  //     }
-  //     persist->prev_hash = new_hash;
-  //   }
+
   s_context = persist;
   soft_timer_start(PERSIST_COMMIT_TIMEOUT_MS, prv_periodic_commit, &persist->timer);
 }

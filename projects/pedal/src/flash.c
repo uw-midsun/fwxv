@@ -5,7 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-// #include "critical_section.h"
 #include "log.h"
 
 #define FLASH_DEFAULT_FILENAME "x86_flash"
