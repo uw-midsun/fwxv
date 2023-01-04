@@ -102,7 +102,7 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   // Initialize hardware settings
   status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, settings));
 
-  if (settings->mode == 0){
+  if (settings->mode == CAN_CONTINUOUS){
     // Create RX and TX Tasks 
     // TODO: Figure out priorities
     status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
