@@ -8,6 +8,7 @@
 //
 #include "can.h"
 #include "gpio.h"
+#include "mcp2515_defs.h"
 #include "spi.h"
 
 typedef struct Mcp2515Errors {

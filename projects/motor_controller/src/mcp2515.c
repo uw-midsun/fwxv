@@ -6,9 +6,6 @@
 #include "delay.h"
 #include "gpio_it.h"
 #include "log.h"
-#include "mcp2515_defs.h"
-#include "soft_timer.h"
-#include "spi.h"
 
 typedef struct Mcp2515LoadTxPayload {
   uint8_t cmd;
@@ -103,7 +100,7 @@ static void prv_reset() {
   uint8_t payload[] = { MCP2515_CMD_RESET };
   spi_exchange(s_storage->spi_port, payload, sizeof(payload), NULL, 0);
   // this can cause problems maybe?
-  delay_us(100);
+  delay_ms(1);
 }
 
 static void prv_read(uint8_t addr, uint8_t *read_data, size_t read_len) {
@@ -239,6 +236,17 @@ TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
   }
 }
 
+// should be auto gen
+void mcp2515_rx_all() {
+  CanMessage msg;
+
+  while (can_receive(&msg) == STATUS_CODE_OK) {
+    switch (msg.id.raw) {
+      default:
+        break;
+    }
+  }
+}
 TASK(MCP2515_RX, TASK_MIN_STACK_SIZE) {
   int counter = 0;
   while (true) {
@@ -249,18 +257,6 @@ TASK(MCP2515_RX, TASK_MIN_STACK_SIZE) {
     mcp2515_rx_all();
 
     send_task_end();
-  }
-}
-
-// should be auto gen
-void mcp2515_rx_all() {
-  CanMessage msg;
-
-  while (can_receive(&msg) == STATUS_CODE_OK) {
-    switch (msg.id.raw) {
-      default:
-        break;
-    }
   }
 }
 
@@ -277,6 +273,19 @@ StatusCode mcp2515_receive(const CanMessage *msg) {
   return ret;
 }
 
+// should be auto gen
+void mcp2515_tx_all() {
+  CanMessage msg = { 0 };
+
+  // can_pack_transmit_msg1(&msg, g_tx_struct.transmit_msg1_status);
+  // can_transmit(&msg);
+
+  // can_pack_transmit_msg2(&msg, g_tx_struct.transmit_msg2_signal,
+  // g_tx_struct.transmit_msg2_signal2); can_transmit(&msg);
+
+  // can_pack_transmit_msg3(&msg, g_tx_struct.transmit_msg3_help);
+  // can_transmit(&msg);
+}
 TASK(MCP2515_TX, TASK_MIN_STACK_SIZE) {
   int counter = 0;
   while (true) {
@@ -288,20 +297,6 @@ TASK(MCP2515_TX, TASK_MIN_STACK_SIZE) {
 
     send_task_end();
   }
-}
-
-// should be auto gen
-void mcp2515_tx_tall() {
-  CanMessage msg = { 0 };
-
-  // can_pack_transmit_msg1(&msg, g_tx_struct.transmit_msg1_status);
-  // can_transmit(&msg);
-
-  // can_pack_transmit_msg2(&msg, g_tx_struct.transmit_msg2_signal,
-  // g_tx_struct.transmit_msg2_signal2); can_transmit(&msg);
-
-  // can_pack_transmit_msg3(&msg, g_tx_struct.transmit_msg3_help);
-  // can_transmit(&msg);
 }
 
 StatusCode mcp2515_transmit(const CanMessage *msg) {
@@ -472,7 +467,7 @@ StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings
 
   status_ok_or_return(can_queue_init(&s_storage->rx_queue));
 
-  if (settings->mode == CAN_CONTINUOUS) {
+  if (settings->can_settings.mode == CAN_CONTINUOUS) {
     // Create RX and TX Tasks
     status_ok_or_return(tasks_init_task(MCP2515_RX, TASK_PRIORITY(2), NULL));
     status_ok_or_return(tasks_init_task(MCP2515_TX, TASK_PRIORITY(2), NULL));
@@ -485,12 +480,12 @@ StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings
     .priority = INTERRUPT_PRIORITY_NORMAL,
     .edge = INTERRUPT_EDGE_FALLING,
   };
-  gpio_it_register_interrupt(&settings->interrupt_pin, &it_settings, 0, MCP2515_INTERRUPT);
+  return gpio_it_register_interrupt(&settings->interrupt_pin, &it_settings, 0, MCP2515_INTERRUPT);
 }
 
 // Just set the filters[i].raw, don't set individual parts of the id manually
 // Otherwise it will be handled incorrectly when setting the filters
-StatusCode mcp2515_set_filter(Mcp2515Id *filters, bool loopback) {
+StatusCode mcp2515_set_filter(CanMessageId *filters, bool loopback) {
   // Set to Config mode, CLKOUT /4
   prv_bit_modify(MCP2515_CTRL_REG_CANCTRL,
                  MCP2515_CANCTRL_OPMODE_MASK | MCP2515_CANCTRL_CLKOUT_MASK,
