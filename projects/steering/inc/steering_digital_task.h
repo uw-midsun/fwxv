@@ -39,7 +39,3 @@ typedef enum {
 StatusCode steering_digital_input_init(void);
 void run_steering_digital_task();
 void handle_state_change(const int digital_input, const GpioState state);
-
-StatusCode steering_digital_input_init(void);
-static void run_steering_digital_task();
-void handle_state_change(const int digital_input, const GpioState *state);

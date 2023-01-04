@@ -89,12 +89,12 @@ void handle_state_change(const int digital_input, const GpioState state) {
 }
 
 StatusCode steering_digital_input_init(void) {
-  GpioSettings digital_input_settings = {
-    .direction = GPIO_DIR_IN,
-    .state = GPIO_STATE_LOW,
-    .resistor = GPIO_RES_NONE,
-    .alt_function = GPIO_ALTFN_NONE,
-  };
+  // GpioSettings digital_input_settings = {
+  //   .direction = GPIO_DIR_IN,
+  //   .state = GPIO_STATE_LOW,
+  //   .resistor = GPIO_RES_NONE,
+  //   .alt_function = GPIO_ALTFN_NONE,
+  // };
 
   set_digital_signal_horn_state(0);
   set_digital_signal_cruise_control_command(0);
@@ -103,7 +103,7 @@ StatusCode steering_digital_input_init(void) {
   GpioState state = GPIO_STATE_LOW;
 
   for (int i = 0; i < NUM_STEERING_DIGITAL_INPUTS; i++) {
-    status_ok_or_return(gpio_init_pin(&s_steering_lookup_table[i], &digital_input_settings));
+    status_ok_or_return(gpio_init_pin(&s_steering_lookup_table[i], GPIO_INPUT_PULL_UP, GPIO_STATE_LOW)); //&digital_input_settings
     GPIO_prev_state[i] = gpio_get_state(&s_steering_lookup_table[i], &state);
   }
   return STATUS_CODE_OK;
