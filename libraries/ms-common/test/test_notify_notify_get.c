@@ -35,6 +35,9 @@ TASK(receive_task, TASK_MIN_STACK_SIZE) {
     TEST_ASSERT_EQUAL(s_notify_events[i], e);
     i++;
   }
+
+  while (1) {
+  }
 }
 
 TEST_IN_TASK
@@ -48,10 +51,11 @@ TEST_IN_TASK
 void test_notifications() {
   tasks_init_task(receive_task, TASK_PRIORITY(1), NULL);
   // Delay, then send first message
-  delay_ms(1);
+  // TODO(mitchell) - use a mutex for this test
+  delay_ms(10);
   TEST_ASSERT_OK(notify(receive_task, s_notify_events[0]));
   // Allow receive to catch up
-  delay_ms(1);
+  delay_ms(10);
   // Send all above notification in one fell swoop
   for (uint8_t i = 0; i < NUM_TEST_EVENTS; i++) {
     TEST_ASSERT_OK(notify(receive_task, s_notify_events[i]));

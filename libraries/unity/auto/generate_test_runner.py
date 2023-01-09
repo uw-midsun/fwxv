@@ -94,7 +94,7 @@ def get_tests(input):
   test_types = { "TEST_PRE_TASK", "TEST_IN_TASK" }
   default_type = "TEST_PRE_TASK"
   for lineNum, line in enumerate(input):
-    res = re.search('^\s*void \s*(test_([A-z]|_)*)\s*\((void)?\)', line)
+    res = re.search('^\s*void \s*(test_([A-z0-9]|_)*)\s*\((void)?\)', line)
     if res != None:
       test_type = input[lineNum - 1].strip() if (lineNum > 0) else ''
       tests.append((res.group(1), lineNum + 1, test_type if (test_type in test_types) else default_type))

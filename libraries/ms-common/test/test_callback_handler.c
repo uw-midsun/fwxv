@@ -46,7 +46,7 @@ void test_register_max_callbacks() {
     notify(callback_task, registered_events[i]);
     // TEST_ASSERT(result);
   }
-  delay_ms(5);
+  delay_ms(100);
   for (uint8_t i = 0; i < MAX_CALLBACKS; ++i) {
     TEST_ASSERT_EQUAL(STATUS_CODE_OK, cancel_callback(print_num, test_numbers + i));
   }
