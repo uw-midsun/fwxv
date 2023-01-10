@@ -7,31 +7,8 @@
 // event loop.
 //
 #include "can.h"
-#include "gpio.h"
 #include "mcp2515_defs.h"
-#include "spi.h"
-
-typedef struct Mcp2515Errors {
-  uint8_t eflg;
-  uint8_t tec;
-  uint8_t rec;
-} Mcp2515Errors;
-
-typedef struct Mcp2515Settings {
-  SpiPort spi_port;
-  SpiSettings spi_settings;
-
-  GpioAddress interrupt_pin;
-
-  // Mcp does not support 1000kbps bitrate
-  CanSettings can_settings;
-} Mcp2515Settings;
-
-typedef struct Mcp2515Storage {
-  SpiPort spi_port;
-  volatile CanQueue rx_queue;
-  Mcp2515Errors errors;
-} Mcp2515Storage;
+#include "mcp2515_hw.h"
 
 // Initializes the specified CAN configuration.
 StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings);
