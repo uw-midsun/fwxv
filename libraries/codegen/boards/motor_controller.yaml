@@ -89,13 +89,13 @@
       target:
         - centre_console
       signals:
-        limit_bitset_left:
+        limit_bitset_l:
           length: 8
-        error_bitset_left:
+        error_bitset_l:
           length: 8
-        limit_bitset_right:
+        limit_bitset_r:
           length: 8
-        error_bitset_right:
+        error_bitset_r:
           length: 8
         board_fault_bitset:
           length: 8

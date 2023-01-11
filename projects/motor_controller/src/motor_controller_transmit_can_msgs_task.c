@@ -38,10 +38,10 @@ void run_motor_controller_transmit_can_msgs_medium_cycle() {
   set_motor_controller_vc_mc_voltage_r(right_motor.bus_voltage_v);
   set_motor_controller_vc_mc_current_r(right_motor.bus_current_a);
 
-  set_mc_status_error_bitset_left(left_motor.mc_error_bitset);
-  set_mc_status_error_bitset_right(right_motor.mc_error_bitset);
-  set_mc_status_limit_bitset_left(left_motor.mc_limit_bitset);
-  set_mc_status_limit_bitset_right(right_motor.mc_limit_bitset);
+  set_mc_status_error_bitset_l(left_motor.mc_error_bitset);
+  set_mc_status_error_bitset_r(right_motor.mc_error_bitset);
+  set_mc_status_limit_bitset_l(left_motor.mc_limit_bitset);
+  set_mc_status_limit_bitset_r(right_motor.mc_limit_bitset);
   // TODO(devAdhiraj): set_mc_status_board_fault_bitset();
   // TODO(devAdhiraj): set_mc_status_overtemp_bitset();
 
