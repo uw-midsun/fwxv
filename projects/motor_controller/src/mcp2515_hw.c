@@ -2,6 +2,7 @@
 #include "mcp2515_hw.h"
 
 #include "delay.h"
+#include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
 #include "mcp2515_defs.h"
