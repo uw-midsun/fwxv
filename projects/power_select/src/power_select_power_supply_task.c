@@ -70,24 +70,12 @@ static FsmTransition s_power_supply_transition_list[NUM_POWER_SUPPLY_STATES] = {
 
 StatusCode init_power_supply(void) {
   // init valid pin
-  const GpioSettings valid_settings = {
-    .direction = GPIO_DIR_IN,
-    .state = GPIO_STATE_LOW,
-    .resistor = GPIO_RES_NONE,
-    .alt_function = GPIO_ALTFN_NONE,
-  };
-  status_ok_or_return(gpio_init_pin(&g_power_select_valid_pin, &valid_settings));
-  // init voltage and current pins and set adc channel
-  const GpioSettings sense_settings = {
-    .direction = GPIO_DIR_IN,
-    .state = GPIO_STATE_LOW,
-    .resistor = GPIO_RES_NONE,
-    .alt_function = GPIO_ALTFN_ANALOG,
-  };
-  status_ok_or_return(gpio_init_pin(&g_power_select_voltage_pin, &sense_settings));
-  status_ok_or_return(adc_set_channel(g_power_select_voltage_pin, true));
-  status_ok_or_return(gpio_init_pin(&g_power_select_current_pin, &sense_settings));
-  status_ok_or_return(adc_set_channel(g_power_select_current_pin, true));
+  status_ok_or_return(
+      gpio_init_pin(&g_power_select_valid_pin, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW));
+  status_ok_or_return(gpio_init_pin(&g_power_select_voltage_pin, GPIO_ANALOG, GPIO_STATE_LOW));
+  status_ok_or_return(adc_add_channel(g_power_select_voltage_pin));
+  status_ok_or_return(gpio_init_pin(&g_power_select_current_pin, GPIO_ANALOG, GPIO_STATE_LOW));
+  status_ok_or_return(adc_add_channel(g_power_select_current_pin));
   // init FSM task
   const FsmSettings settings = {
     .state_list = s_power_supply_state_list,

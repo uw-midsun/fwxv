@@ -60,6 +60,7 @@ int main() @co@
   setup_test();
   test_pre_task();
 { IF_TEST_IN_TASK(tests, '''
+  tasks_init();
   tasks_init_task(test_task, configMAX_PRIORITIES - 1, NULL);
   tasks_start(); 
 ''')}

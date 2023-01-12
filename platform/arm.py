@@ -9,15 +9,15 @@ ar = 'arm-none-eabi-ar'
 
 arch_cflags = [
     '-mlittle-endian',
-    '-mcpu=cortex-m0',
-    '-march=armv6-m',
+    '-mcpu=cortex-m3',
+    '-march=armv7-m',
     '-mthumb'
 ]
 
 defines = [
     'MS_PLATFORM_ARM',
     'USE_STDPERIPH_DRIVER',
-    'STM32F072',
+    'STM32F10X_MD', # Medium-density devices are STM32F103xx with 64-128k flash
     'HSE_VALUE=32000000',
 ]
 define_flags = ['-D{}'.format(define) for define in defines]
@@ -46,7 +46,7 @@ cflags = [
 
 link_flags = [
     '-L{}/linker_scripts'.format(PLATFORM_DIR),
-    '-Tstm32f0_default.ld',
+    '-Tstm32f1_default.ld',
 ]
 
 arm_env = Environment(

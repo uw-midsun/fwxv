@@ -9,6 +9,7 @@ typedef enum {
   GPIO_PORT_D,
   GPIO_PORT_E,
   GPIO_PORT_F,
+  GPIO_PORT_G,
   NUM_GPIO_PORTS,
 } GpioPort;
 

@@ -7,7 +7,8 @@
 #include "spi_mcu.h"
 #include "status.h"
 
-#define SPI_MUTEX_WAIT_MS 100
+#define SPI_TIMEOUT_MS 100
+#define SPI_MAX_NUM_DATA 32
 
 typedef enum {
   SPI_MODE_0 = 0,  // CPOL: 0 CPHA: 0

@@ -17,7 +17,6 @@
 typedef struct {
   GpioAddress tx;  // tx pin
   GpioAddress rx;  // rx pin
-  GpioAltFn alt_fn;
   uint32_t baudrate;
 } UartSettings;
 

@@ -148,7 +148,7 @@ StatusCode x86_interrupt_register_handler(x86InterruptHandler handler, uint8_t *
 StatusCode x86_interrupt_register_interrupt(uint8_t handler_id, const InterruptSettings *settings,
                                             uint8_t *interrupt_id) {
   if (handler_id >= s_x86_interrupt_next_handler_id ||
-      settings->priority >= NUM_INTERRUPT_PRIORITIES || settings->type >= NUM_INTERRUPT_TYPES) {
+      settings->priority >= NUM_INTERRUPT_PRIORITIES || settings->type >= NUM_INTERRUPT_CLASSES) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   } else if (s_x86_interrupt_next_interrupt_id >= NUM_X86_INTERRUPT_INTERRUPTS) {
     return status_code(STATUS_CODE_RESOURCE_EXHAUSTED);

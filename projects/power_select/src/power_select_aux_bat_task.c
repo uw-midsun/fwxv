@@ -38,18 +38,6 @@ GpioAddress adc_voltage_addr = {
   .port = GPIO_PORT_A,
   .pin = 2,
 };
-GpioSettings gpio_settings = {
-  GPIO_DIR_IN,
-  GPIO_STATE_HIGH,
-  GPIO_RES_NONE,
-  GPIO_ALTFN_NONE,
-};
-GpioSettings adc_settings = {
-  GPIO_DIR_IN,
-  GPIO_STATE_HIGH,
-  GPIO_RES_NONE,
-  GPIO_ALTFN_ANALOG,
-};
 
 #define NUM_AUX_BAT_STATES 2
 #define NUM_AUX_BAT_TRANSITIONS 2
@@ -144,16 +132,16 @@ StatusCode init_power_select_aux_bat() {
 StatusCode init_aux_bat(void) {
   // Initializations for gpio's, adc's, and the fsm
   gpio_init();
-  gpio_init_pin(&voltage_addr, &gpio_settings);
-  gpio_init_pin(&current_addr, &gpio_settings);
-  gpio_init_pin(&temp_addr, &gpio_settings);
-  gpio_init_pin(&valid_addr, &gpio_settings);
-  gpio_init_pin(&adc_current_addr, &adc_settings);
-  gpio_init_pin(&adc_temp_addr, &adc_settings);
-  gpio_init_pin(&adc_voltage_addr, &adc_settings);
-  adc_set_channel(adc_current_addr, true);
-  adc_set_channel(adc_temp_addr, true);
-  adc_set_channel(adc_voltage_addr, true);
+  gpio_init_pin(&voltage_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&current_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&temp_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&valid_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&adc_current_addr, GPIO_ANALOG, GPIO_STATE_LOW);
+  gpio_init_pin(&adc_temp_addr, GPIO_ANALOG, GPIO_STATE_LOW);
+  gpio_init_pin(&adc_voltage_addr, GPIO_ANALOG, GPIO_STATE_LOW);
+  adc_add_channel(adc_current_addr);
+  adc_add_channel(adc_temp_addr);
+  adc_add_channel(adc_voltage_addr);
   adc_init(ADC_MODE_SINGLE);
 
   FsmSettings settings = {

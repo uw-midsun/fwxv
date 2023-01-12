@@ -3,10 +3,10 @@
 #include <string.h>
 
 #include "semaphore.h"
-#include "stm32f0xx.h"
-#include "stm32f0xx_interrupt.h"
-#include "stm32f0xx_rcc.h"
-#include "stm32f0xx_usart.h"
+#include "stm32f10x.h"
+#include "stm32f10x_interrupt.h"
+#include "stm32f10x_rcc.h"
+#include "stm32f10x_usart.h"
 
 typedef struct UartPortQueue {
   uint8_t tx_buf[UART_MAX_BUFFER_LEN];
@@ -36,12 +36,8 @@ static UartPortData s_port[] = {
                     .base = USART2 },
   [UART_PORT_3] = { .rcc_cmd = RCC_APB1PeriphClockCmd,
                     .periph = RCC_APB1Periph_USART3,
-                    .irq = USART3_4_IRQn,
+                    .irq = USART3_IRQn,
                     .base = USART3 },
-  [UART_PORT_4] = { .rcc_cmd = RCC_APB1PeriphClockCmd,
-                    .periph = RCC_APB1Periph_USART4,
-                    .irq = USART3_4_IRQn,
-                    .base = USART4 },
 };
 
 static void prv_handle_irq(UartPort uart);
@@ -63,13 +59,8 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
   s_port_queues[uart].rx_queue.storage_buf = s_port_queues[uart].rx_buf;
   queue_init(&s_port_queues[uart].rx_queue);
 
-  GpioSettings gpio_settings = {
-    .alt_function = settings->alt_fn,
-    .resistor = GPIO_RES_PULLUP,
-  };
-
-  gpio_init_pin(&settings->tx, &gpio_settings);
-  gpio_init_pin(&settings->rx, &gpio_settings);
+  gpio_init_pin(&settings->tx, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&settings->rx, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
 
   USART_InitTypeDef usart_init;
   USART_StructInit(&usart_init);
@@ -86,7 +77,7 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
   // when there is data to be received
   USART_ITConfig(s_port[uart].base, USART_IT_RXNE, ENABLE);
 
-  stm32f0xx_interrupt_nvic_enable(s_port[uart].irq, INTERRUPT_PRIORITY_NORMAL);
+  stm32f10x_interrupt_nvic_enable(s_port[uart].irq, INTERRUPT_PRIORITY_NORMAL);
 
   USART_Cmd(s_port[uart].base, ENABLE);
   s_port[uart].initialized = true;
