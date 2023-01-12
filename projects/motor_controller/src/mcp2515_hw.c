@@ -264,7 +264,7 @@ StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *sett
   };
 
   status_ok_or_return(tasks_init_task(MCP2515_INTERRUPT, TASK_PRIORITY(2), NULL));
-  status_ok_or_return(gpio_init_pin(&settings->interrupt_pin, &gpio_settings));
+  status_ok_or_return(gpio_init_pin(&settings->interrupt_pin, &gpio_settings, GPIO_STATE_LOW));
   const InterruptSettings it_settings = {
     .type = INTERRUPT_TYPE_INTERRUPT,
     .priority = INTERRUPT_PRIORITY_NORMAL,
