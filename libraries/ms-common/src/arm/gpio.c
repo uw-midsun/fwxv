@@ -28,6 +28,9 @@ static uint32_t s_gpio_rcc_apb_timer_map[NUM_GPIO_PORTS] = {
 };
 
 StatusCode gpio_init(void) {
+  // Remap JTAG pins to GPIOs for LEDs
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+  AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE;
   return STATUS_CODE_OK;
 }
 
