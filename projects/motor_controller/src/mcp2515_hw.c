@@ -2,7 +2,6 @@
 #include "mcp2515_hw.h"
 
 #include "delay.h"
-#include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
 #include "mcp2515_defs.h"
@@ -258,13 +257,12 @@ StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *sett
   uint8_t opmode = (settings->can_settings.loopback ? MCP2515_CANCTRL_OPMODE_LOOPBACK
                                                     : MCP2515_CANCTRL_OPMODE_NORMAL);
   prv_bit_modify(MCP2515_CTRL_REG_CANCTRL, MCP2515_CANCTRL_OPMODE_MASK, opmode);
-  // Active-low interrupt pin
-  const GpioSettings gpio_settings = {
-    .direction = GPIO_DIR_IN,
-  };
 
   status_ok_or_return(tasks_init_task(MCP2515_INTERRUPT, TASK_PRIORITY(2), NULL));
-  status_ok_or_return(gpio_init_pin(&settings->interrupt_pin, &gpio_settings, GPIO_STATE_LOW));
+
+  // active low
+  status_ok_or_return(
+      gpio_init_pin(&settings->interrupt_pin, GPIO_INPUT_FLOATING, GPIO_STATE_HIGH));
   const InterruptSettings it_settings = {
     .type = INTERRUPT_TYPE_INTERRUPT,
     .priority = INTERRUPT_PRIORITY_NORMAL,
