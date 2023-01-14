@@ -250,7 +250,7 @@ if PLATFORM == 'arm' and TYPE == 'project':
             '-f interface/{}.cfg'.format(PROBE),
             '-f target/stm32f1x.cfg',
             '-f {}/stm32f1-openocd.cfg'.format(PLATFORM_DIR),
-            '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
+           # '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
             '-c "stm_flash {}"'.format(proj_bin(TARGET, env.get("smoke"))),
             '-c shutdown'
         ]

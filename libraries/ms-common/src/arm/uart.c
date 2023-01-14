@@ -44,11 +44,13 @@ static void prv_handle_irq(UartPort uart);
 
 StatusCode uart_init(UartPort uart, UartSettings *settings) {
   // Reserve USART Port 1 for Retarget.c
-  if (uart == UART_PORT_1 || settings == NULL) return STATUS_CODE_INVALID_ARGS;
+  // if (uart == UART_PORT_1 || settings == NULL) return STATUS_CODE_INVALID_ARGS;
   if (s_port[uart].initialized) return STATUS_CODE_RESOURCE_EXHAUSTED;
 
+  // Enable clocks for 
   s_port[uart].rcc_cmd(s_port[uart].periph, ENABLE);
-
+  
+  // Initialize queueus
   s_port_queues[uart].tx_queue.item_size = sizeof(uint8_t);
   s_port_queues[uart].tx_queue.num_items = UART_MAX_BUFFER_LEN;
   s_port_queues[uart].tx_queue.storage_buf = s_port_queues[uart].tx_buf;

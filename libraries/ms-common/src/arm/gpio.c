@@ -55,7 +55,7 @@ StatusCode gpio_init_pin(const GpioAddress *address, const GpioMode pin_mode,
   };
 
   // Set the pin state.
-  gpio_set_state(address, init_state);
+  //gpio_set_state(address, init_state);
 
   // Use the init_struct to set the pin.
   GPIO_Init(s_gpio_port_map[address->port], &init_struct);
