@@ -15,7 +15,7 @@ Ads1015Storage s_ads1015_storage = { 0 };
 StatusCode read_throttle_data(int16_t *position) {
   status_ok_or_return(ads1015_read_raw(&s_ads1015_storage, THROTTLE_CHANNEL, position));
   int32_t position_upscaled = (int32_t)*position * EE_PEDAL_VALUE_DENOMINATOR;
-  int32_t range = 0;
+  int32_t range = 1;
   // TODO(Scrubpai): Add calibration values and update position_upscaled (using range)
   position_upscaled *= 100;
   if (range != 0) {
@@ -29,7 +29,7 @@ StatusCode read_throttle_data(int16_t *position) {
 bool read_brake_data(int16_t *position) {
   ads1015_read_raw(&s_ads1015_storage, BRAKE_CHANNEL, position);
   int32_t position_upscaled = (int32_t)*position * EE_PEDAL_VALUE_DENOMINATOR;
-  int32_t range = 0;
+  int32_t range = 1;
   // TODO(Scrubpai): Add calibration values and update position_upscaled (using range)
   position_upscaled *= 100;
   if (range != 0) {
