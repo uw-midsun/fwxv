@@ -35,7 +35,6 @@ static GpioSettings button_settings = { .direction = GPIO_DIR_IN,
 int main() {
   interrupt_init();
   gpio_init();
-  gpio_it_init();
 
   gpio_init_pin(&button[0], &button_settings);
 
