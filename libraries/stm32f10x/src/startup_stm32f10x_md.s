@@ -91,6 +91,9 @@ LoopFillZerobss:
 	bcc	FillZerobss
 /* Call the clock system intitialization function.*/
   bl  SystemInit 	
+
+/* Call the retarget intitialization function.*/
+
 /* Call the application's entry point.*/
 	bl	main
 	bx	lr    
@@ -120,6 +123,7 @@ Infinite_Loop:
 	.size	g_pfnVectors, .-g_pfnVectors
     
     
+
 g_pfnVectors:
 	.word	_estack
 	.word	Reset_Handler

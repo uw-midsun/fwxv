@@ -53,10 +53,53 @@
 //   }
 // }
 
+void UART1_Init(uint32_t baudrate)
+{
+    // Enable clock for UART1 and GPIOA
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA, ENABLE);
+
+    // Configure UART1 pins
+    GPIO_InitTypeDef gpio;
+    gpio.GPIO_Pin = GPIO_Pin_9;
+    gpio.GPIO_Mode = GPIO_Mode_AF_PP;
+    gpio.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &gpio);
+    gpio.GPIO_Pin = GPIO_Pin_10;
+    gpio.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+    GPIO_Init(GPIOB, &gpio);
+
+    // Configure UART1
+    USART_InitTypeDef uart;
+    uart.USART_BaudRate = baudrate;
+    uart.USART_WordLength = USART_WordLength_8b;
+    uart.USART_StopBits = USART_StopBits_1;
+    uart.USART_Parity = USART_Parity_No;
+    uart.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    uart.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+    USART_Init(USART1, &uart);
+
+    // Enable UART1
+    USART_Cmd(USART1, ENABLE);
+}
+
+void UART1_Send(uint8_t *data, uint16_t length)
+{
+    for(int i = 0; i < length; i++)
+    {
+        // Wait until the transmit buffer is empty
+        while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
+
+        // Send the data
+        USART_SendData(USART1, data[i]);
+    }
+}
+
 int main(void) {
-  for(int i = 0; i < 1000; i++) {
-    printf("Hello World\n");
-  }
-    
+  uint8_t data[1000];
+  UART1_Init(112500);
+  UART1_Send(data, 1000);
+
+
+   
   return 0;
 }
