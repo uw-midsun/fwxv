@@ -1,7 +1,7 @@
 #pragma once
 // Implements a flash-based persistance layer
-// Requires flash, soft timers, and CRC32 to be initialized.
-//
+// Requires flash, and CRC32 to be initialized.
+// CRC32 hasn't been officially implemented yet
 // Allocates one page of flash to keep data across resets.
 // Data is written to flash periodically. Note that to reduce necessary wear on
 // the flash, data is only committed if changes have occurred.
@@ -10,6 +10,7 @@
 // active at once. However, note that there is no protection against multiple
 // persistance instances writing to the same page.
 #include <stddef.h>
+
 #include "flash.h"
 #include "soft_timer.h"
 #include "status.h"
