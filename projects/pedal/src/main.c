@@ -10,6 +10,7 @@
 #include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
+#include "pedal_data.h"
 #include "pedal_setters.h"
 #include "soft_timer.h"
 #include "tasks.h"
@@ -29,14 +30,10 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
-// TODO(Scrubpai): Read any GPIOs and the ADC for throttle
-uint16_t read_pedal_throttle() {
-  return false;
-}
-
-// TODO(Scrubpai): Read any GPIOs and the ADC for brake
-bool read_pedal_brake() {
-  return false;
+// TODO(Scrubpai): Read the ADC when throttle and brake are pressed down or released,
+// and use that reading to set the upper (max) and lower bounds (min) of each pedal
+void pedal_calibrate() {
+  return;
 }
 
 void init_pedal_controls() {
@@ -54,6 +51,7 @@ void init_pedal_controls() {
   i2c_init(I2C_PORT_2, &i2c_settings);
   GpioAddress ready_pin = { .port = GPIO_PORT_B, .pin = 2 };
   adc_init(ADC_MODE_SINGLE);
+  ads1015_init(&s_ads1015_storage, I2C_PORT_2, ADS1015_ADDRESS_GND, &ready_pin);
 }
 
 void run_fast_cycle() {
@@ -64,12 +62,17 @@ void run_medium_cycle() {
   run_can_tx_cycle();
   wait_tasks(1);
 
+  int16_t brake_position = INT16_MAX;
+  int16_t throttle_position = INT16_MAX;
+
+  read_brake_data(&brake_position);
+  read_throttle_data(&throttle_position);
   // Sending messages
-  if (!read_pedal_brake()) {  // Brake is not pressed - Send proper throttle data
-    set_pedal_output_brake_output(0);
-    set_pedal_output_throttle_output(read_pedal_throttle());
+  if (!brake_position) {  // Brake is not pressed - Send proper throttle data
+    set_pedal_output_brake_output((uint32_t)brake_position);
+    set_pedal_output_throttle_output((uint32_t)throttle_position);
   } else {  // Brake is pressed - Send proper brake data with throttle as 0
-    set_pedal_output_brake_output(1);
+    set_pedal_output_brake_output((uint32_t)brake_position);
     set_pedal_output_throttle_output(0);
   }
 }

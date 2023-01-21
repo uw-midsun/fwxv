@@ -8,13 +8,16 @@
 TASK(master_task, TASK_STACK_512) {
   while (true) {
     fsm_run_cycle(fsm1);
+    wait_tasks(1);
     fsm_run_cycle(fsm2);
+    wait_tasks(1);
     delay_ms(1000);
   }
 }
 
 int main(void) {
   log_init();
+  tasks_init();
   init_fsm1();
   init_fsm2();
   tasks_init_task(master_task, TASK_PRIORITY(3), NULL);
