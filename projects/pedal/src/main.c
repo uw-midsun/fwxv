@@ -52,9 +52,6 @@ void init_pedal_controls() {
   GpioAddress ready_pin = { .port = GPIO_PORT_B, .pin = 2 };
   adc_init(ADC_MODE_SINGLE);
   ads1015_init(&s_ads1015_storage, I2C_PORT_2, ADS1015_ADDRESS_GND, &ready_pin);
-
-  // Calibrates the pedal upon initialization
-  pedal_calibrate();
 }
 
 void run_fast_cycle() {
