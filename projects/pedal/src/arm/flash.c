@@ -1,5 +1,7 @@
 #include "flash.h"
+
 #include <string.h>
+
 #include "stm32f10x.h"
 
 StatusCode flash_init(void) {

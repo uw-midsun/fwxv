@@ -11,6 +11,7 @@
 #include "log.h"
 #include "pedal_setters.h"
 
+/* TODO - ads1015 storage needs to be changed to MAX11600 (pending driver completion) */
 static Ads1015Storage *s_ads1015_storage;
 void prv_callback_channel(Ads1015Channel channel, void *context) {
   int16_t reading = 0;

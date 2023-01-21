@@ -19,6 +19,7 @@ static PedalCalibBlob s_calib_blob;
 static PedalCalibrationStorage s_throttle_calibration_storage;
 static PedalCalibrationStorage s_brake_calibration_storage;
 
+/* TODO - ads1015 storage needs to be changed to MAX11600 (pending driver completion) */
 void setup_test(void) {
   gpio_init();
   interrupt_init();
@@ -41,6 +42,7 @@ void setup_test(void) {
 
 void teardown_test(void) {}
 
+/* TODO - ads1015 storage needs to be changed to MAX11600 (pending driver completion) */
 void test_throttle_calibration_run(void) {
   LOG_DEBUG("Please ensure the throttle is not being pressed.\n");
   delay_s(7);
@@ -58,6 +60,7 @@ void test_throttle_calibration_run(void) {
   calib_commit();
 }
 
+/* TODO - ads1015 storage needs to be changed to MAX11600 (pending driver completion) */
 void test_brake_calibration_run(void) {
   LOG_DEBUG("Please ensure the brake is not being pressed.\n");
   delay_s(7);
