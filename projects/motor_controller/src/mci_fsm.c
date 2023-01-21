@@ -2,14 +2,13 @@
 
 #include "delay.h"
 #include "log.h"
+#include "mc_data.h"
 #include "motor_controller_getters.h"
 #include "task.h"
 
 #define get_drive_output() get_drive_output_drive_output()
 
 FSM(mci_fsm, NUM_MCI_FSM_STATES);
-
-static MciFsmStorage s_storage;
 
 static void prv_mci_fsm_off_input(Fsm *fsm, void *context) {
   // TODO(devAdhiraj): added check if power state of MCI is precharged charged
@@ -30,13 +29,14 @@ static void prv_mci_fsm_drive_input(Fsm *fsm, void *context) {
   if (drive_event == MCI_FSM_GOTO_OFF) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
   } else if (drive_event == MCI_FSM_GOTO_REVERSE) {
-    if (s_storage.velocity == 0) {
+    if (left_motor.velocity == 0 && right_motor.velocity == 0) {
       fsm_transition(fsm, MCI_FSM_STATE_REVERSE);
     } else {
       LOG_DEBUG("reverse requirement not met, didn't transition\n");
     }
   } else if (drive_event == MCI_FSM_GOTO_CRUISE) {
-    if (s_storage.velocity <= CRUISE_MAX_SPEED && s_storage.velocity >= CRUISE_MIN_SPEED) {
+    if (left_motor.velocity <= CRUISE_MAX_SPEED && right_motor.velocity <= CRUISE_MAX_SPEED &&
+        left_motor.velocity >= CRUISE_MIN_SPEED && right_motor.velocity >= CRUISE_MIN_SPEED) {
       fsm_transition(fsm, MCI_FSM_STATE_CRUISE);
     } else {
       LOG_DEBUG("cruise requirement not met, didn't transition\n");
@@ -53,7 +53,7 @@ static void prv_mci_fsm_reverse_input(Fsm *fsm, void *context) {
   if (drive_event == MCI_FSM_GOTO_OFF) {
     fsm_transition(fsm, MCI_FSM_STATE_OFF);
   } else if (drive_event == MCI_FSM_GOTO_DRIVE) {
-    if (s_storage.velocity == 0) {
+    if (left_motor.velocity == 0 && right_motor.velocity == 0) {
       fsm_transition(fsm, MCI_FSM_STATE_DRIVE);
     } else {
       LOG_DEBUG("drive requirement not met, didn't transition\n");
