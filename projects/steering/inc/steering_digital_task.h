@@ -4,6 +4,7 @@
 #include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
+#include "notify.h"
 #include "status.h"
 #include "steering_setters.h"
 
@@ -26,7 +27,6 @@
 #define CC_DECREASE_SPEED_GPIO_ADDR \
   { .port = GPIO_PORT_A, .pin = 8 }
 
-// enum may or may not be needed
 typedef enum {
   STEERING_DIGITAL_INPUT_HORN = 0,
   STEERING_DIGITAL_INPUT_REGEN_BRAKE_TOGGLE,
@@ -36,6 +36,31 @@ typedef enum {
   NUM_STEERING_DIGITAL_INPUTS,
 } SteeringInterfaceDigitalInput;
 
+typedef enum {
+  STEERING_INPUT_HORN_EVENT = 0,
+  STEERING_REGEN_BRAKE_EVENT,
+  STEERING_CC_TOGGLE_EVENT,
+  STEERING_INCREASE_SPEED_EVENT,
+  STEERING_DECREASE_SPEED_EVENT,
+  NUM_STEERING_EVENTS,
+} SteeringDigitalEvent;
+
+static GpioAddress s_steering_lookup_table[NUM_STEERING_DIGITAL_INPUTS] = {
+  [STEERING_DIGITAL_INPUT_HORN] = HORN_GPIO_ADDR,
+  [STEERING_DIGITAL_INPUT_REGEN_BRAKE_TOGGLE] = REGEN_BRAKE_TOGGLE_GPIO_ADDR,
+  [STEERING_DIGITAL_INPUT_CC_TOGGLE] = CC_TOGGLE_GPIO_ADDR,
+  [STEERING_DIGITAL_INPUT_CC_INCREASE_SPEED] = CC_INCREASE_SPEED_GPIO_ADDR,
+  [STEERING_DIGITAL_INPUT_CC_DECREASE_SPEED] = CC_DECREASE_SPEED_GPIO_ADDR,
+};
+
+static Event s_steering_event_lookup_table[NUM_STEERING_DIGITAL_INPUTS] = {
+  [STEERING_DIGITAL_INPUT_HORN] = STEERING_INPUT_HORN_EVENT,
+  [STEERING_DIGITAL_INPUT_REGEN_BRAKE_TOGGLE] = STEERING_REGEN_BRAKE_EVENT,
+  [STEERING_DIGITAL_INPUT_CC_TOGGLE] = STEERING_CC_TOGGLE_EVENT,
+  [STEERING_DIGITAL_INPUT_CC_INCREASE_SPEED] = STEERING_INCREASE_SPEED_EVENT,
+  [STEERING_DIGITAL_INPUT_CC_DECREASE_SPEED] = STEERING_DECREASE_SPEED_EVENT,
+};
+
 StatusCode steering_digital_input_init(void);
+StatusCode handle_state_change(Event digital_input);
 void run_steering_digital_task();
-void handle_state_change(const int digital_input, const GpioState state);

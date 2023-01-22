@@ -1,110 +1,74 @@
 #include "steering_digital_task.h"
 
+#define HORN_COMMAND g_tx_struct.digital_signal_horn_state
+#define REGEN_BRAKE_COMMAND g_tx_struct.digital_signal_regen_brake_toggle_command
 #define CRUISE_CONTROL_COMMAND g_tx_struct.digital_signal_cruise_control_command
 
-static GpioState GPIO_prev_state[NUM_STEERING_DIGITAL_INPUTS];
-
-static GpioAddress s_steering_lookup_table[NUM_STEERING_DIGITAL_INPUTS] = {
-  [STEERING_DIGITAL_INPUT_HORN] = HORN_GPIO_ADDR,
-  [STEERING_DIGITAL_INPUT_REGEN_BRAKE_TOGGLE] = REGEN_BRAKE_TOGGLE_GPIO_ADDR,
-  [STEERING_DIGITAL_INPUT_CC_TOGGLE] = CC_TOGGLE_GPIO_ADDR,
-  [STEERING_DIGITAL_INPUT_CC_INCREASE_SPEED] = CC_INCREASE_SPEED_GPIO_ADDR,
-  [STEERING_DIGITAL_INPUT_CC_DECREASE_SPEED] = CC_DECREASE_SPEED_GPIO_ADDR,
-};
+static uint32_t notification = 0;
+Event steering_event;
 
 void run_steering_digital_task() {
-  GpioState state = GPIO_STATE_LOW;
+  notify_get(&notification);
 
-  for (int i = 0; i < NUM_STEERING_DIGITAL_INPUTS; i++) {
-    gpio_get_state(&s_steering_lookup_table[i], &state);
-    if (state != GPIO_prev_state[i]) {
-      handle_state_change(i, state);
-      GPIO_prev_state[i] = state;
-    }
+  while (event_from_notification(&notification, &steering_event)) {
+    handle_state_change(steering_event);
   }
 }
 
-void handle_state_change(const int digital_input, const GpioState state) {
+StatusCode handle_state_change(Event digital_input) {
   GpioState toggle_state;
 
   switch (digital_input) {
-    case STEERING_DIGITAL_INPUT_HORN:
+    case STEERING_INPUT_HORN_EVENT:
 
-      if (state == GPIO_STATE_HIGH) {
-        set_digital_signal_horn_state(1);
-      } else {
-        set_digital_signal_horn_state(0);
-      }
+      set_digital_signal_horn_state(HORN_COMMAND ^ 1u);
       break;
 
-    case STEERING_DIGITAL_INPUT_REGEN_BRAKE_TOGGLE:
+    case STEERING_REGEN_BRAKE_EVENT:
 
-      if (state == GPIO_STATE_HIGH) {
-        set_digital_signal_regen_brake_toggle_command(1);
-      } else {
-        set_digital_signal_regen_brake_toggle_command(0);
-      }
+      set_digital_signal_regen_brake_toggle_command(REGEN_BRAKE_COMMAND ^ 1u);
       break;
 
-    case STEERING_DIGITAL_INPUT_CC_TOGGLE:
+    case STEERING_CC_TOGGLE_EVENT:
 
-      if (state == GPIO_STATE_HIGH) {
-        set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND |
-                                                  DIGITAL_SIGNAL_CC_TOGGLE_MASK);
-      } else {
-        set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND ^
-                                                  DIGITAL_SIGNAL_CC_TOGGLE_MASK);
-      }
+      set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND ^
+                                                DIGITAL_SIGNAL_CC_TOGGLE_MASK);
       break;
 
-    case STEERING_DIGITAL_INPUT_CC_INCREASE_SPEED:
+    case STEERING_INCREASE_SPEED_EVENT:
       toggle_state =
           gpio_get_state(&s_steering_lookup_table[STEERING_DIGITAL_INPUT_CC_TOGGLE], &toggle_state);
 
-      if ((state == GPIO_STATE_HIGH) && (toggle_state == GPIO_STATE_HIGH)) {
-        set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND |
-                                                  DIGITAL_SIGNAL_CC_INCREASE_MASK);
-      } else {
+      if (toggle_state == GPIO_STATE_HIGH) {
         set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND ^
                                                   DIGITAL_SIGNAL_CC_INCREASE_MASK);
       }
       break;
 
-    case STEERING_DIGITAL_INPUT_CC_DECREASE_SPEED:
+    case STEERING_DECREASE_SPEED_EVENT:
       toggle_state =
           gpio_get_state(&s_steering_lookup_table[STEERING_DIGITAL_INPUT_CC_TOGGLE], &toggle_state);
 
-      if ((state == GPIO_STATE_HIGH) && (toggle_state == GPIO_STATE_HIGH)) {
-        set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND |
-                                                  DIGITAL_SIGNAL_CC_DECREASE_MASK);
-      } else {
+      if (toggle_state == GPIO_STATE_HIGH) {
         set_digital_signal_cruise_control_command(CRUISE_CONTROL_COMMAND ^
                                                   DIGITAL_SIGNAL_CC_DECREASE_MASK);
       }
       break;
 
     default:
-      return;
+      return STATUS_CODE_INVALID_ARGS;
   }
+  return STATUS_CODE_OK;
 }
 
 StatusCode steering_digital_input_init(void) {
-  // GpioSettings digital_input_settings = {
-  //   .direction = GPIO_DIR_IN,
-  //   .state = GPIO_STATE_LOW,
-  //   .resistor = GPIO_RES_NONE,
-  //   .alt_function = GPIO_ALTFN_NONE,
-  // };
-
   set_digital_signal_horn_state(0);
   set_digital_signal_cruise_control_command(0);
   set_digital_signal_regen_brake_toggle_command(0);
 
-  GpioState state = GPIO_STATE_LOW;
-
   for (int i = 0; i < NUM_STEERING_DIGITAL_INPUTS; i++) {
-    status_ok_or_return(gpio_init_pin(&s_steering_lookup_table[i], GPIO_INPUT_PULL_UP, GPIO_STATE_LOW)); //&digital_input_settings
-    GPIO_prev_state[i] = gpio_get_state(&s_steering_lookup_table[i], &state);
+    status_ok_or_return(
+        gpio_init_pin(&s_steering_lookup_table[i], GPIO_INPUT_PULL_UP, GPIO_STATE_LOW));
   }
   return STATUS_CODE_OK;
 }

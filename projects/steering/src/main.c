@@ -28,6 +28,18 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
+InterruptSettings it_settings = {
+  .priority = INTERRUPT_PRIORITY_NORMAL,
+  .type = INTERRUPT_TYPE_INTERRUPT,
+  .edge = INTERRUPT_EDGE_RISING_FALLING,
+};
+
+InterruptSettings toggle_settings = {
+  .priority = INTERRUPT_PRIORITY_NORMAL,
+  .type = INTERRUPT_TYPE_INTERRUPT,
+  .edge = INTERRUPT_EDGE_FALLING,
+};
+
 void run_fast_cycle() {}
 
 void run_medium_cycle() {
@@ -67,12 +79,21 @@ int main() {
   gpio_it_init();
   adc_init(ADC_MODE_SINGLE);
   // steering_analog_adc_init();
-  steering_digital_input_init();
 
   can_init(&s_can_storage, &can_settings);
-
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
+  for (int i = 0; i < NUM_STEERING_DIGITAL_INPUTS; i++) {
+    if (i == STEERING_DIGITAL_INPUT_CC_TOGGLE) {
+      gpio_it_register_interrupt(&s_steering_lookup_table[i], &toggle_settings,
+                                 s_steering_event_lookup_table[i], master_task);
+    } else {
+      gpio_it_register_interrupt(&s_steering_lookup_table[i], &it_settings,
+                                 s_steering_event_lookup_table[i], master_task);
+    }
+  }
+
+  steering_digital_input_init();
   tasks_start();
 
   return 0;
