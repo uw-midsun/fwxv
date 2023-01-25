@@ -8,10 +8,10 @@ static uint32_t notification = 0;
 Event steering_event;
 
 void run_steering_digital_task() {
-  notify_get(&notification);
-
-  while (event_from_notification(&notification, &steering_event)) {
-    handle_state_change(steering_event);
+  if (notify_get(&notification) == STATUS_CODE_OK) {
+    while (event_from_notification(&notification, &steering_event) == STATUS_CODE_INCOMPLETE) {
+      handle_state_change(steering_event);
+    }
   }
 }
 

@@ -31,13 +31,13 @@ const CanSettings can_settings = {
 InterruptSettings it_settings = {
   .priority = INTERRUPT_PRIORITY_NORMAL,
   .type = INTERRUPT_TYPE_INTERRUPT,
-  .edge = INTERRUPT_EDGE_RISING_FALLING,
+  .edge = INTERRUPT_EDGE_FALLING,
 };
 
-InterruptSettings toggle_settings = {
+InterruptSettings horn_settings = {
   .priority = INTERRUPT_PRIORITY_NORMAL,
   .type = INTERRUPT_TYPE_INTERRUPT,
-  .edge = INTERRUPT_EDGE_FALLING,
+  .edge = INTERRUPT_EDGE_RISING_FALLING,
 };
 
 void run_fast_cycle() {}
@@ -84,8 +84,8 @@ int main() {
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
   for (int i = 0; i < NUM_STEERING_DIGITAL_INPUTS; i++) {
-    if (i == STEERING_DIGITAL_INPUT_CC_TOGGLE) {
-      gpio_it_register_interrupt(&s_steering_lookup_table[i], &toggle_settings,
+    if (i == STEERING_DIGITAL_INPUT_HORN) {
+      gpio_it_register_interrupt(&s_steering_lookup_table[i], &horn_settings,
                                  s_steering_event_lookup_table[i], master_task);
     } else {
       gpio_it_register_interrupt(&s_steering_lookup_table[i], &it_settings,
