@@ -296,3 +296,6 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
   *reading = (adc_reading * vdda) / 4095;
   return STATUS_CODE_OK;
 }
+
+// Don't need to do anything on ARM
+void adc_deinit(void) {}
