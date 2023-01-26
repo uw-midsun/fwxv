@@ -36,17 +36,6 @@ StatusCode run_mcp2515_tx_cycle() {
   return STATUS_CODE_OK;
 }
 
-// should be auto gen
-void mcp2515_rx_all() {
-  CanMessage msg;
-
-  while (can_receive(&msg) == STATUS_CODE_OK) {
-    switch (msg.id.raw) {
-      default:
-        break;
-    }
-  }
-}
 TASK(MCP2515_RX, TASK_MIN_STACK_SIZE) {
   int counter = 0;
   while (true) {
@@ -73,19 +62,6 @@ StatusCode mcp2515_receive(const CanMessage *msg) {
   return ret;
 }
 
-// should be auto gen
-void mcp2515_tx_all() {
-  CanMessage msg = { 0 };
-
-  // can_pack_transmit_msg1(&msg, g_tx_struct.transmit_msg1_status);
-  // can_transmit(&msg);
-
-  // can_pack_transmit_msg2(&msg, g_tx_struct.transmit_msg2_signal,
-  // g_tx_struct.transmit_msg2_signal2); can_transmit(&msg);
-
-  // can_pack_transmit_msg3(&msg, g_tx_struct.transmit_msg3_help);
-  // can_transmit(&msg);
-}
 TASK(MCP2515_TX, TASK_MIN_STACK_SIZE) {
   int counter = 0;
   while (true) {
@@ -109,9 +85,18 @@ StatusCode mcp2515_transmit(const CanMessage *msg) {
   return mcp2515_hw_transmit(msg->id.raw, msg->extended, msg->data, msg->dlc);
 }
 
+static void no_op() {}
+
 StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings) {
   memset(storage, 0, sizeof(*storage));
   s_storage = storage;
+
+  if (mcp2515_rx_all == NULL) {
+    mcp2515_rx_all = no_op;
+  }
+  if (mcp2515_tx_all == NULL) {
+    mcp2515_tx_all = no_op;
+  }
 
   mcp2515_hw_init(&storage->rx_queue, settings);
 
@@ -125,6 +110,7 @@ StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings
 
   if (settings->can_settings.mode == CAN_CONTINUOUS) {
     // Create RX and TX Tasks
+    // ! Ensure the task priority is lower than the interrupt tasks in mcp2515_hw.c
     status_ok_or_return(tasks_init_task(MCP2515_RX, TASK_PRIORITY(2), NULL));
     status_ok_or_return(tasks_init_task(MCP2515_TX, TASK_PRIORITY(2), NULL));
   }

@@ -92,9 +92,6 @@ static const uint8_t s_brp_lookup[NUM_CAN_HW_BITRATES] = {
 static void prv_reset() {
   uint8_t payload[] = { MCP2515_CMD_RESET };
   spi_exchange(s_storage->spi_port, payload, sizeof(payload), NULL, 0);
-
-  // this can cause problems maybe?
-  delay_ms(1);
 }
 
 static void prv_read(uint8_t addr, uint8_t *read_data, size_t read_len) {
@@ -182,18 +179,65 @@ static void prv_handle_error(uint8_t int_flags, uint8_t err_flags) {
   prv_read(MCP2515_CTRL_REG_TEC, &s_storage->errors.tec, 1);
   prv_read(MCP2515_CTRL_REG_REC, &s_storage->errors.rec, 1);
 
-  // keep error callback?
-  // if (err_flags) {
-  //   if (s_storage->bus_err_cb != NULL) {
-  //     s_storage->bus_err_cb(&s_storage->errors);
-  //   }
-  // }
+  if (err_flags) {
+    // TODO: handle errors
+    // s_storage->errors
+  }
+}
+
+static CanHwBitrate mcp2515_bitrate;
+static bool mcp2515_loopback;
+
+static StatusCode mcp2515_hw_init_after_schedular_start() {
+  prv_reset();
+  // Set to Config mode, CLKOUT /4
+  prv_bit_modify(MCP2515_CTRL_REG_CANCTRL,
+                 MCP2515_CANCTRL_OPMODE_MASK | MCP2515_CANCTRL_CLKOUT_MASK,
+                 MCP2515_CANCTRL_OPMODE_CONFIG | MCP2515_CANCTRL_CLKOUT_CLKPRE_4);
+
+  // set RXB0 ctrl BUKT bit on to enable rollover to rx1
+  prv_bit_modify(MCP2515_CTRL_REG_RXB0CTRL, 1 << 3, 1 << 3);
+  // 5.7 Timing configurations:
+  // In order:
+  // CNF3: PS2 Length = 6
+  // CNF2: PS1 Length = 8, PRSEG Length = 1
+  // CNF1: BRP = 0 (500kbps), 1 (250kbps), 3 (125kbps)
+  // CANINTE: Enable error and receive interrupts
+  // CANINTF: clear all IRQ flags
+  // EFLG: clear all error flags
+  const uint8_t s_registers[] = {
+    0x05,
+    MCP2515_CNF2_BTLMODE_CNF3 | MCP2515_CNF2_SAMPLE_3X | (0x07 << 3),
+    s_brp_lookup[mcp2515_bitrate],
+    MCP2515_CANINT_EFLAG | MCP2515_CANINT_RX1IE | MCP2515_CANINT_RX0IE,
+    0x00,
+    0x00,
+  };
+
+  prv_write(MCP2515_CTRL_REG_CNF3, s_registers, SIZEOF_ARRAY(s_registers));
+
+  // Sanity check: read register after first write
+  // If new reg value corresponds to expected
+  uint8_t reg_val = 0;
+  prv_read(MCP2515_CTRL_REG_CNF3, &reg_val, 1);
+
+  LOG_DEBUG("MCP2515 Init Status: %s\n",
+            reg_val == 0x05 ? "Connection SUCCESSFUL\n" : "Connection UNSUCCESSFUL\n");
+
+  // Leave config mode
+  uint8_t opmode =
+      (mcp2515_loopback ? MCP2515_CANCTRL_OPMODE_LOOPBACK : MCP2515_CANCTRL_OPMODE_NORMAL);
+  prv_bit_modify(MCP2515_CTRL_REG_CANCTRL, MCP2515_CANCTRL_OPMODE_MASK, opmode);
+
+  return STATUS_CODE_OK;
 }
 
 TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
+  mcp2515_hw_init_after_schedular_start();
+
   uint32_t notification;
-  while (notify_wait(&notification, BLOCK_INDEFINITELY) == STATUS_CODE_OK) {
-    // bool disabled = critical_section_start();
+  while (true) {
+    notify_wait(&notification, BLOCK_INDEFINITELY);
     // Read CANINTF and EFLG
     struct {
       uint8_t canintf;
@@ -206,7 +250,6 @@ TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
     // Either RX or error
     prv_handle_rx(regs.canintf);
     prv_handle_error(regs.canintf, regs.eflg);
-    // critical_section_end(disabled);
   }
 }
 
@@ -214,51 +257,13 @@ TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
 StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *settings) {
   // settings->spi_settings.mode = SPI_MODE_0;
   status_ok_or_return(spi_init(settings->spi_port, &settings->spi_settings));
-  prv_reset();
-  // Set to Config mode, CLKOUT /4
-  prv_bit_modify(MCP2515_CTRL_REG_CANCTRL,
-                 MCP2515_CANCTRL_OPMODE_MASK | MCP2515_CANCTRL_CLKOUT_MASK,
-                 MCP2515_CANCTRL_OPMODE_CONFIG | MCP2515_CANCTRL_CLKOUT_CLKPRE_4);
-
-  // set RXB0 ctrl BUKT bit on to enable rollover to rx1
-  prv_bit_modify(MCP2515_CTRL_REG_RXB0CTRL, 1 << 3, 1 << 3);
 
   if (settings->can_settings.bitrate > CAN_HW_BITRATE_500KBPS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "mcp2515 does not support this bitrate");
   }
-  // 5.7 Timing configurations:
-  // In order:
-  // CNF3: PS2 Length = 6
-  // CNF2: PS1 Length = 8, PRSEG Length = 1
-  // CNF1: BRP = 0 (500kbps), 1 (250kbps), 3 (125kbps)
-  // CANINTE: Enable error and receive interrupts
-  // CANINTF: clear all IRQ flags
-  // EFLG: clear all error flags
-  const uint8_t registers[] = {
-    0x05,
-    MCP2515_CNF2_BTLMODE_CNF3 | MCP2515_CNF2_SAMPLE_3X | (0x07 << 3),
-    s_brp_lookup[settings->can_settings.bitrate],
-    MCP2515_CANINT_EFLAG | MCP2515_CANINT_RX1IE | MCP2515_CANINT_RX0IE,
-    0x00,
-    0x00,
-  };
 
-  prv_write(MCP2515_CTRL_REG_CNF3, registers, SIZEOF_ARRAY(registers));
-
-  // Sanity check: read register after first write
-  // If new reg value corresponds to expected
-  uint8_t reg_val = 0;
-  prv_read(MCP2515_CTRL_REG_CNF3, &reg_val, 1);
-
-  LOG_DEBUG("MCP2515 Init Status: %s\n",
-            reg_val == 0x05 ? "Connection SUCCESSFUL\n" : "Connection UNSUCCESSFUL\n");
-
-  // Leave config mode
-  uint8_t opmode = (settings->can_settings.loopback ? MCP2515_CANCTRL_OPMODE_LOOPBACK
-                                                    : MCP2515_CANCTRL_OPMODE_NORMAL);
-  prv_bit_modify(MCP2515_CTRL_REG_CANCTRL, MCP2515_CANCTRL_OPMODE_MASK, opmode);
-
-  status_ok_or_return(tasks_init_task(MCP2515_INTERRUPT, TASK_PRIORITY(2), NULL));
+  mcp2515_bitrate = settings->can_settings.bitrate;
+  mcp2515_loopback = settings->can_settings.loopback;
 
   // active low
   status_ok_or_return(
@@ -268,7 +273,13 @@ StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *sett
     .priority = INTERRUPT_PRIORITY_NORMAL,
     .edge = INTERRUPT_EDGE_FALLING,
   };
-  return gpio_it_register_interrupt(&settings->interrupt_pin, &it_settings, 0, MCP2515_INTERRUPT);
+  status_ok_or_return(
+      gpio_it_register_interrupt(&settings->interrupt_pin, &it_settings, 0, MCP2515_INTERRUPT));
+
+  // ! Ensure the task priority is higher than the rx/tx tasks in mcp2515.c
+  status_ok_or_return(tasks_init_task(MCP2515_INTERRUPT, TASK_PRIORITY(3), NULL));
+
+  return STATUS_CODE_OK;
 }
 
 StatusCode mcp2515_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extended);
