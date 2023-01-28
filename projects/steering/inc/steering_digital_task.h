@@ -8,10 +8,7 @@
 #include "status.h"
 #include "steering_setters.h"
 
-#define DIGITAL_SIGNAL_CC_TOGGLE_MASK 0x04
-#define DIGITAL_SIGNAL_CC_INCREASE_MASK 0x02
-#define DIGITAL_SIGNAL_CC_DECREASE_MASK 0x01
-
+// List of gpio inputs controlled by steering digital
 #define HORN_GPIO_ADDR \
   { .port = GPIO_PORT_B, .pin = 1 }
 
@@ -27,6 +24,16 @@
 #define CC_DECREASE_SPEED_GPIO_ADDR \
   { .port = GPIO_PORT_A, .pin = 8 }
 
+// Masks for each respective CAN message signal bit in digital_input
+// All digital inputs are contained within a 1Byte signal
+typedef enum {
+  DIGITAL_SIGNAL_CC_DECREASE_MASK = 0x01,
+  DIGITAL_SIGNAL_CC_INCREASE_MASK = 0x02,
+  DIGITAL_SIGNAL_CC_TOGGLE_MASK = 0x04,
+  DIGITAL_SIGNAL_REGEN_BRAKE_MASK = 0x08,
+  DIGITAL_SIGNAL_HORN_MASK = 0x10,
+} SteeringMask;
+
 typedef enum {
   STEERING_DIGITAL_INPUT_HORN = 0,
   STEERING_DIGITAL_INPUT_REGEN_BRAKE_TOGGLE,
@@ -36,31 +43,24 @@ typedef enum {
   NUM_STEERING_DIGITAL_INPUTS,
 } SteeringInterfaceDigitalInput;
 
+// Sets values corresponding to possible digital input events
 typedef enum {
   STEERING_INPUT_HORN_EVENT = 0,
   STEERING_REGEN_BRAKE_EVENT,
   STEERING_CC_TOGGLE_EVENT,
-  STEERING_INCREASE_SPEED_EVENT,
-  STEERING_DECREASE_SPEED_EVENT,
+  STEERING_CC_INCREASE_SPEED_EVENT,
+  STEERING_CC_DECREASE_SPEED_EVENT,
   NUM_STEERING_EVENTS,
 } SteeringDigitalEvent;
 
-static GpioAddress s_steering_lookup_table[NUM_STEERING_DIGITAL_INPUTS] = {
-  [STEERING_DIGITAL_INPUT_HORN] = HORN_GPIO_ADDR,
-  [STEERING_DIGITAL_INPUT_REGEN_BRAKE_TOGGLE] = REGEN_BRAKE_TOGGLE_GPIO_ADDR,
-  [STEERING_DIGITAL_INPUT_CC_TOGGLE] = CC_TOGGLE_GPIO_ADDR,
-  [STEERING_DIGITAL_INPUT_CC_INCREASE_SPEED] = CC_INCREASE_SPEED_GPIO_ADDR,
-  [STEERING_DIGITAL_INPUT_CC_DECREASE_SPEED] = CC_DECREASE_SPEED_GPIO_ADDR,
-};
+// Initializes all digital input GPIO's'and GPIO interrupts
+// Return STATUS_CODE_OK if initialization successful
+StatusCode steering_digital_input_init(Task *task);
 
-static Event s_steering_event_lookup_table[NUM_STEERING_DIGITAL_INPUTS] = {
-  [STEERING_DIGITAL_INPUT_HORN] = STEERING_INPUT_HORN_EVENT,
-  [STEERING_DIGITAL_INPUT_REGEN_BRAKE_TOGGLE] = STEERING_REGEN_BRAKE_EVENT,
-  [STEERING_DIGITAL_INPUT_CC_TOGGLE] = STEERING_CC_TOGGLE_EVENT,
-  [STEERING_DIGITAL_INPUT_CC_INCREASE_SPEED] = STEERING_INCREASE_SPEED_EVENT,
-  [STEERING_DIGITAL_INPUT_CC_DECREASE_SPEED] = STEERING_DECREASE_SPEED_EVENT,
-};
-
-StatusCode steering_digital_input_init(void);
+// Parses digital_input Event to send the appropriate CAN message signal
+// Returns STATUS_CODE_OK if digital_input is processed successfully, and
+// STATUS_CODE_INVALID_ARGS if an invalid Event is received
 StatusCode handle_state_change(Event digital_input);
-void run_steering_digital_task();
+
+// Gets a notification and calls handle_state_change() to process events associated with it
+void steering_digital_input(void);

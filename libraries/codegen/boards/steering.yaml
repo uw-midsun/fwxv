@@ -10,16 +10,24 @@
 
 ---
   Messages:
-    digital_signal:
+    steering_info:
       id: 21  # or some number
       target:
         - power_distribution_front
         - power_distribution_back
         - motor_controller
       signals:
-        horn_state:
+        digital_input:
           length: 8
-        cruise_control_command:
+    
+    lights:
+      id: 24
+      target:
+        - lights
+      signals:
+        lights_id:
           length: 8
-        regen_brake_toggle_command:
+        state:
           length: 8
+      
+
