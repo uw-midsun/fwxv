@@ -28,6 +28,9 @@ static uint32_t s_gpio_rcc_apb_timer_map[NUM_GPIO_PORTS] = {
 };
 
 StatusCode gpio_init(void) {
+  // Remap pins to disable jtag and enable LEDs
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+  GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
   return STATUS_CODE_OK;
 }
 
@@ -51,11 +54,11 @@ StatusCode gpio_init_pin(const GpioAddress *address, const GpioMode pin_mode,
     .GPIO_Mode = s_gpio_mode_map[pin_mode],
   };
 
-  // Set the pin state.
-  gpio_set_state(address, init_state);
-
   // Use the init_struct to set the pin.
   GPIO_Init(s_gpio_port_map[address->port], &init_struct);
+
+  // Set the pin state.
+  gpio_set_state(address, init_state);
 
   taskEXIT_CRITICAL();
   return STATUS_CODE_OK;
