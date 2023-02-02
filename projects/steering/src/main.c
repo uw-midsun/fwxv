@@ -8,7 +8,7 @@
 #include "gpio_mcu.h"
 #include "log.h"
 #include "tasks.h"
-// #include "steering_analog_task.h"
+#include "steering_analog_task.h"
 #include "steering_digital_task.h"
 
 #ifdef MS_PLATFORM_X86
@@ -34,7 +34,7 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
 
-  // steering_analog_input();
+  steering_analog_input();
   steering_digital_input();
 
   run_can_tx_cycle();
@@ -65,8 +65,7 @@ int main() {
   log_init();
   gpio_init();
   gpio_it_init();
-  adc_init(ADC_MODE_SINGLE);
-  // steering_analog_adc_init();
+  steering_analog_adc_init();
 
   can_init(&s_can_storage, &can_settings);
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
