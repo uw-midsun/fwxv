@@ -21,7 +21,7 @@ TASK(task1, TASK_STACK_512) {
     // Your code here
     LOG_DEBUG("task1 %d", counter1);
     counter1++;
-    prv_delay(1000);
+    prv_delay(pdMS_TO_TICKS(1000));
   }
 }
 
@@ -31,7 +31,7 @@ TASK(task2, TASK_STACK_512) {
     // Your code here
     LOG_DEBUG("task2 %d", counter2);
     counter2++;
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    prv_delay(pdMS_TO_TICKS(1000));
   }
 }
 
@@ -40,7 +40,7 @@ int main(void) {
   log_init();
 
   tasks_init_task(task1, TASK_PRIORITY(1), NULL);
-  tasks_init_task(task2, TASK_PRIORITY(2), NULL);
+  tasks_init_task(task2, TASK_PRIORITY(1), NULL);
   // Create tasks here
 
   LOG_DEBUG("Program start...\n");
