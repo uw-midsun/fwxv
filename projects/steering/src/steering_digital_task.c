@@ -33,8 +33,6 @@ void steering_digital_input() {
 }
 
 StatusCode handle_state_change(Event digital_input) {
-  GpioState toggle_state;
-
   switch (digital_input) {
     case STEERING_INPUT_HORN_EVENT:
 
@@ -49,20 +47,12 @@ StatusCode handle_state_change(Event digital_input) {
       set_steering_info_digital_input(DIGITAL_INPUT ^ DIGITAL_SIGNAL_CC_TOGGLE_MASK);
       break;
     case STEERING_CC_INCREASE_SPEED_EVENT:
-      toggle_state =
-          gpio_get_state(&s_steering_lookup_table[STEERING_DIGITAL_INPUT_CC_TOGGLE], &toggle_state);
 
-      if (toggle_state == GPIO_STATE_HIGH) {
-        set_steering_info_digital_input(DIGITAL_INPUT | DIGITAL_SIGNAL_CC_INCREASE_MASK);
-      }
+      set_steering_info_digital_input(DIGITAL_INPUT | DIGITAL_SIGNAL_CC_INCREASE_MASK);
       break;
     case STEERING_CC_DECREASE_SPEED_EVENT:
-      toggle_state =
-          gpio_get_state(&s_steering_lookup_table[STEERING_DIGITAL_INPUT_CC_TOGGLE], &toggle_state);
 
-      if (toggle_state == GPIO_STATE_HIGH) {
-        set_steering_info_digital_input(DIGITAL_INPUT | DIGITAL_SIGNAL_CC_DECREASE_MASK);
-      }
+      set_steering_info_digital_input(DIGITAL_INPUT | DIGITAL_SIGNAL_CC_DECREASE_MASK);
       break;
     default:
       return STATUS_CODE_INVALID_ARGS;
