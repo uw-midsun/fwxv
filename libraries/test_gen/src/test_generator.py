@@ -29,7 +29,7 @@ def get_function_line_spacing(function_words):
             spacing -= 1
 
     if bracket_location == -1:
-        raise Exception("No bracket in provided line!") # pylint: disable=W0719
+        raise Exception("No bracket in provided line!")  # pylint: disable=W0719
 
     # Count the number of letters leading up to the bracket
     for i in range(len(function_words[bracket_location])):
