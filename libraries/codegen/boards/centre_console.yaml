@@ -60,7 +60,9 @@
         - motor_controller
       critical: true
       signals:
-        drive_output:
+        drive_state:
+          length: 16
+        target_velocity:
           length: 16
 
     set_ebrake_state:

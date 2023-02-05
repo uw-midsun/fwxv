@@ -10,13 +10,25 @@
 
 ---
   Messages:
-    drive_state:
+    drive_output:
       id: 22
       target:
         - motor_controller
       signals:
         drive_state:
           length: 16
+        target_velocity:
+          length: 16
+    
+    pedal:
+      id: 18
+      target:
+        - motor_controller
+      signals:
+        throttle_output:
+          length: 32
+        brake_output:
+          length: 32
 
     precharge_completed:
       id: 29

@@ -5,7 +5,7 @@
 #include "motor_controller_getters.h"
 #include "task.h"
 
-#define get_drive_output() get_drive_output_drive_output()
+#define get_drive_output() get_drive_output_drive_state()
 
 FSM(mci_fsm, NUM_MCI_FSM_STATES);
 
