@@ -47,9 +47,9 @@ TASK(task2, TASK_STACK_512) {
   while (true) {
     // Your code goes here
     for (size_t i = 0; i < QUEUE_LEN; i++) {
-      ret = queue_receive(&s_queue1, &outstr[i], 0);
+      ret = queue_receive(&s_queue1, &s_queue1_buf[i], 0);
       if (ret == STATUS_CODE_OK) {
-        LOG_DEBUG("%s", outstr);
+        LOG_DEBUG("%s", s_list[i]);
       } else {
         LOG_DEBUG("read from queue failed");
       }
