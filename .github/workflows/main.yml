@@ -57,7 +57,6 @@ jobs:
           make --version
           clang --version
           clang-format --version
-          .venv/bin/pip3 freeze
 
       - name: Format and lint
         run: |
