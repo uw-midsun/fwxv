@@ -27,7 +27,7 @@ jobs:
       # TODO: cache all the setup
       - name: get setup script
         run: |
-          curl https://raw.githubusercontent.com/uw-midsun/box/master/requirements.sh
+          wget https://raw.githubusercontent.com/uw-midsun/box/master/requirements.sh
           ./requirements.sh
 
       - name: Force PATH to update
