@@ -31,7 +31,7 @@ TASK(task1, TASK_STACK_512) {
   while (true) {
     // Your code goes here
     for (size_t i = 0; i < QUEUE_LEN; i++) {
-      ret = queue_send(&s_queue1, &s_list[i], 0);
+      ret = queue_send(&s_queue1, &s_list[i], 100);
       delay_ms(100);
       if (ret != STATUS_CODE_OK) {
         LOG_DEBUG("write to queue failed");
@@ -47,9 +47,9 @@ TASK(task2, TASK_STACK_512) {
   while (true) {
     // Your code goes here
     for (size_t i = 0; i < QUEUE_LEN; i++) {
-      ret = queue_receive(&s_queue1, &s_queue1_buf[i], 0);
+      ret = queue_receive(&s_queue1, outstr, 100);
       if (ret == STATUS_CODE_OK) {
-        LOG_DEBUG("%s", s_list[i]);
+        LOG_DEBUG("%s \n", s_list[i]);
       } else {
         LOG_DEBUG("read from queue failed");
       }
