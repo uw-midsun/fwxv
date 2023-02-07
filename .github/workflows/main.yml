@@ -57,6 +57,7 @@ jobs:
           make --version
           clang --version
           clang-format --version
+          pylint --version
 
       - name: Format and lint
         run: |
