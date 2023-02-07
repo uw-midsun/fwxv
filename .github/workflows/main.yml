@@ -32,7 +32,7 @@ jobs:
 
       - name: Install STM32 toolchain
         env:
-          GCC_PATH: gcc-arm-none-eabi
+          GCC_PATH: gcc-arm-none-eabi-8-2019-q3-update
           GCC_ARCHIVE_PATH: gcc-arm-none-eabi-8-2019-q3-update-linux.tar.bz2
           GCC_URL: https://developer.arm.com/-/media/Files/downloads/gnu-rm/8-2019q3/RC1.1/gcc-arm-none-eabi-8-2019-q3-update-linux.tar.bz2
         run: |
