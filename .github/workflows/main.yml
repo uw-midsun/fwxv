@@ -25,9 +25,10 @@ jobs:
           python-version: "3.9"
 
       # TODO: cache all the setup
-      - name: get setup script
+      - name: Get and run setup script
         run: |
           wget https://raw.githubusercontent.com/uw-midsun/box/master/requirements.sh
+          chmod +x ./requirements.sh
           ./requirements.sh
 
       - name: Force PATH to update
