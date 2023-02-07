@@ -1,6 +1,7 @@
 #include "fsm.h"
 
 #include <limits.h>
+#include <stdio.h>
 
 #include "log.h"
 #include "notify.h"
@@ -26,6 +27,7 @@ void fsm_run_cycle(Task *fsm) {
     return;
   }
   Fsm *task_fsm = fsm->context;
+  // Allow fsm to run
   BaseType_t ret = xSemaphoreGive(task_fsm->fsm_sem);
   if (ret == pdFALSE) {
     LOG_CRITICAL("FSM run Cycle Failed\n");
@@ -49,6 +51,8 @@ void _fsm_task(void *context) {
       // TODO(mitchellostler): Timeout Error handling
       LOG_DEBUG("FSM timeout\n");
     }
+    // Indicate that a fsm_cycle is finished
+    send_task_end();
   }
 }
 

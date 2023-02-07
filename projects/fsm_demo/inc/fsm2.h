@@ -8,7 +8,7 @@
 #include "task.h"
 
 #define NUM_FSM2_STATES 3
-#define NUM_FSM2_TRANSITIONS 7
+#define NUM_FSM2_TRANSITIONS 3
 
 DECLARE_FSM(fsm2);
 

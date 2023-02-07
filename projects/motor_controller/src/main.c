@@ -13,9 +13,9 @@
 #include "tasks.h"
 
 #ifdef MS_PLATFORM_X86
-#define MASTER_MS_CYCLE_TIME 100
+#define MASTER_MS_CYCLE_TIME 20
 #else
-#define MASTER_MS_CYCLE_TIME 1000
+#define MASTER_MS_CYCLE_TIME 200
 #endif
 
 static CanStorage s_can_storage = { 0 };
@@ -55,7 +55,7 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
 #ifdef TEST
     xSemaphoreGive(test_cycle_end_sem);
 #endif
-    vTaskDelayUntil(&previousWakeTime, pdMS_TO_TICKS(200));
+    vTaskDelayUntil(&previousWakeTime, pdMS_TO_TICKS(MASTER_MS_CYCLE_TIME));
   }
 }
 
@@ -65,7 +65,7 @@ int main() {
   can_init(&s_can_storage, &can_settings);
   mcp2515_init(&s_mcp2515_storage, &mcp2515_settings);
   init_motor_controller_can();
-
+  init_motor_controller_transmit_can_msgs();
   LOG_DEBUG("Motor Controller Task\n");
 
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
