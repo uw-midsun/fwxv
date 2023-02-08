@@ -29,7 +29,7 @@ typedef enum {
 } Topic;
 
 // Gets highest priority (highest value)  event available, and clears it
-// Returns true if all events processed, false if any remaining
+// Returns STATUS_CODE_OK if all events processed, STATUS_CODE_INCOMPLETE if any remaining
 // Notification value should be processed until all events are cleared
 StatusCode event_from_notification(uint32_t *notification, Event *event);
 
