@@ -65,11 +65,14 @@ int main() {
   log_init();
   gpio_init();
   gpio_it_init();
+
+  // Setup analog inputs and initialize adc 
   steering_analog_adc_init();
+  adc_init(ADC_MODE_SINGLE);
+  steering_digital_input_init(master_task);
 
   can_init(&s_can_storage, &can_settings);
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
-  steering_digital_input_init(master_task);
   tasks_start();
 
   return 0;
