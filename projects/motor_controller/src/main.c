@@ -5,10 +5,9 @@
 #include "delay.h"
 #include "fsm.h"
 #include "log.h"
-#include "mci_fsm.h"
 #include "mcp2515.h"
 #include "misc.h"
-#include "motor.h"
+#include "motor_can.h"
 #include "soft_timer.h"
 #include "tasks.h"
 
@@ -65,7 +64,6 @@ int main() {
   can_init(&s_can_storage, &can_settings);
   mcp2515_init(&s_mcp2515_storage, &mcp2515_settings);
   init_motor_controller_can();
-  init_motor_controller_transmit_can_msgs();
   LOG_DEBUG("Motor Controller Task\n");
 
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);

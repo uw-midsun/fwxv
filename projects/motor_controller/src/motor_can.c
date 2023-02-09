@@ -1,4 +1,6 @@
 
+#include "motor_can.h"
+
 #include <stdint.h>
 
 #include "mcp2515.h"
@@ -31,13 +33,10 @@ typedef enum MotorControllerMessageIds {
 } MotorControllerMessageIds;
 
 static void motor_controller_tx_all() {
-  float current;
-  float velocity;
-
   // verify that can messages from center console, peddal are not stale
   CanMessage message = {
     .id.raw = DRIVER_CONTROL_BASE + 0x01,
-    .data_u32 = { current, velocity },
+    .data_u32 = { s_target_current, s_target_velocity },
     .dlc = 8,
   };
 
@@ -56,27 +55,27 @@ static void motor_controller_rx_all() {
         break;
 
       case MOTOR_CONTROLLER_BASE_L + BUS_MEASUREMENT:
-        set_motor_controller_vc_mc_current_1(msg.data_u32[0]);
-        set_motor_controller_vc_mc_voltage_1(msg.data_u32[1]);
+        set_motor_controller_vc_mc_current_l(msg.data_u32[0]);
+        set_motor_controller_vc_mc_voltage_l(msg.data_u32[1]);
         break;
       case MOTOR_CONTROLLER_BASE_R + BUS_MEASUREMENT:
-        set_motor_controller_vc_mc_current_2(msg.data_u32[0]);
-        set_motor_controller_vc_mc_voltage_2(msg.data_u32[1]);
+        set_motor_controller_vc_mc_current_r(msg.data_u32[0]);
+        set_motor_controller_vc_mc_voltage_r(msg.data_u32[1]);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
-        set_motor_velocity_vehicle_velocity_left(msg.data_u32[0]);
+        set_motor_velocity_velocity_l(msg.data_u32[0]);
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
-        set_motor_velocity_vehicle_velocity_right(msg.data_u32[0]);
+        set_motor_velocity_velocity_r(msg.data_u32[0]);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:
-        set_motor_sink_temps_sink_temp_l(msg.data_u32[0]);
+        set_motor_sink_temps_heatsink_temp_l(msg.data_u32[0]);
         set_motor_sink_temps_motor_temp_l(msg.data_u32[1]);
         break;
       case MOTOR_CONTROLLER_BASE_R + HEAT_SINK_MOTOR_TEMP:
-        set_motor_sink_temps_sink_temp_r(msg.data_u32[0]);
+        set_motor_sink_temps_heatsink_temp_r(msg.data_u32[0]);
         set_motor_sink_temps_motor_temp_r(msg.data_u32[1]);
         break;
     }

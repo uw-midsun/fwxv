@@ -2,7 +2,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "motor.h"
+#include "motor_can.h"
+#include "motor_controller_getters.h"
 
 #define ACCERLATION_FORCE 100
 
