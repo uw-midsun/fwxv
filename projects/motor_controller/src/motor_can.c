@@ -33,7 +33,14 @@ typedef enum MotorControllerMessageIds {
 } MotorControllerMessageIds;
 
 static void motor_controller_tx_all() {
-  // verify that can messages from center console, peddal are not stale
+  // s_send_message will be false if no can message from center_console and peddle were received
+  // since last motor controller transmission
+  // TODO: update this with can watchdog
+  if (s_send_message != true) {
+    return;
+  }
+  s_send_message = false;
+
   CanMessage message = {
     .id.raw = DRIVER_CONTROL_BASE + 0x01,
     .data_u32 = { s_target_current, s_target_velocity },

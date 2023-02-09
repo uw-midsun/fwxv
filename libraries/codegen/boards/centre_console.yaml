@@ -61,9 +61,9 @@
       critical: true
       signals:
         drive_state:
-          length: 16
+          length: 32
         target_velocity:
-          length: 16
+          length: 32
 
     set_ebrake_state:
       id: 10
@@ -72,15 +72,6 @@
       critical: true
       signals:
         ebrake_state:
-          length: 8
-
-    regen_braking:
-      id: 11
-      target:
-        - motor_controller
-      critical: true
-      signals:
-        state:
           length: 8
 
     ready_to_drive:

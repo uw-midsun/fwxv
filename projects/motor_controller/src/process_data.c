@@ -6,6 +6,7 @@
 #include "motor_controller_getters.h"
 
 #define ACCERLATION_FORCE 100
+#define CRUISE_THROTTLE_THRESHOLD 0
 
 typedef enum DriveState {
   // drive states defined by center console
@@ -27,11 +28,14 @@ void process_data() {
   uint32_t throttle_percent = get_pedal_throttle_output();
   uint32_t break_percent = get_pedal_brake_output();
   uint32_t target_vel = get_drive_output_target_velocity();
-  bool regen = get_regen_braking_state();
 
-  DriveState drive_state = DRIVE;
+  // TODO: fix autogen to allow mis-matched signal length
+  // currently just use masks to get the values within drive state
+  DriveState drive_state = (get_drive_output_drive_state() & 0xFF000000) >> 24;
+  bool regen = (get_drive_output_drive_state() & 0x00FF0000) >> 16;
+  bool cruise = (get_drive_output_drive_state() & 0x0000FF00) >> 8;
 
-  if (drive_state == CRUISE && throttle_percent > 0) {
+  if (cruise && throttle_percent > CRUISE_THROTTLE_THRESHOLD) {
     drive_state = DRIVE;
   }
   if (break_percent > 0 || throttle_percent == 0) {
