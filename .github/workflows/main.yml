@@ -22,7 +22,6 @@ jobs:
 
       - name: Get and run setup script
         run: |
-          apt-get retry --option="APT::Acquire::Retries=3"
           wget https://raw.githubusercontent.com/uw-midsun/box/master/requirements.sh
           chmod +x ./requirements.sh
           sudo ./requirements.sh
