@@ -4,8 +4,8 @@
 #include "fsm.h"
 #include "gpio.h"
 #include "log.h"
-#include "task.h"
 #include "power_fsm_sequence.h"
+#include "task.h"
 
 #define NUM_CENTRE_CONSOLE_POWER_STATES 14
 #define NUM_CENTRE_CONSOLE_POWER_TRANSITIONS 40
@@ -23,8 +23,8 @@ typedef enum MciFsmStateId {
   POWER_FSM_POWER_MAIN_COMPLETE,
   POWER_FSM_STATE_MAIN,
   // -> AUX Sequence
-    // Confirm aux status
-    // Turn on everything
+  // Confirm aux status
+  // Turn on everything
   POWER_FSM_STATE_AUX,
   // -> FAULT Sequence (none)
   POWER_FSM_STATE_FAULT,

@@ -1,8 +1,8 @@
 #include "power_fsm.h"
-#include "power_fsm_sequence.h"
 
 #include "delay.h"
 #include "log.h"
+#include "power_fsm_sequence.h"
 #include "task.h"
 
 FSM(centre_console_power_fsm, NUM_CENTRE_CONSOLE_POWER_STATES);
@@ -47,21 +47,29 @@ static FsmState s_power_fsm_states[NUM_CENTRE_CONSOLE_POWER_STATES] = {
   STATE(POWER_FSM_STATE_FAULT, prv_power_fsm_fault_input, prv_power_fsm_fault_output),
 
   // -> MAIN Sequence
-  STATE(POWER_FSM_CONFIRM_AUX_STATUS, prv_power_fsm_confirm_aux_status_input, prv_power_fsm_confirm_aux_status_output),
+  STATE(POWER_FSM_CONFIRM_AUX_STATUS, prv_power_fsm_confirm_aux_status_input,
+        prv_power_fsm_confirm_aux_status_output),
   STATE(POWER_FSM_SEND_PD_BMS, prv_power_fsm_send_pd_bms_input, prv_power_fsm_send_pd_bms_output),
-  STATE(POWER_FSM_CONFIRM_BATTERY_STATUS, prv_power_fsm_confirm_battery_status_input, prv_power_fsm_confirm_battery_status_output),
-  STATE(POWER_FSM_CLOSE_BATTERY_RELAYS, prv_power_fsm_close_battery_relays_input, prv_power_fsm_close_battery_relays_output),
-  STATE(POWER_FSM_CONFIRM_DC_DC, prv_power_fsm_confirm_dc_dc_input, prv_power_fsm_confirm_dc_dc_output),
-  STATE(POWER_FSM_TURN_ON_EVERYTHING, prv_power_fsm_turn_on_everything_input, prv_power_fsm_turn_on_everything_output),
-  STATE(POWER_FSM_POWER_MAIN_COMPLETE, prv_power_fsm_power_main_complete_input, prv_power_fsm_power_main_complete_output),
+  STATE(POWER_FSM_CONFIRM_BATTERY_STATUS, prv_power_fsm_confirm_battery_status_input,
+        prv_power_fsm_confirm_battery_status_output),
+  STATE(POWER_FSM_CLOSE_BATTERY_RELAYS, prv_power_fsm_close_battery_relays_input,
+        prv_power_fsm_close_battery_relays_output),
+  STATE(POWER_FSM_CONFIRM_DC_DC, prv_power_fsm_confirm_dc_dc_input,
+        prv_power_fsm_confirm_dc_dc_output),
+  STATE(POWER_FSM_TURN_ON_EVERYTHING, prv_power_fsm_turn_on_everything_input,
+        prv_power_fsm_turn_on_everything_output),
+  STATE(POWER_FSM_POWER_MAIN_COMPLETE, prv_power_fsm_power_main_complete_input,
+        prv_power_fsm_power_main_complete_output),
 
   // -> AUX Sequence
-    // Confirm aux status
-    // Turn on everything
+  // Confirm aux status
+  // Turn on everything
 
   // -> OFF Sequence
-  STATE(POWER_FSM_DISCHARGE_PRECHARGE, prv_power_fsm_discharge_precharge_input, prv_power_fsm_discharge_precharge_output),
-  STATE(POWER_FSM_TURN_OFF_EVERYTHING, prv_power_fsm_turn_off_everything_input, prv_power_fsm_turn_off_everything_output),
+  STATE(POWER_FSM_DISCHARGE_PRECHARGE, prv_power_fsm_discharge_precharge_input,
+        prv_power_fsm_discharge_precharge_output),
+  STATE(POWER_FSM_TURN_OFF_EVERYTHING, prv_power_fsm_turn_off_everything_input,
+        prv_power_fsm_turn_off_everything_output),
   STATE(POWER_FSM_OPEN_RELAYS, prv_power_fsm_open_relays_input, prv_power_fsm_open_relays_output),
 };
 
@@ -70,7 +78,7 @@ static FsmTransition s_power_fsm_transitions[NUM_CENTRE_CONSOLE_POWER_TRANSITION
   // Transitions for OFF state
   TRANSITION(POWER_FSM_STATE_OFF, POWER_FSM_STATE_FAULT),
   // Transitions for MAIN state
-  TRANSITION(POWER_FSM_STATE_MAIN, POWER_FSM_STATE_FAULT),  
+  TRANSITION(POWER_FSM_STATE_MAIN, POWER_FSM_STATE_FAULT),
   // Transitions for AUX state
   TRANSITION(POWER_FSM_STATE_AUX, POWER_FSM_STATE_FAULT),
 

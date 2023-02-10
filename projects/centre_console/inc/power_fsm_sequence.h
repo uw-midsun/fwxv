@@ -1,3 +1,6 @@
+#ifndef PROJECTS_CENTRE_CONSOLE_INC_POWER_FSM_SEQUENCE_H_
+#define PROJECTS_CENTRE_CONSOLE_INC_POWER_FSM_SEQUENCE_H_
+
 #include "fsm.h"
 
 // Tell power select to check any aux faults before enabling power
@@ -40,3 +43,4 @@ void prv_power_fsm_turn_off_everything_output(void *context);
 void prv_power_fsm_open_relays_input(Fsm *fsm, void *context);
 void prv_power_fsm_open_relays_output(void *context);
 
+#endif  // PROJECTS_CENTRE_CONSOLE_INC_POWER_FSM_SEQUENCE_H_

@@ -1,4 +1,5 @@
 #include "power_fsm_sequence.h"
+
 #include "log.h"
 
 // Input/outputs for going into MAIN
@@ -24,7 +25,7 @@ void prv_power_fsm_confirm_dc_dc_input(Fsm *fsm, void *context) {
 }
 
 void prv_power_fsm_turn_on_everything_input(Fsm *fsm, void *context) {
-
+  return;
 }
 
 void prv_power_fsm_power_main_complete_input(Fsm *fsm, void *context) {
@@ -61,8 +62,8 @@ void prv_power_fsm_power_main_complete_output(void *context) {
 
 // Input/outputs for going into AUX
 
-  // Confirm aux status
-  // Turn on everything
+// Confirm aux status
+// Turn on everything
 
 // Input/outputs for going into OFF
 
