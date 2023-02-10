@@ -6,10 +6,7 @@
 
 typedef struct
 {
-{%- for message, message_data in messages.items() -%}
-    {%- set signals = message_data['signals'] -%}
-    {%- for signal, signal_data in signals.items() %}
-    uint{{signal_data['length']}}_t {{message}}_{{signal}};
-    {%- endfor %}
+{%- for message, message_data in messages.items() %}
+    uint64_t {{message}};
 {%- endfor %}
 } {{board}}_rx_struct;

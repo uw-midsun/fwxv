@@ -3,12 +3,16 @@
 
 #pragma once
 
+#include <stdint.h>
 #include "can_codegen.h"
 
-{% for message, message_data in messages.items() -%}    
-    {%- set signals = message_data['signals'] -%}
-    {% for signal, signal_data in signals.items() %}
+{% for message, message_data in messages.items() -%}
+    {%- set offset = namespace(value=64) -%}
+    {% for signal, signal_data in message_data.signals.items() -%}
+        {%- set offset.value = offset.value - signal_data.length %}
 #define set_{{message}}_{{signal}}(val) \
-    g_tx_struct.{{message}}_{{signal}} = val
+    g_tx_struct.{{message}} = ((g_tx_struct.{{message}} {# template only new line -#}
+        & {{'0x%0x' % ('1' * signal_data.length + '0' * offset.value + '1' * (64 - signal_data.length - offset.value)) | int(base=2)}}) {# data region mask -#}
+        | ((uint64_t)val << {{offset.value}}));
     {% endfor -%}
 {% endfor -%}

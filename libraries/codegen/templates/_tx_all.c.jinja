@@ -1,18 +1,15 @@
 {% set messages = data["Messages"] -%}
 {% set board = data["Board"] -%}
 
-#include "{{board}}_pack_msg.h"
+#include "can_board_ids.h" 
 #include "can_codegen.h"
+#include "can_pack_impl.h"
 
 void can_tx_all() {
     CanMessage msg = { 0 };
 {%- for message, message_data in messages.items() -%}
-    {%- set signals = message_data["signals"].keys() -%}
-    {%- set function_parameters -%}
-can_pack_{{message}}(&msg {%- for signal in signals %}, g_tx_struct.{{message}}_{{signal}} {%- endfor -%});
-    {%- endset %}
-
-    {{function_parameters | format_function_length(4)}}
+    {%- set size = message_data['signals'].values() | sum(attribute='length') %}
+    can_pack_impl_u64(&msg, SYSTEM_CAN_MESSAGE_{{data["Board"] | upper}}_{{message|upper}}, {{size}}, g_tx_struct.{{message}});
     can_transmit(&msg);
-{%- endfor %}
+{%- endfor -%}
 }

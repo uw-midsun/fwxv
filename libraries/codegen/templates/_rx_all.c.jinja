@@ -1,8 +1,9 @@
 {% set messages = data["Messages"] -%}
 {% set board = data["Board"] -%}
 
-#include "{{board}}_unpack_msg.h"
+#include "can_board_ids.h" 
 #include "can_codegen.h"
+#include "can_unpack_impl.h"
 
 void can_rx_all() {
     CanMessage msg = { 0 };
@@ -13,13 +14,9 @@ void can_rx_all() {
         // Or do some sort or binary search for O(lgn)
         switch (msg.id.raw) {
 {%- for message, message_data in messages.items() %}
+    {%- set size = message_data['signals'].values() | sum(attribute='length') %}
             case SYSTEM_CAN_MESSAGE_{{message_data["src"] | upper}}_{{message | upper}}:
-
-    {%- set signals = message_data["signals"].keys() -%}
-    {%- set function_parameters -%}
-can_unpack_{{message}}(&msg {%- for signal in signals %}, &g_rx_struct.{{message}}_{{signal}} {%- endfor -%});
-    {%- endset %}
-                {{function_parameters | format_function_length(16)}}
+                can_unpack_impl_u64(&msg, {{size}}, &g_rx_struct.{{message}});
                 break;
 {%- endfor %}
             default:
