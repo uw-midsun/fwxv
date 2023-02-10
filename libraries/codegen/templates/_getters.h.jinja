@@ -11,6 +11,6 @@
     {% for signal, signal_data in message_data.signals.items() -%}
         {%- set offset.value = offset.value - signal_data.length %}
 #define get_{{message}}_{{signal}}() \
-    (uint{{signal_data.length}}_t)(g_rx_struct.{{message}} >> {{offset.value}})
+    ((uint{{signal_data.length}}_t)(g_rx_struct.{{message}} >> {{offset.value}}))
     {% endfor -%}
 {% endfor %}

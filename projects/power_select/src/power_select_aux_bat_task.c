@@ -4,10 +4,8 @@
 #include "gpio_it.h"
 #include "log.h"
 // #include "new_can_tx_structs.h"
-#include "power_select_setters.h"
+#include "power_select_status.h"
 
-#define AUX_BAT_STATUS g_tx_struct.power_select_status_status
-#define AUX_BAT_FAULT g_tx_struct.power_select_status_fault
 uint16_t threshold;
 
 GpioAddress voltage_addr = {
@@ -64,10 +62,10 @@ void prv_state0_input(Fsm *fsm, void *context) {
 // Output Functions for the Two States
 void prv_state0_output(void *context) {
   // Using AND to clear the aux_bat fault and status bits
-  set_power_select_status_status(AUX_BAT_STATUS & ~(1 << 2));
-  set_power_select_status_fault(AUX_BAT_FAULT & ~(1 << 7));
-  set_power_select_status_fault(AUX_BAT_FAULT & ~(1 << 6));
-  set_power_select_status_fault(AUX_BAT_FAULT & ~(1 << 5));
+  set_power_select_status_status(POWER_SELECT_STATUS & ~(1 << 2));
+  set_power_select_status_fault(POWER_SELECT_FAULT & ~(1 << 7));
+  set_power_select_status_fault(POWER_SELECT_FAULT & ~(1 << 6));
+  set_power_select_status_fault(POWER_SELECT_FAULT & ~(1 << 5));
 }
 
 void prv_state1_input(Fsm *fsm, void *context) {
@@ -84,7 +82,7 @@ void prv_state1_input(Fsm *fsm, void *context) {
   if (adc_voltage_channel > threshold) {
     // Set Fault Status to High
     // Set Aux Voltage
-    set_power_select_status_fault(AUX_BAT_FAULT | (1 << 7));
+    set_power_select_status_fault(POWER_SELECT_FAULT | (1 << 7));
     set_power_select_aux_measurements_aux_voltage(adc_voltage_channel);
   }
   uint16_t adc_current_channel;
@@ -92,7 +90,7 @@ void prv_state1_input(Fsm *fsm, void *context) {
   if (adc_current_channel > threshold) {
     // Set Fault Status to High
     // Set Aux Current
-    set_power_select_status_fault(AUX_BAT_FAULT | (1 << 6));
+    set_power_select_status_fault(POWER_SELECT_FAULT | (1 << 6));
     set_power_select_aux_measurements_aux_current(adc_current_channel);
   }
   uint16_t adc_temp_channel;
@@ -100,14 +98,14 @@ void prv_state1_input(Fsm *fsm, void *context) {
   if (adc_temp_channel > threshold) {
     // Set Fault Status to High
     // Set Aux Temp
-    set_power_select_status_fault(AUX_BAT_FAULT | (1 << 5));
+    set_power_select_status_fault(POWER_SELECT_FAULT | (1 << 5));
     set_power_select_aux_measurements_aux_temp(adc_temp_channel);
   }
 }
 
 void prv_state1_output(void *context) {
   // Using OR to set the aux_bat status bit
-  set_power_select_status_status(AUX_BAT_STATUS | (1 << 2));
+  set_power_select_status_status(POWER_SELECT_STATUS | (1 << 2));
 }
 
 // Declare states in state list

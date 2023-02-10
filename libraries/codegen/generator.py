@@ -177,7 +177,7 @@ def check_yaml_file(data):
         for signal, signal_data in data["Messages"][message]["signals"].items():
             # All signals within a message are the same length
             if signal_data["length"] % 8 != 0:
-                raise Exception("Signal length must be a multiple of 8")
+                raise Exception("Signal length must be a ")
             message_length += signal_data['length']
             # No illegal characters in signal names
             if(regex.search(signal) != None):
@@ -186,10 +186,6 @@ def check_yaml_file(data):
             raise Exception("Message must be 64 bits or less")
 
 def main():
-    print("Done autogenerating")
-
-
-if __name__ == "__main__":
     parser = OptionParser()
     # TODO: Get rid of -y option or -b option, redundant
     parser.add_option("-y", "--yaml_file", default=[], dest="yaml_file", action="append",
@@ -240,4 +236,8 @@ if __name__ == "__main__":
             data["Board"] = options.board
             write_template(env, template_name, file_path, data)
 
+    print("Done autogenerating")
+
+
+if __name__ == "__main__":
     main()

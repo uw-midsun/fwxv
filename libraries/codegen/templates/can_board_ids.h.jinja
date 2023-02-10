@@ -14,10 +14,7 @@ typedef enum {
 {%- for board, board_data in boards.items() -%}
   {%- set messages = board_data["Messages"] -%}
   {% for message, message_data in messages.items() %}
-
 #define SYSTEM_CAN_MESSAGE_{{board|upper}}_{{message|upper}} \
   ({{message_data["id"]}} << 5) + SYSTEM_CAN_DEVICE_{{board|upper}}
-
-  {%- endfor %}
-{%- endfor %}
-
+  {% endfor %}
+{% endfor %}

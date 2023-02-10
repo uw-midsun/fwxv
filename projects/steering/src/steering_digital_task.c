@@ -1,6 +1,6 @@
 #include "steering_digital_task.h"
 
-#define DIGITAL_INPUT g_tx_struct.steering_info_digital_input
+#define DIGITAL_INPUT ((uint8_t)(g_tx_struct.steering_info >> 56))
 
 static GpioAddress s_steering_lookup_table[NUM_STEERING_DIGITAL_INPUTS] = {
   [STEERING_DIGITAL_INPUT_HORN] = HORN_GPIO_ADDR,

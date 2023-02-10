@@ -6,10 +6,10 @@
 #include <stdio.h>
 
 #include "power_select_power_supply_task.h"
+#include "power_select_status.h"
 
-#define DCDC_STATUS g_tx_struct.power_select_status_status
-#define DCDC_FAULT g_tx_struct.power_select_status_fault
-
+#define DCDC_STATUS (uint8_t)(g_tx_struct.power_select_status >> 56)
+#define DCDC_FAULT (uint8_t)(g_tx_struct.power_select_status >> 48)
 // We already have
 // g_power_select_valid_pin, g_power_select_voltage_pin,
 // g_power_select_current_pin from header file
@@ -31,7 +31,7 @@ static void prv_power_supply_inactive_input(Fsm *fsm, void *context) {
 
 // Set the power supply status to inactive
 static void prv_power_supply_inactive_output(void *context) {
-  set_power_select_status_status(DCDC_STATUS & ~POWER_SELECT_DCDC_STATUS_MASK);
+  set_power_select_status_status(POWER_SELECT_STATUS & ~POWER_SELECT_DCDC_STATUS_MASK);
   LOG_DEBUG("Transitioned to POWER_SUPPLY_INACTIVE\n");
 }
 
@@ -44,24 +44,24 @@ static void prv_power_supply_active_input(Fsm *fsm, void *context) {
     return;
   }
   set_power_select_status_fault(
-      DCDC_FAULT & ~(POWER_SELECT_DCDC_FAULT_OC_MASK | POWER_SELECT_DCDC_FAULT_OV_MASK));
+      POWER_SELECT_FAULT & ~(POWER_SELECT_DCDC_FAULT_OC_MASK | POWER_SELECT_DCDC_FAULT_OV_MASK));
   adc_read_converted(g_power_select_voltage_pin, &adc_reading_voltage);
   set_power_select_dcdc_measurements_dcdc_voltage(adc_reading_voltage);
   if (adc_reading_voltage > POWER_SELECT_DCDC_MAX_VOLTAGE_MV) {
     LOG_WARN("power_supply: overvoltage");
-    set_power_select_status_fault(DCDC_FAULT | POWER_SELECT_DCDC_FAULT_OV_MASK);
+    set_power_select_status_fault(POWER_SELECT_FAULT | POWER_SELECT_DCDC_FAULT_OV_MASK);
   }
   adc_read_converted(g_power_select_current_pin, &adc_reading_current);
   set_power_select_dcdc_measurements_dcdc_current(adc_reading_current);
   if (adc_reading_current > POWER_SELECT_DCDC_MAX_CURRENT_MA) {
     LOG_WARN("power_supply: overcurrent");
-    set_power_select_status_fault(DCDC_FAULT | POWER_SELECT_DCDC_FAULT_OC_MASK);
+    set_power_select_status_fault(POWER_SELECT_FAULT | POWER_SELECT_DCDC_FAULT_OC_MASK);
   }
   adc_read_converted(g_power_select_temp_pin, &adc_reading_temp);
   set_power_select_dcdc_measurements_dcdc_temp(adc_reading_temp);
   if (adc_reading_temp > POWER_SELECT_DCDC_MAX_TEMP_C) {
     LOG_WARN("power_supply: overtemperature");
-    set_power_select_status_fault(DCDC_FAULT | POWER_SELECT_DCDC_FAULT_OT_MASK);
+    set_power_select_status_fault(POWER_SELECT_FAULT | POWER_SELECT_DCDC_FAULT_OT_MASK);
   }
   LOG_DEBUG("power_supply: valid=%d, voltage=%d, current=%d, temp=%d", state == GPIO_STATE_HIGH,
             adc_reading_voltage, adc_reading_current, adc_reading_temp);
@@ -69,7 +69,7 @@ static void prv_power_supply_active_input(Fsm *fsm, void *context) {
 
 // Set the power supply status to active
 static void prv_power_supply_active_output(void *context) {
-  set_power_select_status_status(DCDC_STATUS | POWER_SELECT_DCDC_STATUS_MASK);
+  set_power_select_status_status(POWER_SELECT_STATUS | POWER_SELECT_DCDC_STATUS_MASK);
   LOG_DEBUG("Transitioned to POWER_SUPPLY_ACTIVE\n");
 }
 
