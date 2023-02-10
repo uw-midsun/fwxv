@@ -7,8 +7,8 @@
 #include "task.h"
 #include "power_fsm_sequence.h"
 
-#define NUM_CENTRE_CONSOLE_POWER_STATES 4
-#define NUM_CENTRE_CONSOLE_POWER_TRANSITIONS 7
+#define NUM_CENTRE_CONSOLE_POWER_STATES 14
+#define NUM_CENTRE_CONSOLE_POWER_TRANSITIONS 40
 DECLARE_FSM(centre_console_power_fsm);
 
 typedef enum MciFsmStateId {
