@@ -8,9 +8,9 @@
 
 {% for message, message_data in messages.items() -%}
     {%- set offset = namespace(value=64) -%}
-    {% for signal, signal_data in message_data['signals'].items() -%}
-        {%- set offset.value = offset.value - signal_data['length'] %}
+    {% for signal, signal_data in message_data.signals.items() -%}
+        {%- set offset.value = offset.value - signal_data.length %}
 #define get_{{message}}_{{signal}}() \
-    (g_rx_struct.{{message}} >> {{offset.value}})
+    (uint{{signal_data.length}}_t)(g_rx_struct.{{message}} >> {{offset.value}})
     {% endfor -%}
 {% endfor %}
