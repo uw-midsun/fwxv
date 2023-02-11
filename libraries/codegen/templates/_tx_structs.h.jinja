@@ -8,10 +8,8 @@
 typedef struct
 {
 {%- for message in messages -%}
-    {%- set signals = data['Messages'][message]['signals'].keys() | list -%}
-    {%- for signal in signals %}
-    {%- set len = messages[message]['signals'][signal]['length'] %}
-    uint{{len}}_t {{message}}_{{signal}};
+    {%- for signal, signal_data in messages[message]['signals'].items() %}
+    uint{{signal_data['length']}}_t {{message}}_{{signal}};
     {%- endfor -%}
 {% endfor %}
 } {{board}}_tx_struct;

@@ -7,8 +7,7 @@
 typedef struct
 {
 {%- for message, message_data in messages.items() %}
-    {%- set signals = message_data['signals'] %}
-    {%- for signal, signal_data in signals.items() %}
+    {%- for signal, signal_data in message_data['signals'].items() %}
     uint{{signal_data['length']}}_t {{message}}_{{signal}};
     {%- endfor %}
 {%- endfor %}
