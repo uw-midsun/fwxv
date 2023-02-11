@@ -1,15 +1,13 @@
 #pragma once
 
-{% set board = data["Board"] -%}
-{% set messages = data["Messages"] -%}
+{%- set board = data["Board"] %}
+{%- set messages = data["Messages"] %}
 
 #include "can_codegen.h"
 
-{%- for message, message_data in messages.items() -%}
+{% for message, message_data in messages.items() %}
     {%- for signal, signal_data in message_data['signals'].items() %}
-
 #define get_{{message}}_{{signal}}() \
     g_rx_struct.{{message}}_{{signal}}
-    {%- endfor -%}
-{% endfor %}
-
+    {% endfor %}
+{%- endfor %}

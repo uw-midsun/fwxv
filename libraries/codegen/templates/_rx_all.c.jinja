@@ -1,7 +1,7 @@
 {% set messages = data["Messages"] -%}
 {% set board = data["Board"] -%}
 
-#include "{{board}}_unpack_msg.h"
+#include "can_board_ids.h"
 #include "can_codegen.h"
 
 void can_rx_all() {
