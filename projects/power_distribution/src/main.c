@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "lights_fsm.h"
 #include "log.h"
 #include "tasks.h"
 
@@ -31,6 +32,7 @@ int main() {
   log_init();
   LOG_DEBUG("Welcome to TEST!");
 
+  init_lights();
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
   tasks_start();
