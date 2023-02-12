@@ -1,13 +1,10 @@
 #pragma once
 
-#include "delay.h"
 #include "fsm.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
-#include "notify.h"
 #include "soft_timer.h"
-#include "stdbool.h"
 #include "task.h"
 
 #define NUM_LIGHTS_STATES 5
