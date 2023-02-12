@@ -102,7 +102,7 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   // Initialize hardware settings
   status_ok_or_return(can_hw_init(&s_can_storage->rx_queue, settings));
 
-  if (settings->mode == 0){
+  if (settings->mode == CAN_CONTINUOUS){
     // Create RX and TX Tasks 
     // TODO: Figure out priorities
     status_ok_or_return(tasks_init_task(CAN_RX, TASK_PRIORITY(2), NULL));
@@ -131,8 +131,6 @@ StatusCode can_transmit(const CanMessage *msg)
 {
   if (s_can_storage == NULL) {
     return status_code(STATUS_CODE_UNINITIALIZED);
-  } else if (msg->id.msg_id >= CAN_MSG_MAX_IDS) {
-    return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
   }
 
   return can_hw_transmit(msg->id.raw, msg->extended, msg->data_u8, msg->dlc);

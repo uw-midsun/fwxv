@@ -7,6 +7,7 @@
 #include "log.h"
 #include "mci_fsm.h"
 #include "misc.h"
+#include "motor_controller_transmit_can_msgs_task.h"
 #include "soft_timer.h"
 #include "tasks.h"
 
@@ -32,7 +33,8 @@ void run_medium_cycle() {
   wait_tasks(1);
 
   fsm_run_cycle(mci_fsm);
-  wait_tasks(1);
+  run_motor_controller_transmit_can_msgs_cycle();
+  wait_tasks(2);
 
   run_can_tx_cycle();
   wait_tasks(1);
@@ -62,6 +64,7 @@ int main() {
   log_init();
   can_init(&s_can_storage, &can_settings);
   init_mci_fsm();
+  init_motor_controller_transmit_can_msgs();
   LOG_DEBUG("Motor Controller Task\n");
 
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
