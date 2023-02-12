@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "can.h"
+#include "lights_fsm.h"
 #include "log.h"
 #include "power_seq_fsm.h"
 #include "tasks.h"
@@ -44,6 +45,7 @@ int main() {
 
   can_init(&s_can_storage, &can_settings);
   init_power_seq();
+  init_lights();
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
   tasks_start();
