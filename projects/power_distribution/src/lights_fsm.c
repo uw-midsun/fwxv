@@ -139,6 +139,7 @@ StatusCode init_lights(void) {
   };
   fsm_init(lights, lights_settings, NULL);
 
+  gpio_init();
   status_ok_or_return(gpio_init_pin(LEFT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW));
   status_ok_or_return(gpio_init_pin(RIGHT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW));
 
