@@ -7,22 +7,13 @@
 # - 0-13: Critical messages (have ACK)
 # - 14-30: Actionable messages (trigger a change in another system)
 # - 30-63: Data messages (usually not actionable by an onboard device)
----
-  Boards:
-    - babydriver
-    - bms_carrier
-    - centre_console
-    - charger
-    - motor_controller
-    - pedal
-    - power_distribution_front
-    - power_distribution_rear
-    - power_select
-    - solar_5_mppts
-    - solar_6_mppts
-    - steering
-    - uv_cutoff
 
-    - new_can
-    - can_one_shot_mode
-  
+---
+  Messages:
+    uv_cutoff_notification:
+      id: 45
+      target:
+        - telemetry
+      signals:
+        signal1:
+          length: 8
