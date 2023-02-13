@@ -43,7 +43,7 @@ static void motor_controller_tx_all() {
 
   CanMessage message = {
     .id.raw = DRIVER_CONTROL_BASE + 0x01,
-    .data_u32 = { s_target_current, s_target_velocity },
+    .data_u32 = { *(uint32_t *)(&s_target_current), *(uint32_t *)(&s_target_velocity) },
     .dlc = 8,
   };
 
