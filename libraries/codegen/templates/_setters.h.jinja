@@ -7,12 +7,12 @@
 #include "can_codegen.h"
 
 {% for message, message_data in messages.items() -%}
-    {%- set offset = namespace(value=64) -%}
+    {%- set offset = namespace(value=0) -%}
     {% for signal, signal_data in message_data.signals.items() -%}
-        {%- set offset.value = offset.value - signal_data.length %}
 #define set_{{message}}_{{signal}}(val) \
     g_tx_struct.{{message}} = ((g_tx_struct.{{message}} {# template only new line -#}
         & {{'0x%016x' % ('1' * (64 - offset.value - signal_data.length) + '0' * signal_data.length + '1' * (offset.value)) | int(base=2)}}) {# data region mask -#}
         | ((uint64_t)(val) << {{offset.value}}));
+        {%- set offset.value = offset.value + signal_data.length %}
     {% endfor -%}
 {% endfor -%}
