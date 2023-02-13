@@ -1,12 +1,13 @@
 #include <stdio.h>
 
+#include "delay.h"
 #include "gpio_it.h"
 #include "interrupt.h"
+#include "log.h"
+#include "misc.h"
+#include "soft_timer.h"
 #include "tasks.h"
 #include "uart.h"
-
-static GpioAddress gpios[] = { { .port = GPIO_PORT_A, .pin = 10 },
-                               { .port = GPIO_PORT_A, .pin = 11 } };
 
 TASK(master_task, TASK_MIN_STACK_SIZE) {
   // while (true) {
@@ -15,21 +16,23 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
 }
 
 int main() {
+  log_init();
   gpio_init();
   gpio_it_init();
   interrupt_init();
-
-  gpio_init_pin(&gpios[0], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
-  gpio_init_pin(&gpios[1], GPIO_INPUT_PULL_DOWN, GPIO_STATE_HIGH);
-
-  UartSettings smoke_settings = { .tx = gpios[0], .rx = gpios[1], .baudrate = 9600 };
+  UartSettings smoke_settings = { .tx = { .port = GPIO_PORT_A, .pin = 10 },
+                                  .rx = { .port = GPIO_PORT_A, .pin = 11 },
+                                  .baudrate = 9600 };
   uart_init(UART_PORT_2, &smoke_settings);
 
   tasks_init();
+
+  LOG_DEBUG("Welcome to TEST!");
 
   tasks_init_task(master_task, TASK_PRIORITY(0), NULL);
 
   tasks_start();
 
+  LOG_DEBUG("exiting main?");
   return 0;
 }
