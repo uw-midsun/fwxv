@@ -14,10 +14,10 @@ void can_rx_all() {
         switch (msg.id.raw) {
         {%- for message, message_data in messages.items() %}
             case SYSTEM_CAN_MESSAGE_{{message_data["src"] | upper}}_{{message | upper}}:
-            {%- set offset = namespace(value=64) %}
+            {%- set offset = namespace(value=0) %}
             {%- for signal, signal_data in message_data['signals'].items() %}
-                {%- set offset.value = offset.value - signal_data.length %}
                 g_rx_struct.{{message}}_{{signal}} = (msg.data >> {{offset.value}});
+                {%- set offset.value = offset.value + signal_data.length %}
             {%- endfor %}
                 break;
         {%- endfor %}
