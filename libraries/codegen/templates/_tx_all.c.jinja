@@ -5,22 +5,29 @@
 
 #include "can_board_ids.h"
 #include "can_codegen.h"
-#include "can_pack_impl.h"
+
+static CanMessage s_msg = { 
+    .type = CAN_MSG_TYPE_DATA,
+};
+static void prv_tx_can_message(CanMessageId id, size_t num_bytes, uint64_t data) {
+    s_msg.id.raw = id,
+    s_msg.dlc = num_bytes;
+    s_msg.data = data;
+    s_msg.extended = (s_msg.id.msg_id >= CAN_MSG_MAX_STD_IDS);
+    can_transmit(&s_msg);
+}
 
 void can_tx_all() {
-    CanMessage msg = { 0 };
 {%- for message, message_data in messages.items() %}
     {%- set signals = message_data["signals"].keys() %}
-    can_pack_impl_u64(
-        &msg, SYSTEM_CAN_MESSAGE_{{data["Board"] | upper}}_{{message | upper}}, 
-        {{- message_data['signals'].values() | sum(attribute='length') }},
+    prv_tx_can_message(
+        SYSTEM_CAN_MESSAGE_{{data["Board"] | upper}}_{{message | upper}}, 
+        {{- message_data['signals'].values() | sum(attribute='length') // 8 }},
     {%- set offset = namespace(value=0) %}
     {%- for signal, signal_data in message_data['signals'].items() %}
         (uint64_t) g_tx_struct.{{message}}_{{signal}} << {{offset.value}} &
         {%- set offset.value = offset.value + signal_data.length %}
-    {%- endfor -%}
-        0
+    {%- endfor -%} 0
     );
-    can_transmit(&msg);
 {%- endfor %}
 }
