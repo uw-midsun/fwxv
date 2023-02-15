@@ -11,6 +11,8 @@
 
 #define DEVICE_ID 0x04
 
+#define DEVICE_ID 0x04
+
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
   .device_id = DEVICE_ID,
