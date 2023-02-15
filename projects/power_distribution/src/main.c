@@ -1,6 +1,9 @@
 #include <stdio.h>
 
 #include "can.h"
+#include "gpio.h"
+#include "gpio_it.h"
+#include "can.h"
 #include "lights_fsm.h"
 #include "log.h"
 #include "power_seq_fsm.h"
@@ -12,9 +15,11 @@
 #define MASTER_MS_CYCLE_TIME 1000
 #endif
 
+#define DEVICE_ID 0x04
+
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
-  .device_id = 0x05,
+  .device_id = DEVICE_ID,
   .bitrate = CAN_HW_BITRATE_125KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
