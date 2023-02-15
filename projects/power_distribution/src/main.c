@@ -1,5 +1,8 @@
 #include <stdio.h>
 
+#include "can.h"
+#include "gpio.h"
+#include "gpio_it.h"
 #include "lights_fsm.h"
 #include "log.h"
 #include "tasks.h"
@@ -9,6 +12,17 @@
 #else
 #define MASTER_MS_CYCLE_TIME 1000
 #endif
+
+#define DEVICE_ID 0x04
+
+static CanStorage s_can_storage = { 0 };
+const CanSettings can_settings = {
+  .device_id = DEVICE_ID,
+  .bitrate = CAN_HW_BITRATE_125KBPS,
+  .tx = { GPIO_PORT_A, 12 },
+  .rx = { GPIO_PORT_A, 11 },
+  .loopback = true,
+};
 
 void run_fast_cycle() {}
 
@@ -31,7 +45,7 @@ int main() {
   tasks_init();
   log_init();
   LOG_DEBUG("Welcome to TEST!");
-
+  can_init(&s_can_storage, &can_settings);
   init_lights();
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 

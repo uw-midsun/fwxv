@@ -1,10 +1,12 @@
 #pragma once
 
+#include "can.h"
 #include "fsm.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
 #include "soft_timer.h"
+#include "status.h"
 #include "task.h"
 
 #define NUM_LIGHTS_STATES 5
