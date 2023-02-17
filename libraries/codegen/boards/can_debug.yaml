@@ -1,0 +1,16 @@
+---
+  Messages:
+    test_debug:
+      id: 0
+      target:
+        - can_debug
+      critical: true
+      signals:
+        operation:
+          length: 8
+        operandA:
+          length: 8
+        operandB:
+          length: 8
+        operandC:
+          length: 8
