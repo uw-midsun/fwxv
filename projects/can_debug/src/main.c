@@ -47,6 +47,7 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
 
     result = perform_calculation(get_test_debug_operation(), get_test_debug_operandA(),
                                  get_test_debug_operandB(), get_test_debug_operandC());
+
     if (result) LOG_DEBUG("The result of the calculation is %d\n", result);
 
     vTaskDelay(pdMS_TO_TICKS(1000));
