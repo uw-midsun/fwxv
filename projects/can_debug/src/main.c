@@ -18,15 +18,19 @@ const CanSettings can_settings = {
 int perform_calculation(uint8_t operation, uint8_t operandA, uint8_t operandB, uint8_t operandC) {
   switch (operation) {
     case 1:
-      return operandA + operandB + operandC;
+      LOG_DEBUG("Hello World!\n");
+      return 0;
       break;
     case 2:
-      return operandA - operandB - operandC;
+      return operandA + operandB + operandC;
       break;
     case 3:
-      return operandA * operandB * operandC;
+      return operandA - operandB - operandC;
       break;
     case 4:
+      return operandA * operandB * operandC;
+      break;
+    case 5:
       return operandA / operandB / operandC;
       break;
     default:
@@ -43,10 +47,7 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
 
     result = perform_calculation(get_test_debug_operation(), get_test_debug_operandA(),
                                  get_test_debug_operandB(), get_test_debug_operandC());
-    if (!result)
-      LOG_DEBUG("The result of the calculation is 0 or an invalid operation was specified\n");
-    else
-      LOG_DEBUG("The result of the calculation is %d\n", result);
+    if (result) LOG_DEBUG("The result of the calculation is %d\n", result);
 
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
