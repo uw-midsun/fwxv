@@ -13,14 +13,14 @@ static const GpioAddress leds[] = {
 };
 
 int main(void) {
-   printf("starting \n");
-   gpio_init();
-   log_init();
+  printf("starting \n");
+  gpio_init();
+  log_init();
 
-   for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
-      printf("init pins \n");
-      gpio_init_pin(&leds[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
-   }
+  for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
+    printf("init pins \n");
+    gpio_init_pin(&leds[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
+  }
 
   while (true) {
     for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {

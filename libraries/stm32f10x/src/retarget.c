@@ -25,6 +25,9 @@ void retarget_init(void) {
   RETARGET_CFG_UART_ENABLE_CLK();
   prv_init_gpio();
 
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+  GPIO_PinRemapConfig(GPIO_Remap_USART1, ENABLE);
+
   USART_InitTypeDef usart_init;
   USART_StructInit(&usart_init);
   usart_init.USART_BaudRate = 115200;
