@@ -37,7 +37,7 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
       }
     }
     if (SHOULD_READ) {
-      status = uart_rex(UART_PORT_RECEIVE, &data_received, &len);
+      status = uart_rx(UART_PORT_RECEIVE, &data_received, &len);
       if (status == STATUS_CODE_OK) {
         LOG_DEBUG("Successfully received %u\n", data_received);
       } else {
@@ -54,7 +54,7 @@ int main() {
 
   tasks_init();
 
-  tasks_init_task(master_task, TASK_PRIORITY(1), NULL);
+  tasks_init_task(master_task, TASK_PRIORITY(0), NULL);
 
   tasks_start();
 
