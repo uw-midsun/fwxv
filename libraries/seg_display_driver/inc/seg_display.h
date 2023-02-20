@@ -1,6 +1,5 @@
 #include "gpio.h"
 #include "gpio_it.h"
-
 typedef struct PinsBcd {
   const GpioAddress A = {
     .port = GPIO_PORT_A,
@@ -27,6 +26,7 @@ typedef struct PinsBcd {
 PinsBcd *pins_bcd;
 
 typedef struct DispPins {
+  DispPins *disp_pins;
   const GpioAddress D1 = {
     .port = GPIO_PORT_D,
     .pin = 1,
@@ -40,8 +40,6 @@ typedef struct DispPins {
     .pin = 3,
   };
 } DispPins;
-
-DispPins *disp_pins;
 
 StatusCode seg_display_init(PinsBcd *bcd_pins, DispPins *disp_sel_pins);
 
