@@ -10,7 +10,7 @@ StatusCode seg_display_init(PinsBcd *bcd_pins, DispPins *disp_sel_pins) {
   set_seg_display(8, 1, bcd_pins, disp_sel_pins);
   set_seg_display(8, 2, bcd_pins, disp_sel_pins);
   return STATUS_CODE_OK;
-};
+}
 
 StatusCode seg_display_set_int(uint16_t val, PinsBcd *bcd_pins, DispPins *disp_sel_pins) {
   // Check for max value
@@ -23,8 +23,8 @@ StatusCode seg_display_set_int(uint16_t val, PinsBcd *bcd_pins, DispPins *disp_s
     val = val / 10;
     set_seg_display(val % 10, 2, bcd_pins, disp_sel_pins);
     return STATUS_CODE_OK;
-  };
-};
+  }
+}
 
 StatusCode set_display_set_float(float val, PinsBcd *bcd_pins, DispPins *disp_sel_pins) {
   int int_part = (int)val;
@@ -42,7 +42,7 @@ StatusCode set_display_set_float(float val, PinsBcd *bcd_pins, DispPins *disp_se
     gpio_toggle_state(&disp_sel_pins->D2);
     return STATUS_CODE_OK;
   }
-};
+}
 
 void seg_gpio_init(PinsBcd *bcd_pins, DispPins *disp_sel_pins) {
   // Initializes gpio pins
@@ -95,4 +95,4 @@ void set_seg_display(uint8_t disp_value, uint8_t pin_number, PinsBcd *bcd_pins,
     gpio_toggle_state(&disp_sel_pins->D3);
     gpio_toggle_state(&disp_sel_pins->D3);
   }
-};
+}
