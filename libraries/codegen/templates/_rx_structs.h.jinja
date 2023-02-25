@@ -4,7 +4,7 @@
 {% set messages = data["Messages"] -%}
 #include <stdint.h>
 
-typedef g
+typedef struct
 {
 {%- for message, message_data in messages.items() -%}
     {%- set signals = message_data['signals'] -%}
