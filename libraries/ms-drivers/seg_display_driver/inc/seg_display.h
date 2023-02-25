@@ -1,3 +1,4 @@
+#ifndef LIBRARIES_MS_DRIVERS_SEG_DISPLAY_DRIVER_INC_SEG_DISPLAY_H_
 #include "gpio.h"
 #include "gpio_it.h"
 typedef struct PinsBcd {
