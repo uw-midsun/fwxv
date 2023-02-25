@@ -32,9 +32,9 @@ StatusCode set_display_set_float(float val, PinsBcd *bcd_pins, DispPins *disp_se
   if (int_part > 99) {
     return STATUS_CODE_OUT_OF_RANGE;
   } else {
-    set_seg_display(int_part % 10, 2, bcd_pins, disp_sel_pins);
-    int_part = int_part / 10;
     set_seg_display(int_part % 10, 1, bcd_pins, disp_sel_pins);
+    int_part = int_part / 10;
+    set_seg_display(int_part % 10, 2, bcd_pins, disp_sel_pins);
     set_seg_display(dec_part, 0, bcd_pins, disp_sel_pins);
     // Set decimal point
     gpio_set_state(&bcd_pins->DP, GPIO_STATE_HIGH);
@@ -63,21 +63,20 @@ void set_seg_display(uint8_t disp_value, uint8_t pin_number, PinsBcd *bcd_pins,
   uint8_t B = 1 ? (dec_to_bcd(disp_value) | 2) == dec_to_bcd(disp_value) : 0;
   uint8_t C = 1 ? (dec_to_bcd(disp_value) | 4) == dec_to_bcd(disp_value) : 0;
   uint8_t D = 1 ? (dec_to_bcd(disp_value) | 8) == dec_to_bcd(disp_value) : 0;
-  int pins[4] = { A, B, C, D };
   // Uses values of A, B, C, D to set bcd_pins' states
-  if (pins[0])
+  if (A)
     gpio_set_state(&bcd_pins->A, GPIO_STATE_HIGH);
   else
     gpio_set_state(&bcd_pins->A, GPIO_STATE_LOW);
-  if (pins[1])
+  if (B)
     gpio_set_state(&bcd_pins->B, GPIO_STATE_HIGH);
   else
     gpio_set_state(&bcd_pins->B, GPIO_STATE_LOW);
-  if (pins[2])
+  if (C)
     gpio_set_state(&bcd_pins->C, GPIO_STATE_HIGH);
   else
     gpio_set_state(&bcd_pins->C, GPIO_STATE_LOW);
-  if (pins[3])
+  if (D)
     gpio_set_state(&bcd_pins->D, GPIO_STATE_HIGH);
   else
     gpio_set_state(&bcd_pins->D, GPIO_STATE_LOW);
