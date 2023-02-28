@@ -9,7 +9,28 @@ typedef struct PinsBcd {
   const GpioAddress DP;
 } PinsBcd;
 
-PinsBcd *pins_bcd;
+static const GpioAddress pins_bcd[] = {
+  {
+      .port = GPIO_PORT_A,
+      .pin = 7,
+  },
+  {
+      .port = GPIO_PORT_B,
+      .pin = 1,
+  },
+  {
+      .port = GPIO_PORT_C,
+      .pin = 2,
+  },
+  {
+      .port = GPIO_PORT_D,
+      .pin = 6,
+  },
+  {
+      .port = GPIO_PORT_E,
+      .pin = 1,
+  },
+};
 
 typedef struct DispPins {
   const GpioAddress D1;
@@ -17,7 +38,24 @@ typedef struct DispPins {
   const GpioAddress D3;
 } DispPins;
 
-DispPins *disp_pins;
+static const GpioAddress disp_pins[] = {
+  {
+      .port = GPIO_PORT_D,
+      .pin = 1,
+  },
+  {
+      .port = GPIO_PORT_D,
+      .pin = 2,
+  },
+  {
+      .port = GPIO_PORT_D,
+      .pin = 3,
+  },
+  {
+      .port = GPIO_PORT_D,
+      .pin = 6,
+  },
+};
 
 StatusCode seg_display_init(PinsBcd *bcd_pins, DispPins *disp_sel_pins);
 
