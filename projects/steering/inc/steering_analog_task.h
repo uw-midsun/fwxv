@@ -12,22 +12,18 @@
 #define VOLTAGE_TOLERANCE_MV 20
 #define STEERING_CONTROL_STALK_LEFT_SIGNAL_VOLTAGE_MV 3025
 #define STEERING_CONTROL_STALK_RIGHT_SIGNAL_VOLTAGE_MV 2984
+#define CTRL_STALK_GPIO \
+  { .port = GPIO_PORT_A, .pin = 3 }
 
-//https://github.com/uw-midsun/hardware/blob/master/MSXII_SteeringWheelInterfaceBoard/Project%20Outputs%20for%20MSXII_SteeringWheelInterfaceBoard/MSXII_SteeringWheelInterfaceBoard_3.1.PDF
-static GpioAddress control_stalk_GPIO = { .port = GPIO_PORT_A, .pin = 3};
-
-void run_steering_analog_task();
-StatusCode steering_analog_adc_init();
-
-typedef enum SteeringLightState{
+typedef enum SteeringLightState {
   STEERING_LIGHT_OFF = 0,
   STEERING_LIGHT_LEFT,
   STEERING_LIGHT_RIGHT,
 } SteeringLightState;
 
-typedef enum EELightState {
-  EE_LIGHT_STATE_OFF = 0,
-  EE_LIGHT_STATE_ON,
-  NUM_EE_LIGHT_STATES,
-} EELightState;
+// Initializes the ADC input for the ctrl stalk
+// Must be called before adc_init()
+StatusCode steering_analog_adc_init();
 
+// Reads the analog input, determines a light state, and sets the requisite value in the can message
+void steering_analog_input();

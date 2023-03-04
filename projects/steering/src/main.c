@@ -7,9 +7,9 @@
 #include "gpio_it.h"
 #include "gpio_mcu.h"
 #include "log.h"
-#include "tasks.h"
 #include "steering_analog_task.h"
 #include "steering_digital_task.h"
+#include "tasks.h"
 
 #ifdef MS_PLATFORM_X86
 #define MASTER_MS_CYCLE_TIME 100
@@ -66,7 +66,7 @@ int main() {
   gpio_init();
   gpio_it_init();
 
-  // Setup analog inputs and initialize adc 
+  // Setup analog inputs and initialize adc
   steering_analog_adc_init();
   adc_init(ADC_MODE_SINGLE);
   steering_digital_input_init(master_task);
