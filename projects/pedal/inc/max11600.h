@@ -6,19 +6,26 @@
 #include "gpio.h"
 #include "i2c.h"
 
-#define NUM_MAX11600_CHANNELS 3
-#define REFERENCE_VOLTAGE 3.3
+#define REFERENCE_VOLTAGE_V 3.3
+
+typedef enum {
+  MAX11600_CHANNEL_0 = 0,
+  MAX11600_CHANNEL_1,
+  MAX11600_CHANNEL_2,
+  MAX11600_CHANNEL_3,
+  NUM_MAX11600_CHANNELS,
+} MAX11600Channel;
+
 typedef struct {
   I2CPort i2c_port;  // I2C_PORT_1 or I2C_PORT_2
   I2CAddress i2c_read_address;
   I2CAddress i2c_write_address;
-  uint8_t channel_readings[NUM_MAX11600_CHANNELS];
+  uint16_t channel_readings[NUM_MAX11600_CHANNELS];
 } Max11600Storage;
 
 // Initializes the storage pointers with the i2c port and addresses needed for the driver, and sets
 // up the MAX11600 ADC
-StatusCode max11600_init(Max11600Storage *storage, I2CPort i2c_port, I2CAddress i2c_read_address,
-                         I2CAddress i2c_write_address);
+StatusCode max11600_init(Max11600Storage *storage, I2CPort i2c_port);
 
 // Reads the raw data from the MAX11600's AIN channels and stores it into the storage pointer
 // Updates the storage readings with the raw values

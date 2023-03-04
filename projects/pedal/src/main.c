@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include "adc.h"
-#include "ads1015.h"
 #include "can.h"
 #include "can_board_ids.h"
 #include "can_msg.h"
@@ -10,6 +9,7 @@
 #include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
+#include "max11600.h"
 #include "pedal_data.h"
 #include "pedal_setters.h"
 #include "soft_timer.h"
@@ -51,7 +51,7 @@ void init_pedal_controls() {
   i2c_init(I2C_PORT_2, &i2c_settings);
   GpioAddress ready_pin = { .port = GPIO_PORT_B, .pin = 2 };
   adc_init(ADC_MODE_SINGLE);
-  ads1015_init(&s_ads1015_storage, I2C_PORT_2, ADS1015_ADDRESS_GND, &ready_pin);
+  max11600_init(&s_max11600_storage, I2C_PORT_2);
 }
 
 void run_fast_cycle() {
