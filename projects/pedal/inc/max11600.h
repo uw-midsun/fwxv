@@ -12,7 +12,7 @@ typedef struct {
   I2CPort i2c_port;  // I2C_PORT_1 or I2C_PORT_2
   I2CAddress i2c_read_address;
   I2CAddress i2c_write_address;
-  int8_t channel_readings[NUM_MAX11600_CHANNELS];
+  uint8_t channel_readings[NUM_MAX11600_CHANNELS];
 } Max11600Storage;
 
 // Initializes the storage pointers with the i2c port and addresses needed for the driver, and sets
