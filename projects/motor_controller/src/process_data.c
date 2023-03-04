@@ -7,6 +7,7 @@
 
 #define ACCERLATION_FORCE 100
 #define CRUISE_THROTTLE_THRESHOLD 0
+#define TORQUE_CONTROL_VEL 20000
 
 typedef enum DriveState {
   // drive states defined by center console
@@ -42,14 +43,16 @@ void process_data() {
     drive_state = regen ? BREAK : NEUTRAL;
   }
 
+  // set target current and velocity based on drive state
+  // https://tritiumcharging.com/wp-content/uploads/2020/11/TritiumWaveSculptor22_Manual.pdf 18.3
   switch (drive_state) {
     case DRIVE:
       s_target_current = throttle_percent;
-      s_target_velocity = 2000;
+      s_target_velocity = TORQUE_CONTROL_VEL;
       break;
     case REVERSE:
       s_target_current = throttle_percent;
-      s_target_velocity = -2000;
+      s_target_velocity = -TORQUE_CONTROL_VEL;
       break;
     case CRUISE:
       s_target_current = ACCERLATION_FORCE;
