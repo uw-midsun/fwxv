@@ -5,10 +5,10 @@
 
 #include "can_codegen.h"
 
-{% for message, message_data in messages.items() -%}    
-    {%- set signals = message_data['signals'] -%}
-    {% for signal, signal_data in signals.items() %}
+{% for message, message_data in messages.items() %}    
+    {%- set signals = message_data['signals'] %}
+    {%- for signal, signal_data in signals.items() %}
 #define set_{{message}}_{{signal}}(val) \
     g_tx_struct.{{message}}_{{signal}} = val
-    {% endfor -%}
-{% endfor -%}
+    {% endfor %}
+{%- endfor %}
