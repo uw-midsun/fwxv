@@ -74,6 +74,13 @@ AddOption(
     action='store',
 )
 
+AddOption(
+    '--location',
+    dest='location',
+    type='string',
+    action='store',
+)
+
 PLATFORM = GetOption('platform')
 PROJECT = GetOption('project')
 LIBRARY = GetOption('library')
