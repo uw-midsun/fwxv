@@ -8,14 +8,17 @@
 
 static void prv_init_gpio(void) {
   RETARGET_CFG_UART_GPIO_ENABLE_CLK();
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+  GPIO_PinRemapConfig(GPIO_Remap_USART1, ENABLE);
+  RCC_PCLK2Config(RCC_HCLK_Div1);
 
   GPIO_InitTypeDef gpio_init = {
     .GPIO_Pin = (1 << RETARGET_CFG_UART_GPIO_TX),
     .GPIO_Speed = GPIO_Speed_10MHz,
     .GPIO_Mode = GPIO_Mode_AF_PP,
   };
-  GPIO_Init(RETARGET_CFG_UART_GPIO_PORT, &gpio_init);
 
+  GPIO_Init(RETARGET_CFG_UART_GPIO_PORT, &gpio_init);
   gpio_init.GPIO_Pin = (1 << RETARGET_CFG_UART_GPIO_RX);
   gpio_init.GPIO_Mode = GPIO_Mode_IN_FLOATING;
   GPIO_Init(RETARGET_CFG_UART_GPIO_PORT, &gpio_init);
@@ -25,12 +28,9 @@ void retarget_init(void) {
   RETARGET_CFG_UART_ENABLE_CLK();
   prv_init_gpio();
 
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-  GPIO_PinRemapConfig(GPIO_Remap_USART1, ENABLE);
-
   USART_InitTypeDef usart_init;
   USART_StructInit(&usart_init);
-  usart_init.USART_BaudRate = 115200;
+  usart_init.USART_BaudRate = 9600;
   USART_Init(RETARGET_CFG_UART, &usart_init);
 
   USART_Cmd(RETARGET_CFG_UART, ENABLE);
