@@ -6,6 +6,7 @@
 #include "gpio.h"
 #include "i2c.h"
 
+// Reference voltage for the IC, from the board schematic
 #define REFERENCE_VOLTAGE_V 3.3
 
 typedef enum {
@@ -17,20 +18,19 @@ typedef enum {
 } MAX11600Channel;
 
 typedef struct {
-  I2CPort i2c_port;  // I2C_PORT_1 or I2C_PORT_2
+  I2CPort i2c_port;
   I2CAddress i2c_read_address;
   I2CAddress i2c_write_address;
   uint16_t channel_readings[NUM_MAX11600_CHANNELS];
 } Max11600Storage;
 
-// Initializes the storage pointers with the i2c port and addresses needed for the driver, and sets
-// up the MAX11600 ADC
+// Initializes the storage struct with the I2C port
 StatusCode max11600_init(Max11600Storage *storage, I2CPort i2c_port);
 
-// Reads the raw data from the MAX11600's AIN channels and stores it into the storage pointer
+// Reads the raw data from the MAX11600's AIN channels and stores it into the storage struct
 // Updates the storage readings with the raw values
 StatusCode max11600_read_raw(Max11600Storage *storage);
 
-// Reads the raw data from the MAX11600's AIN channels and stores it into the storage pointer
+// Reads the raw data from the MAX11600's AIN channels and stores it into the storage struct
 // Updates the storage readings with the converted values (in mV)
 StatusCode max11600_read_converted(Max11600Storage *storage);

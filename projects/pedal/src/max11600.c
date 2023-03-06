@@ -45,21 +45,19 @@ StatusCode max11600_init(Max11600Storage *storage, I2CPort i2c_port) {
 }
 
 StatusCode max11600_read_raw(Max11600Storage *storage) {
-  StatusCode status;
   uint8_t rx_data[3];
-  // read in the data, and update channel readings to read AIN0 -> AIN2 (scan0 = scan1 = 0)
-  status = i2c_read(storage->i2c_port, storage->i2c_read_address, rx_data, 3);
+  // read in the data, and update channel readings to read AIN0 -> AIN2
+  status_ok_or_return(i2c_read(storage->i2c_port, storage->i2c_read_address, rx_data, 3));
   storage->channel_readings[0] = rx_data[0];
   storage->channel_readings[1] = rx_data[1];
   storage->channel_readings[2] = rx_data[2];
-  return status;
+  return STATUS_CODE_OK;
 }
 
 StatusCode max11600_read_converted(Max11600Storage *storage) {
-  StatusCode status;
-  status = max11600_read_raw(storage);
+  status_ok_or_return(max11600_read_raw(storage));
   storage->channel_readings[0] *= 1000 * REFERENCE_VOLTAGE_V / 256;
   storage->channel_readings[1] *= 1000 * REFERENCE_VOLTAGE_V / 256;
   storage->channel_readings[2] *= 1000 * REFERENCE_VOLTAGE_V / 256;
-  return status;
+  return STATUS_CODE_OK;
 }
