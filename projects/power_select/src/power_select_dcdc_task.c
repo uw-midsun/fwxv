@@ -1,110 +1,102 @@
-#include "power_select_dcdc_task.h"
-
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-
-#include "power_select_power_supply_task.h"
+#include "power_select.h"
+#include "power_select_setters.h"
 
 #define DCDC_STATUS g_tx_struct.power_select_status_status
 #define DCDC_FAULT g_tx_struct.power_select_status_fault
 
-// We already have
-// g_power_select_valid_pin, g_power_select_voltage_pin,
-// g_power_select_current_pin from header file
-const GpioAddress g_power_select_temp_pin = POWER_SELECT_DCDC_TSENSE_ADDR;
+const GpioAddress g_dcdc_valid_pin = POWER_SELECT_DCDC_VALID_ADDR;
+const GpioAddress g_dcdc_voltage_pin = POWER_SELECT_DCDC_VSENSE_ADDR;
+const GpioAddress g_dcdc_current_pin = POWER_SELECT_DCDC_ISENSE_ADDR;
+const GpioAddress g_dcdc_temp_pin = POWER_SELECT_DCDC_TSENSE_ADDR;
 
 static uint16_t adc_reading_voltage;
 static uint16_t adc_reading_current;
 static uint16_t adc_reading_temp;
 
-// Logic when power supply status is inactive (monitoring inputs)
-static void prv_power_supply_inactive_input(Fsm *fsm, void *context) {
+FSM(dcdc, NUM_POWER_SELECT_STATES);
+
+static void prv_dcdc_inactive_input(Fsm *fsm, void *context) {
   GpioState state = GPIO_STATE_LOW;
-  gpio_get_state(&g_power_select_valid_pin, &state);
+  gpio_get_state(&g_dcdc_valid_pin, &state);
   if (state == GPIO_STATE_LOW) {
-    fsm_transition(fsm, POWER_SUPPLY_ACTIVE);
+    fsm_transition(fsm, POWER_SELECT_ACTIVE);
   }
-  LOG_DEBUG("power_supply: valid=%d", state == GPIO_STATE_HIGH);
+  LOG_DEBUG("dcdc: valid=%d\n", state == GPIO_STATE_HIGH);
 }
 
-// Set the power supply status to inactive
-static void prv_power_supply_inactive_output(void *context) {
+static void prv_dcdc_inactive_output(void *context) {
   set_power_select_status_status(DCDC_STATUS & ~POWER_SELECT_DCDC_STATUS_MASK);
-  LOG_DEBUG("Transitioned to POWER_SUPPLY_INACTIVE\n");
+  LOG_DEBUG("dcdc: transitioned to INACTIVE\n");
 }
 
 // Logic when power supply status is active (monitoring inputs)
-static void prv_power_supply_active_input(Fsm *fsm, void *context) {
+static void prv_dcdc_active_input(Fsm *fsm, void *context) {
   GpioState state = GPIO_STATE_LOW;
-  gpio_get_state(&g_power_select_valid_pin, &state);
+  gpio_get_state(&g_dcdc_valid_pin, &state);
   if (state == GPIO_STATE_HIGH) {
-    fsm_transition(fsm, POWER_SUPPLY_INACTIVE);
+    fsm_transition(fsm, POWER_SELECT_INACTIVE);
     return;
   }
-  set_power_select_status_fault(
-      DCDC_FAULT & ~(POWER_SELECT_DCDC_FAULT_OC_MASK | POWER_SELECT_DCDC_FAULT_OV_MASK));
-  adc_read_converted(g_power_select_voltage_pin, &adc_reading_voltage);
+  set_power_select_status_fault(DCDC_FAULT & ~(POWER_SELECT_DCDC_FAULT_OC_MASK |
+                                               POWER_SELECT_DCDC_FAULT_OV_MASK |
+                                               POWER_SELECT_DCDC_FAULT_OT_MASK));
+  adc_read_converted(g_dcdc_voltage_pin, &adc_reading_voltage);
   set_power_select_dcdc_measurements_dcdc_voltage(adc_reading_voltage);
   if (adc_reading_voltage > POWER_SELECT_DCDC_MAX_VOLTAGE_MV) {
-    LOG_WARN("power_supply: overvoltage");
+    LOG_WARN("dcdc: overvoltage\n");
     set_power_select_status_fault(DCDC_FAULT | POWER_SELECT_DCDC_FAULT_OV_MASK);
   }
-  adc_read_converted(g_power_select_current_pin, &adc_reading_current);
+  adc_read_converted(g_dcdc_current_pin, &adc_reading_current);
   set_power_select_dcdc_measurements_dcdc_current(adc_reading_current);
   if (adc_reading_current > POWER_SELECT_DCDC_MAX_CURRENT_MA) {
-    LOG_WARN("power_supply: overcurrent");
+    LOG_WARN("dcdc: overcurrent\n");
     set_power_select_status_fault(DCDC_FAULT | POWER_SELECT_DCDC_FAULT_OC_MASK);
   }
-  adc_read_converted(g_power_select_temp_pin, &adc_reading_temp);
+  adc_read_converted(g_dcdc_temp_pin, &adc_reading_temp);
   set_power_select_dcdc_measurements_dcdc_temp(adc_reading_temp);
   if (adc_reading_temp > POWER_SELECT_DCDC_MAX_TEMP_C) {
-    LOG_WARN("power_supply: overtemperature");
+    LOG_WARN("dcdc: overtemperature\n");
     set_power_select_status_fault(DCDC_FAULT | POWER_SELECT_DCDC_FAULT_OT_MASK);
   }
-  LOG_DEBUG("power_supply: valid=%d, voltage=%d, current=%d, temp=%d", state == GPIO_STATE_HIGH,
+  LOG_DEBUG("dcdc: valid=%d, voltage=%d, current=%d, temp=%d\n", state == GPIO_STATE_HIGH,
             adc_reading_voltage, adc_reading_current, adc_reading_temp);
 }
 
 // Set the power supply status to active
-static void prv_power_supply_active_output(void *context) {
+static void prv_dcdc_active_output(void *context) {
   set_power_select_status_status(DCDC_STATUS | POWER_SELECT_DCDC_STATUS_MASK);
-  LOG_DEBUG("Transitioned to POWER_SUPPLY_ACTIVE\n");
+  LOG_DEBUG("dcdc: transitioned to ACTIVE\n");
 }
 
-FSM(dcdc, NUM_POWER_SUPPLY_STATES);
-
 // Define FSM State and Transition
-static FsmState s_power_supply_state_list[NUM_POWER_SUPPLY_STATES] = {
-  STATE(POWER_SUPPLY_INACTIVE, prv_power_supply_inactive_input, prv_power_supply_inactive_output),
-  STATE(POWER_SUPPLY_ACTIVE, prv_power_supply_active_input, prv_power_supply_active_output),
+static FsmState s_power_supply_state_list[NUM_POWER_SELECT_STATES] = {
+  STATE(POWER_SELECT_INACTIVE, prv_dcdc_inactive_input, prv_dcdc_inactive_output),
+  STATE(POWER_SELECT_ACTIVE, prv_dcdc_active_input, prv_dcdc_active_output),
 };
 
-static FsmTransition s_power_supply_transition_list[NUM_POWER_SUPPLY_STATES] = {
-  TRANSITION(POWER_SUPPLY_INACTIVE, POWER_SUPPLY_ACTIVE),
-  TRANSITION(POWER_SUPPLY_ACTIVE, POWER_SUPPLY_INACTIVE),
+static FsmTransition s_power_supply_transition_list[NUM_POWER_SELECT_STATES] = {
+  TRANSITION(POWER_SELECT_INACTIVE, POWER_SELECT_ACTIVE),
+  TRANSITION(POWER_SELECT_ACTIVE, POWER_SELECT_INACTIVE),
 };
 
 StatusCode init_dcdc(void) {
   // Initialize valid GPIO pin
-  status_ok_or_return(
-      gpio_init_pin(&g_power_select_valid_pin, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW));
+  status_ok_or_return(gpio_init_pin(&g_dcdc_valid_pin, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW));
 
   // Initialize voltage & current pins, and set adc channels
-  status_ok_or_return(gpio_init_pin(&g_power_select_voltage_pin, GPIO_ANALOG, GPIO_STATE_LOW));
-  status_ok_or_return(adc_add_channel(g_power_select_voltage_pin));
-  status_ok_or_return(gpio_init_pin(&g_power_select_current_pin, GPIO_ANALOG, GPIO_STATE_LOW));
-  status_ok_or_return(adc_add_channel(g_power_select_current_pin));
-  status_ok_or_return(gpio_init_pin(&g_power_select_temp_pin, GPIO_ANALOG, GPIO_STATE_LOW));
-  status_ok_or_return(adc_add_channel(g_power_select_temp_pin));
+  status_ok_or_return(gpio_init_pin(&g_dcdc_voltage_pin, GPIO_ANALOG, GPIO_STATE_LOW));
+  status_ok_or_return(adc_add_channel(g_dcdc_voltage_pin));
+  status_ok_or_return(gpio_init_pin(&g_dcdc_current_pin, GPIO_ANALOG, GPIO_STATE_LOW));
+  status_ok_or_return(adc_add_channel(g_dcdc_current_pin));
+  status_ok_or_return(gpio_init_pin(&g_dcdc_temp_pin, GPIO_ANALOG, GPIO_STATE_LOW));
+  status_ok_or_return(adc_add_channel(g_dcdc_temp_pin));
 
   // Initialize FSM task
   const FsmSettings settings = {
     .state_list = s_power_supply_state_list,
     .transitions = s_power_supply_transition_list,
-    .num_transitions = NUM_POWER_SUPPLY_TRANSITIONS,
-    .initial_state = POWER_SUPPLY_INACTIVE,
+    .num_transitions = NUM_POWER_SELECT_TRANSITIONS,
+    .initial_state = POWER_SELECT_INACTIVE,
   };
   fsm_init(dcdc, settings, NULL);
 

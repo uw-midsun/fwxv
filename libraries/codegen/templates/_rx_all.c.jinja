@@ -1,7 +1,7 @@
 {% set messages = data["Messages"] -%}
 {% set board = data["Board"] -%}
 
-#include "{{board}}_unpack_msg.h"
+#include "can_board_ids.h"
 #include "can_codegen.h"
 
 void can_rx_all() {
@@ -12,16 +12,15 @@ void can_rx_all() {
         // If store all functions in callback array may be better?
         // Or do some sort or binary search for O(lgn)
         switch (msg.id.raw) {
-{%- for message, message_data in messages.items() %}
+        {%- for message, message_data in messages.items() %}
             case SYSTEM_CAN_MESSAGE_{{message_data["src"] | upper}}_{{message | upper}}:
-
-    {%- set signals = message_data["signals"].keys() -%}
-    {%- set function_parameters -%}
-can_unpack_{{message}}(&msg {%- for signal in signals %}, &g_rx_struct.{{message}}_{{signal}} {%- endfor -%});
-    {%- endset %}
-                {{function_parameters | format_function_length(16)}}
+            {%- set offset = namespace(value=0) %}
+            {%- for signal, signal_data in message_data['signals'].items() %}
+                g_rx_struct.{{message}}_{{signal}} = (msg.data >> {{offset.value}});
+                {%- set offset.value = offset.value + signal_data.length %}
+            {%- endfor %}
                 break;
-{%- endfor %}
+        {%- endfor %}
             default:
                 break;
         }

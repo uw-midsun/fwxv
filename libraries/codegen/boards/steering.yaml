@@ -9,25 +9,15 @@
 # - 30-63: Data messages (usually not actionable by an onboard device)
 
 ---
-  Messages:
-    steering_info:
-      id: 21  # or some number
-      target:
-        - power_distribution_front
-        - power_distribution_back
-        - motor_controller
-      signals:
-        digital_input:
-          length: 8
-    
-    lights:
-      id: 24
-      target:
-        - lights
-      signals:
-        lights_id:
-          length: 8
-        state:
-          length: 8
-      
-
+Messages:
+  steering_info:
+    id: 21 # or some number
+    target:
+      - power_distribution_front
+      - power_distribution_back
+      - motor_controller
+    signals:
+      digital_input:
+        length: 8
+      analog_input:
+        length: 8
