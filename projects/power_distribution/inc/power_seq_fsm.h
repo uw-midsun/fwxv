@@ -1,20 +1,14 @@
 #pragma once
 
 #include "can.h"
-#include "delay.h"
 #include "fsm.h"
-#include "gpio.h"
-#include "gpio_it.h"
 #include "log.h"
-#include "soft_timer.h"
-#include "status.h"
 #include "task.h"
 
 #define NUM_POWER_SEQ_STATES 5
 #define NUM_POWER_SEQ_TRANSITIONS 9
 
 DECLARE_FSM(power_seq);
-
 typedef enum PowerSeqStateId {
   POWER_SEQ_INIT_STATE = 0,
   POWER_SEQ_EVERYTHING_ON,

@@ -137,8 +137,8 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         # The CAN output should actually go into the projects/<project>
         # Fine for now but will be an issue if ever trying to build multiple projects
         can_location_name = entry.name
-        if entry.name == "power_distribution":
-            can_location_name = "power_distribution_front"
+        if (entry.name == "power_distribution"):
+            can_location_name += "_".join(str(GetOption("location")))
         srcs += OBJ_DIR.Dir(str(CAN_DIR)).Dir('src').glob('*.[cs]')
         srcs += OBJ_DIR.Dir(str(CAN_DIR)).Dir('src').Dir(PLATFORM).glob('*.[cs]')
         inc_dirs += [CAN_DIR.Dir('inc')]

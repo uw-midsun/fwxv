@@ -51,6 +51,3 @@ int main() {
   LOG_DEBUG("exiting main?");
   return 0;
 }
-
-// TO DO
-// is can_storage and can_settings initialized properly?
