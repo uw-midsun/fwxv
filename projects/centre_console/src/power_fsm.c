@@ -3,11 +3,13 @@
 #include "delay.h"
 #include "log.h"
 #include "power_fsm_sequence.h"
+#include "centre_console_getters.h"
 #include "task.h"
 
 FSM(centre_console_power_fsm, NUM_CENTRE_CONSOLE_POWER_STATES);
 
 static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
+
   return;
 }
 

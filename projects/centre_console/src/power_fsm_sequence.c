@@ -1,4 +1,6 @@
 #include "power_fsm_sequence.h"
+#include "power_fsm.h"
+#include "centre_console_getters.h"
 
 #include "log.h"
 
@@ -13,14 +15,24 @@ void prv_power_fsm_send_pd_bms_input(Fsm *fsm, void *context) {
 }
 
 void prv_power_fsm_confirm_battery_status_input(Fsm *fsm, void *context) {
+  uint8_t status = get_bps_heartbeat_status();
+  if(status) {
+    fsm_transition(fsm, POWER_FSM_CLOSE_BATTERY_RELAYS);
+  }
   return;
 }
 
 void prv_power_fsm_close_battery_relays_input(Fsm *fsm, void *context) {
+  uint8_t hv_status = get_battery_relay_state_hv();
+  uint8_t gnd_status = get_battery_relay_state_gnd();
+  if(hv_status || gnd_status) {
+    fsm_transition(fsm, POWER_FSM_CONFIRM_DC_DC);
+  }
   return;
 }
 
 void prv_power_fsm_confirm_dc_dc_input(Fsm *fsm, void *context) {
+  
   return;
 }
 
