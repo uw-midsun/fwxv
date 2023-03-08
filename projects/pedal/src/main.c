@@ -49,10 +49,6 @@ void init_pedal_controls() {
 }
 
 void run_fast_cycle() {
-  return;
-}
-
-void run_medium_cycle() {
   run_can_tx_cycle();
   wait_tasks(1);
 
@@ -81,10 +77,6 @@ void run_medium_cycle() {
   }
 }
 
-void run_slow_cycle() {
-  return;
-}
-
 TASK(master_task, TASK_MIN_STACK_SIZE) {
   int counter = 0;
   while (true) {
@@ -92,9 +84,6 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
     xSemaphoreTake(test_cycle_start_sem);
 #endif
     run_fast_cycle();
-    if (!(counter % 10)) run_medium_cycle();
-    if (!(counter % 100)) run_slow_cycle();
-
 #ifdef TEST
     xSemaphoreGive(test_cycle_end_sem);
 #endif
