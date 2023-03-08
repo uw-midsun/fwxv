@@ -3,11 +3,11 @@
 
 FSM(drive_fsm, NUM_DRIVE_TRANSITIONS);
 
-// Drive state 
+// Drive state
 static void prv_drive_input(Fsm *fsm, void *context) {
     // fsm_transition();
 }
-static void prv_drive_output(Fsm *fsm, void *context) {
+static void prv_drive_output(void *context) {
     
 }
 
@@ -15,15 +15,24 @@ static void prv_drive_output(Fsm *fsm, void *context) {
 static void prv_reverse_input(Fsm *fsm, void *context) {
     // fsm_transition();
 }
-static void prv_reverse_output(Fsm *fsm, void *context) {
+static void prv_reverse_output(void *context) {
     
 }
 
-// Neutral state 
+// Neutral state | First state in state machine
 static void prv_neutral_input(Fsm *fsm, void *context) {
+    LOG_DEBUG("NEUTRAL\n");
+
+    /**
+     * If Drive button pressed & power state is POWER_MAIN & speed >= 0
+     *    transition to GET_PRECHARGE
+     * IF Reverse button pressed & power state is POWER_MAIN & speed <= 0
+     *   transition to GET_PRECHARGE
+     */
+
     // fsm_transition();
 }
-static void prv_neutral_output(Fsm *fsm, void *context) {
+static void prv_neutral_output(void *context) {
     
 }
 
@@ -39,11 +48,14 @@ static FsmState s_drive_state_list[NUM_DRIVE_STATES] = {
 
 // Declares transition for state machine, must match those in input functions
 static FsmTransition s_drive_transitions[NUM_DRIVE_TRANSITIONS] = {
-    // NEUTRAL -> SEQ
-    TRANSITION(NEUTRAL, GET_PRECHARGE),
+    // SEQ: GET_PRECHARGE transitions to DO_PRECHARGE or TRANSMIT
+    //      DO_PRECHARGE transitions to TRANSMIT
     TRANSITION(GET_PRECHARGE, DO_PRECHARGE),
     TRANSITION(GET_PRECHARGE, TRANSMIT),
     TRANSITION(DO_PRECHARGE, TRANSMIT),
+
+    // NEUTRAL -> SEQ
+    TRANSITION(NEUTRAL, GET_PRECHARGE),
 
     // SEQ -> DRIVE
     TRANSITION(TRANSMIT, DRIVE),
@@ -56,10 +68,10 @@ static FsmTransition s_drive_transitions[NUM_DRIVE_TRANSITIONS] = {
     TRANSITION(DO_PRECHARGE, NEUTRAL),
     TRANSITION(TRANSMIT, NEUTRAL),
 
-    // DRIVE -> SEQ (TRANSMIT -> NEUTRAL state reused)
+    // DRIVE -> SEQ 
     TRANSITION(DRIVE, TRANSMIT),
 
-    // REVERSE -> SEQ (TRANSMIT -> NEUTRAL state reused)
+    // REVERSE -> SEQ 
     TRANSITION(REVERSE, TRANSMIT), 
 };
 
