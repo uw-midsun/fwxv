@@ -3,7 +3,6 @@
 #include <stdio.h>
 
 #include "adc.h"
-#include "ads1015.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "i2c.h"
@@ -11,30 +10,43 @@
 #include "log.h"
 #include "pedal_setters.h"
 
-/* TODO - ads1015 storage needs to be changed to MAX11600 (pending driver completion) */
-static Ads1015Storage *s_ads1015_storage;
-void prv_callback_channel(Ads1015Channel channel, void *context) {
-  int16_t reading = 0;
-  PedalCalibrationStorage *storage = context;
-  ads1015_read_raw(s_ads1015_storage, channel, &reading);
-  storage->max_reading = MAX(storage->max_reading, reading);
-  storage->min_reading = MIN(storage->min_reading, reading);
-}
-
 StatusCode pedal_calib_init(PedalCalibrationStorage *storage) {
   memset(storage, 0, sizeof(*storage));
   return STATUS_CODE_OK;
 }
-StatusCode pedal_calib_sample(Ads1015Storage *ads1015_storage, PedalCalibrationStorage *storage,
-                              PedalCalibrationData *data, Ads1015Channel channel,
-                              PedalState state) {
-  s_ads1015_storage = ads1015_storage;
-  ads1015_configure_channel(s_ads1015_storage, channel, false, NULL, NULL);
-  ads1015_configure_channel(s_ads1015_storage, channel, true, prv_callback_channel, storage);
+
+StatusCode pedal_calib_sample(Max11600Storage *max11600_storage,
+                              PedalCalibrationStorage *calib_storage, PedalCalibrationData *data,
+                              MAX11600Channel channel, PedalState state) {
+  // Reset variables for pedal calibration storage
+  int32_t average_value = 0;
+  calib_storage->sample_counter = 0;
+  calib_storage->min_reading = INT16_MAX;
+  calib_storage->max_reading = INT16_MIN;
+
+  max11600_init(max11600_storage, I2C_PORT_2);
+
+  StatusCode status;
+  while (calib_storage->sample_counter < NUM_SAMPLES) {
+    // Read the values from the MAX, at this point the pedal should be in either a fully pressed or
+    // released state
+    status = max11600_read_raw(max11600_storage);
+    if (status != STATUS_CODE_OK) {
+      return STATUS_CODE_INCOMPLETE;
+    }
+    uint8_t reading = max11600_storage->channel_readings[channel];
+    calib_storage->sample_counter++;
+    average_value += channel;
+    calib_storage->min_reading = MIN(calib_storage->min_reading, reading);
+    calib_storage->max_reading = MAX(calib_storage->min_reading, reading);
+  }
+
   if (state == PEDAL_PRESSED) {
-    data->upper_value = storage->max_reading;
+    data->upper_value = average_value / NUM_SAMPLES;
+  } else if (state == PEDAL_UNPRESSED) {
+    data->lower_value = average_value / NUM_SAMPLES;
   } else {
-    data->lower_value = storage->min_reading;
+    return STATUS_CODE_INVALID_ARGS;
   }
   return STATUS_CODE_OK;
 }

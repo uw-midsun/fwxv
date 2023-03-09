@@ -1,5 +1,7 @@
 #pragma once
-#include "ads1015.h"
+#include "max11600.h"
+
+#define NUM_SAMPLES 1000
 
 typedef enum {
   PEDAL_PRESSED = 0,
@@ -25,7 +27,11 @@ typedef struct PedalCalibrationStorage {
   volatile uint32_t sample_counter;
 } PedalCalibrationStorage;
 
+extern PedalCalibBlob global_calib_blob;
+
 StatusCode pedal_calib_init(PedalCalibrationStorage *storage);
 
-StatusCode pedal_calib_sample(Ads1015Storage *ads1015_storage, PedalCalibrationStorage *storage,
-                              PedalCalibrationData *data, Ads1015Channel channel, PedalState state);
+// Re-initializes the MAX11600 to the correct channel
+StatusCode pedal_calib_sample(Max11600Storage *max11600_storage,
+                              PedalCalibrationStorage *calib_storage, PedalCalibrationData *data,
+                              MAX11600Channel channel, PedalState state);
