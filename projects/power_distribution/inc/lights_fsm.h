@@ -9,7 +9,7 @@
 #include "status.h"
 #include "task.h"
 
-#define NUM_LIGHTS_STATES 5
+#define NUM_LIGHTS_STATES 4
 #define NUM_LIGHTS_TRANSITIONS 10
 
 #define RIGHT_LIGHT_ADDR \
@@ -20,12 +20,12 @@
 
 DECLARE_FSM(lights);
 
+// Light events matches CAN message defs from steering analog
 typedef enum LightsStateId {
   INIT_STATE = 0,
   LEFT_SIGNAL,
   RIGHT_SIGNAL,
   HAZARD,
-  BPS_FAULT,
   NUM_STATES,
 } LightsStateId;
 
