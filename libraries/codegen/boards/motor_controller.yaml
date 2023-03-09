@@ -16,11 +16,11 @@
         - motor_controller
       signals:
         drive_state:
-          length: 32
-          # 1st 8 bit is drive state
-          # 2nd 8 bit is cruise control toggle
-          # 3rd 8 bit is regen breaking toggle
-          # 4th 8 bit is unused
+          length: 8
+        cruise_control:
+          length: 8
+        regen_braking:
+          length: 8
         target_velocity:
           length: 32
     

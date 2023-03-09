@@ -13,11 +13,6 @@
 #define MOTOR_CONTROLLER_BASE_L 0x40
 #define MOTOR_CONTROLLER_BASE_R 0x80
 
-#define CURRENT_SCALE 100
-#define VOLTAGE_SCALE 100
-#define VELOCITY_SCALE 100
-#define TEMP_SCALE 100
-
 typedef enum MotorControllerMessageIds {
   IDENTIFICATION = 0x00,
   STATUS,
@@ -38,7 +33,7 @@ typedef enum MotorControllerMessageIds {
 } MotorControllerMessageIds;
 
 static void motor_controller_tx_all() {
-  // s_send_message will be false if no can message from center_console and peddle were received
+  // s_send_message will be false if no can message from center_console and pedal were received
   // since last motor controller transmission
   // TODO: update this with can watchdog
   if (s_send_message != true) {
@@ -51,12 +46,12 @@ static void motor_controller_tx_all() {
     .dlc = 8,
   };
   memcpy(&message.data_u32[0], &s_target_current, sizeof(s_target_current));
-  memcpy(&message.data_u32[0], &s_target_velocity, sizeof(s_target_current));
+  memcpy(&message.data_u32[1], &s_target_velocity, sizeof(s_target_velocity));
 
   mcp2515_transmit(&message);
 }
 
-static float uint32_as_float(uint32_t f) {
+static float get_float(uint32_t f) {
   union {
     float f;
     uint32_t u;
@@ -76,28 +71,28 @@ static void motor_controller_rx_all() {
         break;
 
       case MOTOR_CONTROLLER_BASE_L + BUS_MEASUREMENT:
-        set_motor_controller_vc_mc_current_l(uint32_as_float(msg.data_u32[0]) * CURRENT_SCALE);
-        set_motor_controller_vc_mc_voltage_l(uint32_as_float(msg.data_u32[1]) * VOLTAGE_SCALE);
+        set_motor_controller_vc_mc_current_l(get_float(msg.data_u32[0]) * CURRENT_SCALE);
+        set_motor_controller_vc_mc_voltage_l(get_float(msg.data_u32[1]) * VOLTAGE_SCALE);
         break;
       case MOTOR_CONTROLLER_BASE_R + BUS_MEASUREMENT:
-        set_motor_controller_vc_mc_current_r(uint32_as_float(msg.data_u32[0]) * CURRENT_SCALE);
-        set_motor_controller_vc_mc_voltage_r(uint32_as_float(msg.data_u32[1]) * VOLTAGE_SCALE);
+        set_motor_controller_vc_mc_current_r(get_float(msg.data_u32[0]) * CURRENT_SCALE);
+        set_motor_controller_vc_mc_voltage_r(get_float(msg.data_u32[1]) * VOLTAGE_SCALE);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
-        set_motor_velocity_velocity_l(uint32_as_float(msg.data_u32[0]) * VELOCITY_SCALE);
+        set_motor_velocity_velocity_l(get_float(msg.data_u32[0]) * VELOCITY_SCALE);
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
-        set_motor_velocity_velocity_r(uint32_as_float(msg.data_u32[0]) * VELOCITY_SCALE);
+        set_motor_velocity_velocity_r(get_float(msg.data_u32[0]) * VELOCITY_SCALE);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:
-        set_motor_sink_temps_heatsink_temp_l(uint32_as_float(msg.data_u32[0]) * TEMP_SCALE);
-        set_motor_sink_temps_motor_temp_l(uint32_as_float(msg.data_u32[1]) * TEMP_SCALE);
+        set_motor_sink_temps_heatsink_temp_l(get_float(msg.data_u32[0]) * TEMP_SCALE);
+        set_motor_sink_temps_motor_temp_l(get_float(msg.data_u32[1]) * TEMP_SCALE);
         break;
       case MOTOR_CONTROLLER_BASE_R + HEAT_SINK_MOTOR_TEMP:
-        set_motor_sink_temps_heatsink_temp_r(uint32_as_float(msg.data_u32[0]) * TEMP_SCALE);
-        set_motor_sink_temps_motor_temp_r(uint32_as_float(msg.data_u32[1]) * TEMP_SCALE);
+        set_motor_sink_temps_heatsink_temp_r(get_float(msg.data_u32[0]) * TEMP_SCALE);
+        set_motor_sink_temps_motor_temp_r(get_float(msg.data_u32[1]) * TEMP_SCALE);
         break;
     }
   }

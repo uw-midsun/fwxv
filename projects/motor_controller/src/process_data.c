@@ -5,7 +5,7 @@
 #include "motor_can.h"
 #include "motor_controller_getters.h"
 
-#define ACCERLATION_FORCE 100
+#define ACCERLATION_FORCE 1
 #define CRUISE_THROTTLE_THRESHOLD 0
 #define TORQUE_CONTROL_VEL 20000
 
@@ -19,22 +19,41 @@ typedef enum DriveState {
   BREAK,
 } DriveState;
 
+static uint32_t vel_to_rpm(uint32_t f) {
+  // convert to float
+  union {
+    float f;
+    uint32_t u;
+  } fu = { .f = f };
+
+  // TODO: set actual ratio, m/s to motor rpm
+  float ratio = 1;
+
+  return fu.u * ratio;
+}
+
+static float get_float(uint32_t f) {
+  union {
+    float f;
+    uint32_t u;
+  } fu = { .f = f };
+  return fu.u;
+}
+
 void process_data() {
-  // verify that can messages from center console, peddal are not stale
+  // verify that can messages from center console, pedal are not stale
   s_send_message = true;
   if (!s_send_message) {
     return;
   }
 
-  uint32_t throttle_percent = get_pedal_throttle_output();
-  uint32_t break_percent = get_pedal_brake_output();
-  uint32_t target_vel = get_drive_output_target_velocity();
+  float throttle_percent = get_float(get_pedal_throttle_output());
+  float break_percent = get_float(get_pedal_brake_output());
+  float target_vel = vel_to_rpm(get_drive_output_target_velocity());
 
-  // TODO: fix autogen to allow mis-matched signal length
-  // currently just use masks to get the values within drive state
-  DriveState drive_state = (get_drive_output_drive_state() & 0xFF000000) >> 24;
-  bool regen = (get_drive_output_drive_state() & 0x00FF0000) >> 16;
-  bool cruise = (get_drive_output_drive_state() & 0x0000FF00) >> 8;
+  DriveState drive_state = get_drive_output_drive_state();
+  bool regen = get_drive_output_regen_braking();
+  bool cruise = get_drive_output_cruise_control();
 
   if (cruise && throttle_percent > CRUISE_THROTTLE_THRESHOLD) {
     drive_state = DRIVE;
