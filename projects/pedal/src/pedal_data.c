@@ -27,7 +27,7 @@ StatusCode read_pedal_data(int16_t *reading, MAX11600Channel channel) {
     *reading = (int16_t)reading_upscaled;
   }
   return STATUS_CODE_OK;
-};
+}
 
 StatusCode read_throttle_data(int16_t *reading) {
   return read_pedal_data(reading, THROTTLE_CHANNEL);
