@@ -5,6 +5,14 @@ FSM(drive_fsm, NUM_DRIVE_TRANSITIONS);
 
 // Drive state
 static void prv_drive_input(Fsm *fsm, void *context) {
+    LOG_DEBUG("DRIVE\n");
+
+    /**
+     * If Neutral button pressed OR force msg (from power fsm) OR drive_state != main
+     *  transition to TRANSMIT
+     * 
+     */
+
     // fsm_transition();
 }
 static void prv_drive_output(void *context) {
@@ -13,6 +21,14 @@ static void prv_drive_output(void *context) {
 
 // Reverse state 
 static void prv_reverse_input(Fsm *fsm, void *context) {
+    LOG_DEBUG("REVERSE\n");
+
+    /**
+     * If Neutral button pressed OR force msg (from power fsm) OR drive_state != main
+     *  transition to TRANSMIT
+     * 
+     */
+
     // fsm_transition();
 }
 static void prv_reverse_output(void *context) {
