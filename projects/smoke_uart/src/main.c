@@ -15,7 +15,7 @@ static UartSettings uart_settings = { .tx = { .port = GPIO_PORT_A, .pin = 10 },
 TASK(master_task, TASK_MIN_STACK_SIZE) {
   uart_init(UART_PORT_1, &uart_settings);
 
-  size_t len = sizeof(uint8_t);
+  size_t len = sizeof(test);
 
   while (true) {
     StatusCode status;
