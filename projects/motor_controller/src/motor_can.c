@@ -36,10 +36,10 @@ static void motor_controller_tx_all() {
   // s_send_message will be false if no can message from center_console and pedal were received
   // since last motor controller transmission
   // TODO: update this with can watchdog
-  if (s_send_message != true) {
+  if (s_missed_message <= 0) {
     return;
   }
-  s_send_message = false;
+  s_missed_message--;
 
   CanMessage message = {
     .id.raw = DRIVER_CONTROL_BASE + 0x01,

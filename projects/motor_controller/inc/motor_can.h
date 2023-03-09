@@ -4,7 +4,7 @@
 
 #include <stdbool.h>
 
-static bool s_send_message;
+static int s_missed_message;
 static float s_target_current;
 static float s_target_velocity;
 

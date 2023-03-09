@@ -41,12 +41,6 @@ static float get_float(uint32_t f) {
 }
 
 void process_data() {
-  // verify that can messages from center console, pedal are not stale
-  s_send_message = true;
-  if (!s_send_message) {
-    return;
-  }
-
   float throttle_percent = get_float(get_pedal_throttle_output());
   float break_percent = get_float(get_pedal_brake_output());
   float target_vel = vel_to_rpm(get_drive_output_target_velocity());
@@ -89,4 +83,8 @@ void process_data() {
       // invalid drive state
       return;
   }
+
+  // verify that can messages from center console, pedal are not stale
+  // allow up to 2 missed messages from center console
+  s_missed_message = 3;
 }
