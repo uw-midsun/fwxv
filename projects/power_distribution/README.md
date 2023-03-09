@@ -14,3 +14,7 @@
 -->
 # power_distribution
 
+The power distribution project consists of two different boards, front and rear. 
+## Power Distribution Front
+
+## Power Distribution Rear

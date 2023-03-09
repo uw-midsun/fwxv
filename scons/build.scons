@@ -138,7 +138,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         # Fine for now but will be an issue if ever trying to build multiple projects
         can_location_name = entry.name
         if (entry.name == "power_distribution"):
-            can_location_name += "_".join(str(GetOption("location")))
+            can_location_name += "_" + str(GetOption("location"))
         srcs += OBJ_DIR.Dir(str(CAN_DIR)).Dir('src').glob('*.[cs]')
         srcs += OBJ_DIR.Dir(str(CAN_DIR)).Dir('src').Dir(PLATFORM).glob('*.[cs]')
         inc_dirs += [CAN_DIR.Dir('inc')]
