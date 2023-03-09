@@ -31,7 +31,7 @@ void setup_test(void) {
     .sda = { .port = GPIO_PORT_B, .pin = 11 },
   };
   i2c_init(I2C_PORT_2, &i2c_settings);
-  max11600_init(s_max11600_storage, I2C_PORT_2);
+  max11600_init(&s_max11600_storage, I2C_PORT_2);
 
   TEST_ASSERT_OK(calib_init(&global_calib_blob, sizeof(global_calib_blob), true));
   pedal_calib_init(&s_throttle_calibration_storage);
