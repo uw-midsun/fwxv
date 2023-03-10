@@ -233,3 +233,14 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
   *reading = (adc_reading * vdda) / 4095;
   return STATUS_CODE_OK;
 }
+
+// Testing if ADC works
+uint16_t reading;
+void set_reading(GpioAddress sample_address) {
+  StatusCode adc_add_channel(sample_address);
+  StatusCode adc_init(ADC_MODE_SINGLE);
+  adc_read_converted(sample_address, &reading);
+}
+uint16_t get_reading() {
+  return reading;
+}
