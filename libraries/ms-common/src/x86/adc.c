@@ -234,8 +234,7 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
   return STATUS_CODE_OK;
 }
 
-// Testing if ADC works
-uint16_t reading;
+// Getters and setters to test if ADC works
 void set_reading(GpioAddress sample_address) {
   StatusCode adc_add_channel(sample_address);
   StatusCode adc_init(ADC_MODE_SINGLE);

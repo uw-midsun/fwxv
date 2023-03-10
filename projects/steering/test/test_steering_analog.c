@@ -10,7 +10,7 @@
 
 static bool s_task_started;
 // Gpio Address can be changed to different values for testing
-static const GpioAddress s_ctrl_stlk_address = CTRL_STALK_GPIO;
+static const GpioAddress s_ctrl_stk_address = CTRL_STALK_GPIO;
 uint16_t control_stalk_data = UINT16_MAX;
 uint16_t control_stalk_data_verify = UINT16_MAX;
 
@@ -24,7 +24,7 @@ void teardown_test(void) {}
 TASK(steering_analog_input, TASK_STACK_512) {
   LOG_DEBUG("steering_analog_input started\n");
   s_task_started = true;
-  set_reading(s_ctrl_stlk_address);
+  set_reading(s_ctrl_stk_address);
   control_stalk_data_verify = get_reading();
   steering_analog_input();
   while (true) {
