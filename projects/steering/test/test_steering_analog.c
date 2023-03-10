@@ -1,4 +1,5 @@
 #include "adc.h"
+#include "delay.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
@@ -21,7 +22,7 @@ void setup_test(void) {
 
 void teardown_test(void) {}
 
-TASK(steering_analog_input, TASK_STACK_512) {
+TASK(steering_analog_input_task, TASK_STACK_512) {
   LOG_DEBUG("steering_analog_input started\n");
   s_task_started = true;
   set_reading(s_ctrl_stk_address);
@@ -34,7 +35,7 @@ TASK(steering_analog_input, TASK_STACK_512) {
 TEST_IN_TASK
 void test_steering_analog(void) {
   adc_init(ADC_MODE_SINGLE);
-  tasks_init_task(steering_analog_input, TASK_PRIORITY(1), NULL);
+  tasks_init_task(steering_analog_input_task, TASK_PRIORITY(1), NULL);
   TEST_ASSERT_FALSE(s_task_started);
 
   delay_ms(20);
@@ -43,18 +44,16 @@ void test_steering_analog(void) {
   TEST_ASSERT_NOT_EQUAL(control_stalk_data, UINT16_MAX);
   TEST_ASSERT_NOT_EQUAL(control_stalk_data_verify, UINT16_MAX);
   TEST_ASSERT_EQUAL(control_stalk_data, control_stalk_data_verify);
-  SteeringLightState state = get_steering_info_analog_input();
-  TEST_ASSERT_BITS_HIGH_MESSAGE(state);
 
   if (control_stalk_data > STEERING_CONTROL_STALK_LEFT_SIGNAL_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
       control_stalk_data < STEERING_CONTROL_STALK_LEFT_SIGNAL_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
-    TEST_ASSERT_EQUAL(state, STEERING_LIGHT_LEFT);
+    TEST_ASSERT_EQUAL(get_steering_info_analog_input();, STEERING_LIGHT_LEFT);
   } else if (control_stalk_data >
                  STEERING_CONTROL_STALK_RIGHT_SIGNAL_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
              control_stalk_data <
                  STEERING_CONTROL_STALK_RIGHT_SIGNAL_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
-    TEST_ASSERT_EQUAL(state, STEERING_LIGHT_RIGHT);
+    TEST_ASSERT_EQUAL(get_steering_info_analog_input();, STEERING_LIGHT_RIGHT);
   } else {
-    TEST_ASSERT_EQUAL(state, STEERING_LIGHT_OFF);
+    TEST_ASSERT_EQUAL(get_steering_info_analog_input();, STEERING_LIGHT_OFF);
   }
 }
