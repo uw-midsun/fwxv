@@ -4,6 +4,7 @@
 #include "gpio_it.h"
 #include "log.h"
 #include "steering_analog_task.h"
+#include "steering_getters.h"
 #include "task_test_helpers.h"
 #include "unity.h"
 
