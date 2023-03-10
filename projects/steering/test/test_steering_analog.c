@@ -47,13 +47,13 @@ void test_steering_analog(void) {
 
   if (control_stalk_data > STEERING_CONTROL_STALK_LEFT_SIGNAL_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
       control_stalk_data < STEERING_CONTROL_STALK_LEFT_SIGNAL_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
-    TEST_ASSERT_EQUAL(get_steering_info_analog_input();, STEERING_LIGHT_LEFT);
+    TEST_ASSERT_EQUAL(get_steering_info_analog_input(), STEERING_LIGHT_LEFT);
   } else if (control_stalk_data >
                  STEERING_CONTROL_STALK_RIGHT_SIGNAL_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
              control_stalk_data <
                  STEERING_CONTROL_STALK_RIGHT_SIGNAL_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
-    TEST_ASSERT_EQUAL(get_steering_info_analog_input();, STEERING_LIGHT_RIGHT);
+    TEST_ASSERT_EQUAL(get_steering_info_analog_input(), STEERING_LIGHT_RIGHT);
   } else {
-    TEST_ASSERT_EQUAL(get_steering_info_analog_input();, STEERING_LIGHT_OFF);
+    TEST_ASSERT_EQUAL(get_steering_info_analog_input(), STEERING_LIGHT_OFF);
   }
 }
