@@ -27,7 +27,7 @@ TASK(steering_analog_input_task, TASK_STACK_512) {
   LOG_DEBUG("steering_analog_input started\n");
   s_task_started = true;
   set_reading(s_ctrl_stk_address);
-  control_stalk_data_verify = get_reading();
+  control_stalk_data_verify = get_reading(s_ctrl_stk_address);
   steering_analog_input();
   while (true) {
   }
@@ -42,6 +42,11 @@ void test_steering_analog(void) {
   delay_ms(20);
 
   TEST_ASSERT_TRUE(s_task_started);
+
+  // Since the ADC read converted is from a variable GPIO address pin, these values are not going to
+  // change from their original values, but if the pin is being used for testing, the next two lines
+  // can be uncommented
+
   // TEST_ASSERT_NOT_EQUAL(control_stalk_data, UINT16_MAX);
   // TEST_ASSERT_NOT_EQUAL(control_stalk_data_verify, UINT16_MAX);
   TEST_ASSERT_EQUAL(control_stalk_data, control_stalk_data_verify);

@@ -66,8 +66,6 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading);
 // Used to clear state
 void adc_deinit(void);
 
-// Used to set and read values modified from ADC pins
-uint16_t reading;
-
-void set_reading(GpioAddress address);
-uint16_t get_reading();
+// Getters and setters for adc testing
+void set_reading(GpioAddress sample_address);
+uint16_t get_reading(GpioAddress sample_address);
