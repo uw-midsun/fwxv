@@ -2,15 +2,17 @@
 // requires mcp2515
 // mcp2515 can be initialized before or after motor controller can
 
-#include <stdbool.h>
-
-static int s_missed_message;
-static float s_target_current;
-static float s_target_velocity;
-
 #define CURRENT_SCALE 100
 #define VOLTAGE_SCALE 100
 #define VELOCITY_SCALE 100
 #define TEMP_SCALE 100
+
+#define ACCERLATION_FORCE 1
+#define CRUISE_THROTTLE_THRESHOLD 0
+#define TORQUE_CONTROL_VEL 20000
+
+#define DRIVER_CONTROL_BASE 0x1
+#define MOTOR_CONTROLLER_BASE_L 0x40
+#define MOTOR_CONTROLLER_BASE_R 0x80
 
 void init_motor_controller_can();

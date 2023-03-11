@@ -8,6 +8,7 @@
 #include "mcp2515.h"
 #include "misc.h"
 #include "motor_can.h"
+#include "process_data.h"
 #include "soft_timer.h"
 #include "tasks.h"
 
@@ -47,6 +48,8 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
     run_can_rx_cycle();
     run_mcp2515_rx_cycle();
     wait_tasks(2);
+
+    process_data();
 
     run_can_tx_cycle();
     run_mcp2515_tx_cycle();

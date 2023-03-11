@@ -15,14 +15,14 @@
       target:
         - motor_controller
       signals:
+        target_velocity:
+          length: 32
         drive_state:
           length: 8
         cruise_control:
           length: 8
         regen_braking:
           length: 8
-        target_velocity:
-          length: 32
     
     pedal:
       id: 18

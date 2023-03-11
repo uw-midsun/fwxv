@@ -8,11 +8,6 @@
 #include "motor_controller_setters.h"
 #include "tasks.h"
 
-#define DRIVER_CONTROL_BASE 0x1
-
-#define MOTOR_CONTROLLER_BASE_L 0x40
-#define MOTOR_CONTROLLER_BASE_R 0x80
-
 typedef enum MotorControllerMessageIds {
   IDENTIFICATION = 0x00,
   STATUS,
@@ -32,14 +27,89 @@ typedef enum MotorControllerMessageIds {
   SLIP_SPEED = 0x17,
 } MotorControllerMessageIds;
 
-static void motor_controller_tx_all() {
-  // s_send_message will be false if no can message from center_console and pedal were received
-  // since last motor controller transmission
-  // TODO: update this with can watchdog
-  if (s_missed_message <= 0) {
-    return;
+typedef enum DriveState {
+  // drive states defined by center console
+  DRIVE,
+  NEUTRAL,
+  REVERSE,
+  // extra drive state types used only by mci
+  CRUISE,
+  BREAK,
+} DriveState;
+
+static float s_target_current;
+static float s_target_velocity;
+
+static float get_float(uint32_t f) {
+  union {
+    float f;
+    uint32_t u;
+  } fu = { .f = f };
+  return fu.u;
+}
+
+static uint32_t vel_to_rpm(uint32_t f) {
+  // convert to float
+  union {
+    float f;
+    uint32_t u;
+  } fu = { .f = f };
+
+  // TODO: set actual ratio, m/s to motor rpm
+  float ratio = 1;
+
+  return fu.u * ratio;
+}
+
+static void prv_update_target_current_velocity() {
+  float throttle_percent = get_float(get_pedal_throttle_output());
+  float break_percent = get_float(get_pedal_brake_output());
+  float target_vel = prv_vel_to_rpm(get_drive_output_target_velocity());
+
+  DriveState drive_state = get_drive_output_drive_state();
+  bool regen = get_drive_output_regen_braking();
+  bool cruise = get_drive_output_cruise_control();
+
+  if (cruise && throttle_percent > CRUISE_THROTTLE_THRESHOLD) {
+    drive_state = DRIVE;
   }
-  s_missed_message--;
+  if (break_percent > 0 || throttle_percent == 0) {
+    drive_state = regen ? BREAK : NEUTRAL;
+  }
+
+  // set target current and velocity based on drive state
+  // https://tritiumcharging.com/wp-content/uploads/2020/11/TritiumWaveSculptor22_Manual.pdf 18.3
+  switch (drive_state) {
+    case DRIVE:
+      s_target_current = throttle_percent;
+      s_target_velocity = TORQUE_CONTROL_VEL;
+      break;
+    case REVERSE:
+      s_target_current = throttle_percent;
+      s_target_velocity = -TORQUE_CONTROL_VEL;
+      break;
+    case CRUISE:
+      s_target_current = ACCERLATION_FORCE;
+      s_target_velocity = target_vel;
+      break;
+    case BREAK:
+      s_target_current = ACCERLATION_FORCE;
+      s_target_velocity = 0;
+      break;
+    case NEUTRAL:
+      s_target_current = 0;
+      s_target_velocity = 0;
+      break;
+    default:
+      // invalid drive state
+      return;
+  }
+}
+
+static void motor_controller_tx_all() {
+  // TODO: add can watchdog to shut down motor controller if messages are not received from
+  // center console
+  prv_update_target_current_velocity();
 
   CanMessage message = {
     .id.raw = DRIVER_CONTROL_BASE + 0x01,
@@ -49,14 +119,6 @@ static void motor_controller_tx_all() {
   memcpy(&message.data_u32[1], &s_target_velocity, sizeof(s_target_velocity));
 
   mcp2515_transmit(&message);
-}
-
-static float get_float(uint32_t f) {
-  union {
-    float f;
-    uint32_t u;
-  } fu = { .f = f };
-  return fu.u;
 }
 
 static void motor_controller_rx_all() {
