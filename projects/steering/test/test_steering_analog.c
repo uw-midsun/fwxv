@@ -27,21 +27,26 @@ TASK(steering_analog_input_task, TASK_STACK_512) {
 }
 
 TEST_IN_TASK
-void test_steering_analog(void) {
+void test_steering_analog_right(void) {
   adc_init(ADC_MODE_SINGLE);
-
   control_stalk_data = STEERING_CONTROL_STALK_LEFT_SIGNAL_VOLTAGE_MV;
   set_reading(s_ctrl_stk_address, control_stalk_data);
   tasks_init_task(steering_analog_input_task, TASK_PRIORITY(1), NULL);
   delay_ms(20);
   TEST_ASSERT_EQUAL(g_tx_struct.steering_info_analog_input, STEERING_LIGHT_LEFT);
+}
 
+void test_steering_analog_left(void) {
+  adc_init(ADC_MODE_SINGLE);
   control_stalk_data = STEERING_CONTROL_STALK_RIGHT_SIGNAL_VOLTAGE_MV;
   set_reading(s_ctrl_stk_address, control_stalk_data);
   tasks_init_task(steering_analog_input_task, TASK_PRIORITY(1), NULL);
   delay_ms(20);
   TEST_ASSERT_EQUAL(g_tx_struct.steering_info_analog_input, STEERING_LIGHT_RIGHT);
+}
 
+test_steering_analog_off(void) {
+  adc_init(ADC_MODE_SINGLE);
   control_stalk_data = 0;
   set_reading(s_ctrl_stk_address, control_stalk_data);
   tasks_init_task(steering_analog_input_task, TASK_PRIORITY(1), NULL);
