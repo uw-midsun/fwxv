@@ -44,7 +44,7 @@ static void prv_handle_irq(UartPort uart);
 
 StatusCode uart_init(UartPort uart, UartSettings *settings) {
   // Reserve USART Port 1 for Retarget.c
-  if (uart == UART_PORT_1 || settings == NULL) return STATUS_CODE_INVALID_ARGS;
+  // if (uart == UART_PORT_1 || settings == NULL) return STATUS_CODE_INVALID_ARGS;
   if (s_port[uart].initialized) return STATUS_CODE_RESOURCE_EXHAUSTED;
 
   s_port[uart].rcc_cmd(s_port[uart].periph, ENABLE);
@@ -61,6 +61,9 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
 
   gpio_init_pin(&settings->tx, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&settings->rx, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
+
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+  GPIO_PinRemapConfig(GPIO_Remap_USART1, ENABLE);
 
   USART_InitTypeDef usart_init;
   USART_StructInit(&usart_init);
