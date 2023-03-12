@@ -40,7 +40,7 @@ typedef enum DriveState {
 static float s_target_current;
 static float s_target_velocity;
 
-static float get_float(uint32_t f) {
+static float prv_get_float(uint32_t f) {
   union {
     float f;
     uint32_t u;
@@ -49,9 +49,9 @@ static float get_float(uint32_t f) {
 }
 
 static void prv_update_target_current_velocity() {
-  float throttle_percent = get_float(get_pedal_throttle_output());
-  float break_percent = get_float(get_pedal_brake_output());
-  float target_vel = get_float(get_drive_output_target_velocity()) * VEL_TO_RPM_RATIO;
+  float throttle_percent = prv_get_float(get_pedal_throttle_output());
+  float break_percent = prv_get_float(get_pedal_brake_output());
+  float target_vel = prv_get_float(get_drive_output_target_velocity()) * VEL_TO_RPM_RATIO;
 
   DriveState drive_state = get_drive_output_drive_state();
   bool regen = get_drive_output_regen_braking();
@@ -120,28 +120,28 @@ static void motor_controller_rx_all() {
         break;
 
       case MOTOR_CONTROLLER_BASE_L + BUS_MEASUREMENT:
-        set_motor_controller_vc_mc_current_l(get_float(msg.data_u32[0]) * CURRENT_SCALE);
-        set_motor_controller_vc_mc_voltage_l(get_float(msg.data_u32[1]) * VOLTAGE_SCALE);
+        set_motor_controller_vc_mc_current_l(prv_get_float(msg.data_u32[0]) * CURRENT_SCALE);
+        set_motor_controller_vc_mc_voltage_l(prv_get_float(msg.data_u32[1]) * VOLTAGE_SCALE);
         break;
       case MOTOR_CONTROLLER_BASE_R + BUS_MEASUREMENT:
-        set_motor_controller_vc_mc_current_r(get_float(msg.data_u32[0]) * CURRENT_SCALE);
-        set_motor_controller_vc_mc_voltage_r(get_float(msg.data_u32[1]) * VOLTAGE_SCALE);
+        set_motor_controller_vc_mc_current_r(prv_get_float(msg.data_u32[0]) * CURRENT_SCALE);
+        set_motor_controller_vc_mc_voltage_r(prv_get_float(msg.data_u32[1]) * VOLTAGE_SCALE);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
-        set_motor_velocity_velocity_l(get_float(msg.data_u32[0]) * VELOCITY_SCALE);
+        set_motor_velocity_velocity_l(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE);
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
-        set_motor_velocity_velocity_r(get_float(msg.data_u32[0]) * VELOCITY_SCALE);
+        set_motor_velocity_velocity_r(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:
-        set_motor_sink_temps_heatsink_temp_l(get_float(msg.data_u32[0]) * TEMP_SCALE);
-        set_motor_sink_temps_motor_temp_l(get_float(msg.data_u32[1]) * TEMP_SCALE);
+        set_motor_sink_temps_heatsink_temp_l(prv_get_float(msg.data_u32[0]) * TEMP_SCALE);
+        set_motor_sink_temps_motor_temp_l(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
         break;
       case MOTOR_CONTROLLER_BASE_R + HEAT_SINK_MOTOR_TEMP:
-        set_motor_sink_temps_heatsink_temp_r(get_float(msg.data_u32[0]) * TEMP_SCALE);
-        set_motor_sink_temps_motor_temp_r(get_float(msg.data_u32[1]) * TEMP_SCALE);
+        set_motor_sink_temps_heatsink_temp_r(prv_get_float(msg.data_u32[0]) * TEMP_SCALE);
+        set_motor_sink_temps_motor_temp_r(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
         break;
     }
   }
