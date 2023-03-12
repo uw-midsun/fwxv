@@ -29,6 +29,8 @@
       target:
         - motor_controller
         - pedal
+        - power_distribution_front
+        - power_distribution_rear 
       critical: true
       signals:
         sequence:
@@ -39,6 +41,8 @@
       target:
         - motor_controller
         - pedal
+        - power_distribution_front
+        - power_distribution_rear
       critical: true
       signals:
         sequence:
@@ -49,6 +53,8 @@
       target:
         - motor_controller
         - pedal
+        - power_distribution_front
+        - power_distribution_rear
       critical: true
       signals:
         sequence:
