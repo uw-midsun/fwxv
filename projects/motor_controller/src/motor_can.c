@@ -48,23 +48,10 @@ static float get_float(uint32_t f) {
   return fu.u;
 }
 
-static uint32_t vel_to_rpm(uint32_t f) {
-  // convert to float
-  union {
-    float f;
-    uint32_t u;
-  } fu = { .f = f };
-
-  // TODO: set actual ratio, m/s to motor rpm
-  float ratio = 1;
-
-  return fu.u * ratio;
-}
-
 static void prv_update_target_current_velocity() {
   float throttle_percent = get_float(get_pedal_throttle_output());
   float break_percent = get_float(get_pedal_brake_output());
-  float target_vel = prv_vel_to_rpm(get_drive_output_target_velocity());
+  float target_vel = get_float(get_drive_output_target_velocity()) * VEL_TO_RPM_RATIO;
 
   DriveState drive_state = get_drive_output_drive_state();
   bool regen = get_drive_output_regen_braking();

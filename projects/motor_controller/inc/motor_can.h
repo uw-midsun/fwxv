@@ -9,7 +9,8 @@
 
 #define ACCERLATION_FORCE 1
 #define CRUISE_THROTTLE_THRESHOLD 0
-#define TORQUE_CONTROL_VEL 20000
+#define TORQUE_CONTROL_VEL 20000  // unobtainable rpm for current control
+#define VEL_TO_RPM_RATIO 1.0      // TODO: set actual ratio, m/s to motor rpm
 
 #define DRIVER_CONTROL_BASE 0x1
 #define MOTOR_CONTROLLER_BASE_L 0x40
