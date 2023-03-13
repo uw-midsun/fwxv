@@ -56,8 +56,6 @@ TASK(CAN_RX, TASK_MIN_STACK_SIZE)
 
     can_rx_all();
 
-    clear_rx_struct();
-
     send_task_end();
   }
 }
@@ -75,7 +73,7 @@ TASK(CAN_TX, TASK_MIN_STACK_SIZE)
 
     can_tx_all();
 
-    clear_tx_struct();
+    clear_rx_received();
 
     send_task_end();
   }

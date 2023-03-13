@@ -5,6 +5,12 @@
 #include "can_codegen.h"
 #include "can_watchdog.h"
 
+{% for message, message_data in messages.items() %}
+    {%- if message_data["target"][board]["watchdog"] != 0 %}
+static CanWatchDog s_{{message}}_msg_watchdog = {0, {{message_data["target"][board]["watchdog"] | lower}}};
+    {%- endif %}
+{%- endfor %}
+
 void can_rx_all() {
     CanMessage msg = { 0 };
     while (can_receive(&msg) == STATUS_CODE_OK) {
@@ -12,7 +18,6 @@ void can_rx_all() {
         // Might be O(n)
         // If store all functions in callback array may be better?
         // Or do some sort or binary search for O(lgn)
-        watchdog_check(msg.id.raw);
         switch (msg.id.raw) {
         {%- for message, message_data in messages.items() %}
             case SYSTEM_CAN_MESSAGE_{{message_data["src"] | upper}}_{{message | upper}}:
@@ -22,10 +27,34 @@ void can_rx_all() {
                 {%- set offset.value = offset.value + signal_data.length %}
             {%- endfor %}
                 g_rx_struct.received_{{message}} = true;
+            {%- if message_data["target"][board]["watchdog"] %}
+                s_{{message}}_msg_watchdog.cycles_over = 0;
+            {%- endif %}
                 break;
         {%- endfor %}
             default:
                 break;
         }
     }
+}
+
+void clear_rx_received() {
+{%- for message, message_data in messages.items() %}
+    g_rx_struct.received_{{message}} = false;
+{%- endfor %}
+}
+
+StatusCode check_can_watchdogs() {
+{%- for message, message_data in messages.items() %}
+    {%- if message_data["target"][board]["watchdog"] != 0 %}
+    if (!g_rx_struct.received_{{message}}) {
+        ++s_{{message}}_msg_watchdog.cycles_over;
+        if (s_{{message}}_msg_watchdog.cycles_over >= s_{{message}}_msg_watchdog.max_cycles) {
+            LOG_CRITICAL("DID NOT RECEIVE CAN MESSAGE: %u IN MAX CYCLES : %u\n", SYSTEM_CAN_MESSAGE_{{message_data["src"] | upper}}_{{message | upper}},
+                            s_{{message}}_msg_watchdog.max_cycles);
+        }
+    }
+    {%- endif %}
+{%- endfor %}
+    return STATUS_CODE_OK;
 }

@@ -13,7 +13,8 @@
     lights_sync:
       id: 23
       target:
-        - lights_front
+        lights_front:
+          watchdog: 0
       signals:
         signal1:
           length: 8
@@ -21,7 +22,8 @@
     rear_current_measurement:
       id: 55
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       signals:
         current_id:
           length: 16
@@ -31,7 +33,8 @@
     rear_pd_fault:
       id: 61
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       signals:
         fault_data:
           length: 16

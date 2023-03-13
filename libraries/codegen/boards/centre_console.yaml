@@ -13,10 +13,14 @@
     set_relay_states:
       id: 1
       target:
-        - bms_carrier
-        - motor_controller
-        - solar_5_mppts
-        - solar_6_mppts
+        bms_carrier:
+          watchdog: 0
+        motor_controller:
+          watchdog: 0
+        solar_5_mppts:
+          watchdog: 0
+        solar_6_mppts:
+          watchdog: 0
       critical: true
       signals:
         relay_mask:
@@ -27,10 +31,14 @@
     power_on_main_sequence:
       id: 6
       target:
-        - motor_controller
-        - pedal
-        - power_distribution_front
-        - power_distribution_rear 
+        motor_controller:
+          watchdog: 0
+        pedal:
+          watchdog: 0
+        power_distribution_front:
+          watchdog: 0
+        power_distribution_rear :
+          watchdog: 0
       critical: true
       signals:
         sequence:
@@ -39,10 +47,14 @@
     power_off_main_sequence:
       id: 7
       target:
-        - motor_controller
-        - pedal
-        - power_distribution_front
-        - power_distribution_rear
+        motor_controller:
+          watchdog: 0
+        pedal:
+          watchdog: 0
+        power_distribution_front:
+          watchdog: 0
+        power_distribution_rear:
+          watchdog: 0
       critical: true
       signals:
         sequence:
@@ -51,10 +63,14 @@
     power_on_aux_sequence:
       id: 8
       target:
-        - motor_controller
-        - pedal
-        - power_distribution_front
-        - power_distribution_rear
+        motor_controller:
+          watchdog: 0
+        pedal:
+          watchdog: 0
+        power_distribution_front:
+          watchdog: 0
+        power_distribution_rear:
+          watchdog: 0
       critical: true
       signals:
         sequence:
@@ -63,7 +79,8 @@
     drive_output:
       id: 9
       target:
-        - motor_controller
+        motor_controller:
+          watchdog: 0
       critical: true
       signals:
         target_velocity:
@@ -80,7 +97,8 @@
     set_ebrake_state:
       id: 10
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       critical: true
       signals:
         ebrake_state:
@@ -89,7 +107,8 @@
     ready_to_drive:
       id: 13
       target:
-        - telemetry
+        telemetry:
+          watchdog: 0
       signals:
         ready_state:
           length: 8
@@ -97,7 +116,8 @@
     begin_precharge:
       id: 28
       target:
-        - motor_controller
+        motor_controller:
+          watchdog: 0
       signals:
         signal1:
           length: 8
@@ -105,7 +125,8 @@
     hazard:
       id: 32
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       signals:
         state:
           length: 8
@@ -113,7 +134,8 @@
     discharge_precharge:
       id: 31
       target:
-        - motor_controller
+        motor_controller:
+          watchdog: 0
       signals:
         signal1:
           length: 8
@@ -121,7 +143,8 @@
     state_transition_fault:
       id: 34
       target:
-        - telemetry
+        telemetry:
+          watchdog: 0
       signals:
         state_machine:
           length: 16
@@ -131,7 +154,8 @@
     allow_charging:
       id: 49
       target:
-        - charger
+        charger:
+          watchdog: 0
       signals:
         signal1:
           length: 8

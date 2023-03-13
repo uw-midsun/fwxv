@@ -13,7 +13,8 @@
     relay_open_ok_6_mppts:
       id: 15
       target:
-        - telemetry
+        telemetry:
+          watchdog: 0
       signals:
         signal1:
           length: 8
@@ -21,7 +22,8 @@
     solar_data_6_mppts:
       id: 51
       target:
-        - telemetry
+        telemetry:
+          watchdog: 0
       signals:
         data_point_type:
           length: 32
@@ -31,8 +33,10 @@
     solar_fault_6_mppts:
       id: 52
       target:
-        - telemetry
-        - centre_console
+        telemetry:
+          watchdog: 0
+        centre_console:
+          watchdog: 0
       signals:
         fault:
           length: 8

@@ -13,7 +13,8 @@
     power_select_status:
       id: 1
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       critical: true
       signals:
         status:
@@ -23,7 +24,8 @@
     power_select_aux_measurements:
       id: 2
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       signals:
         aux_voltage:
           length: 16
@@ -36,7 +38,8 @@
     power_select_dcdc_measurements:
       id: 3
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       signals:
         dcdc_voltage:
           length: 16

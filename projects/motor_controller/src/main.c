@@ -5,13 +5,13 @@
 #include "delay.h"
 #include "fsm.h"
 #include "log.h"
+#include "master_task.h"
 #include "mcp2515.h"
 #include "misc.h"
 #include "motor_can.h"
 #include "precharge_control.h"
 #include "soft_timer.h"
 #include "tasks.h"
-#include "master_task.h"
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
@@ -40,8 +40,7 @@ PrechargeControlSettings precharge_settings = {
   .precharge_monitor2 = { GPIO_PORT_A, 8 },
 };
 
-void run_fast_cycle()
-{
+void run_fast_cycle() {
   run_can_rx_cycle();
   run_mcp2515_rx_cycle();
   wait_tasks(2);
@@ -54,7 +53,6 @@ void run_fast_cycle()
 void run_medium_cycle() {}
 
 void run_slow_cycle() {}
-
 
 int main() {
   tasks_init();

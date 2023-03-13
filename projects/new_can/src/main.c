@@ -2,12 +2,12 @@
 
 #include "can.h"
 #include "can_board_ids.h"
+#include "can_watchdog.h"
+#include "delay.h"
 #include "log.h"
+#include "master_task.h"
 #include "new_can_setters.h"
 #include "tasks.h"
-#include "master_task.h"
-#include "delay.h"
-#include "can_watchdog.h"
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
@@ -18,8 +18,7 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
-void run_fast_cycle() {
-}
+void run_fast_cycle() {}
 
 void run_medium_cycle() {
   run_can_rx_cycle();
@@ -37,9 +36,7 @@ int main() {
 
   LOG_DEBUG("Welcome to CAN!\n");
   can_init(&s_can_storage, &can_settings);
-  can_watchdogs_init();
   can_add_filter_in(SYSTEM_CAN_MESSAGE_NEW_CAN_TRANSMIT_MSG1);
-  can_add_watchdog(0, 1);
 
   init_master_task();
 

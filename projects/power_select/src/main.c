@@ -1,9 +1,9 @@
 #include <stdio.h>
 
 #include "log.h"
+#include "master_task.h"
 #include "power_select.h"
 #include "tasks.h"
-#include "master_task.h"
 
 void run_fast_cycle() {}
 

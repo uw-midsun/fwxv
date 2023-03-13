@@ -9,12 +9,12 @@
 #include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
+#include "master_task.h"
 #include "max11600.h"
 #include "pedal_data.h"
 #include "pedal_setters.h"
 #include "soft_timer.h"
 #include "tasks.h"
-#include "master_task.h"
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {

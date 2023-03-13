@@ -7,10 +7,10 @@
 #include "gpio_it.h"
 #include "gpio_mcu.h"
 #include "log.h"
+#include "master_task.h"
 #include "steering_analog_task.h"
 #include "steering_digital_task.h"
 #include "tasks.h"
-#include "master_task.h"
 
 #define DEVICE_ID 0x02
 
@@ -37,7 +37,6 @@ void run_medium_cycle() {
 }
 
 void run_slow_cycle() {}
-
 
 int main() {
   tasks_init();
