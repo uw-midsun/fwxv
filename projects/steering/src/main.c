@@ -10,12 +10,7 @@
 #include "steering_analog_task.h"
 #include "steering_digital_task.h"
 #include "tasks.h"
-
-#ifdef MS_PLATFORM_X86
-#define MASTER_MS_CYCLE_TIME 100
-#else
-#define MASTER_MS_CYCLE_TIME 1000
-#endif
+#include "master_task.h"
 
 #define DEVICE_ID 0x02
 
@@ -43,22 +38,6 @@ void run_medium_cycle() {
 
 void run_slow_cycle() {}
 
-TASK(master_task, TASK_MIN_STACK_SIZE) {
-  int counter = 0;
-  while (true) {
-#ifdef TEST
-    xSemaphoreTake(test_cycle_start_sem);
-#endif
-    run_fast_cycle();
-    if (!(counter % 10)) run_medium_cycle();
-    if (!(counter % 100)) run_slow_cycle();
-#ifdef TEST
-    xSemaphoreGive(test_cycle_end_sem);
-#endif
-    vTaskDelay(pdMS_TO_TICKS(1000));
-    ++counter;
-  }
-}
 
 int main() {
   tasks_init();
@@ -69,10 +48,10 @@ int main() {
   // Setup analog inputs and initialize adc
   steering_analog_adc_init();
   adc_init(ADC_MODE_SINGLE);
-  steering_digital_input_init(master_task);
+  steering_digital_input_init(get_master_task());
 
   can_init(&s_can_storage, &can_settings);
-  tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
+  init_master_task();
   tasks_start();
 
   return 0;

@@ -3,6 +3,7 @@
 
 #include "can_board_ids.h"
 #include "can_codegen.h"
+#include "can_watchdog.h"
 
 void can_rx_all() {
     CanMessage msg = { 0 };
@@ -11,6 +12,7 @@ void can_rx_all() {
         // Might be O(n)
         // If store all functions in callback array may be better?
         // Or do some sort or binary search for O(lgn)
+        watchdog_check(msg.id.raw);
         switch (msg.id.raw) {
         {%- for message, message_data in messages.items() %}
             case SYSTEM_CAN_MESSAGE_{{message_data["src"] | upper}}_{{message | upper}}:
@@ -19,6 +21,7 @@ void can_rx_all() {
                 g_rx_struct.{{message}}_{{signal}} = (msg.data >> {{offset.value}});
                 {%- set offset.value = offset.value + signal_data.length %}
             {%- endfor %}
+                g_rx_struct.received_{{message}} = true;
                 break;
         {%- endfor %}
             default:

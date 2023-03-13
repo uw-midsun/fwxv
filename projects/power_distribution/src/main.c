@@ -7,12 +7,7 @@
 #include "log.h"
 #include "power_seq_fsm.h"
 #include "tasks.h"
-
-#ifdef MS_PLATFORM_X86
-#define MASTER_MS_CYCLE_TIME 100
-#else
-#define MASTER_MS_CYCLE_TIME 1000
-#endif
+#include "master_task.h"
 
 #define DEVICE_ID 0x04
 
@@ -51,7 +46,7 @@ int main() {
   can_init(&s_can_storage, &can_settings);
   init_power_seq();
   init_lights();
-  tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
+  init_master_task();
 
   tasks_start();
 
