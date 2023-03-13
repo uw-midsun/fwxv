@@ -21,6 +21,7 @@ void teardown_test(void) {}
 
 TASK(steering_analog_input_task, TASK_STACK_512) {
   LOG_DEBUG("steering_analog_input started\n");
+  steering_analog_adc_init();
   steering_analog_input();
   while (true) {
   }
