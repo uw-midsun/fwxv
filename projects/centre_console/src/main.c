@@ -19,9 +19,8 @@ void run_fast_cycle() {}
 
 void run_medium_cycle() {
   fsm_run_cycle(drive_fsm);
-  wait_tasks(1);
   fsm_run_cycle(centre_console_power_fsm);
-  wait_tasks(1);
+  wait_tasks(2);
   // delay_ms(1000);
 }
 

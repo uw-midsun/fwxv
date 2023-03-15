@@ -1,5 +1,7 @@
 #pragma once 
 #include "fsm.h"
+#include "log.h"
+
 
 void prv_get_precharge_input(Fsm *fsm, void *context);
 void prv_get_precharge_output(void *context);
