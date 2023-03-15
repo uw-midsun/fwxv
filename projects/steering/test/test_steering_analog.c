@@ -57,7 +57,7 @@ void test_steering_analog_left(void) {
 //   adc_init(ADC_MODE_SINGLE);
 //   control_stalk_data = STEERING_CONTROL_STALK_RIGHT_SIGNAL_VOLTAGE_MV;
 //   set_reading(s_ctrl_stk_address, &control_stalk_data);
-//   tasks_init_task(steering_analog_input_right, TASK_PRIORITY(1), NULL);
+//   tasks_init_task(steering_analog_input_right, TASK_PRIORITY(2), NULL);
 //   delay_ms(20);
 // }
 
@@ -66,6 +66,6 @@ void test_steering_analog_left(void) {
 //   adc_init(ADC_MODE_SINGLE);
 //   control_stalk_data = 0;
 //   set_reading(s_ctrl_stk_address, &control_stalk_data);
-//   tasks_init_task(steering_analog_input_off, TASK_PRIORITY(1), NULL);
+//   tasks_init_task(steering_analog_input_off, TASK_PRIORITY(3), NULL);
 //   delay_ms(20);
 // }
