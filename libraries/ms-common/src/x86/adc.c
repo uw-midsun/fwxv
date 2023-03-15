@@ -235,14 +235,15 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
 }
 
 // Getters and setters to test if ADC works
-void set_reading(GpioAddress sample_address, uint16_t adc_reading) {
+void set_reading(GpioAddress sample_address, uint16_t *adc_reading) {
   uint8_t adc_channel;
+  gpio_init_pin(&sample_address, GPIO_INPUT_PULL_DOWN, GPIO_STATE_LOW);
   adc_add_channel(sample_address);
   adc_init(ADC_MODE_SINGLE);
   adc_get_channel(sample_address, &adc_channel);
-  // This should mimic what adc_mock is supposed to be doing
+  // This should mimic what adc_mock would to be doing
   s_adc_stores[adc_channel].channel = adc_channel;
-  s_adc_stores[adc_channel].reading = adc_reading;
+  s_adc_stores[adc_channel].reading = *adc_reading;
   s_adc_stores[ADC_Channel_Vrefint].reading = 4095;
   delay_ms(20);
   mutex_unlock(&s_adc_status.converting);

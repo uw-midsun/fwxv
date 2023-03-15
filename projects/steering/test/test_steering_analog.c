@@ -21,7 +21,6 @@ void teardown_test(void) {}
 
 TASK(steering_analog_input_task, TASK_STACK_512) {
   LOG_DEBUG("steering_analog_input started\n");
-  steering_analog_adc_init();
   steering_analog_input();
   while (true) {
   }
@@ -31,9 +30,9 @@ TEST_IN_TASK
 void test_steering_analog_right(void) {
   adc_init(ADC_MODE_SINGLE);
   control_stalk_data = STEERING_CONTROL_STALK_LEFT_SIGNAL_VOLTAGE_MV;
-  set_reading(s_ctrl_stk_address, control_stalk_data);
+  set_reading(s_ctrl_stk_address, &control_stalk_data);
   tasks_init_task(steering_analog_input_task, TASK_PRIORITY(1), NULL);
-  delay_ms(20);
+  delay_ms(50);
   TEST_ASSERT_EQUAL(g_tx_struct.steering_info_analog_input, STEERING_LIGHT_LEFT);
 }
 
