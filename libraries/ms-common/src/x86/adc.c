@@ -183,8 +183,8 @@ void adc_deinit(void) {
 static void adc_mock(uint8_t channel) {
   // Use hardcoded value for now
   LOG_DEBUG("Reading ADC\n");
-  s_adc_stores[channel].reading = 0xAA;
-  s_adc_stores[ADC_Channel_Vrefint].reading = 0x1;
+  // s_adc_stores[channel].reading = 0xAA;
+  // s_adc_stores[ADC_Channel_Vrefint].reading = 0x1;
   delay_ms(100);
   mutex_unlock(&s_adc_status.converting);
 }
