@@ -19,39 +19,53 @@ void setup_test(void) {
 
 void teardown_test(void) {}
 
-TASK(steering_analog_input_task, TASK_STACK_512) {
+TASK(steering_analog_input_left, TASK_STACK_512) {
   LOG_DEBUG("steering_analog_input started\n");
   steering_analog_input();
+  TEST_ASSERT_EQUAL(g_tx_struct.steering_info_analog_input, STEERING_LIGHT_LEFT);
+  while (true) {
+  }
+}
+
+TASK(steering_analog_input_right, TASK_STACK_512) {
+  LOG_DEBUG("steering_analog_input started\n");
+  steering_analog_input();
+  TEST_ASSERT_EQUAL(g_tx_struct.steering_info_analog_input, STEERING_LIGHT_RIGHT);
+  while (true) {
+  }
+}
+
+TASK(steering_analog_input_off, TASK_STACK_512) {
+  LOG_DEBUG("steering_analog_input started\n");
+  steering_analog_input();
+  TEST_ASSERT_EQUAL(g_tx_struct.steering_info_analog_input, STEERING_LIGHT_OFF);
   while (true) {
   }
 }
 
 TEST_IN_TASK
-void test_steering_analog_right(void) {
+void test_steering_analog_left(void) {
   adc_init(ADC_MODE_SINGLE);
   control_stalk_data = STEERING_CONTROL_STALK_LEFT_SIGNAL_VOLTAGE_MV;
   set_reading(s_ctrl_stk_address, &control_stalk_data);
-  tasks_init_task(steering_analog_input_task, TASK_PRIORITY(1), NULL);
-  delay_ms(50);
-  TEST_ASSERT_EQUAL(g_tx_struct.steering_info_analog_input, STEERING_LIGHT_LEFT);
+  tasks_init_task(steering_analog_input_left, TASK_PRIORITY(1), NULL);
+  delay_ms(20);
 }
 
 // TEST_IN_TASK
-// void test_steering_analog_left(void) {
+// void test_steering_analog_right(void) {
 //   adc_init(ADC_MODE_SINGLE);
 //   control_stalk_data = STEERING_CONTROL_STALK_RIGHT_SIGNAL_VOLTAGE_MV;
-//   set_reading(s_ctrl_stk_address, control_stalk_data);
-//   tasks_init_task(steering_analog_input_task, TASK_PRIORITY(1), NULL);
+//   set_reading(s_ctrl_stk_address, &control_stalk_data);
+//   tasks_init_task(steering_analog_input_right, TASK_PRIORITY(1), NULL);
 //   delay_ms(20);
-//   TEST_ASSERT_EQUAL(g_tx_struct.steering_info_analog_input, STEERING_LIGHT_RIGHT);
 // }
 
 // TEST_IN_TASK
 // void test_steering_analog_off(void) {
 //   adc_init(ADC_MODE_SINGLE);
 //   control_stalk_data = 0;
-//   set_reading(s_ctrl_stk_address, control_stalk_data);
-//   tasks_init_task(steering_analog_input_task, TASK_PRIORITY(1), NULL);
+//   set_reading(s_ctrl_stk_address, &control_stalk_data);
+//   tasks_init_task(steering_analog_input_off, TASK_PRIORITY(1), NULL);
 //   delay_ms(20);
-//   TEST_ASSERT_EQUAL(g_tx_struct.steering_info_analog_input, STEERING_LIGHT_OFF);
 // }
