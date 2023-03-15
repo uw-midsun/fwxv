@@ -32,7 +32,7 @@ StatusCode mcp2515_transmit(const CanMessage *msg);
 StatusCode mcp2515_receive(const CanMessage *msg);
 
 // Run the can rx cycle
-StatusCode mcp2515_can_rx_cycle();
+StatusCode run_mcp2515_rx_cycle();
 
 // Run the can tx cycle
-StatusCode mcp2515_can_tx_cycle();
+StatusCode run_mcp2515_tx_cycle();
