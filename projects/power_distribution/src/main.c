@@ -3,7 +3,6 @@
 #include "can.h"
 #include "gpio.h"
 #include "gpio_it.h"
-#include "can.h"
 #include "lights_fsm.h"
 #include "log.h"
 #include "power_seq_fsm.h"
