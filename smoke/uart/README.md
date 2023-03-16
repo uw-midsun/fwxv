@@ -12,9 +12,5 @@
         - How does it fit into the overall system?
         - How does it work? (architectural overview, e.g. what each module's purpose is or how data flows through the firmware)
 -->
-# power_distribution
+# uart
 
-The power distribution project consists of two different boards, front and rear. 
-## Power Distribution Front
-
-## Power Distribution Rear

@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 #include "adc.h"
-#include "ads1015.h"
 #include "can.h"
 #include "can_board_ids.h"
 #include "can_msg.h"
@@ -10,6 +9,7 @@
 #include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
+#include "max11600.h"
 #include "pedal_data.h"
 #include "pedal_setters.h"
 #include "soft_timer.h"
@@ -30,12 +30,6 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
-// TODO(Scrubpai): Read the ADC when throttle and brake are pressed down or released,
-// and use that reading to set the upper (max) and lower bounds (min) of each pedal
-void pedal_calibrate() {
-  return;
-}
-
 void init_pedal_controls() {
   // Initialize GPIOs needed for the throttle
   interrupt_init();
@@ -51,34 +45,36 @@ void init_pedal_controls() {
   i2c_init(I2C_PORT_2, &i2c_settings);
   GpioAddress ready_pin = { .port = GPIO_PORT_B, .pin = 2 };
   adc_init(ADC_MODE_SINGLE);
-  ads1015_init(&s_ads1015_storage, I2C_PORT_2, ADS1015_ADDRESS_GND, &ready_pin);
+  max11600_init(&s_max11600_storage, I2C_PORT_2);
 }
 
 void run_fast_cycle() {
-  return;
-}
-
-void run_medium_cycle() {
   run_can_tx_cycle();
   wait_tasks(1);
 
   int16_t brake_position = INT16_MAX;
-  int16_t throttle_position = INT16_MAX;
+  int16_t throttle_position = 0;
 
-  read_brake_data(&brake_position);
-  read_throttle_data(&throttle_position);
-  // Sending messages
-  if (!brake_position) {  // Brake is not pressed - Send proper throttle data
-    set_pedal_output_brake_output((uint32_t)brake_position);
-    set_pedal_output_throttle_output((uint32_t)throttle_position);
-  } else {  // Brake is pressed - Send proper brake data with throttle as 0
-    set_pedal_output_brake_output((uint32_t)brake_position);
-    set_pedal_output_throttle_output(0);
+  StatusCode status;
+
+  status = read_brake_data(&brake_position);
+  if (status == STATUS_CODE_OK) {
+    read_throttle_data(&throttle_position);
   }
-}
 
-void run_slow_cycle() {
-  return;
+  // Only update data on STATUS_CODE_OK
+  if (status == STATUS_CODE_OK) {
+    // Sending messages
+    if (!brake_position) {
+      // Brake is not pressed - Send both readings, brake will be 0 and ignored by the receiver
+      set_pedal_output_brake_output((uint32_t)brake_position);
+      set_pedal_output_throttle_output((uint32_t)throttle_position);
+    } else {
+      // Brake is pressed - Send brake data with throttle as 0
+      set_pedal_output_brake_output((uint32_t)brake_position);
+      set_pedal_output_throttle_output(0);
+    }
+  }
 }
 
 TASK(master_task, TASK_MIN_STACK_SIZE) {
@@ -88,9 +84,6 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
     xSemaphoreTake(test_cycle_start_sem);
 #endif
     run_fast_cycle();
-    if (!(counter % 10)) run_medium_cycle();
-    if (!(counter % 100)) run_slow_cycle();
-
 #ifdef TEST
     xSemaphoreGive(test_cycle_end_sem);
 #endif

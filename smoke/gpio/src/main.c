@@ -53,14 +53,7 @@ static const GpioAddress smoke_gpio[] = {
       .port = GPIO_PORT_A,
       .pin = 10,
   },
-  {
-      .port = GPIO_PORT_A,
-      .pin = 11,
-  },
-  {
-      .port = GPIO_PORT_A,
-      .pin = 12,
-  },
+  // Pins A11-14 used for SWD/CAN
   {
       .port = GPIO_PORT_A,
       .pin = 15,
@@ -72,6 +65,10 @@ static const GpioAddress smoke_gpio[] = {
   {
       .port = GPIO_PORT_B,
       .pin = 1,
+  },
+  {
+      .port = GPIO_PORT_B,
+      .pin = 2,
   },
   {
       .port = GPIO_PORT_B,
@@ -129,31 +126,21 @@ static const GpioAddress smoke_gpio[] = {
       .port = GPIO_PORT_C,
       .pin = 13,
   },
-  {
-      .port = GPIO_PORT_C,
-      .pin = 14,
-  },
-  {
-      .port = GPIO_PORT_C,
-      .pin = 15,
-  },
 };
 
-#ifdef MS_PLATFORM_X86
-#define MASTER_MS_CYCLE_TIME 100
-#else
-#define MASTER_MS_CYCLE_TIME 1000
-#endif
-
-TASK(smoke_gpio_task, TASK_MIN_STACK_SIZE) {
+TASK(smoke_gpio_task, TASK_STACK_512) {
   for (uint8_t i = 0; i < SIZEOF_ARRAY(smoke_gpio); i++) {
-    gpio_init_pin(&smoke_gpio[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+    gpio_init_pin(&smoke_gpio[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
   }
   while (true) {
     for (uint8_t i = 0; i < SIZEOF_ARRAY(smoke_gpio); i++) {
       gpio_toggle_state(&smoke_gpio[i]);
-      delay_s(1);
     }
+    delay_s(1);
+    for (uint8_t i = 0; i < SIZEOF_ARRAY(smoke_gpio); i++) {
+      gpio_toggle_state(&smoke_gpio[i]);
+    }
+    delay_s(3);
   }
 }
 

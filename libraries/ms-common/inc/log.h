@@ -17,7 +17,7 @@ DECLARE_TASK(log_task);
 #define MAX_LOG_SIZE (size_t)200
 #define LOG_TIMEOUT_MS 10
 
-#define UARTPORT UART_PORT_2
+#define UARTPORT UART_PORT_1
 #define TX_PIN 6
 #define RX_PIN 7
 
