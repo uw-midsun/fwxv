@@ -31,18 +31,11 @@ typedef enum LightsStateId {
 
 // Light type to be used with SYSTEM_CAN_MESSAGE_LIGHTS_STATE message
 typedef enum EELightType {
-  EE_LIGHT_TYPE_STROBE = 0,
-  EE_LIGHT_TYPE_SIGNAL_RIGHT,
+  EE_LIGHT_TYPE_OFF = 0,
   EE_LIGHT_TYPE_SIGNAL_LEFT,
+  EE_LIGHT_TYPE_SIGNAL_RIGHT,
   EE_LIGHT_TYPE_SIGNAL_HAZARD,
   NUM_EE_LIGHT_TYPES,
 } EELightType;
-
-// Light state to be used with a SYSTEM_CAN_MESSAGE_LIGHTS message
-typedef enum EELightState {
-  EE_LIGHT_STATE_OFF = 0,
-  EE_LIGHT_STATE_ON,
-  NUM_EE_LIGHT_STATES,
-} EELightState;
 
 StatusCode init_lights(void);
