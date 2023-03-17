@@ -7,11 +7,12 @@
 #include "power_fsm_sequence.h"
 #include "task.h"
 
-#define NUM_CENTRE_CONSOLE_POWER_STATES 14
-#define NUM_CENTRE_CONSOLE_POWER_TRANSITIONS 40
+#define NUM_POWER_STATES 14
+#define NUM_POWER_TRANSITIONS 40
+
 DECLARE_FSM(centre_console_power_fsm);
 
-typedef enum MciFsmStateId {
+typedef enum PowerFsmStateId {
   POWER_FSM_STATE_OFF = 0,
   // -> MAIN Sequence
   POWER_FSM_CONFIRM_AUX_STATUS,
@@ -32,6 +33,11 @@ typedef enum MciFsmStateId {
   POWER_FSM_DISCHARGE_PRECHARGE,
   POWER_FSM_TURN_OFF_EVERYTHING,
   POWER_FSM_OPEN_RELAYS
-} MciFsmStateId;
+} PowerFsmStateId;
+
+typedef struct PowerFsmContext {
+  PowerFsmStateId latest_state;
+  PowerFsmStateId target_state;
+} PowerFsmContext;
 
 StatusCode init_power_fsm(void);

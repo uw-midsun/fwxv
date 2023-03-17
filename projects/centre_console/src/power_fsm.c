@@ -133,7 +133,7 @@ StatusCode init_power_fsm(void) {
   FsmSettings settings = {
     .state_list = s_power_fsm_states,
     .transitions = s_power_fsm_transitions,
-    .num_transitions = NUM_CENTRE_CONSOLE_POWER_STATES,
+    .num_transitions = NUM_POWER_STATES,
     .initial_state = POWER_FSM_STATE_OFF,
   };
   fsm_init(centre_console_power_fsm, settings, NULL);
