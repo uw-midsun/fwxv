@@ -33,7 +33,7 @@ void test_max11600_read_raw(void) {
       for (int LSB_BRAKE = 0; LSB_BRAKE < 256; LSB_BRAKE++) {
         // Mock all possible combinations of LSD onto the I2C
         uint8_t tx_data[] = { LSB_THROTTLE, LSB_STEERING, LSB_BRAKE };
-        i2c_write(TEST_MAX11600_I2C_PORT, MAX11600_WRITE_ADDRESS, &tx_data, 3);
+        i2c_write(TEST_MAX11600_I2C_PORT, MAX11600_WRITE_ADDRESS, tx_data, 3);
         // Read the raw data from the MAX11600
         TEST_ASSERT_OK(max11600_read_raw(&max_storage));
         for (int channel = 0; channel < 3; channel++) {
@@ -50,7 +50,7 @@ void test_max11600_read_converted(void) {
       for (int LSB_BRAKE = 0; LSB_BRAKE < 256; LSB_BRAKE++) {
         // Mock all possible combinations of LSD onto the I2C
         uint8_t tx_data[] = { LSB_THROTTLE, LSB_STEERING, LSB_BRAKE };
-        i2c_write(TEST_MAX11600_I2C_PORT, MAX11600_WRITE_ADDRESS, &tx_data, 3);
+        i2c_write(TEST_MAX11600_I2C_PORT, MAX11600_WRITE_ADDRESS, tx_data, 3);
         // Read the converted data from the MAX11600
         TEST_ASSERT_OK(max11600_read_converted(&max_storage));
         for (int channel = 0; channel < 3; channel++) {
