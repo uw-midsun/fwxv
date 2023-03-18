@@ -45,6 +45,7 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
 int main() {
   tasks_init();
   log_init();
+  gpio_init();
   LOG_DEBUG("Welcome to TEST!");
 
   can_init(&s_can_storage, &can_settings);

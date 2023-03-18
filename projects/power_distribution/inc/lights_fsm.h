@@ -12,12 +12,6 @@
 #define NUM_LIGHTS_STATES 4
 #define NUM_LIGHTS_TRANSITIONS 10
 
-#define RIGHT_LIGHT_ADDR \
-  { .port = GPIO_PORT_A, .pin = 13 }
-
-#define LEFT_LIGHT_ADDR \
-  { .port = GPIO_PORT_A, .pin = 12 }
-
 DECLARE_FSM(lights);
 
 // Light events matches CAN message defs from steering analog
