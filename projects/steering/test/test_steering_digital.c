@@ -3,14 +3,14 @@
 #include "gpio.h"
 #include "gpio_it.h"
 #include "notify.h"
-#include "steering_digital_task.h"
 #include "status.h"
+#include "steering_digital_task.h"
 #include "task_test_helpers.h"
 #include "unity.h"
 
 #define DEVICE_ID 0x04
 #define INVALID_STEERING_CAN_EVENT \
-    {.id = 16, .data = 0}
+  { .id = 16, .data = 0 }
 
 #define DIGITAL_INPUT g_tx_struct.steering_info_digital_input
 
@@ -37,7 +37,7 @@ void setup_test(void) {
 void teardown_test(void) {}
 
 TASK(handler, TASK_MIN_STACK_SIZE) {
-  while (true) {  
+  while (true) {
     steering_digital_input();
   }
 }
@@ -78,7 +78,8 @@ void test_steering_regen_brake() {
   // Test Regen brake event & CAN message - press and unpress
   TEST_ASSERT_OK(gpio_it_trigger_interrupt(&REGEN_BRAKE_TOGGLE_GPIO_ADDR));
   delay_ms(100);
-  TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_REGEN_BRAKE_MASK, DIGITAL_SIGNAL_REGEN_BRAKE_MASK);
+  TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_REGEN_BRAKE_MASK,
+                    DIGITAL_SIGNAL_REGEN_BRAKE_MASK);
 
   TEST_ASSERT_OK(gpio_it_trigger_interrupt(&REGEN_BRAKE_TOGGLE_GPIO_ADDR));
   delay_ms(100);
@@ -90,10 +91,12 @@ void test_steering_cc_increase_decrease() {
   // Test CC increase speed event & CAN message - press
   TEST_ASSERT_OK(gpio_it_trigger_interrupt(&CC_INCREASE_SPEED_GPIO_ADDR));
   delay_ms(100);
-  TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_CC_INCREASE_MASK, DIGITAL_SIGNAL_CC_INCREASE_MASK);
+  TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_CC_INCREASE_MASK,
+                    DIGITAL_SIGNAL_CC_INCREASE_MASK);
 
   // Test CC decrease speed event & CAN message - press
   TEST_ASSERT_OK(gpio_it_trigger_interrupt(&CC_DECREASE_SPEED_GPIO_ADDR));
   delay_ms(100);
-  TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_CC_DECREASE_MASK, DIGITAL_SIGNAL_CC_DECREASE_MASK);
+  TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_CC_DECREASE_MASK,
+                    DIGITAL_SIGNAL_CC_DECREASE_MASK);
 }
