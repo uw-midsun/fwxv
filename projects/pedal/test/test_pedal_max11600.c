@@ -36,7 +36,7 @@ void test_max11600_read_raw(void) {
         i2c_write(TEST_MAX11600_I2C_PORT, MAX11600_WRITE_ADDRESS, &tx_data, 3);
         // Read the raw data from the MAX11600
         TEST_ASSERT_OK(max11600_read_raw(&max_storage));
-        for (int channel = 0; channel < NUM_MAX11600_CHANNELS; channel++) {
+        for (int channel = 0; channel < 3; channel++) {
           TEST_ASSERT_EQUAL(tx_data[channel], max_storage.channel_readings[channel]);
         }
       }
@@ -53,7 +53,7 @@ void test_max11600_read_converted(void) {
         i2c_write(TEST_MAX11600_I2C_PORT, MAX11600_WRITE_ADDRESS, &tx_data, 3);
         // Read the converted data from the MAX11600
         TEST_ASSERT_OK(max11600_read_converted(&max_storage));
-        for (int channel = 0; channel < NUM_MAX11600_CHANNELS; channel++) {
+        for (int channel = 0; channel < 3; channel++) {
           // Calculate the expected converted value
           uint16_t expected_converted_value = 1000 * REFERENCE_VOLTAGE_V * tx_data[channel] / 256;
           TEST_ASSERT_EQUAL(expected_converted_value, max_storage.channel_readings[channel]);
