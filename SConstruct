@@ -64,6 +64,16 @@ AddOption(
     action='store'
 )
 
+# Only for the power distribution project to specify front or rear PD
+
+AddOption(
+    '--location',
+    dest='location',
+    type='string',
+    action='store',
+    default='front',
+)
+
 # Adding Memory Report Argument to Environment Flags
 # Note platform needs to be explicitly set to arm
 

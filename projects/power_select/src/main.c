@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "log.h"
+#include "power_select.h"
 #include "tasks.h"
 
 #ifdef MS_PLATFORM_X86
