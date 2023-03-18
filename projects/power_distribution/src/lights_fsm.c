@@ -3,10 +3,8 @@
 #include "power_distribution_front_getters.h"
 
 // Placeholder GPIO Address, will be updated
-#define RIGHT_LIGHT_ADDR \
-  { .port = GPIO_PORT_A, .pin = 11 }
-#define LEFT_LIGHT_ADDR \
-  { .port = GPIO_PORT_A, .pin = 12 }
+GpioAddress RIGHT_LIGHT_ADDR = { .port = GPIO_PORT_A, .pin = 11 };
+GpioAddress LEFT_LIGHT_ADDR = { .port = GPIO_PORT_A, .pin = 12 };
 
 // Softtimer module setup for light blinkers
 static SoftTimer s_timer_single;
