@@ -47,6 +47,7 @@ static bool is_disconnected = false;
 void uv_logic() {
   GpioState uv_value;
   if (is_disconnected) {
+    set_uv_cutoff_notification_signal1(true);
     return;
   }
 
@@ -56,7 +57,6 @@ void uv_logic() {
   }
   if (uv_value == GPIO_STATE_LOW) {
     is_disconnected = true;
-    set_uv_cutoff_notification_signal1(true);
     return;
   }
 
