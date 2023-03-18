@@ -1,26 +1,23 @@
 #pragma once
 #include "gpio.h"
-#include "gpio_it.h"
-typedef struct PinsBcd {
+
+// Functions to initialize and then set integers and floats to the 7 segment display
+typedef struct SegDisplay {
   const GpioAddress A;
   const GpioAddress B;
   const GpioAddress C;
   const GpioAddress D;
   const GpioAddress DP;
-} PinsBcd;
-
-typedef struct DispPins {
   const GpioAddress D1;
   const GpioAddress D2;
   const GpioAddress D3;
-} DispPins;
+} SegDisplay;
 
-StatusCode seg_display_init();
+// Initializes input and display GPIOs
+StatusCode seg_display_init(SegDisplay *display);
 
-StatusCode seg_display_set_int(uint16_t val);
+// Sets an integer value onto the display with a max value of 999
+StatusCode seg_display_set_int(SegDisplay *display, uint16_t val);
 
-StatusCode set_display_set_float(float val);
-
-void set_seg_display(uint8_t disp_value, uint8_t pin_number);
-
-void seg_gpio_init();
+// Sets a single digit decimal value onto the display with a max value of 99.9
+StatusCode set_display_set_float(SegDisplay *display, float val);
