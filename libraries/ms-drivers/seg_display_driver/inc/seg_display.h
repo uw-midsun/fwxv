@@ -23,4 +23,4 @@ StatusCode seg_display_init(SegDisplay *display);
 StatusCode seg_display_set_int(SegDisplay *display, uint16_t val);
 
 // Sets a single digit decimal value onto the display with a max value of 99.9
-StatusCode set_display_set_float(SegDisplay *display, float val);
+StatusCode seg_display_set_float(SegDisplay *display, float val);

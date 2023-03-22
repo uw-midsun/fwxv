@@ -32,7 +32,7 @@ StatusCode seg_display_set_int(SegDisplay *display, uint16_t val) {
   }
 }
 
-StatusCode set_display_set_float(SegDisplay *display, float val) {
+StatusCode seg_display_set_float(SegDisplay *display, float val) {
   int int_part = (int)val;
   int dec_part = (int)((val - (float)int_part) * 10);
   if (int_part > 99) {
