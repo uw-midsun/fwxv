@@ -1,6 +1,5 @@
 #include "seg_display.h"
 
-#include "bcd.h"
 #include "log.h"
 
 StatusCode seg_display_init(SegDisplay *display) {
@@ -45,8 +44,6 @@ StatusCode set_display_set_float(SegDisplay *display, float val) {
     set_seg_display(display, dec_part, 0);
     // Set decimal point
     gpio_set_state(&display->DP, GPIO_STATE_HIGH);
-    gpio_toggle_state(&display->DP);
-    gpio_toggle_state(&display->DP);
     return STATUS_CODE_OK;
   }
 }

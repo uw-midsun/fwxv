@@ -1,7 +1,10 @@
 #pragma once
 #include "gpio.h"
 
-// Functions to initialize and then set integers and floats to the 7 segment display
+// Functions interact with 7 segment display
+// Initializes all the gpios necessary for 7 segment display operation and sets both integers and
+// floats to the display
+
 typedef struct SegDisplay {
   const GpioAddress A;
   const GpioAddress B;
