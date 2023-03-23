@@ -21,61 +21,54 @@ StatusCode prv_set_precharge_control(PrechargeControlStorage *storage, const Gpi
 }
 
 TASK(PRECHARGE_INTERRUPT, TASK_MIN_STACK_SIZE) {
+  uint32_t notification;
   while (true) {
-    if (s_precharge_storage.state == MCI_PRECHARGE_DISCHARGED) {
-      // inconsistent until second precharge result
-      s_precharge_storage.state = MCI_PRECHARGE_INCONSISTENT;
-      set_mc_status_precharge_status(MCI_PRECHARGE_INCONSISTENT);
-    }
-  }
-}
+    notify_wait(&notification, BLOCK_INDEFINITELY);
 
-TASK(PRECHARGE_INTERRUPT2, TASK_MIN_STACK_SIZE) {
-  while (true) {
-    if (s_precharge_storage.state == MCI_PRECHARGE_INCONSISTENT) {
-      // both pins are in sync
-      s_precharge_storage.state = MCI_PRECHARGE_CHARGED;
-      set_mc_status_precharge_status(MCI_PRECHARGE_CHARGED);
+    if (notify_check_event(&notification, 0)) {
+      if (get_drive_output_precharge() == MCI_PRECHARGE_DISCHARGED) {
+        // inconsistent until second precharge result
+        set_mc_status_precharge_status(MCI_PRECHARGE_INCONSISTENT);
+      } else {
+        set_mc_status_precharge_status(MCI_PRECHARGE_CHARGED);
+      }
+    }
+    if (notify_check_event(&notification, 1)) {
+      if (get_drive_output_precharge() == MCI_PRECHARGE_DISCHARGED) {
+        // inconsistent until second precharge result
+        set_mc_status_precharge_status(MCI_PRECHARGE_INCONSISTENT);
+      } else {
+        set_mc_status_precharge_status(MCI_PRECHARGE_CHARGED);
+      }
     }
   }
 }
 
 StatusCode run_precharge_rx_cycle() {
-  if (s_precharge_storage.state == MCI_PRECHARGE_CHARGED) {
+  if (get_drive_output_precharge() == MCI_PRECHARGE_CHARGED) {
+    set_mc_status_precharge_status(MCI_PRECHARGE_CHARGED);
     return prv_set_precharge_control(&s_precharge_storage, GPIO_STATE_HIGH);
   } else {
+    set_mc_status_precharge_status(MCI_PRECHARGE_DISCHARGED);
     return prv_set_precharge_control(&s_precharge_storage, GPIO_STATE_LOW);
   }
 }
 
-PrechargeState get_precharge_state() {
-  return s_precharge_storage.state;
-}
-
 void prv_populate_storage(PrechargeControlStorage *storage,
                           const PrechargeControlSettings *settings) {
-  storage->state = MCI_PRECHARGE_DISCHARGED;
   storage->precharge_control = settings->precharge_control;
-  storage->precharge_monitor = settings->precharge_monitor;
-  storage->precharge_monitor2 = settings->precharge_monitor2;
-  storage->initialized = true;
 }
 
 StatusCode precharge_control_init(const PrechargeControlSettings *settings) {
-  if (s_precharge_storage.initialized) {
-    return STATUS_CODE_INTERNAL_ERROR;
-  }
   interrupt_init();
   prv_populate_storage(&s_precharge_storage, settings);
   InterruptSettings monitor_it_settings = { .type = INTERRUPT_TYPE_INTERRUPT,
                                             .priority = INTERRUPT_PRIORITY_NORMAL,
                                             .edge = INTERRUPT_EDGE_RISING };
-  status_ok_or_return(gpio_it_register_interrupt(&s_precharge_storage.precharge_monitor,
-                                                 &monitor_it_settings, 0, PRECHARGE_INTERRUPT));
-  status_ok_or_return(gpio_it_register_interrupt(&s_precharge_storage.precharge_monitor2,
-                                                 &monitor_it_settings, 0, PRECHARGE_INTERRUPT2));
-  status_ok_or_return(tasks_init_task(PRECHARGE_INTERRUPT, TASK_PRIORITY(1), NULL));
-
-  status_ok_or_return(tasks_init_task(PRECHARGE_INTERRUPT2, TASK_PRIORITY(1), NULL));
+  status_ok_or_return(gpio_it_register_interrupt(&settings->precharge_monitor, &monitor_it_settings,
+                                                 0, PRECHARGE_INTERRUPT));
+  status_ok_or_return(gpio_it_register_interrupt(&settings->precharge_monitor2,
+                                                 &monitor_it_settings, 1, PRECHARGE_INTERRUPT));
+  status_ok_or_return(tasks_init_task(PRECHARGE_INTERRUPT, TASK_PRIORITY(2), NULL));
   return STATUS_CODE_OK;
 }

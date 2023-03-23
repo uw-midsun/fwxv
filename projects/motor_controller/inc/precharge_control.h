@@ -21,11 +21,7 @@ typedef struct PrechargeControlSettings {
 } PrechargeControlSettings;
 
 typedef struct PrechargeControlStorage {
-  PrechargeState state;
   GpioAddress precharge_control;
-  GpioAddress precharge_monitor;
-  GpioAddress precharge_monitor2;
-  bool initialized;
 } PrechargeControlStorage;
 
 PrechargeControlStorage *test_get_storage(void);
