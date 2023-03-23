@@ -39,6 +39,7 @@ Mcp2515Settings mcp2515_settings = {  // place holder values
   },
 };
 PrechargeControlSettings precharge_settings = {
+  // place holder values
   .precharge_control = { GPIO_PORT_A, 10 },
   .precharge_monitor = { GPIO_PORT_A, 9 },
   .precharge_monitor2 = { GPIO_PORT_A, 8 },
