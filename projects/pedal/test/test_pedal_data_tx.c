@@ -1,36 +1,40 @@
 #include <stdint.h>
 #include "max11600.h"
-#include "can_hw.h"
-#include "can_msg.h"
-#include "can.h"
-#include "delay.h"
-#include "fsm.h"
-#include "gpio.h"
-#include "gpio_it.h"
-#include "interrupt.h"
 #include "log.h"
 #include "test_helpers.h"
 #include "pedal_data.h"
 #include "pedal_calib.h"
-#include "soft_timer.h"
+#include "pedal_setters.h"
 #include "unity.h"
 
 #define THROTTLE_CHANNEL MAX11600_CHANNEL_0
 #define BRAKE_CHANNEL MAX11600_CHANNEL_2
 #define EE_PEDAL_VALUE_DENOMINATOR (1 << 12)
 
-extern g_tx_struct;
+//Definitions for mock pedal calibrations
+#define MOCK_THROTTLE_CALIB_LOWER 0
+#define MOCK_THROTTLE_CALIB_UPPER 1000
+#define MOCK_BRAKE_CALIB_LOWER    0
+#define MOCK_BRAKE_CALIB_UPPER    1000
+
+//Definitions for mock pedal values
+#define MOCK_THROTTLE_VALUE ((int32_t)500)
+#define MOCK_BRAKE_VALUE    ((int32_t)600)
+
+//Expected values for pedal readings
+#define EXPECTED_THROTTLE_VALUE (((MOCK_THROTTLE_VALUE * EE_PEDAL_VALUE_DENOMINATOR) * 100) / ((MOCK_THROTTLE_CALIB_UPPER - MOCK_THROTTLE_CALIB_LOWER) * EE_PEDAL_VALUE_DENOMINATOR))
+#define EXPECTED_BRAKE_VALUE (((MOCK_BRAKE_VALUE * EE_PEDAL_VALUE_DENOMINATOR) * 100) / ((MOCK_BRAKE_CALIB_UPPER - MOCK_BRAKE_CALIB_LOWER) * EE_PEDAL_VALUE_DENOMINATOR))
 
 //Mock function for pedal calibration
 PedalCalibBlob global_calib_blob_mock = {
-  .throttle_calib = { .lower_value = 0, .upper_value = 1000 },
-  .brake_calib = { .lower_value = 0, .upper_value = 1000 },
+  .throttle_calib = { .lower_value = MOCK_THROTTLE_CALIB_LOWER, .upper_value = MOCK_THROTTLE_CALIB_UPPER },
+  .brake_calib = { .lower_value = MOCK_BRAKE_CALIB_LOWER, .upper_value = MOCK_BRAKE_CALIB_UPPER },
 };
 
 //Mock function for max11600_read_converted
 StatusCode TEST_MOCK(max11600_read_converted)(Max11600Storage *storage) {
-  storage->channel_readings[THROTTLE_CHANNEL] = 500; //Mock throttle value
-  storage->channel_readings[BRAKE_CHANNEL] = 600;    //Mock brake value
+  storage->channel_readings[THROTTLE_CHANNEL] = MOCK_THROTTLE_VALUE; //Mock throttle value
+  storage->channel_readings[BRAKE_CHANNEL] = MOCK_BRAKE_VALUE;    //Mock brake value
   return STATUS_CODE_OK;
 }
 
@@ -75,8 +79,6 @@ void test_pedal_cycle(void) {
   can_tx_all();
 
   //Check the correct values for the throttle and brake signals are in the g_tx_struct
-  int32_t throttle_sent = (int32_t)(g_tx_struct.pedal_output.throttle_output);
-  int32_t brake_sent = (int32_t)(g_tx_struct.pedal_output.brake_output);
-  TEST_ASSERT_EQUAL_INT32(throttle_reading, throttle_sent);
-  TEST_ASSERT_EQUAL_INT32(brake_reading, brake_sent);
+  TEST_ASSERT_EQUAL_INT32(EXPECTED_THROTTLE_VALUE, g_tx_struct.pedal_output.throttle_output);
+  TEST_ASSERT_EQUAL_INT32(EXPECTED_BRAKE_VALUE, g_tx_struct.pedal_output.brake_output);
 }
