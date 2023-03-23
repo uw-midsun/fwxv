@@ -181,10 +181,7 @@ void adc_deinit(void) {
 }
 
 static void adc_mock(uint8_t channel) {
-  // Use hardcoded value for now
   LOG_DEBUG("Reading ADC\n");
-  // s_adc_stores[channel].reading = 0xAA;
-  // s_adc_stores[ADC_Channel_Vrefint].reading = 0x1;
   delay_ms(100);
   mutex_unlock(&s_adc_status.converting);
 }
@@ -234,22 +231,14 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
   return STATUS_CODE_OK;
 }
 
-// Getters and setters to test if ADC works
-void set_reading(GpioAddress sample_address, uint16_t *adc_reading) {
+#ifdef MS_TEST
+void adc_set_reading(GpioAddress sample_address, uint16_t adc_reading) {
   uint8_t adc_channel;
-  gpio_init_pin(&sample_address, GPIO_INPUT_PULL_DOWN, GPIO_STATE_LOW);
-  adc_add_channel(sample_address);
-  adc_init(ADC_MODE_SINGLE);
   adc_get_channel(sample_address, &adc_channel);
   // This should mimic what adc_mock would to be doing
   s_adc_stores[adc_channel].channel = adc_channel;
-  s_adc_stores[adc_channel].reading = *adc_reading;
+  s_adc_stores[adc_channel].reading = adc_reading;
   s_adc_stores[ADC_Channel_Vrefint].reading = 4095;
   delay_ms(20);
-  mutex_unlock(&s_adc_status.converting);
 }
-uint16_t get_reading(GpioAddress sample_address) {
-  uint8_t adc_channel;
-  adc_get_channel(sample_address, &adc_channel);
-  return s_adc_stores[adc_channel].reading;
-}
+#endif
