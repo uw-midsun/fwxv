@@ -24,6 +24,4 @@ StatusCode prv_set_precharge_control(GpioAddress *address, const GpioState state
 
 StatusCode run_precharge_rx_cycle();
 
-PrechargeState get_precharge_state();
-
 StatusCode precharge_control_init(const PrechargeControlSettings *settings);
