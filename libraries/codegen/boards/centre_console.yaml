@@ -133,3 +133,13 @@
       signals:
         signal1:
           length: 8
+
+    power_info:
+      id: 47
+      target:
+        - power_distribution_front
+      signals:
+        hazard_state:
+          length: 8
+        power_state:
+          length: 8

@@ -15,16 +15,18 @@ FSM(lights, NUM_LIGHTS_STATES);
 static void prv_lights_signal_blinker(SoftTimerId id) {
   if (light_id_callback == EE_LIGHT_TYPE_SIGNAL_LEFT) {
     gpio_toggle_state(&LEFT_LIGHT_ADDR);
-    soft_timer_start(600, prv_lights_signal_blinker, &s_timer_single);
+    soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
 
   } else if (light_id_callback == EE_LIGHT_TYPE_SIGNAL_RIGHT) {
     gpio_toggle_state(&RIGHT_LIGHT_ADDR);
-    soft_timer_start(600, prv_lights_signal_blinker, &s_timer_single);
+    soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
 
   } else if (light_id_callback == EE_LIGHT_TYPE_SIGNAL_HAZARD) {
+    GpioState sync_state = gpio_get_state(&LEFT_LIGHT_ADDR, &sync_state);
+    gpio_set_state(&RIGHT_LIGHT_ADDR, sync_state);
     gpio_toggle_state(&LEFT_LIGHT_ADDR);
     gpio_toggle_state(&RIGHT_LIGHT_ADDR);
-    soft_timer_start(600, prv_lights_signal_blinker, &s_timer_single);
+    soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
   } else {
     // in the initial state light_id_callback == NUM_EE_LIGHT_TYPES
     return;
@@ -34,8 +36,9 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
 static void prv_init_state_input(Fsm *fsm, void *context) {
   // can transition to LEFT, RIGHT, HAZARD
   EELightType light_event = get_steering_info_analog_input();
+  HazardStatus hazard_status = get_power_info_hazard_state();
 
-  if (light_event == EE_LIGHT_TYPE_SIGNAL_HAZARD) {
+  if (hazard_status == HAZARD_ON) {
     fsm_transition(fsm, HAZARD);
   } else if (light_event == EE_LIGHT_TYPE_SIGNAL_LEFT) {
     fsm_transition(fsm, LEFT_SIGNAL);
@@ -52,8 +55,9 @@ static void prv_init_state_output(void *context) {
 static void prv_left_signal_input(Fsm *fsm, void *context) {
   // can transition to INIT, RIGHT, HAZARD
   EELightType light_event = get_steering_info_analog_input();
+  HazardStatus hazard_status = get_power_info_hazard_state();
 
-  if (light_event == EE_LIGHT_TYPE_SIGNAL_HAZARD) {
+  if (hazard_status == HAZARD_ON) {
     fsm_transition(fsm, HAZARD);
   } else if (light_event == EE_LIGHT_TYPE_OFF) {
     fsm_transition(fsm, INIT_STATE);
@@ -72,8 +76,9 @@ static void prv_left_signal_output(void *context) {
 static void prv_right_signal_input(Fsm *fsm, void *context) {
   // can transition to INIT, LEFT, HAZARD
   EELightType light_event = get_steering_info_analog_input();
+  HazardStatus hazard_status = get_power_info_hazard_state();
 
-  if (light_event == EE_LIGHT_TYPE_SIGNAL_HAZARD) {
+  if (hazard_status == HAZARD_ON) {
     fsm_transition(fsm, HAZARD);
   } else if (light_event == EE_LIGHT_TYPE_OFF) {
     fsm_transition(fsm, INIT_STATE);
