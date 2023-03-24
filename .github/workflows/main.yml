@@ -70,6 +70,8 @@ jobs:
             exit 1;
           fi
 
+          scons clean
+
       - name: Build stm32f10x
         id: build-stm32
         run: |
