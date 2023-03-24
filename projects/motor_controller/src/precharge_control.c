@@ -22,7 +22,7 @@ TASK(PRECHARGE_INTERRUPT, TASK_MIN_STACK_SIZE) {
     notify_wait(&notification, BLOCK_INDEFINITELY);
 
     if (notify_check_event(&notification, 0)) {
-      if (get_drive_output_precharge() == MCI_PRECHARGE_DISCHARGED) {
+      if (g_rx_struct.drive_output_precharge == MCI_PRECHARGE_DISCHARGED) {
         // inconsistent until second precharge result
         set_mc_status_precharge_status(MCI_PRECHARGE_INCONSISTENT);
       } else {
@@ -30,7 +30,7 @@ TASK(PRECHARGE_INTERRUPT, TASK_MIN_STACK_SIZE) {
       }
     }
     if (notify_check_event(&notification, 1)) {
-      if (get_drive_output_precharge() == MCI_PRECHARGE_DISCHARGED) {
+      if (g_rx_struct.drive_output_precharge == MCI_PRECHARGE_DISCHARGED) {
         // inconsistent until second precharge result
         set_mc_status_precharge_status(MCI_PRECHARGE_INCONSISTENT);
       } else {
