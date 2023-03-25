@@ -11,7 +11,7 @@
 #include "tasks.h"
 #include "unity.h"
 
-#define MOCK_I2C_ADDRESS 0b01010101
+#define MOCK_I2C_ADDRESS 0x55
 #define MOCK_I2C_PIN PCA9555_PIN_IO0_4
 #define MOCK_I2C_IN_PIN PCA9555_PIN_IO0_1
 #define MOCK_REG 0b00100011
@@ -49,7 +49,7 @@ void test_gpio_set_state(void) {
   status = pca9555_gpio_set_state(&pca9555_address, PCA9555_GPIO_STATE_HIGH);
   TEST_ASSERT_EQUAL(STATUS_CODE_OK, status);
 
-  // checking the output reg address. Reg address should be 0x01 (OUTPUT0) for pins 0-7
+  // checking the output reg address. Reg address should be 0x02 (OUTPUT0) for pins 0-7
   status = i2c_get_data(i2c_port, &data, 1);
   TEST_ASSERT_EQUAL(STATUS_CODE_OK, status);
   TEST_ASSERT_EQUAL(0x02, data);
@@ -197,7 +197,7 @@ void test_gpio_init_pin() {
   TEST_ASSERT_EQUAL(STATUS_CODE_OK, status);
   TEST_ASSERT_EQUAL(MOCK_REG, data);
 
-  // reading the output reg address. Reg address should be 0x00 (OUTPUT0) for pins 0-7
+  // reading the output reg address. Reg address should be 0x02 (OUTPUT0) for pins 0-7
   status = i2c_get_data(i2c_port, &data, 1);
   TEST_ASSERT_EQUAL(STATUS_CODE_OK, status);
   TEST_ASSERT_EQUAL(0x02, data);
