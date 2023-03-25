@@ -39,7 +39,7 @@ static SpiSettings spi_settings = {
 };
 
 TASK(smoke_spi_task, TASK_STACK_512) {
-   spi_init(SPI_PORT_1, &spi_settings)
+   spi_init(SPI_PORT_1, &spi_settings);
    while (true) {
       if(SHOULD_WRITE) {
          // Calculate the write length
@@ -50,8 +50,7 @@ TASK(smoke_spi_task, TASK_STACK_512) {
          status = spi_tx(WRITE_SPI_PORT, bytes_to_write, tx_len);
 
          if (status == STATUS_CODE_OK) {
-            LOG_DEBUG("Successfully wrote %d bytes to SPI address %x on SPI_PORT_1\n", tx_len,
-                  WRITE_SPI_ADDRESS);
+            LOG_DEBUG("Successfully wrote %d bytes on SPI_PORT_1\n", tx_len);
          }
          // Log an unsuccessful write
          if (status != STATUS_CODE_OK) {
@@ -62,13 +61,15 @@ TASK(smoke_spi_task, TASK_STACK_512) {
       if(SHOULD_READ) {
          // Allocate space for the bytes we'll read
          uint8_t read_bytes[NUM_BYTES_TO_READ] = { 0 };
+         uint8_t place[NUM_BYTES_TO_READ] = { 0 };
+         uint8_t placeholder = { 0x0A };
 
          StatusCode status;
 
-         status = spi_rx(READ_SPI_PORT, read_bytes, NUM_BYTES_TO_READ,);
+         status = spi_rx(READ_SPI_PORT, read_bytes, NUM_BYTES_TO_READ, placeholder);
          // Log a successful read
-         LOG_DEBUG("Successfully read %d bytes from SPI address %x on SPI_PORT_1\n",
-                NUM_BYTES_TO_READ, READ_SPI_ADDRESS);
+         LOG_DEBUG("Successfully read %d bytes on SPI_PORT_1\n",
+                NUM_BYTES_TO_READ);
 
 				 if (status == STATUS_CODE_OK) {
 					// Log the bytes we read
