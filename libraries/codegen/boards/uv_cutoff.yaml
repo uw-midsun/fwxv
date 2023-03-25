@@ -17,33 +17,3 @@
       signals:
         signal1:
           length: 8
-
-    front_current_measurement:
-      id: 54
-      target:
-        - centre_console
-      signals:
-        current_id:
-          length: 16
-        current:
-          length: 16
-
-    front_pd_fault:
-      id: 62
-      target:
-        - centre_console
-      signals:
-        fault_data:
-          length: 16
-        faulting_output:
-          length: 16
-    horn_and_lights:
-      id: 46
-      target:
-        - uv_cutoff
-      signals:
-        horn_state:
-          length: 8
-        lights_state:
-          length: 8
-    
