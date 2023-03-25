@@ -10,30 +10,6 @@
 
 ---
   Messages:
-    drive_output:
-      id: 22
-      target:
-        - motor_controller
-      signals:
-        target_velocity:
-          length: 32
-        drive_state:
-          length: 8
-        cruise_control:
-          length: 8
-        regen_braking:
-          length: 8
-    
-    pedal:
-      id: 18
-      target:
-        - motor_controller
-      signals:
-        throttle_output:
-          length: 32
-        brake_output:
-          length: 32
-
     precharge_completed:
       id: 29
       target:
