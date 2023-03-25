@@ -74,6 +74,8 @@
           length: 8
         regen_braking:
           length: 8
+        precharge:
+          length: 8
 
     set_ebrake_state:
       id: 10
@@ -91,6 +93,16 @@
       signals:
         ready_state:
           length: 8
+
+    pedal:
+      id: 18
+      target:
+        - motor_controller
+      signals:
+        throttle_output:
+          length: 32
+        brake_output:
+          length: 32
 
     begin_precharge:
       id: 28
