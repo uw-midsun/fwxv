@@ -8,7 +8,7 @@ void fsm_shared_mem_init(FSMStorage *storage) {
     LOG_DEBUG("mutex init failed\n");
     return;
   }
-  // power_state hard coded to POWER_FSM_STATE_OFF
+  // storage->power_state hard coded to POWER_FSM_STATE_OFF
   storage->power_state = 0;
   storage->error_code = STATUS_CODE_OK;
 }

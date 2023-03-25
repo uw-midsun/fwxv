@@ -41,6 +41,7 @@ int main() {
   log_init();
   tasks_init();
   LOG_DEBUG("Welcome to TEST! \n");
+  fsm_shared_mem_init(&cc_storage);
 
   init_drive_fsm();
   init_power_fsm();

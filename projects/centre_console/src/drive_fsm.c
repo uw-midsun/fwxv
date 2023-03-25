@@ -3,7 +3,25 @@
 #include "power_fsm.h"
 
 FSM(drive_fsm, NUM_DRIVE_TRANSITIONS);
-static int counter = 0; // delete
+
+#define NUM_DRIVE_FSM_BUTTONS 3
+
+StatusCode error_state = STATUS_CODE_OK; 
+
+static uint32_t notification = 0;
+static Event drive_fsm_event;
+
+static GpioAddress s_drive_fsm_button_lookup_table[NUM_DRIVE_FSM_BUTTONS] = {
+  [NEUTRAL_BUTTON] = 1,
+  [DRIVE_BUTTON] = 2,
+  [REVERSE_BUTTON] = 3,
+};
+
+static Event s_drive_fsm_event_lookup_table[NUM_DRIVE_FSM_EVENTS] = {
+  [NEUTRAL_BUTTON] = NEUTRAL_BUTTON_EVENT,
+  [DRIVE_BUTTON] = DRIVE_BUTTON_EVENT,
+  [REVERSE_BUTTON] = REVERSE_BUTTON_EVENT,
+};
 
 static uint32_t notification = 0;
 static Event drive_fsm_event;
@@ -14,7 +32,7 @@ static void prv_drive_input(Fsm *fsm, void *context) {
     LOG_DEBUG("DRIVE\n");
 
     /**
-     * If Neutral button pressed OR force msg (from power fsm) OR drive_state != main
+     * If Neutral button pressed OR drive_state != main
      *  transition to TRANSMIT
      * 
      */
@@ -30,7 +48,7 @@ static void prv_reverse_input(Fsm *fsm, void *context) {
     LOG_DEBUG("REVERSE\n");
 
     /**
-     * If Neutral button pressed OR force msg (from power fsm) OR drive_state != main
+     * If Neutral button pressed OR drive_state != main
      *  transition to TRANSMIT
      * 
      */
@@ -46,12 +64,25 @@ static void prv_neutral_input(Fsm *fsm, void *context) {
     LOG_DEBUG("NEUTRAL\n");
     LOG_DEBUG("counter: %d\n", counter);
 
-    // button press probably using notify
-    /*
-    if (notify_get(&notification) == STATUS_CODE_OK) {
-        do stuff with notification
+    if(error_state != STATUS_CODE_OK) {
+        fsm_shared_mem_set_error_code(&cc_storage, error_state);
+    } else{
+        error_state = fsm_shared_mem_get_error_code(&cc_storage);
     }
-    */
+
+    StateId power_state = fsm_shared_mem_get_power_state(&cc_storage); 
+    int speed = 0; // needs to be got from MCI 
+
+    // button press probably using notify
+    if (notify_get(&notification) == STATUS_CODE_OK) {
+        while(event_from_notification(&notification, &drive_fsm_event) == STATUS_CODE_INCOMPLETE) {
+            if (drive_fsm_event == DRIVE_BUTTON_EVENT && power_state == POWER_FSM_STATE_MAIN && speed >= 0) { 
+                fsm_transition(fsm, GET_PRECHARGE);
+            }else if (drive_fsm_event == REVERSE_BUTTON_EVENT && power_state == POWER_FSM_STATE_MAIN && speed <= 0) { 
+                fsm_transition(fsm, GET_PRECHARGE);
+            }
+        }
+    }
 
     // getting power state is tentative 
         // can have a notification var that is static for drive fsm
@@ -59,16 +90,8 @@ static void prv_neutral_input(Fsm *fsm, void *context) {
         // power fsm will send drive fsm notification during output function 
         // this should ensure that drive picks it up by next cycle 
 
-        // notify(power_fsm, EXAMPLE_DRIVE_STATE); We will use notify to notify on state change in drive fsm
-        // notify_get(&notif); receives notification from power fsm
-
     // I think MCI is sending speed to drive fsm
         // this should come in the form of a CAN msg
-
-    if(counter == 2){
-        fsm_transition(fsm, GET_PRECHARGE);
-    }
-    counter++;
 
 
     /**
@@ -78,7 +101,6 @@ static void prv_neutral_input(Fsm *fsm, void *context) {
      *   transition to GET_PRECHARGE
      */
 
-    // fsm_transition();
 }
 static void prv_neutral_output(void *context) {
     
@@ -125,12 +147,21 @@ static FsmTransition s_drive_transitions[NUM_DRIVE_TRANSITIONS] = {
 
 
 StatusCode init_drive_fsm(void) {
-  FsmSettings settings = {
-    .state_list = s_drive_state_list,
-    .transitions = s_drive_transitions,
-    .num_transitions = NUM_DRIVE_TRANSITIONS,
-    .initial_state = NEUTRAL,
-  };
+    FsmSettings settings = {
+        .state_list = s_drive_state_list,
+        .transitions = s_drive_transitions,
+        .num_transitions = NUM_DRIVE_TRANSITIONS,
+        .initial_state = NEUTRAL,
+    };
+    InterruptSettings it_settings = {
+        .priority = INTERRUPT_PRIORITY_NORMAL,
+        .type = INTERRUPT_TYPE_INTERRUPT,
+        .edge = INTERRUPT_EDGE_RISING, // not sure if this needs to be rising or falling
+    };
+    // Add gpio init pins 
+    // Add gpio register interrupts
+
+
   fsm_init(drive_fsm, settings, NULL);
   return STATUS_CODE_OK;
 }

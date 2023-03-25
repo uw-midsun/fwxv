@@ -8,3 +8,5 @@ typedef struct FSMStorage {
   StatusCode error_code;
   Mutex mutex;
 } FSMStorage;
+
+extern FSMStorage cc_storage;

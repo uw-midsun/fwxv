@@ -1,5 +1,7 @@
 #pragma once 
 
+#include "fsm_shared_mem.h"
+
 #include "delay.h"
 #include "fsm.h"
 #include "gpio.h"
@@ -20,5 +22,19 @@ typedef enum driveState {
   DO_PRECHARGE,   // turn on precharge and get ack
   TRANSMIT, // send drive state (NEUTRAL, DRIVE, or REVERSE) to MCI
 } driveState;
+
+typedef enum driveButtons{
+  NEUTRAL_BUTTON,
+  DRIVE_BUTTON,
+  REVERSE_BUTTON,
+  NUM_DRIVE_FSM_BUTTONS,
+} driveButtons;
+
+typedef enum driveEvents{
+  NEUTRAL_BUTTON_EVENT,
+  DRIVE_BUTTON_EVENT,
+  REVERSE_BUTTON_EVENT,
+  NUM_DRIVE_FSM_EVENTS,
+} driveEvents;
 
 StatusCode init_drive_fsm(void);
