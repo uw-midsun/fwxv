@@ -20,19 +20,26 @@ static const GpioAddress adc_addy[] = {
   { .port = GPIO_PORT_B, .pin = 1 },
 };
 
-TASK(smoke_adc_task, TASK_MIN_STACK_SIZE) {
-   for (uint8_t i = 0; i < SIZEOF_ARRAY(adc_addy); i++) {
+static const GpioAddress tmp = 
+  { .port = NUM_GPIO_PORTS, .pin = ADC_Channel_Vrefint };
+
+TASK(smoke_adc_task, TASK_STACK_1024) {
+   for (uint8_t i = 0; i < 1; i++) {
       gpio_init_pin(&adc_addy[i], GPIO_ANALOG, GPIO_STATE_LOW);
-      adc_add_channel(adc_addy[i]);
    }
+   //adc_add_channel(tmp);
+   adc_add_channel(adc_addy[0]);
+   adc_init(ADC_MODE_SINGLE);
 
 
    while(true) {
       uint16_t data = 0;
-      for (uint8_t i = 0; i < SIZEOF_ARRAY(adc_addy); i++) {
-        adc_read_converted(adc_addy[i], &data);
-        LOG_DEBUG("%d%d: %d\n", adc_addy[i].port, adc_addy[i].pin, data);
-      }
+      //for (uint8_t i = 0; i < SIZEOF_ARRAY(adc_addy); i++) {
+        //adc_read_raw(tmp, &data);
+        LOG_DEBUG("voltage ref: %d\n\r", data);
+        adc_read_raw(adc_addy[0], &data);
+        LOG_DEBUG("pinA0: %d\n\r", data);
+      //}
       delay_ms(1000);
    }
 }
@@ -42,8 +49,7 @@ int main() {
    interrupt_init();
    gpio_init();
    log_init();
-   adc_init(ADC_MODE_SINGLE);
-   LOG_DEBUG("Welcome to ADC SMOKE TEST!");
+   LOG_DEBUG("Welcome to ADC SMOKE TEST!\n\r");
 
    tasks_init_task(smoke_adc_task, TASK_PRIORITY(2), NULL);
 

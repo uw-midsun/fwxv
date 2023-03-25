@@ -29,14 +29,14 @@ typedef struct AdcStatus {
   uint8_t active_channels;    // Keeps track of how many channels have been registered with the ADC
   volatile uint8_t sequence;  // Indicates where next conversion will go
   bool continuous;            // Determines whether conversions are continuous or single-shot
-  Mutex converting;
+  Semaphore converting;
 } AdcStatus;
 
 static AdcStatus s_adc_status;
 
 typedef struct AdcStore {
   uint8_t channel;
-  uint16_t reading;
+  volatile uint16_t reading;
 } AdcStore;
 
 // Mock Gpio addresses for internal channels
@@ -211,17 +211,17 @@ StatusCode adc_init(AdcMode adc_mode) {
   }
 
   // Enable interrupts for the end of each conversion
-  stm32f10x_interrupt_nvic_enable(ADC1_2_IRQn, INTERRUPT_PRIORITY_HIGH);
+  stm32f10x_interrupt_nvic_enable(ADC1_2_IRQn, INTERRUPT_PRIORITY_LOW);
   ADC_ITConfig(ADC1, ADC_IT_EOC, true);
 
   // By default, enable vref and temp sensor for voltage conversions
   ADC_TempSensorVrefintCmd(true);
-  adc_add_channel(ADC_REF);
+  //adc_add_channel(ADC_REF);
 
   // Initialize static variables
   s_adc_status.continuous = adc_mode;
   s_adc_status.sequence = 0;
-  mutex_init(&s_adc_status.converting);
+  sem_init(&s_adc_status.converting, 1, 0);
   s_adc_status.initialized = true;
 
   // If we are in continuous mode, start the adc
@@ -231,7 +231,7 @@ StatusCode adc_init(AdcMode adc_mode) {
   return STATUS_CODE_OK;
 }
 
-void ADC1_COMP_IRQHandler() {
+void ADC1_2_IRQHandler() {
   // In case tasks are unblocked by behaviour in this IT handler
   BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
@@ -259,13 +259,11 @@ StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
   status_ok_or_return(prv_check_channel_enabled(channel));
 
   if (!s_adc_status.continuous) {
-    // For Single-shot, we take semaphore and initiate a conversion
-    status_ok_or_return(mutex_lock(&s_adc_status.converting, ADC_TIMEOUT_MS));
+    // For Single-shot, we initiate a conversion and wait for semaphore
     ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 
     // Once conversion is finished, we will receive the semaphore from ISR
-    mutex_lock(&s_adc_status.converting, ADC_TIMEOUT_MS);
-    mutex_unlock(&s_adc_status.converting);
+    sem_wait(&s_adc_status.converting, ADC_TIMEOUT_MS);
   }
 
   *reading = s_adc_stores[channel].reading;
@@ -292,7 +290,7 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
       break;
   }
   // Get latest vref value to convert read value to a voltage
-  uint16_t vdda = s_adc_stores[ADC_Channel_Vrefint].reading;
+  volatile uint16_t vdda = s_adc_stores[ADC_Channel_Vrefint].reading;
   *reading = (adc_reading * vdda) / 4095;
   return STATUS_CODE_OK;
 }
