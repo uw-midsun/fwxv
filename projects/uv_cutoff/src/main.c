@@ -8,6 +8,7 @@
 #include "misc.h"
 #include "soft_timer.h"
 #include "tasks.h"
+#include "uv_cutoff.h"
 #include "uv_cutoff_getters.h"
 #include "uv_cutoff_setters.h"
 
@@ -42,21 +43,24 @@ static const CanSettings can_settings = {
   .loopback = true,
 };
 
-static bool is_disconnected = false;
+static UVCutoffState state = UV_CUTOFF_ACTIVE;
 
 void uv_logic() {
   GpioState uv_value;
-  if (is_disconnected) {
-    set_uv_cutoff_notification_signal1(true);
-    return;
-  }
 
   if (gpio_get_state(&uv_status, &uv_value) != STATUS_CODE_OK) {
     LOG_CRITICAL("Error reading UV_cutoff pin!\n");
     return;
   }
   if (uv_value == GPIO_STATE_LOW) {
-    is_disconnected = true;
+    state = UV_CUTOFF_DISCONNECTED;
+  } else {
+    state = UV_CUTOFF_ACTIVE;
+  }
+
+  set_uv_cutoff_notification_signal1(state);
+
+  if (state == UV_CUTOFF_DISCONNECTED) {
     return;
   }
 
