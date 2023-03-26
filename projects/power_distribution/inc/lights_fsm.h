@@ -11,7 +11,7 @@
 
 #define NUM_LIGHTS_STATES 4
 #define NUM_LIGHTS_TRANSITIONS 10
-#define SIGNAL_BLINK_PERIOD_MS 600 // Signal blink frequency of 1.66Hz
+#define SIGNAL_BLINK_PERIOD_MS 600  // Signal blink frequency of 1.66Hz
 DECLARE_FSM(lights);
 
 // Light events matches CAN message defs from steering analog
