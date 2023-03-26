@@ -74,6 +74,8 @@
           length: 8
         regen_braking:
           length: 8
+        precharge:
+          length: 8
 
     set_ebrake_state:
       id: 10
