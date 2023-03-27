@@ -162,9 +162,9 @@ StatusCode adc_init(AdcMode adc_mode) {
   if (s_adc_status.initialized) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "adc_init should only be called once");
   }
-  if (s_adc_status.active_channels == 0) {
-    return STATUS_CODE_INVALID_ARGS;  // Need to have added channels
-  }
+  //if (s_adc_status.active_channels == 0) {
+  //  return STATUS_CODE_INVALID_ARGS;  // Need to have added channels
+  //}
 
   // Clear Previous settings
   ADC_DeInit(ADC1);
@@ -173,10 +173,23 @@ StatusCode adc_init(AdcMode adc_mode) {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, true);
 
   // Initialize each adc store with it's own channel for easy initialization
-  for (uint8_t channel = 0; channel < NUM_ADC_CHANNELS; channel++) {
-    s_adc_stores[channel].channel = channel;
-  }
+  //for (uint8_t channel = 0; channel < NUM_ADC_CHANNELS; channel++) {
+  //  s_adc_stores[channel].channel = channel;
+  //}
 
+  adc_add_channel(ADC_REF);
+
+  // Initialize ADC1
+  ADC_InitTypeDef adc_settings = {
+    .ADC_Mode = ADC_Mode_Independent,    // Use only one ADC
+    .ADC_ScanConvMode = ENABLE,          // Use multi-channel scan
+    .ADC_ContinuousConvMode = (FunctionalState)adc_mode,  // Continuous or one-shot
+    // Don't need to trigger adc on external stimuli
+    .ADC_ExternalTrigConv = ADC_ExternalTrigConv_None,         
+    .ADC_DataAlign = ADC_DataAlign_Right,  // Use rightmost 12 bits of ADC register
+    .ADC_NbrOfChannel = s_adc_status.active_channels,  // Scan as many channels as we've initialized
+  };
+  ADC_Init(ADC1, &adc_settings);
   // Initialize all channels registered via adc_add_channel()
   for (uint8_t index = 0; index < s_adc_status.active_channels; index++) {
     // Each channel is configured with ascending rank, starting at one
@@ -184,39 +197,25 @@ StatusCode adc_init(AdcMode adc_mode) {
     ADC_RegularChannelConfig(ADC1, s_adc_sequence[index]->channel, rank, ADC_SAMPLE_RATE);
   }
 
-  // Initialize ADC1
-  ADC_InitTypeDef adc_settings = {
-    .ADC_Mode = ADC_Mode_Independent,    // Use only one ADC
-    .ADC_ScanConvMode = ENABLE,          // Use multi-channel scan
-    .ADC_ContinuousConvMode = adc_mode,  // Continuous or one-shot
-    .ADC_ExternalTrigConv =
-        ADC_ExternalTrigConv_None,         // Don't need to trigger adc on external stimuli
-    .ADC_DataAlign = ADC_DataAlign_Right,  // Use rightmost 12 bits of ADC register
-    .ADC_NbrOfChannel = s_adc_status.active_channels,  // Scan as many channels as we've initialized
-  };
-  ADC_Init(ADC1, &adc_settings);
-
+  // By default, enable vref and temp sensor for voltage conversions
+  ADC_TempSensorVrefintCmd(true);
+  
   // Enable the ADC
   ADC_Cmd(ADC1, true);
 
   // Calibrate ADC
   // Reset Calibration regs, wait for flag to be cleared
   ADC_ResetCalibration(ADC1);
-  while (ADC_GetResetCalibrationStatus(ADC1)) {
-  }
+  while (ADC_GetResetCalibrationStatus(ADC1));
 
   // Start and Wait for calibration to complete
   ADC_StartCalibration(ADC1);
-  while (ADC_GetCalibrationStatus(ADC1)) {
-  }
+  while (ADC_GetCalibrationStatus(ADC1));
 
   // Enable interrupts for the end of each conversion
   stm32f10x_interrupt_nvic_enable(ADC1_2_IRQn, INTERRUPT_PRIORITY_LOW);
   ADC_ITConfig(ADC1, ADC_IT_EOC, true);
 
-  // By default, enable vref and temp sensor for voltage conversions
-  ADC_TempSensorVrefintCmd(true);
-  //adc_add_channel(ADC_REF);
 
   // Initialize static variables
   s_adc_status.continuous = adc_mode;
@@ -229,28 +228,6 @@ StatusCode adc_init(AdcMode adc_mode) {
     ADC_SoftwareStartConvCmd(ADC1, ENABLE);
   }
   return STATUS_CODE_OK;
-}
-
-void ADC1_2_IRQHandler() {
-  // In case tasks are unblocked by behaviour in this IT handler
-  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
-  // Interrupt EOC triggered after every conversion
-  // Values generated in order of sequence, so we store them at channel pointed to by sequence index
-  if (ADC_GetITStatus(ADC1, ADC_IT_EOC)) {
-    s_adc_sequence[s_adc_status.sequence]->reading = ADC_GetConversionValue(ADC1);
-    // If we've converted all the registered channels, start over
-    if (++s_adc_status.sequence >= s_adc_status.active_channels) {
-      s_adc_status.sequence = 0;
-      // If single-shot, signal that all values converted
-      if (s_adc_status.continuous == ADC_MODE_SINGLE) {
-        xSemaphoreGiveFromISR(s_adc_status.converting.handle, &xHigherPriorityTaskWoken);
-        ADC_SoftwareStartConvCmd(ADC1, DISABLE);
-      }
-    }
-    ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
-  }
-  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
@@ -297,3 +274,26 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
 
 // Don't need to do anything on ARM
 void adc_deinit(void) {}
+
+void ADC1_2_IRQHandler() {
+  // In case tasks are unblocked by behaviour in this IT handler
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+
+  // Interrupt EOC triggered after every conversion
+  // Values generated in order of sequence, so we store them at channel pointed to by sequence index
+  if (ADC_GetITStatus(ADC1, ADC_IT_EOC)) {
+    s_adc_sequence[s_adc_status.sequence]->reading = ADC_GetConversionValue(ADC1);
+    // If we've converted all the registered channels, start over
+    if (++s_adc_status.sequence >= s_adc_status.active_channels) {
+      s_adc_status.sequence = 0;
+      // If single-shot, signal that all values converted
+      if (s_adc_status.continuous == ADC_MODE_SINGLE) {
+        xSemaphoreGiveFromISR(s_adc_status.converting.handle, &xHigherPriorityTaskWoken);
+        ADC_SoftwareStartConvCmd(ADC1, DISABLE);
+      }
+    }
+    ADC_ClearITPendingBit(ADC1, ADC_IT_EOC);
+  }
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+}
+
