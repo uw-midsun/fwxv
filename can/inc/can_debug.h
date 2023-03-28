@@ -7,7 +7,8 @@
 
 #include "can.h"
 
-#define NUM_CALLBACKS 5
+// The maximum number of callbacks that can be registered
+#define MAX_NUM_CALLBACKS 5
 
 typedef void (*CanDebugCallback)(uint64_t);
 

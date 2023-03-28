@@ -16,14 +16,32 @@ const CanSettings can_settings = {
   .mode = 1,
 };
 
-void extract_first_byte(uint64_t data) {
-  uint8_t first_byte = data & FIRST_BYTE_HEX_MASK;
-  LOG_DEBUG("The first byte is: %X\n", first_byte);
+uint8_t extract_first_byte(uint64_t data) {
+  return data & FIRST_BYTE_HEX_MASK;
 }
 
-void extract_last_byte(uint64_t data) {
-  uint8_t last_byte = (data & LAST_BYTE_HEX_MASK) >> LAST_BYTE_BIT_SHIFT;
-  LOG_DEBUG("The last byte is: %X\n", last_byte);
+uint8_t extract_last_byte(uint64_t data) {
+  return (data & LAST_BYTE_HEX_MASK) >> LAST_BYTE_BIT_SHIFT;
+}
+
+void add(uint64_t data) {
+  uint16_t sum = extract_first_byte(data) + extract_last_byte(data);
+  LOG_DEBUG("The sum of the first and last byte is %X\n", sum);
+}
+
+void subtract(uint64_t data) {
+  uint16_t diff = extract_first_byte(data) - extract_last_byte(data);
+  LOG_DEBUG("The difference between the first and last byte is %X\n", diff);
+}
+
+void multiply(uint64_t data) {
+  uint16_t product = extract_first_byte(data) * extract_last_byte(data);
+  LOG_DEBUG("The product of the first and last byte is %X\n", product);
+}
+
+void divide(uint64_t data) {
+  uint16_t quotient = extract_first_byte(data) / extract_last_byte(data);
+  LOG_DEBUG("The quotient of the first and last byte is %X\n", quotient);
 }
 
 TASK(master_task, TASK_MIN_STACK_SIZE) {
@@ -40,11 +58,15 @@ int main() {
   LOG_DEBUG("Welcome to CAN Debug!\n");
   can_init(&s_can_storage, &can_settings);
 
-  CanMessageId first_byte_id = 0x01E;
-  CanMessageId last_byte_id = 0x02E;
+  CanMessageId add_id = 0x01E;
+  CanMessageId subtract_id = 0x02E;
+  CanMessageId multiply_id = 0x03E;
+  CanMessageId divide_id = 0x04E;
 
-  can_debug_register(first_byte_id, extract_first_byte);
-  can_debug_register(last_byte_id, extract_last_byte);
+  can_debug_register(add_id, add);
+  can_debug_register(subtract_id, subtract);
+  can_debug_register(multiply_id, multiply);
+  can_debug_register(divide_id, divide);
 
   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
