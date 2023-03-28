@@ -1,3 +1,4 @@
+#include "can.h"
 #include "can_debug.h"
 #include "log.h"
 #include "tasks.h"
@@ -13,7 +14,7 @@ const CanSettings can_settings = {
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
   .loopback = true,
-  .mode = 1,
+  .mode = CAN_ONE_SHOT_MODE,
 };
 
 uint8_t extract_first_byte(uint64_t data) {
@@ -22,6 +23,10 @@ uint8_t extract_first_byte(uint64_t data) {
 
 uint8_t extract_last_byte(uint64_t data) {
   return (data & LAST_BYTE_HEX_MASK) >> LAST_BYTE_BIT_SHIFT;
+}
+
+void hello_world(uint64_t data) {
+  LOG_DEBUG("Hello World!\n");
 }
 
 void add(uint64_t data) {
@@ -58,11 +63,13 @@ int main() {
   LOG_DEBUG("Welcome to CAN Debug!\n");
   can_init(&s_can_storage, &can_settings);
 
+  CanMessageId hello_world_id = 0x00E;
   CanMessageId add_id = 0x01E;
   CanMessageId subtract_id = 0x02E;
   CanMessageId multiply_id = 0x03E;
   CanMessageId divide_id = 0x04E;
 
+  can_debug_register(hello_world_id, hello_world);
   can_debug_register(add_id, add);
   can_debug_register(subtract_id, subtract);
   can_debug_register(multiply_id, multiply);

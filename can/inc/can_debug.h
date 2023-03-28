@@ -5,7 +5,8 @@
 //
 // See fwxv/projects/can_debug for a reference project.
 
-#include "can.h"
+#include "can_msg.h"
+#include "status.h"
 
 // The maximum number of callbacks that can be registered
 #define MAX_NUM_CALLBACKS 5

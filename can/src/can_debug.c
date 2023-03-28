@@ -1,7 +1,8 @@
 #include "can_debug.h"
 #include "log.h"
+#include "can.h"
 
-static int s_num_can_callback_functions;
+static uint8_t s_num_can_callback_functions;
 static CanDebugCallback callback_functions[MAX_NUM_CALLBACKS];
 static CanMessageId can_ids[MAX_NUM_CALLBACKS];
 
