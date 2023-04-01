@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "adc.h"
 #include "delay.h"
 #include "gpio.h"
 #include "interrupt.h"
@@ -23,20 +22,38 @@ static const GpioAddress tmp =
   { .port = NUM_GPIO_PORTS, .pin = ADC_Channel_Vrefint };
 
 
+static Semaphore converting;
+
+volatile uint16_t adc_values[16];
+
 TASK(smoke_adc_task, TASK_STACK_1024) {
-   //for (uint8_t i = 0; i < 1; i++) {
-   //   gpio_init_pin(&adc_addy[i], GPIO_ANALOG, GPIO_STATE_LOW);
-   //}
-   //adc_add_channel(tmp);
-   //adc_add_channel(adc_addy[0]);
-   //adc_init(ADC_MODE_SINGLE);
+
+  // GPIO/RCC Initialization
   GPIO_InitTypeDef GPIO_InitStructure = { 0 };
-  
   RCC_ADCCLKConfig(RCC_PCLK2_Div2); 
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOA, ENABLE);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
+  for (int i = 0; i < 9; i++) {
+    gpio_init_pin(&adc_addy[i], GPIO_ANALOG, GPIO_STATE_LOW);
+  }
+  
+  // DMA initialization needed for multi-channel scan
+  DMA_DeInit(DMA1_Channel1);
+  DMA_InitTypedef dma_init = {
+    .DMA_PeripheralBaseAddr = ADC1_DR_Address,
+    .DMA_MemoryBaseAddr = (uint32_t)&ADCConvertedValue,
+    .DMA_DIR = DMA_DIR_PeripheralSRC,
+    .DMA_BufferSize = 16,
+    .DMA_PeripheralInc = DMA_PeripheralInc_Disable,
+    .DMA_MemoryInc = DMA_MemoryInc_Disable,
+    .DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord,
+    .DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord,
+    .DMA_Mode = DMA_Mode_Circular,
+    .DMA_Priority = DMA_Priority_High,
+    .DMA_M2M = DMA_M2M_Disable,
+  },
+  DMA_Init(DMA1_Channel1, &DMA_InitStructure),
+  DMA_Cmd(DMA1_Channel1, ENABLE);
 
   ADC_InitTypeDef ADC_InitStructure = { 0 };
 
@@ -44,17 +61,32 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
   ADC_TempSensorVrefintCmd(ENABLE);
   /* ADC1 configuration ------------------------------------------------------*/
   ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
-  ADC_InitStructure.ADC_ScanConvMode = DISABLE;
+  ADC_InitStructure.ADC_ScanConvMode = ENABLE;
   ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
   ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
   ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-  ADC_InitStructure.ADC_NbrOfChannel = 1;
+  ADC_InitStructure.ADC_NbrOfChannel = 16;
   ADC_Init(ADC1, &ADC_InitStructure);
 
   ADC_TempSensorVrefintCmd(ENABLE);
-  //ADC_RegularChannelConfig(ADC1, ADC_Channel_14, 1, ADC_SampleTime_55Cycles5);
   ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 2, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 3, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_3, 4, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_4, 5, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 6, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_6, 7, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_7, 8, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 9, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_9, 10, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_16, 11, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_16, 12, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 13, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 14, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 15, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 16, ADC_SampleTime_55Cycles5);
   ADC_TempSensorVrefintCmd(ENABLE);
+
 
   // Enable the ADC
   ADC_Cmd(ADC1, ENABLE);
@@ -69,17 +101,18 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
   /* Check the end of ADC1 calibration */
   while(ADC_GetCalibrationStatus(ADC1));
      
-  /* Start ADC1 Software Conversion */ 
-  ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+  stm32f10x_interrupt_nvic_enable(ADC1_2_IRQn, INTERRUPT_PRIORITY_LOW);
+  ADC_ITConfig(ADC1, ADC_IT_EOC, true);
 
    while(true) {
+    ADC_SoftwareStartConvCmd(ADC1, ENABLE);
     /* Wait for the conversion to complete */
-    while(!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
+    sem_wait(&converting, ADC_TIMEOUT_MS);
+    for (int i = 0; i < 16; i++) {
+      LOG_DEBUG("ADC %d: %d\n", i, adc_values[i]);
+    }
     
     /* Read the conversion result */
-    uint16_t data = ADC_GetConversionValue(ADC1);
-
-    LOG_DEBUG("voltage ref: %d\n\r", data);
     delay_ms(1000);
    }
 }
@@ -97,3 +130,9 @@ int main() {
 
    return 0;
 }
+
+
+void ADC1_2_IRQHandler() { 
+  xSemaphoreGiveFromISR(converting.handle, &xHigherPriorityTaskWoken);
+}
+
