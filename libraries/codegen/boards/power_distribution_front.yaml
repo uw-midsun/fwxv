@@ -43,7 +43,8 @@
     horn_and_lights:
       id: 46
       target:
-        - uv_cutoff
+        uv_cutoff:
+          watchdog: 0
       signals:
         horn_state:
           length: 8
