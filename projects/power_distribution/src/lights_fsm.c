@@ -29,6 +29,8 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
     soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
   } else {
     // in the initial state light_id_callback == NUM_EE_LIGHT_TYPES
+    gpio_set_state(&RIGHT_LIGHT_ADDR, GPIO_STATE_LOW);
+    gpio_set_state(&LEFT_LIGHT_ADDR, GPIO_STATE_LOW);
     return;
   }
 }
@@ -70,7 +72,7 @@ static void prv_left_signal_output(void *context) {
   LOG_DEBUG("Transitioned to LEFT_SIGNAL");
   // Toggle Left Signal blinkers at 100 BPM -> 0.6s
   light_id_callback = EE_LIGHT_TYPE_SIGNAL_LEFT;
-  soft_timer_start(600, prv_lights_signal_blinker, &s_timer_single);
+  soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
 }
 
 static void prv_right_signal_input(Fsm *fsm, void *context) {
@@ -91,7 +93,7 @@ static void prv_right_signal_output(void *context) {
   LOG_DEBUG("Transitioned to RIGHT_SIGNAL");
   // Toggle Right Signal blinkers at 100 BPM -> 0.6 s
   light_id_callback = EE_LIGHT_TYPE_SIGNAL_RIGHT;
-  soft_timer_start(600, prv_lights_signal_blinker, &s_timer_single);
+  soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
 }
 
 static void prv_hazard_input(Fsm *fsm, void *context) {
@@ -107,7 +109,7 @@ static void prv_hazard_output(void *context) {
   LOG_DEBUG("Transitioned to HAZARD");
   // Toggle Left and Right Signal blinkers at 100 BPM -> 0.6s
   light_id_callback = EE_LIGHT_TYPE_SIGNAL_HAZARD;
-  soft_timer_start(600, prv_lights_signal_blinker, &s_timer_single);
+  soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
 }
 
 // Lights FSM declaration for states and transitions
