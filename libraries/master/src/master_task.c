@@ -49,7 +49,7 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
   uint32_t counter = 1;
   while (true) {
     // LOG_DEBUG("counter: %u\n", counter);
-    
+
     run_fast_cycle();
     if (!(counter % s_medium_cycle_count)) run_medium_cycle();
     if (!(counter % s_slow_cycle_count)) run_slow_cycle();
