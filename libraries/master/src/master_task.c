@@ -49,16 +49,11 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
   uint32_t counter = 1;
   while (true) {
     // LOG_DEBUG("counter: %u\n", counter);
-#ifdef MS_TEST
-    xSemaphoreTake(test_cycle_start_sem);
-#endif
+    
     run_fast_cycle();
     if (!(counter % s_medium_cycle_count)) run_medium_cycle();
     if (!(counter % s_slow_cycle_count)) run_slow_cycle();
 
-#ifdef MS_TEST
-    xSemaphoreGive(test_cycle_end_sem);
-#endif
     // TODO: perhaps also use xTaskCheckForTimeOut()?
     BaseType_t delay = xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(MASTER_MS_CYCLE_TIME));
     check_late_cycle(delay);
