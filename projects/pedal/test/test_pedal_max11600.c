@@ -27,43 +27,90 @@ void test_max11600_init(void) {
 
 void test_max11600_read_raw(void) {
   uint8_t tx_data[3];
-  tx_data[0] = tx_data[1] = tx_data[2] = 0x00;
+  tx_data[0] = 0x00;
+  tx_data[1] = 0x00;
+  tx_data[2] = 0x00;
   i2c_set_data(TEST_MAX11600_I2C_PORT, tx_data, 3);
   TEST_ASSERT_OK(max11600_read_raw(&max_storage));
   TEST_ASSERT_EQUAL(0x00, max_storage.channel_readings[0]);
   TEST_ASSERT_EQUAL(0x00, max_storage.channel_readings[1]);
   TEST_ASSERT_EQUAL(0x00, max_storage.channel_readings[2]);
-  tx_data[0] = 0xFF;
-  tx_data[1] = 0xFF;
-  tx_data[2] = 0xFF;
+  tx_data[0] = 0x7D;
+  tx_data[1] = 0x45;
+  tx_data[2] = 0x4D;
   i2c_set_data(TEST_MAX11600_I2C_PORT, tx_data, 3);
   TEST_ASSERT_OK(max11600_read_raw(&max_storage));
-  TEST_ASSERT_EQUAL(0xFF, max_storage.channel_readings[0]);
-  TEST_ASSERT_EQUAL(0xFF, max_storage.channel_readings[1]);
-  TEST_ASSERT_EQUAL(0xFF, max_storage.channel_readings[2]);
+  TEST_ASSERT_EQUAL(0x7D, max_storage.channel_readings[0]);
+  TEST_ASSERT_EQUAL(0x45, max_storage.channel_readings[1]);
+  TEST_ASSERT_EQUAL(0x4D, max_storage.channel_readings[2]);
+  tx_data[0] = 0x97;
+  tx_data[1] = 0xe0;
+  tx_data[2] = 0x43;
+  i2c_set_data(TEST_MAX11600_I2C_PORT, tx_data, 3);
+  TEST_ASSERT_OK(max11600_read_raw(&max_storage));
+  TEST_ASSERT_EQUAL(0x97, max_storage.channel_readings[0]);
+  TEST_ASSERT_EQUAL(0xe0, max_storage.channel_readings[1]);
+  TEST_ASSERT_EQUAL(0x43, max_storage.channel_readings[2]);
+  tx_data[0] = 0x2d;
+  tx_data[1] = 0xd3;
+  tx_data[2] = 0x1f;
+  i2c_set_data(TEST_MAX11600_I2C_PORT, tx_data, 3);
+  TEST_ASSERT_OK(max11600_read_raw(&max_storage));
+  TEST_ASSERT_EQUAL(0x2d, max_storage.channel_readings[0]);
+  TEST_ASSERT_EQUAL(0xd3, max_storage.channel_readings[1]);
+  TEST_ASSERT_EQUAL(0x1f, max_storage.channel_readings[2]);
+  tx_data[0] = 0xfd;
+  tx_data[1] = 0xbf;
+  tx_data[2] = 0xa4;
+  i2c_set_data(TEST_MAX11600_I2C_PORT, tx_data, 3);
+  TEST_ASSERT_OK(max11600_read_raw(&max_storage));
+  TEST_ASSERT_EQUAL(0xfd, max_storage.channel_readings[0]);
+  TEST_ASSERT_EQUAL(0xbf, max_storage.channel_readings[1]);
+  TEST_ASSERT_EQUAL(0xa4, max_storage.channel_readings[2]);
 }
 
-void test_max11600_read_converted(void) {}
-
-/*
 void test_max11600_read_converted(void) {
-  for (int LSB_THROTTLE = 0; LSB_THROTTLE < 256; LSB_THROTTLE++) {
-    for (int LSB_STEERING = 0; LSB_STEERING < 256; LSB_STEERING++) {
-      for (int LSB_BRAKE = 0; LSB_BRAKE < 256; LSB_BRAKE++) {
-        // Mock all possible combinations of LSD onto the I2C
-        uint8_t tx_data[] = { LSB_THROTTLE, LSB_STEERING, LSB_BRAKE };
-        i2c_write(TEST_MAX11600_I2C_PORT, MAX11600_WRITE_ADDRESS, tx_data, 3);
-        // Read the converted data from the MAX11600
-        TEST_ASSERT_OK(max11600_read_converted(&max_storage));
-        for (int channel = 0; channel < 3; channel++) {
-          // Calculate the expected converted value
-          uint16_t expected_converted_value = 1000 * REFERENCE_VOLTAGE_V * tx_data[channel] / 256;
-          TEST_ASSERT_EQUAL(expected_converted_value, max_storage.channel_readings[channel]);
-        }
-      }
-    }
-  }
+  uint8_t tx_data[3];
+  tx_data[0] = 0x00;
+  tx_data[1] = 0x00;
+  tx_data[2] = 0x00;
+  i2c_set_data(TEST_MAX11600_I2C_PORT, tx_data, 3);
+  TEST_ASSERT_OK(max11600_read_converted(&max_storage));
+  TEST_ASSERT_EQUAL(0, max_storage.channel_readings[0]);
+  TEST_ASSERT_EQUAL(0, max_storage.channel_readings[1]);
+  TEST_ASSERT_EQUAL(0, max_storage.channel_readings[2]);
+  tx_data[0] = 0x7D;
+  tx_data[1] = 0x45;
+  tx_data[2] = 0x4D;
+  i2c_set_data(TEST_MAX11600_I2C_PORT, tx_data, 3);
+  TEST_ASSERT_OK(max11600_read_converted(&max_storage));
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0x7D / 256, max_storage.channel_readings[0]);
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0x45 / 256, max_storage.channel_readings[1]);
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0x4D / 256, max_storage.channel_readings[2]);
+  tx_data[0] = 0x97;
+  tx_data[1] = 0xe0;
+  tx_data[2] = 0x43;
+  i2c_set_data(TEST_MAX11600_I2C_PORT, tx_data, 3);
+  TEST_ASSERT_OK(max11600_read_converted(&max_storage));
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0x97 / 256, max_storage.channel_readings[0]);
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0xe0 / 256, max_storage.channel_readings[1]);
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0x43 / 256, max_storage.channel_readings[2]);
+  tx_data[0] = 0x2d;
+  tx_data[1] = 0xd3;
+  tx_data[2] = 0x1f;
+  i2c_set_data(TEST_MAX11600_I2C_PORT, tx_data, 3);
+  TEST_ASSERT_OK(max11600_read_converted(&max_storage));
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0x2d / 256, max_storage.channel_readings[0]);
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0xd3 / 256, max_storage.channel_readings[1]);
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0x1f / 256, max_storage.channel_readings[2]);
+  tx_data[0] = 0xfd;
+  tx_data[1] = 0xbf;
+  tx_data[2] = 0xa4;
+  i2c_set_data(TEST_MAX11600_I2C_PORT, tx_data, 3);
+  TEST_ASSERT_OK(max11600_read_converted(&max_storage));
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0xfd / 256, max_storage.channel_readings[0]);
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0xbf / 256, max_storage.channel_readings[1]);
+  TEST_ASSERT_EQUAL(1000 * REFERENCE_VOLTAGE_V * 0xa4 / 256, max_storage.channel_readings[2]);
 }
-*/
 
 void teardown_test(void) {}
