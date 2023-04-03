@@ -121,7 +121,8 @@ def addBuildPath(string: str):
 for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     srcs = []
     inc_dirs = []
-
+    lib_incs = []
+    
     config = parse_config(entry)
     
     if config["can"]:
@@ -147,15 +148,12 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     # Just include all library headers
     # This resolves dependency issues like ms-freertos including FreeRTOS headers
     # even though FreeRTOS depends on ms-freertos, not the other way around
-    lib_incs = [lib_dir.Dir('inc') for lib_dir in LIB_DIRS]
+    lib_incs += [lib_dir.Dir('inc') for lib_dir in LIB_DIRS]
     lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
 
     # Add #/build/{PLATFORM} to srcs path so that .o files stays in build
     srcs = [addBuildPath(x.path) for x in srcs]
     inc_dirs = [addBuildPath(x.path) for x in inc_dirs]
-
-    print(entry.name, [file for file in inc_dirs])
-    print(entry.name, [file for file in srcs])
 
     env.Append(CPPDEFINES=[GetOption('define')])
     if entry in PROJ_DIRS or entry in SMOKE_DIRS:
