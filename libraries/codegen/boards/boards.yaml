@@ -21,6 +21,7 @@
     - solar_5_mppts
     - solar_6_mppts
     - steering
+    - uv_cutoff
 
     - new_can
     - can_one_shot_mode
