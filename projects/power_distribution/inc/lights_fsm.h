@@ -11,7 +11,7 @@
 
 #define NUM_LIGHTS_STATES 4
 #define NUM_LIGHTS_TRANSITIONS 10
-
+#define SIGNAL_BLINK_PERIOD_MS 600  // Signal blink frequency of 1.66Hz
 DECLARE_FSM(lights);
 
 // Light events matches CAN message defs from steering analog
@@ -31,5 +31,10 @@ typedef enum EELightType {
   EE_LIGHT_TYPE_SIGNAL_HAZARD,
   NUM_EE_LIGHT_TYPES,
 } EELightType;
+
+typedef enum HazardStatus {
+  HAZARD_OFF = NUM_EE_LIGHT_TYPES + 1,
+  HAZARD_ON,
+} HazardStatus;
 
 StatusCode init_lights(void);

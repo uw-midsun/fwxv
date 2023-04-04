@@ -99,7 +99,7 @@ StatusCode pca9555_gpio_toggle_state(const Pca9555GpioAddress *address) {
 
   // optimization: instead of using set_state and get_state, we read only once
   uint8_t gpio_data = 0;
-  prv_read_reg(address, INPUT0, INPUT1, &gpio_data);
+  prv_read_reg(address, OUTPUT0, OUTPUT1, &gpio_data);
   gpio_data ^= 1 << prv_pin_bit(address->pin);
   prv_write_reg(address, OUTPUT0, OUTPUT1, gpio_data);
 
