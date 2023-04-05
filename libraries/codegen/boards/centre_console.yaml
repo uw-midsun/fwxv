@@ -74,6 +74,8 @@
           length: 8
         regen_braking:
           length: 8
+        precharge:
+          length: 8
 
     set_ebrake_state:
       id: 10
@@ -132,4 +134,14 @@
         - charger
       signals:
         signal1:
+          length: 8
+
+    power_info:
+      id: 47
+      target:
+        - power_distribution_front
+      signals:
+        hazard_state:
+          length: 8
+        power_state:
           length: 8
