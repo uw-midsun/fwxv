@@ -12,6 +12,7 @@ StatusCode steering_analog_adc_init() {
 
 void steering_analog_input() {
   uint16_t control_stalk_data;
+  uint8_t channel;
   // Read ADC of pin set by steering control
   // Determine if it's a right, left or off signal
   adc_read_converted(s_ctrl_stk_address, &control_stalk_data);
