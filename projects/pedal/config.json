@@ -3,5 +3,10 @@
         "FreeRTOS",
         "ms-common"
     ],
-    "can": true
+    "can": true,
+    "mocks": {
+        "pedal_data_tx": [
+          "max11600_read_converted"
+        ]
+    }
 }

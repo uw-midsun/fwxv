@@ -24,12 +24,14 @@
 #define MOCK_BRAKE_VALUE ((int32_t)600)
 
 // Expected values for pedal readings
+// Expands to 0x32
 #define EXPECTED_THROTTLE_VALUE                                 \
   (((MOCK_THROTTLE_VALUE * EE_PEDAL_VALUE_DENOMINATOR) * 100) / \
-   ((MOCK_THROTTLE_CALIB_UPPER - MOCK_THROTTLE_CALIB_LOWER) * EE_PEDAL_VALUE_DENOMINATOR))
+  ((MOCK_THROTTLE_CALIB_UPPER - MOCK_THROTTLE_CALIB_LOWER) * EE_PEDAL_VALUE_DENOMINATOR))
+// Expands to 0x3C
 #define EXPECTED_BRAKE_VALUE                                 \
   (((MOCK_BRAKE_VALUE * EE_PEDAL_VALUE_DENOMINATOR) * 100) / \
-   ((MOCK_BRAKE_CALIB_UPPER - MOCK_BRAKE_CALIB_LOWER) * EE_PEDAL_VALUE_DENOMINATOR))
+  ((MOCK_BRAKE_CALIB_UPPER - MOCK_BRAKE_CALIB_LOWER) * EE_PEDAL_VALUE_DENOMINATOR))
 
 // Mock function for pedal calibration
 PedalCalibBlob global_calib_blob_mock = {
