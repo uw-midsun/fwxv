@@ -78,7 +78,7 @@ def generate_can_files(env, target=[], source=[], project=TARGET):
             env.Command(
                 LIBRARIES_INC_DIR.File(template.name[:-6]),
                 [BOARDS_DIR, TEMPLATES_DIR, GENERATOR],
-                "{} -y {} -t {} -f {}".format(base_exec, BOARDS_DIR.File("boards.yaml"), template, LIBRARIES_INC_DIR),
+                "{} -y {} -t {} -f {}".format(base_exec, BOARDS_DIR.File("boards.yaml"), template, LIBRARIES_INC_DIR)
             )
             target.append(LIBRARIES_INC_DIR.File(template.name[:-6]))
         else:
