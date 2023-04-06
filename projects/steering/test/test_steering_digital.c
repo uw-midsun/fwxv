@@ -6,6 +6,7 @@
 #include "status.h"
 #include "steering_digital_task.h"
 #include "task_test_helpers.h"
+#include "test_helpers.h"
 #include "unity.h"
 
 #define DEVICE_ID 0x04
@@ -26,21 +27,20 @@ const CanSettings can_settings = {
 static uint32_t notification = 0;
 static Event steering_event;
 
-// Setup test
-void setup_test(void) {
-  tasks_init_task(handler, 2, NULL);
-  interrupt_init();
-  gpio_it_init();
-  TEST_ASSERT_OK(steering_digital_input_init(handler));
-}
-
-void teardown_test(void) {}
-
 TASK(handler, TASK_MIN_STACK_SIZE) {
   while (true) {
     steering_digital_input();
   }
 }
+
+// Setup test
+void setup_test(void) {
+  tasks_init_task(handler, 2, NULL);
+  gpio_it_init();
+  TEST_ASSERT_OK(steering_digital_input_init(handler));
+}
+
+void teardown_test(void) {}
 
 TEST_IN_TASK
 void test_steering_input(void) {
@@ -52,51 +52,51 @@ void test_steering_input(void) {
 TEST_IN_TASK
 void test_steering_digital_input_horn() {
   // Test horn event & CAN message - press and unpress
-  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&HORN_GPIO_ADDR));
-  delay_ms(100);
+  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&(GpioAddress)HORN_GPIO_ADDR));
+  wait_tasks(1);
   TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_HORN_MASK, DIGITAL_SIGNAL_HORN_MASK);
 
-  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&HORN_GPIO_ADDR));
-  delay_ms(100);
+  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&(GpioAddress)HORN_GPIO_ADDR));
+  wait_tasks(1);
   TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_HORN_MASK, 0);
 }
 
 TEST_IN_TASK
 void test_steering_cc_toggle() {
   // Test CC toggle event & CAN message - press and unpress
-  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&CC_TOGGLE_GPIO_ADDR));
-  delay_ms(100);
+  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&(GpioAddress)CC_TOGGLE_GPIO_ADDR));
+  wait_tasks(1);
   TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_CC_TOGGLE_MASK, DIGITAL_SIGNAL_CC_TOGGLE_MASK);
 
-  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&CC_TOGGLE_GPIO_ADDR));
-  delay_ms(100);
+  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&(GpioAddress)CC_TOGGLE_GPIO_ADDR));
+  wait_tasks(1);
   TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_CC_TOGGLE_MASK, 0);
 }
 
 TEST_IN_TASK
 void test_steering_regen_brake() {
   // Test Regen brake event & CAN message - press and unpress
-  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&REGEN_BRAKE_TOGGLE_GPIO_ADDR));
-  delay_ms(100);
+  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&(GpioAddress)REGEN_BRAKE_TOGGLE_GPIO_ADDR));
+  wait_tasks(1);
   TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_REGEN_BRAKE_MASK,
                     DIGITAL_SIGNAL_REGEN_BRAKE_MASK);
 
-  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&REGEN_BRAKE_TOGGLE_GPIO_ADDR));
-  delay_ms(100);
+  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&(GpioAddress)REGEN_BRAKE_TOGGLE_GPIO_ADDR));
+  wait_tasks(1);
   TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_REGEN_BRAKE_MASK, 0);
 }
 
 TEST_IN_TASK
 void test_steering_cc_increase_decrease() {
   // Test CC increase speed event & CAN message - press
-  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&CC_INCREASE_SPEED_GPIO_ADDR));
-  delay_ms(100);
+  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&(GpioAddress)CC_INCREASE_SPEED_GPIO_ADDR));
+  wait_tasks(1);
   TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_CC_INCREASE_MASK,
                     DIGITAL_SIGNAL_CC_INCREASE_MASK);
 
   // Test CC decrease speed event & CAN message - press
-  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&CC_DECREASE_SPEED_GPIO_ADDR));
-  delay_ms(100);
+  TEST_ASSERT_OK(gpio_it_trigger_interrupt(&(GpioAddress)CC_DECREASE_SPEED_GPIO_ADDR));
+  wait_tasks(1);
   TEST_ASSERT_EQUAL(DIGITAL_INPUT & DIGITAL_SIGNAL_CC_DECREASE_MASK,
                     DIGITAL_SIGNAL_CC_DECREASE_MASK);
 }
