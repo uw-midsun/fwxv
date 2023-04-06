@@ -6,15 +6,23 @@ FSM(drive_fsm, NUM_DRIVE_TRANSITIONS);
 
 #define NUM_DRIVE_FSM_BUTTONS 3
 
+#define PRECHARGE_STATE_COMPLETE 1 // delete/change to correct value
+
+DriveStorage drive_storage = { .state = NEUTRAL };
+
 StatusCode error_state = STATUS_CODE_OK; 
 
 static uint32_t notification = 0;
 static Event drive_fsm_event;
 
+// this needs to be deleted. Just here as a placeholder 
+#define FAKE_GPIO_ADDR \
+  { .port = GPIO_PORT_B, .pin = 1 }
+
 static GpioAddress s_drive_fsm_button_lookup_table[NUM_DRIVE_FSM_BUTTONS] = {
-  [NEUTRAL_BUTTON] = 1,
-  [DRIVE_BUTTON] = 2,
-  [REVERSE_BUTTON] = 3,
+  [NEUTRAL_BUTTON] = FAKE_GPIO_ADDR,
+  [DRIVE_BUTTON] = FAKE_GPIO_ADDR,
+  [REVERSE_BUTTON] = FAKE_GPIO_ADDR,
 };
 
 static Event s_drive_fsm_event_lookup_table[NUM_DRIVE_FSM_EVENTS] = {
@@ -23,12 +31,17 @@ static Event s_drive_fsm_event_lookup_table[NUM_DRIVE_FSM_EVENTS] = {
   [REVERSE_BUTTON] = REVERSE_BUTTON_EVENT,
 };
 
-static uint32_t notification = 0;
-static Event drive_fsm_event;
-
+void prv_set_or_get_error_state() {
+    if(error_state != STATUS_CODE_OK) {
+        fsm_shared_mem_set_error_code(&cc_storage, error_state);
+    } else {
+        error_state = fsm_shared_mem_get_error_code(&cc_storage);
+    }
+}
 
 // Drive state
 static void prv_drive_input(Fsm *fsm, void *context) {
+    prv_set_or_get_error_state();
     LOG_DEBUG("DRIVE\n");
 
     /**
@@ -45,6 +58,7 @@ static void prv_drive_output(void *context) {
 
 // Reverse state 
 static void prv_reverse_input(Fsm *fsm, void *context) {
+    prv_set_or_get_error_state();
     LOG_DEBUG("REVERSE\n");
 
     /**
@@ -59,30 +73,39 @@ static void prv_reverse_output(void *context) {
     
 }
 
+static void prv_start_sequence(Fsm *fsm, int precharge_state){
+    if (precharge_state == PRECHARGE_STATE_COMPLETE) {
+        fsm_transition(fsm, TRANSMIT);
+    } else {
+        fsm_transition(fsm, DO_PRECHARGE);
+    }
+}
+
 // Neutral state | First state in state machine
 static void prv_neutral_input(Fsm *fsm, void *context) {
-    LOG_DEBUG("NEUTRAL\n");
-    LOG_DEBUG("counter: %d\n", counter);
-
-    if(error_state != STATUS_CODE_OK) {
-        fsm_shared_mem_set_error_code(&cc_storage, error_state);
-    } else{
-        error_state = fsm_shared_mem_get_error_code(&cc_storage);
-    }
+    prv_set_or_get_error_state();
 
     StateId power_state = fsm_shared_mem_get_power_state(&cc_storage); 
     int speed = 0; // needs to be got from MCI 
+    int precharge_state = 0; // needs to be got from MCI
 
     // button press probably using notify
     if (notify_get(&notification) == STATUS_CODE_OK) {
         while(event_from_notification(&notification, &drive_fsm_event) == STATUS_CODE_INCOMPLETE) {
             if (drive_fsm_event == DRIVE_BUTTON_EVENT && power_state == POWER_FSM_STATE_MAIN && speed >= 0) { 
-                fsm_transition(fsm, GET_PRECHARGE);
+                drive_storage.state = DRIVE;
+                prv_start_sequence(fsm, precharge_state);
             }else if (drive_fsm_event == REVERSE_BUTTON_EVENT && power_state == POWER_FSM_STATE_MAIN && speed <= 0) { 
-                fsm_transition(fsm, GET_PRECHARGE);
+                drive_storage.state = REVERSE;
+                prv_start_sequence(fsm, precharge_state);
             }
         }
     }
+
+
+    // tmp transition
+    // drive_storage.state = DRIVE;
+    // fsm_transition(fsm, TRANSMIT);
 
     // getting power state is tentative 
         // can have a notification var that is static for drive fsm
@@ -111,21 +134,18 @@ static FsmState s_drive_state_list[NUM_DRIVE_STATES] = {
     STATE(NEUTRAL, prv_neutral_input, prv_neutral_output),
     STATE(DRIVE, prv_drive_input, prv_drive_output),
     STATE(REVERSE, prv_reverse_input, prv_reverse_output),
-    STATE(GET_PRECHARGE, prv_get_precharge_input, prv_get_precharge_output),
     STATE(DO_PRECHARGE, prv_do_precharge_input, prv_do_precharge_output),
     STATE(TRANSMIT, prv_transmit_input, prv_transmit_output)
 };
 
 // Declares transition for state machine, must match those in input functions
 static FsmTransition s_drive_transitions[NUM_DRIVE_TRANSITIONS] = {
-    // SEQ: GET_PRECHARGE transitions to DO_PRECHARGE or TRANSMIT
-    //      DO_PRECHARGE transitions to TRANSMIT
-    TRANSITION(GET_PRECHARGE, DO_PRECHARGE),
-    TRANSITION(GET_PRECHARGE, TRANSMIT),
+    // SEQ: DO_PRECHARGE transitions to TRANSMIT
     TRANSITION(DO_PRECHARGE, TRANSMIT),
 
     // NEUTRAL -> SEQ
-    TRANSITION(NEUTRAL, GET_PRECHARGE),
+    TRANSITION(NEUTRAL, DO_PRECHARGE),
+    TRANSITION(NEUTRAL, TRANSMIT),
 
     // SEQ -> DRIVE
     TRANSITION(TRANSMIT, DRIVE),
@@ -133,8 +153,7 @@ static FsmTransition s_drive_transitions[NUM_DRIVE_TRANSITIONS] = {
     // SEQ -> REVERSE 
     TRANSITION(TRANSMIT, REVERSE),
 
-    // SEQ -> NEUTRAL
-    TRANSITION(GET_PRECHARGE, NEUTRAL),
+    // SEQ -> NEUTRAL 
     TRANSITION(DO_PRECHARGE, NEUTRAL),
     TRANSITION(TRANSMIT, NEUTRAL),
 

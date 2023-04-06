@@ -5,12 +5,13 @@
 #include "delay.h"
 #include "fsm.h"
 #include "gpio.h"
+#include "gpio_it.h"
 #include "log.h"
 #include "notify.h"
 #include "task.h"
 
-#define NUM_DRIVE_STATES 6
-#define NUM_DRIVE_TRANSITIONS 11
+#define NUM_DRIVE_STATES 5
+#define NUM_DRIVE_TRANSITIONS 9
 
 DECLARE_FSM(drive_fsm);
 
@@ -18,7 +19,6 @@ typedef enum driveState {
   NEUTRAL = 0,
   DRIVE,
   REVERSE,
-  GET_PRECHARGE,  // gets precharge state
   DO_PRECHARGE,   // turn on precharge and get ack
   TRANSMIT, // send drive state (NEUTRAL, DRIVE, or REVERSE) to MCI
 } driveState;
@@ -37,4 +37,11 @@ typedef enum driveEvents{
   NUM_DRIVE_FSM_EVENTS,
 } driveEvents;
 
+typedef struct DriveStorage {
+  StateId state; // NEUTRAL will be used as a default state
+} DriveStorage;
+
+extern DriveStorage drive_storage;
+
 StatusCode init_drive_fsm(void);
+void prv_set_or_get_error_state();
