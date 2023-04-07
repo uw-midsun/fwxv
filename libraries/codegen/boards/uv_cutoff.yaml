@@ -10,12 +10,10 @@
 
 ---
   Messages:
-    pedal_output:
-      id: 18
+    uv_cutoff_notification:
+      id: 45
       target:
-        - motor_controller
+        - telemetry
       signals:
-        throttle_output:
-          length: 32
-        brake_output:
-          length: 32
+        signal1:
+          length: 8
