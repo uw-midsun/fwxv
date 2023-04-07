@@ -5,20 +5,26 @@
 #include <stdlib.h>
 
 #include "pedal_calib.h"
+#include "pedal_shared_resources_provider.h"
 #include "status.h"
 
 #define THROTTLE_CHANNEL MAX11600_CHANNEL_0
 #define BRAKE_CHANNEL MAX11600_CHANNEL_2
 #define EE_PEDAL_VALUE_DENOMINATOR ((1 << 12))
-Max11600Storage s_max11600_storage = { 0 };
-PedalCalibBlob global_calib_blob;
+
+static PedalCalibBlob *s_calib_blob;
+static Max11600Storage *s_max11600_storage;
+
+void pedal_data_init() {
+  s_max11600_storage = get_shared_max11600_storage();
+  s_calib_blob = get_shared_pedal_calib_blob();
+}
 
 StatusCode read_pedal_data(int16_t *reading, MAX11600Channel channel) {
-  status_ok_or_return(max11600_read_converted(&s_max11600_storage));
-  PedalCalibBlob *calib_blob = &global_calib_blob;
-  int32_t range = calib_blob->brake_calib.upper_value - calib_blob->brake_calib.lower_value;
+  status_ok_or_return(max11600_read_raw(s_max11600_storage));
+  int32_t range = s_calib_blob->brake_calib.upper_value - s_calib_blob->brake_calib.lower_value;
 
-  *reading = (int16_t)s_max11600_storage.channel_readings[channel];
+  *reading = (int16_t)s_max11600_storage->channel_readings[channel];
   int32_t reading_upscaled = (int32_t)*reading * EE_PEDAL_VALUE_DENOMINATOR;
   reading_upscaled *= 100;
 
