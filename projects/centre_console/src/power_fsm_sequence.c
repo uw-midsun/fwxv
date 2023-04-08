@@ -98,7 +98,7 @@ void prv_power_fsm_confirm_dc_dc_input(Fsm *fsm, void *context) {
   uint8_t status = get_power_select_status_status();
   uint8_t fault = get_power_select_status_fault();
 
-  // Status bit 1 is AUX, fault bits 2, 3, 4 are AUX
+  // Status bit 1 is DCDC, fault bits 2, 3, 4 are DCDC
   if((status & 0x02) && !(fault & 0x1C)) {
     // Transition to next state
     fsm_transition(fsm, POWER_FSM_TURN_ON_EVERYTHING);

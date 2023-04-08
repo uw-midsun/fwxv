@@ -6,7 +6,7 @@
 #include "centre_console_getters.h"
 #include "task.h"
 
-FSM(centre_console_power_fsm, NUM_CENTRE_CONSOLE_POWER_STATES);
+FSM(centre_console_power_fsm, NUM_POWER_STATES);
 
 static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
 
@@ -42,7 +42,7 @@ static void prv_power_fsm_fault_output(void *context) {
 }
 
 // Declare states in state lists
-static FsmState s_power_fsm_states[NUM_CENTRE_CONSOLE_POWER_STATES] = {
+static FsmState s_power_fsm_states[NUM_POWER_STATES] = {
   STATE(POWER_FSM_STATE_OFF, prv_power_fsm_off_input, prv_power_fsm_off_output),
   STATE(POWER_FSM_STATE_MAIN, prv_power_fsm_main_input, prv_power_fsm_main_output),
   STATE(POWER_FSM_STATE_AUX, prv_power_fsm_aux_input, prv_power_fsm_aux_output),
@@ -76,7 +76,7 @@ static FsmState s_power_fsm_states[NUM_CENTRE_CONSOLE_POWER_STATES] = {
 };
 
 // Declares transition for state machine
-static FsmTransition s_power_fsm_transitions[NUM_CENTRE_CONSOLE_POWER_TRANSITIONS] = {
+static FsmTransition s_power_fsm_transitions[NUM_POWER_TRANSITIONS] = {
   // Transitions for OFF state
   TRANSITION(POWER_FSM_STATE_OFF, POWER_FSM_STATE_FAULT),
   // Transitions for MAIN state

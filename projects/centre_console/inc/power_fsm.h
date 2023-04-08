@@ -10,7 +10,7 @@
 #define NUM_POWER_STATES 14
 #define NUM_POWER_TRANSITIONS 40
 
-DECLARE_FSM(centre_console_power_fsm);
+DECLARE_FSM(power_fsm);
 
 typedef enum PowerFsmStateId {
   POWER_FSM_STATE_OFF = 0,
@@ -38,6 +38,6 @@ typedef enum PowerFsmStateId {
 typedef struct PowerFsmContext {
   PowerFsmStateId latest_state;
   PowerFsmStateId target_state;
-} PowerFsmContext;
+}   PowerFsmContext;
 
 StatusCode init_power_fsm(void);
