@@ -12,6 +12,10 @@ static uint8_t cycle_timeout = 3;
 
 // Input/outputs for going into MAIN
 
+void prv_power_fsm_confirm_aux_status_output(void *context) {
+  LOG_DEBUG("Transitioned to confirm aux status\n");
+}
+
 void prv_power_fsm_confirm_aux_status_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext*)context;
 
@@ -31,6 +35,11 @@ void prv_power_fsm_confirm_aux_status_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, state_context->latest_state);
   }
   return;
+}
+
+void prv_power_fsm_send_pd_bms_output(void *context) {
+  set_set_bms_power_bms_power_on_notification(CONST);
+  LOG_DEBUG("Transitioned to send pd bms\n");
 }
 
 void prv_power_fsm_send_pd_bms_input(Fsm *fsm, void *context) {
@@ -54,6 +63,10 @@ void prv_power_fsm_send_pd_bms_input(Fsm *fsm, void *context) {
   return;
 }
 
+void prv_power_fsm_confirm_battery_status_output(void *context) {
+  LOG_DEBUG("Transitioned to confirm battery status\n");
+}
+
 void prv_power_fsm_confirm_battery_status_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext*)context;
 
@@ -75,6 +88,12 @@ void prv_power_fsm_confirm_battery_status_input(Fsm *fsm, void *context) {
   return;
 }
 
+void prv_power_fsm_close_battery_relays_output(void *context) {
+  set_set_relay_states_relay_mask(CONST);
+  set_set_relay_states_relay_state(CONST);
+  LOG_DEBUG("Transitioned to close battery relays\n");
+}
+
 void prv_power_fsm_close_battery_relays_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext*)context;
 
@@ -90,6 +109,10 @@ void prv_power_fsm_close_battery_relays_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, state_context->latest_state);
   }
   return;
+}
+
+void prv_power_fsm_confirm_dc_dc_output(void *context) {
+  LOG_DEBUG("Transitioned to confirm dc dc\n");
 }
 
 void prv_power_fsm_confirm_dc_dc_input(Fsm *fsm, void *context) {
@@ -110,10 +133,19 @@ void prv_power_fsm_confirm_dc_dc_input(Fsm *fsm, void *context) {
   return;
 }
 
+void prv_power_fsm_turn_on_everything_output(void *context) {
+  set_set_power_state_turn_on_everything_notification(CONST);
+  LOG_DEBUG("Transitioned to turn on everything\n");
+}
+
 void prv_power_fsm_turn_on_everything_input(Fsm *fsm, void *context) {
   // No checks here, only "Turn on everything" message gets sent in the output function
   fsm_transition(fsm, POWER_FSM_POWER_MAIN_COMPLETE);
   return;
+}
+
+void prv_power_fsm_power_main_complete_output(void *context) {
+  LOG_DEBUG("Transitioned to power main complete\n");
 }
 
 void prv_power_fsm_power_main_complete_input(Fsm *fsm, void *context) {
@@ -122,44 +154,17 @@ void prv_power_fsm_power_main_complete_input(Fsm *fsm, void *context) {
   return;
 }
 
-void prv_power_fsm_confirm_aux_status_output(void *context) {
-  LOG_DEBUG("Transitioned to confirm aux status\n");
-}
-
-void prv_power_fsm_send_pd_bms_output(void *context) {
-  set_set_bms_power_bms_power_on_notification(CONST);
-  LOG_DEBUG("Transitioned to send pd bms\n");
-}
-
-void prv_power_fsm_confirm_battery_status_output(void *context) {
-  LOG_DEBUG("Transitioned to confirm battery status\n");
-}
-
-void prv_power_fsm_close_battery_relays_output(void *context) {
-  set_set_relay_states_relay_mask(CONST);
-  set_set_relay_states_relay_state(CONST);
-  LOG_DEBUG("Transitioned to close battery relays\n");
-}
-
-void prv_power_fsm_confirm_dc_dc_output(void *context) {
-  LOG_DEBUG("Transitioned to confirm dc dc\n");
-}
-
-void prv_power_fsm_turn_on_everything_output(void *context) {
-  set_set_power_state_turn_on_everything_notification(CONST);
-  LOG_DEBUG("Transitioned to turn on everything\n");
-}
-
-void prv_power_fsm_power_main_complete_output(void *context) {
-  LOG_DEBUG("Transitioned to power main complete\n");
-}
-
 // Input/outputs for going into AUX
 
 // Confirm aux status
 // Turn on everything
 
 // Input/outputs for going into OFF
+
+void prv_power_fsm_discharge_precharge_output(void *context) {
+  set_discharge_precharge_signal1(CONST);
+  LOG_DEBUG("Transitioned to discharge precharge\n");
+}
 
 void prv_power_fsm_discharge_precharge_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext*)context;
@@ -177,10 +182,22 @@ void prv_power_fsm_discharge_precharge_input(Fsm *fsm, void *context) {
   return;
 }
 
+void prv_power_fsm_turn_off_everything_output(void *context) {
+  // Maybe reuse this message somehow
+  set_set_power_state_turn_on_everything_notification(!CONST);
+  LOG_DEBUG("Transitioned to turn off everything\n");
+}
+
 void prv_power_fsm_turn_off_everything_input(Fsm *fsm, void *context) {
   // No checks here, only "Turn off everything" message gets sent in the output function
   fsm_transition(fsm, POWER_FSM_OPEN_RELAYS);
   return;
+}
+
+void prv_power_fsm_open_relays_output(void *context) {
+  set_set_relay_states_relay_mask(CONST);
+  set_set_relay_states_relay_state(CONST);
+  LOG_DEBUG("Transitioned to open relays\n");
 }
 
 void prv_power_fsm_open_relays_input(Fsm *fsm, void *context) {
@@ -193,28 +210,11 @@ void prv_power_fsm_open_relays_input(Fsm *fsm, void *context) {
   // If both relays are open, transition to next sequence state
   if(hv_status && gnd_status) {
     // Transition to next state
-    fsm_transition(fsm, POWER_FSM_DISCHARGE_PRECHARGE);
+    fsm_transition(fsm, POWER_FSM_STATE_OFF);
   } else {
     // Transition to last stable state
     fsm_transition(fsm, state_context->latest_state);
   }
   
   return;
-}
-
-void prv_power_fsm_discharge_precharge_output(void *context) {
-  set_discharge_precharge_signal1(CONST);
-  LOG_DEBUG("Transitioned to discharge precharge\n");
-}
-
-void prv_power_fsm_turn_off_everything_output(void *context) {
-  // Maybe reuse this message somehow
-  set_set_power_state_turn_on_everything_notification(!CONST);
-  LOG_DEBUG("Transitioned to turn off everything\n");
-}
-
-void prv_power_fsm_open_relays_output(void *context) {
-  set_set_relay_states_relay_mask(CONST);
-  set_set_relay_states_relay_state(CONST);
-  LOG_DEBUG("Transitioned to open relays\n");
 }
