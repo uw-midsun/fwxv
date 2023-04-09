@@ -11,7 +11,7 @@
 ---
   Messages:
     set_bms_power:
-      id: 0
+      id: 4
       target:
         - power_distribution_front # front? rear? both?
         - power_distribution_rear
@@ -21,7 +21,7 @@
           length: 8
 
     set_power_state:
-      id: 0
+      id: 5
       target:
         - power_distribution_front # front? rear? both?
         - power_distribution_rear

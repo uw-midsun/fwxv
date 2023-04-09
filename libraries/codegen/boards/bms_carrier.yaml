@@ -11,7 +11,7 @@
 ---
   Messages:
     bps_heartbeat:
-      id: 0
+      id: 64
       target:
         centre_console:
           watchdog: 0
