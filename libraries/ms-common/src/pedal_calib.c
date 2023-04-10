@@ -1,7 +1,7 @@
 #include "pedal_calib.h"
 
 #include <stdio.h>
-
+#include <string.h>
 #include "adc.h"
 #include "gpio.h"
 #include "gpio_it.h"

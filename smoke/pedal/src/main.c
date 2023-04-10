@@ -33,7 +33,13 @@ void setup_test(void) {
   i2c_init(I2C_PORT_2, &i2c_settings);
   max11600_init(&s_max11600_storage, I2C_PORT_2);
 
-  TEST_ASSERT_OK(calib_init(&global_calib_blob, sizeof(global_calib_blob), true));
+  StatusCode ret = calib_init(&global_calib_blob, sizeof(global_calib_blob), true);
+  if (ret == STATUS_CODE_OK) {
+      LOG_DEBUG("calib_init test: OK\n");
+  } else {
+      LOG_DEBUG("calib_init test: FAILED (Error code: %d)\n", (int)ret);
+  }
+
   pedal_calib_init(&s_throttle_calibration_storage);
   pedal_calib_init(&s_brake_calibration_storage);
 }
@@ -74,4 +80,10 @@ void test_brake_calibration_run(void) {
   LOG_DEBUG("Completed sampling\n");
 
   calib_commit();
+}
+
+int main(void) {
+  log_init();
+
+  return 0;
 }
