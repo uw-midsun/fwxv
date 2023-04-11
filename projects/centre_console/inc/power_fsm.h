@@ -10,7 +10,7 @@
 #define NUM_POWER_STATES 14
 #define NUM_POWER_TRANSITIONS 40
 
-DECLARE_FSM(power_fsm);
+DECLARE_FSM(power);
 
 typedef enum PowerFsmStateId {
   POWER_FSM_STATE_OFF = 0,

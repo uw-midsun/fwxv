@@ -5,8 +5,6 @@
 
 #include "log.h"
 
-#define CONST 0
-
 // Number of cyces to wait before falling back to stable state
 static uint8_t cycle_timeout = 3;
 
@@ -38,7 +36,7 @@ void prv_power_fsm_confirm_aux_status_input(Fsm *fsm, void *context) {
 }
 
 void prv_power_fsm_send_pd_bms_output(void *context) {
-  set_set_bms_power_bms_power_on_notification(CONST);
+  set_set_bms_power_bms_power_on_notification(0x01); // Todo (Bafran): Change value to real value
   LOG_DEBUG("Transitioned to send pd bms\n");
 }
 
@@ -89,8 +87,8 @@ void prv_power_fsm_confirm_battery_status_input(Fsm *fsm, void *context) {
 }
 
 void prv_power_fsm_close_battery_relays_output(void *context) {
-  set_set_relay_states_relay_mask(CONST);
-  set_set_relay_states_relay_state(CONST);
+  set_set_relay_states_relay_mask(0x01); // Todo (Bafran): Change value to real value
+  set_set_relay_states_relay_state(0x01); // Todo (Bafran): Change value to real value
   LOG_DEBUG("Transitioned to close battery relays\n");
 }
 
@@ -134,7 +132,7 @@ void prv_power_fsm_confirm_dc_dc_input(Fsm *fsm, void *context) {
 }
 
 void prv_power_fsm_turn_on_everything_output(void *context) {
-  set_set_power_state_turn_on_everything_notification(CONST);
+  set_set_power_state_turn_on_everything_notification(0x01); // Todo (Bafran): Change value to real value
   LOG_DEBUG("Transitioned to turn on everything\n");
 }
 
@@ -145,6 +143,7 @@ void prv_power_fsm_turn_on_everything_input(Fsm *fsm, void *context) {
 }
 
 void prv_power_fsm_power_main_complete_output(void *context) {
+  set_ready_to_drive_ready_state(0x01); // Todo (Bafran): Change value to real value
   LOG_DEBUG("Transitioned to power main complete\n");
 }
 
@@ -162,14 +161,14 @@ void prv_power_fsm_power_main_complete_input(Fsm *fsm, void *context) {
 // Input/outputs for going into OFF
 
 void prv_power_fsm_discharge_precharge_output(void *context) {
-  set_discharge_precharge_signal1(CONST);
+  set_discharge_precharge_signal1(0x01); // Todo (Bafran): Change value to real value
   LOG_DEBUG("Transitioned to discharge precharge\n");
 }
 
 void prv_power_fsm_discharge_precharge_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext*)context;
   
-  uint8_t precharge = get_precharge_completed_signal1();
+  uint8_t precharge = get_precharge_completed_notification();
 
   if(precharge) {
     // Transition to next state
@@ -184,7 +183,7 @@ void prv_power_fsm_discharge_precharge_input(Fsm *fsm, void *context) {
 
 void prv_power_fsm_turn_off_everything_output(void *context) {
   // Maybe reuse this message somehow
-  set_set_power_state_turn_on_everything_notification(!CONST);
+  set_set_power_state_turn_on_everything_notification(0x00); // Todo (Bafran): Change value to real value
   LOG_DEBUG("Transitioned to turn off everything\n");
 }
 
@@ -195,8 +194,8 @@ void prv_power_fsm_turn_off_everything_input(Fsm *fsm, void *context) {
 }
 
 void prv_power_fsm_open_relays_output(void *context) {
-  set_set_relay_states_relay_mask(CONST);
-  set_set_relay_states_relay_state(CONST);
+  set_set_relay_states_relay_mask(0x01); // Todo (Bafran): Change value to real value
+  set_set_relay_states_relay_state(0x01); // Todo (Bafran): Change value to real value
   LOG_DEBUG("Transitioned to open relays\n");
 }
 
@@ -208,7 +207,7 @@ void prv_power_fsm_open_relays_input(Fsm *fsm, void *context) {
   uint8_t gnd_status = get_battery_relay_state_gnd();
 
   // If both relays are open, transition to next sequence state
-  if(hv_status && gnd_status) {
+  if(hv_status && gnd_status) { // Todo (Bafran): Change value to real value
     // Transition to next state
     fsm_transition(fsm, POWER_FSM_STATE_OFF);
   } else {

@@ -14,8 +14,10 @@ FSM(centre_console_power_fsm, NUM_POWER_STATES);
 static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext*)context;
 
+  // Start button pressed
   if(gpio_get_state(&s_btn_start, GPIO_STATE_LOW)) {
-    if(0) { // Not sure how cc is reading is brake is pressed
+    // Brake is pressed (any non-zero value)
+    if(get_pedal_output_brake_output()) {
       state_context->target_state = POWER_FSM_STATE_AUX;
     } else {
       state_context->target_state = POWER_FSM_STATE_MAIN;
@@ -39,11 +41,11 @@ static void prv_power_fsm_main_input(Fsm *fsm, void *context) {
 static void prv_power_fsm_aux_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext*)context;
 
-  // Again, idk how we're checking pedal brake
-  if(gpio_get_state(&s_btn_start, GPIO_STATE_LOW) && 1) {
+  // If start button && brake are pressed
+  if(gpio_get_state(&s_btn_start, GPIO_STATE_LOW) && get_pedal_output_brake_output()) {
     state_context->target_state = POWER_FSM_STATE_MAIN;
     fsm_transition(fsm, POWER_FSM_SEND_PD_BMS);
-    // idk how we're going to off
+    // Todo (Bafran): How is off being done? press start again?
   } else if (gpio_get_state(&s_btn_start, GPIO_STATE_LOW)) {
     state_context->target_state = POWER_FSM_STATE_OFF;
     fsm_transition(fsm, POWER_FSM_SEND_PD_BMS);
