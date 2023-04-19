@@ -1,12 +1,14 @@
 #include "drive_fsm.h"
 #include "drive_fsm_sequence.h"
+#include "centre_console_setters.h"
+#include "centre_console_getters.h"
 #include "power_fsm.h"
 
 FSM(drive_fsm, NUM_DRIVE_TRANSITIONS);
 
 #define NUM_DRIVE_FSM_BUTTONS 3
 
-#define PRECHARGE_STATE_COMPLETE 1 // delete/change to correct value
+#define PRECHARGE_STATE_COMPLETE 1 // delete/change to correct value (ask ShiCheng)
 
 DriveStorage drive_storage = { .state = NEUTRAL };
 
@@ -44,6 +46,15 @@ static void prv_drive_input(Fsm *fsm, void *context) {
     prv_set_or_get_error_state();
     LOG_DEBUG("DRIVE\n");
 
+    StateId power_state = fsm_shared_mem_get_power_state(&cc_storage); 
+    if (notify_get(&notification) == STATUS_CODE_OK) {
+        while(event_from_notification(&notification, &drive_fsm_event) == STATUS_CODE_INCOMPLETE) {
+            if (drive_fsm_event == NEUTRAL_BUTTON_EVENT || power_state != POWER_FSM_STATE_MAIN) { 
+                drive_storage.state = NEUTRAL;
+                fsm_transition(fsm, TRANSMIT);
+        }
+    }
+
     /**
      * If Neutral button pressed OR drive_state != main
      *  transition to TRANSMIT
@@ -60,6 +71,15 @@ static void prv_drive_output(void *context) {
 static void prv_reverse_input(Fsm *fsm, void *context) {
     prv_set_or_get_error_state();
     LOG_DEBUG("REVERSE\n");
+
+    StateId power_state = fsm_shared_mem_get_power_state(&cc_storage); 
+    if (notify_get(&notification) == STATUS_CODE_OK) {
+        while(event_from_notification(&notification, &drive_fsm_event) == STATUS_CODE_INCOMPLETE) {
+            if (drive_fsm_event == NEUTRAL_BUTTON_EVENT || power_state != POWER_FSM_STATE_MAIN) { 
+                drive_storage.state = NEUTRAL;
+                fsm_transition(fsm, TRANSMIT);
+        }
+    }
 
     /**
      * If Neutral button pressed OR drive_state != main
@@ -81,21 +101,27 @@ static void prv_start_sequence(Fsm *fsm, int precharge_state){
     }
 }
 
+static bool prv_speed_is_positive(void) {
+    int left_wheel_speed = get_motor_velocity_velocity_l(); // needs to be got from MCI 
+    int right_wheel_speed = get_motor_velocity_velocity_r(); // needs to be got from MCI 
+
+    return (left_wheel_speed >= 0 && right_wheel_speed >= 0) ? true : false;
+}
+
 // Neutral state | First state in state machine
 static void prv_neutral_input(Fsm *fsm, void *context) {
     prv_set_or_get_error_state();
 
     StateId power_state = fsm_shared_mem_get_power_state(&cc_storage); 
-    int speed = 0; // needs to be got from MCI 
-    int precharge_state = 0; // needs to be got from MCI
+    int precharge_state = get_mc_status_precharge_status(); // needs to be got from MCI
 
     // button press probably using notify
     if (notify_get(&notification) == STATUS_CODE_OK) {
         while(event_from_notification(&notification, &drive_fsm_event) == STATUS_CODE_INCOMPLETE) {
-            if (drive_fsm_event == DRIVE_BUTTON_EVENT && power_state == POWER_FSM_STATE_MAIN && speed >= 0) { 
+            if (drive_fsm_event == DRIVE_BUTTON_EVENT && power_state == POWER_FSM_STATE_MAIN && prv_speed_is_positive()) { 
                 drive_storage.state = DRIVE;
                 prv_start_sequence(fsm, precharge_state);
-            }else if (drive_fsm_event == REVERSE_BUTTON_EVENT && power_state == POWER_FSM_STATE_MAIN && speed <= 0) { 
+            }else if (drive_fsm_event == REVERSE_BUTTON_EVENT && power_state == POWER_FSM_STATE_MAIN && !prv_speed_is_positive()) { 
                 drive_storage.state = REVERSE;
                 prv_start_sequence(fsm, precharge_state);
             }
