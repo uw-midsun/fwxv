@@ -9,7 +9,7 @@ typedef struct FSMStorage {
   Mutex mutex;
 } FSMStorage;
 
-void fsm_shared_mem_init(FSMStorage *storage); 
+void fsm_shared_mem_init(FSMStorage *storage);
 void fsm_shared_mem_set_power_state(FSMStorage *storage, StateId state);
 StateId fsm_shared_mem_get_power_state(FSMStorage *storage);
 void fsm_shared_mem_set_error_code(FSMStorage *storage, StatusCode code);
