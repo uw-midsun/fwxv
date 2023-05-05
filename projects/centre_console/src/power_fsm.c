@@ -1,23 +1,23 @@
 #include "power_fsm.h"
 
+#include "cc_hw_defs.h"
+#include "centre_console_getters.h"
 #include "delay.h"
 #include "log.h"
 #include "power_fsm_sequence.h"
-#include "centre_console_getters.h"
 #include "task.h"
-#include "cc_hw_defs.h"
 
 static const GpioAddress s_btn_start = CC_BTN_PUSH_START;
 
-FSM(centre_console_power_fsm, NUM_POWER_STATES);
+FSM(power, NUM_POWER_STATES);
 
 static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext*)context;
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
 
   // Start button pressed
-  if(gpio_get_state(&s_btn_start, GPIO_STATE_LOW)) {
+  if (gpio_get_state(&s_btn_start, GPIO_STATE_LOW)) {
     // Brake is pressed (any non-zero value)
-    if(get_pedal_output_brake_output()) {
+    if (get_pedal_output_brake_output()) {
       state_context->target_state = POWER_FSM_STATE_AUX;
     } else {
       state_context->target_state = POWER_FSM_STATE_MAIN;
@@ -28,10 +28,10 @@ static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_main_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext*)context;
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
 
   // Assuming that pressing start again means we're turning off
-  if(gpio_get_state(&s_btn_start, GPIO_STATE_LOW)) {
+  if (gpio_get_state(&s_btn_start, GPIO_STATE_LOW)) {
     state_context->target_state = POWER_FSM_STATE_OFF;
     fsm_transition(fsm, POWER_FSM_DISCHARGE_PRECHARGE);
   }
@@ -39,10 +39,10 @@ static void prv_power_fsm_main_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_aux_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext*)context;
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
 
   // If start button && brake are pressed
-  if(gpio_get_state(&s_btn_start, GPIO_STATE_LOW) && get_pedal_output_brake_output()) {
+  if (gpio_get_state(&s_btn_start, GPIO_STATE_LOW) && get_pedal_output_brake_output()) {
     state_context->target_state = POWER_FSM_STATE_MAIN;
     fsm_transition(fsm, POWER_FSM_SEND_PD_BMS);
     // Todo (Bafran): How is off being done? press start again?
@@ -59,25 +59,25 @@ static void prv_power_fsm_fault_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_off_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext*)context;
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
   state_context->latest_state = POWER_FSM_STATE_OFF;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM OFF STATE\n");
 }
 
 static void prv_power_fsm_main_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext*)context;
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
   state_context->latest_state = POWER_FSM_STATE_MAIN;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM MAIN STATE\n");
 }
 
 static void prv_power_fsm_aux_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext*)context;
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
   state_context->latest_state = POWER_FSM_STATE_AUX;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM AUX STATE\n");
 }
 
 static void prv_power_fsm_fault_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext*)context;
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
   state_context->latest_state = POWER_FSM_STATE_FAULT;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM FAULT STATE\n");
 }
@@ -178,6 +178,7 @@ StatusCode init_power_fsm(void) {
     .num_transitions = NUM_POWER_STATES,
     .initial_state = POWER_FSM_STATE_OFF,
   };
-  fsm_init(centre_console_power_fsm, settings, NULL);
+  PowerFsmContext context = { 0 };
+  fsm_init(power, settings, &context);
   return STATUS_CODE_OK;
 }

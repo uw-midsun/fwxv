@@ -38,6 +38,6 @@ typedef enum PowerFsmStateId {
 typedef struct PowerFsmContext {
   PowerFsmStateId latest_state;
   PowerFsmStateId target_state;
-}   PowerFsmContext;
+} PowerFsmContext;
 
 StatusCode init_power_fsm(void);
