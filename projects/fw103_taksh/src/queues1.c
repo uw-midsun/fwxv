@@ -26,12 +26,12 @@ static Queue s_queue1 = {
 TASK(task1, TASK_STACK_512) {
   LOG_DEBUG("Task 1 initialized!\n");
   StatusCode ret;
-  char to_send = [50];
+  char to_send[50];
   int i = 0;
   while (true) {
     // Your code goes here
     // strcpy(&to_send, s_list[i]);
-    snprintf(to_send, sizeof(to_send), s_list[i]);
+    snprintf(&to_send, sizeof(to_send), &s_list[i]);
     i++;
     i = i % QUEUE_LEN;
     ret = queue_send(&s_queue1, &to_send, 0);
