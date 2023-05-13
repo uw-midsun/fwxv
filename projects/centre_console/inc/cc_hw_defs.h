@@ -68,3 +68,46 @@
 #define SPDMTR_PWM_TIMER NUM_PWM_TIMERS
 #define SPDMTR_PWM_PIN \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+
+#define GPIO1 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO2 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO3 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO4 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO5 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO6 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO7 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO8 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO9 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO10 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO11 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO12 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO13 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO14 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO15 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO16 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO17 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO18 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO19 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO20 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO21 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }

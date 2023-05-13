@@ -23,6 +23,7 @@
       id: 30
       target:
         - telemetry
+        - centre_console
       critical: false
       signals:
         module_id:
@@ -30,6 +31,9 @@
         voltage:
           length: 16
         temperature:
+          length: 16
+        # This field will change
+        batt_perc:
           length: 16
 
     battery_aggregate_vc:
