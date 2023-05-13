@@ -1,10 +1,13 @@
 #include "cc_displays.h"
 
-// #include "can.h"
+#include "can.h"
 #include "cc_hw_defs.h"
+#include "centre_console_getters.h"
+#include "centre_console_setters.h"
+#include "centre_console_tx_structs.h"
 #include "gpio.h"
 #include "log.h"
-// #include "seg_display.h"
+#include "seg_display.h"
 
 void cc_displays_update(void) {
   static const GpioAddress cc_displays[] = {
@@ -15,10 +18,10 @@ void cc_displays_update(void) {
     gpio_init_pin(&cc_displays[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   }
   // Read from CAN structs and update displays
-  uint8_t cruise_control_val = g_tx_struct.drive_output_cruise_control;
-  float speed_val =
-      (g_rx_struct.motor_velocity.velocity_l + g_rx_struct.motor_velocity.velocity_r) * 0.005;
-  uint8_t batt_perc = g_rx_struct.battery_vt_batt_perc;
+  // uint8_t cruise_control_val = get_drive_output_cruise_control();
+  uint8_t = centre_console_tx_struct.cruise_control;
+  float speed_val = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) * 0.018;
+  uint16_t batt_perc = get_battery_vt_batt_perc();
   SegDisplay cc_display = { GPIO1, GPIO2, GPIO3, GPIO4, GPIO5, GPIO6, GPIO7 };
   SegDisplay speed_display = { GPIO8, GPIO9, GPIO10, GPIO11, GPIO12, GPIO13, GPIO14 };
   SegDisplay batt_perc_display = { GPIO15, GPIO16, GPIO17, GPIO18, GPIO19, GPIO20, GPIO21 };
