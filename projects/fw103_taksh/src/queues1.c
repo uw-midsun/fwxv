@@ -14,9 +14,7 @@
 #define QUEUE_LEN 5
 #define BUF_SIZE (QUEUE_LEN * ITEM_SZ)
 #define code 'STATUS_CODE_OK'
-static const char s_list[QUEUE_LEN][ITEM_SZ] = {
-  "Item1", "Item2", "Item3", "Item4", "Item5"
-  };
+static const char s_list[QUEUE_LEN][ITEM_SZ] = { "Item1", "Item2", "Item3", "Item4", "Item5" };
 // Task static entities
 static uint8_t s_queue1_buf[BUF_SIZE];
 static Queue s_queue1 = {
