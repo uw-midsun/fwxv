@@ -31,7 +31,7 @@ TASK(task1, TASK_STACK_512) {
   while (true) {
     // Your code goes here
     // strcpy(&to_send, s_list[i]);
-    snprintf(to_send, sizeof(to_send), s_list[i]);
+    snprintf(&to_send, sizeof(to_send), s_list[i]);
     i++;
     i = i % QUEUE_LEN;
     ret = queue_send(&s_queue1, &to_send, 0);
