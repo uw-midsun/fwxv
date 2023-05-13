@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "calib.h"
 #include "can.h"
 #include "can_board_ids.h"
 #include "can_msg.h"
@@ -7,13 +8,12 @@
 #include "interrupt.h"
 #include "log.h"
 #include "max11600.h"
+#include "pedal_calib.h"
 #include "pedal_data.h"
 #include "pedal_setters.h"
+#include "pedal_shared_resources_provider.h"
 #include "soft_timer.h"
 #include "tasks.h"
-#include "calib.h"
-#include "pedal_calib.h"
-#include "pedal_shared_resources_provider.h"
 
 #ifdef MS_PLATFORM_X86
 #define MASTER_MS_CYCLE_TIME 100
@@ -30,7 +30,8 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
-// These variables are passed to the shared resources provider, which then get used by the rest of the pedal project
+// These variables are passed to the shared resources provider, which then get used by the rest of
+// the pedal project
 static PedalCalibBlob s_calib_blob = { 0 };
 static Max11600Storage s_max11600_storage = { 0 };
 
