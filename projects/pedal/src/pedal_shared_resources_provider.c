@@ -21,7 +21,7 @@ StatusCode pedal_resources_init(Max11600Storage *storage, PedalCalibBlob *calib_
   return STATUS_CODE_OK;
 }
 
-Max11600Storage *get_shared_ads1015_storage() {
+Max11600Storage *get_shared_max11600_storage() {
   return s_max11600_storage;
 }
 
