@@ -112,3 +112,9 @@
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
 #define GPIO21 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO22 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO23 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define GPIO24 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
