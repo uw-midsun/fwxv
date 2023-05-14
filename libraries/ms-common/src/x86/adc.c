@@ -231,7 +231,6 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
   return STATUS_CODE_OK;
 }
 
-#ifdef MS_TEST
 void adc_set_reading(GpioAddress sample_address, uint16_t adc_reading) {
   uint8_t adc_channel;
   adc_get_channel(sample_address, &adc_channel);
@@ -241,4 +240,3 @@ void adc_set_reading(GpioAddress sample_address, uint16_t adc_reading) {
   s_adc_stores[ADC_Channel_Vrefint].reading = 4095;
   delay_ms(20);
 }
-#endif
