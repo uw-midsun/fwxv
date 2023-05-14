@@ -69,6 +69,7 @@
 #define SPDMTR_PWM_PIN \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
 
+// Seven Segment Display GPIO Addresses for Centre Console
 #define GPIO1 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
 #define GPIO2 \

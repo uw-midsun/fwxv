@@ -12,14 +12,14 @@
 void cc_displays_update(void) {
   static const GpioAddress cc_displays[] = {
     GPIO1,  GPIO2,  GPIO3,  GPIO4,  GPIO5,  GPIO6,  GPIO7,  GPIO8,  GPIO9,  GPIO10, GPIO11,
-    GPIO12, GPIO13, GPIO14, GPIO15, GPIO16, GPIO17, GPIO18, GPIO19, GPIO20, GPIO21,
+    GPIO12, GPIO13, GPIO14, GPIO15, GPIO16, GPIO17, GPIO18, GPIO19, GPIO20, GPIO21
   };
   for (uint8_t i = 0; i < SIZEOF_ARRAY(cc_displays); i++) {
     gpio_init_pin(&cc_displays[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   }
   // Read from CAN structs and update displays
   // uint8_t cruise_control_val = get_drive_output_cruise_control();
-  uint8_t = centre_console_tx_struct.cruise_control;
+  uint8_t cruise_control_val = centre_console_tx_struct.drive_output_cruise_control;
   float speed_val = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) * 0.018;
   uint16_t batt_perc = get_battery_vt_batt_perc();
   SegDisplay cc_display = { GPIO1, GPIO2, GPIO3, GPIO4, GPIO5, GPIO6, GPIO7 };
