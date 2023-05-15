@@ -70,51 +70,51 @@
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
 
 // Seven Segment Display GPIO Addresses for Centre Console
-#define GPIO1 \
+#define CC_DISP1 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO2 \
+#define CC_DISP2 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO3 \
+#define CC_DISP3 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO4 \
+#define CC_DISP4 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO5 \
+#define CC_DISP5 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO6 \
+#define CC_DISP6 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO7 \
+#define CC_DISP7 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO8 \
+#define CC_DISP8 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO9 \
+#define SPD_DISP1 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO10 \
+#define SPD_DISP2 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO11 \
+#define SPD_DISP3 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO12 \
+#define SPD_DISP4 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO13 \
+#define SPD_DISP5 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO14 \
+#define SPD_DISP6 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO15 \
+#define SPD_DISP7 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO16 \
+#define SPD_DISP8 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO17 \
+#define BATT_DISP1 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO18 \
+#define BATT_DISP2 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO19 \
+#define BATT_DISP3 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO20 \
+#define BATT_DISP4 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO21 \
+#define BATT_DISP5 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO22 \
+#define BATT_DISP6 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO23 \
+#define BATT_DISP7 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
-#define GPIO24 \
+#define BATT_DISP8 \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
