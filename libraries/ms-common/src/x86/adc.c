@@ -233,3 +233,13 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
   *reading = (adc_reading * vdda) / 4095;
   return STATUS_CODE_OK;
 }
+
+void adc_set_reading(GpioAddress sample_address, uint16_t adc_reading) {
+  uint8_t adc_channel;
+  adc_get_channel(sample_address, &adc_channel);
+  // This should mimic what adc_mock would to be doing
+  s_adc_stores[adc_channel].channel = adc_channel;
+  s_adc_stores[adc_channel].reading = adc_reading;
+  s_adc_stores[ADC_Channel_Vrefint].reading = 4095;
+  delay_ms(20);
+}
