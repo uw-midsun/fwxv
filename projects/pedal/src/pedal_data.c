@@ -26,6 +26,7 @@ StatusCode read_pedal_data(int16_t *reading, MAX11600Channel channel) {
 
   *reading = (int16_t)s_max11600_storage->channel_readings[channel];
   int32_t reading_upscaled = (int32_t)*reading * EE_PEDAL_VALUE_DENOMINATOR;
+  reading_upscaled -= s_calib_blob->brake_calib.lower_value * EE_PEDAL_VALUE_DENOMINATOR;
   reading_upscaled *= 100;
 
   if (range != 0) {
