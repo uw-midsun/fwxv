@@ -186,9 +186,9 @@ StatusCode adc_init(AdcMode adc_mode) {
 
   // Initialize ADC1
   ADC_InitTypeDef adc_settings = {
-    .ADC_Mode = ADC_Mode_Independent,      // Use only one ADC
-    .ADC_ScanConvMode = ENABLE,            // Use multi-channel scan
-    .ADC_ContinuousConvMode = adc_mode,    // Continuous or one-shot
+    .ADC_Mode = ADC_Mode_Independent,    // Use only one ADC
+    .ADC_ScanConvMode = ENABLE,          // Use multi-channel scan
+    .ADC_ContinuousConvMode = adc_mode,  // Continuous or one-shot
     .ADC_ExternalTrigConv =
         ADC_ExternalTrigConv_None,         // Don't need to trigger adc on external stimuli
     .ADC_DataAlign = ADC_DataAlign_Right,  // Use rightmost 12 bits of ADC register
