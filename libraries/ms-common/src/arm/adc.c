@@ -186,9 +186,9 @@ StatusCode adc_init(AdcMode adc_mode) {
 
   // Initialize ADC1
   ADC_InitTypeDef adc_settings = {
-    .ADC_Mode = ADC_Mode_Independent,    // Use only one ADC
-    .ADC_ScanConvMode = ENABLE,          // Use multi-channel scan
-    .ADC_ContinuousConvMode = adc_mode,  // Continuous or one-shot
+    .ADC_Mode = ADC_Mode_Independent,      // Use only one ADC
+    .ADC_ScanConvMode = ENABLE,            // Use multi-channel scan
+    .ADC_ContinuousConvMode = adc_mode,    // Continuous or one-shot
     .ADC_ExternalTrigConv =
         ADC_ExternalTrigConv_None,         // Don't need to trigger adc on external stimuli
     .ADC_DataAlign = ADC_DataAlign_Right,  // Use rightmost 12 bits of ADC register
@@ -299,3 +299,15 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
 
 // Don't need to do anything on ARM
 void adc_deinit(void) {}
+
+#ifdef MS_TEST
+void adc_set_reading(GpioAddress sample_address, uint16_t adc_reading) {
+  uint8_t adc_channel;
+  adc_get_channel(sample_address, &adc_channel);
+  // This should mimic what adc_mock would to be doing
+  s_adc_stores[adc_channel].channel = adc_channel;
+  s_adc_stores[adc_channel].reading = adc_reading;
+  s_adc_stores[ADC_Channel_Vrefint].reading = 4095;
+  delay_ms(20);
+}
+#endif
