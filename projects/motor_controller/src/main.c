@@ -8,7 +8,6 @@
 #include "mcp2515.h"
 #include "misc.h"
 #include "motor_can.h"
-#include "precharge_control.h"
 #include "soft_timer.h"
 #include "tasks.h"
 
@@ -38,12 +37,6 @@ Mcp2515Settings mcp2515_settings = {  // place holder values
     .loopback = true,
   },
 };
-PrechargeControlSettings precharge_settings = {
-  // place holder values
-  .precharge_control = { GPIO_PORT_A, 10 },
-  .precharge_monitor = { GPIO_PORT_A, 9 },
-  .precharge_monitor2 = { GPIO_PORT_A, 8 },
-};
 
 TASK(master_task, TASK_MIN_STACK_SIZE) {
   TickType_t previousWakeTime = xTaskGetTickCount();
@@ -70,7 +63,6 @@ int main() {
   log_init();
   can_init(&s_can_storage, &can_settings);
   mcp2515_init(&s_mcp2515_storage, &mcp2515_settings);
-  precharge_control_init(&precharge_settings);
   init_motor_controller_can();
   LOG_DEBUG("Motor Controller Task\n");
 

@@ -10,6 +10,37 @@
 
 ---
   Messages:
+    drive_output:
+      id: 22
+      target:
+        - motor_controller
+      signals:
+        target_velocity:
+          length: 32
+        drive_state:
+          length: 8
+        cruise_control:
+          length: 8
+        regen_braking:
+          length: 8
+    
+    pedal:
+      id: 18
+      target:
+        - motor_controller
+      signals:
+        throttle_output:
+          length: 32
+        brake_output:
+          length: 32
+
+    precharge_completed:
+      id: 29
+      target:
+        - centre_console
+      signals:
+        signal1:
+          length: 8
 
     motor_controller_vc:
       id: 35
@@ -85,7 +116,5 @@
         board_fault_bitset:
           length: 8
         overtemp_bitset:
-          length: 8
-        precharge_status:
           length: 8
         

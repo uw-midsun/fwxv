@@ -53,11 +53,3 @@ StatusCode i2c_read_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *rx_d
 // Writes to register address specified by reg
 StatusCode i2c_write_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *tx_data,
                          size_t tx_len);
-
-#ifdef MS_PLATFORM_X86
-// used for tests only. Sets given data in the rx queue.
-StatusCode i2c_set_data(I2CPort i2c, uint8_t *tx_data, size_t tx_len);
-
-// used for tests only. Reads data from the tx_queue.
-StatusCode i2c_get_data(I2CPort i2c, uint8_t *rx_data, size_t rx_len);
-#endif

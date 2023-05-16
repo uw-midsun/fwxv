@@ -54,17 +54,17 @@ extern UartSettings log_uart_settings;
 #ifdef MS_PLATFORM_X86
 #define LOG(level, fmt, ...) printf("[%u] %s:%u: " fmt, (level), __FILE__, __LINE__, ##__VA_ARGS__)
 #else
-#define LOG(level, fmt, ...)                                                               \
-  do {                                                                                     \
-    if (mutex_lock(&s_log_mutex, LOG_TIMEOUT_MS) == STATUS_CODE_OK) {                      \
-      size_t msg_size = (size_t)snprintf(g_log_buffer, MAX_LOG_SIZE, "\r[%u] %s:%u: " fmt, \
-                                         (level), __FILE__, __LINE__, ##__VA_ARGS__);      \
-      if (xTaskGetSchedulerState() != taskSCHEDULER_RUNNING) {                             \
-        printf("%s", g_log_buffer);                                                        \
-      } else {                                                                             \
-        uart_tx(UARTPORT, (uint8_t *)g_log_buffer, &msg_size);                             \
-      }                                                                                    \
-      mutex_unlock(&s_log_mutex);                                                          \
-    }                                                                                      \
+#define LOG(level, fmt, ...)                                                                      \
+  do {                                                                                            \
+    if (mutex_lock(&s_log_mutex, LOG_TIMEOUT_MS) == STATUS_CODE_OK) {                             \
+      size_t msg_size = (size_t)snprintf(g_log_buffer, MAX_LOG_SIZE, "[%u] %s:%u: " fmt, (level), \
+                                         __FILE__, __LINE__, ##__VA_ARGS__);                      \
+      if (xTaskGetSchedulerState() != taskSCHEDULER_RUNNING) {                                    \
+        printf("%s", g_log_buffer);                                                               \
+      } else {                                                                                    \
+        uart_tx(UARTPORT, (uint8_t *)g_log_buffer, &msg_size);                                    \
+      }                                                                                           \
+      mutex_unlock(&s_log_mutex);                                                                 \
+    }                                                                                             \
   } while (0)
 #endif

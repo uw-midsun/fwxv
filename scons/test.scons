@@ -82,9 +82,11 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         objs = OBJ_DIR.Dir(str(entry.path)).Dir('src').glob('*.o')
         objs += OBJ_DIR.Dir(str(entry.path)).Dir('src').Dir(PLATFORM).glob('*.o')
 
+        # TODO: since can.o is here but should really be under the project build folder
         if config["can"]:
-            objs += OBJ_DIR.Dir(entry.path).Dir('can').Dir("src").glob('*.o')
-            objs += OBJ_DIR.Dir(entry.path).Dir('can').Dir("src").Dir(PLATFORM).glob('*.o')
+            objs += OBJ_DIR.Dir("can").Dir('src').glob('*.o')
+            objs += OBJ_DIR.Dir("can").Dir('src').Dir(PLATFORM).glob('*.o')
+            objs += OBJ_DIR.Dir(str(entry.path)).Dir('src').Dir("can_codegen").glob('*.o')
 
         entry_objects = []
         for obj in objs:
@@ -94,8 +96,8 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         inc_dirs = [entry.Dir('inc')]
         inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
         if config["can"]:
-            inc_dirs.append(OBJ_DIR.Dir(entry.path).Dir('can').Dir("inc"))
-            inc_dirs.append(CAN_DIR.Dir("inc"))
+          inc_dirs += [CAN_DIR.Dir("inc")]
+          inc_dirs += [OBJ_DIR.Dir("projects").Dir(entry.name).Dir("inc").Dir("can_codegen")] 
         lib_incs = [lib_dir.Dir('inc') for lib_dir in LIB_DIRS]
         lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
         lib_deps = get_lib_deps(entry)

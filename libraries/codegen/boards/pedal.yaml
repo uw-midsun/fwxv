@@ -13,7 +13,7 @@
     pedal_output:
       id: 18
       target:
-        - motor_controller
+        - motor_interface
       signals:
         throttle_output:
           length: 32

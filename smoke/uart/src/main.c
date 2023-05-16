@@ -1,45 +1,52 @@
 #include <stdio.h>
 
-#include "delay.h"
-#include "interrupt.h"
 #include "log.h"
 #include "tasks.h"
-#include "uart.h"
 
-static const char test[] = "test uart\n";
+#ifdef MS_PLATFORM_X86
+#define MASTER_MS_CYCLE_TIME 100
+#else
+#define MASTER_MS_CYCLE_TIME 1000
+#endif
 
-// This might cause issues because logs are initialized on the same port at a different baudrate, check this if there are issues
-static UartSettings uart_settings = { .tx = { .port = GPIO_PORT_A, .pin = 10 },
-                                      .rx = { .port = GPIO_PORT_A, .pin = 11 },
-                                      .baudrate = 9600 };
+void run_fast_cycle()
+{
+
+}
+
+void run_medium_cycle()
+{
+
+}
+
+void run_slow_cycle()
+{
+
+}
 
 TASK(master_task, TASK_MIN_STACK_SIZE) {
-  uart_init(UART_PORT_1, &uart_settings);
-
-  size_t len = sizeof(test);
-
-  while (true) {
-    StatusCode status;
-    status = uart_tx(UART_PORT_1, test, &len);
-    if (status == STATUS_CODE_OK) {
-      LOG_DEBUG("Successfully transmitted %s\n", test);
-    } else {
-      LOG_DEBUG("Write failed: status code %d\n", status);
+   int counter = 0;
+   while (true) {
+      run_fast_cycle();
+      if (!(counter%10))
+         run_medium_cycle();
+      if (!(counter%100))
+         run_slow_cycle();
+      vTaskDelay(pdMS_TO_TICKS(1000));
+      ++counter;
     }
-    delay_ms(1000);
-  }
 }
 
 int main() {
-  log_init();
-  gpio_init();
-  interrupt_init();
+   tasks_init();
+   log_init();
+   LOG_DEBUG("Welcome to TEST!");
 
-  tasks_init();
+   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
-  tasks_init_task(master_task, TASK_PRIORITY(0), NULL);
+   tasks_start();
 
-  tasks_start();
-
-  return 0;
+   LOG_DEBUG("exiting main?");
+   return 0;
 }
+

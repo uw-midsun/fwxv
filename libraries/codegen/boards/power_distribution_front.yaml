@@ -37,13 +37,3 @@
           length: 16
         faulting_output:
           length: 16
-    horn_and_lights:
-      id: 46
-      target:
-        - uv_cutoff
-      signals:
-        horn_state:
-          length: 8
-        lights_state:
-          length: 8
-    

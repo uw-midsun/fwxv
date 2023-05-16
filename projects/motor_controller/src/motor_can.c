@@ -34,7 +34,7 @@ typedef enum DriveState {
   REVERSE,
   // extra drive state types used only by mci
   CRUISE,
-  BRAKE,
+  BREAK,
 } DriveState;
 
 static float s_target_current;
@@ -49,8 +49,8 @@ static float prv_get_float(uint32_t f) {
 }
 
 static void prv_update_target_current_velocity() {
-  float throttle_percent = prv_get_float(get_pedal_output_throttle_output());
-  float brake_percent = prv_get_float(get_pedal_output_brake_output());
+  float throttle_percent = prv_get_float(get_pedal_throttle_output());
+  float break_percent = prv_get_float(get_pedal_brake_output());
   float target_vel = prv_get_float(get_drive_output_target_velocity()) * VEL_TO_RPM_RATIO;
 
   DriveState drive_state = get_drive_output_drive_state();
@@ -60,8 +60,8 @@ static void prv_update_target_current_velocity() {
   if (cruise && throttle_percent > CRUISE_THROTTLE_THRESHOLD) {
     drive_state = DRIVE;
   }
-  if (brake_percent > 0 || throttle_percent == 0) {
-    drive_state = regen ? BRAKE : NEUTRAL;
+  if (break_percent > 0 || throttle_percent == 0) {
+    drive_state = regen ? BREAK : NEUTRAL;
   }
 
   // set target current and velocity based on drive state
@@ -79,7 +79,7 @@ static void prv_update_target_current_velocity() {
       s_target_current = ACCERLATION_FORCE;
       s_target_velocity = target_vel;
       break;
-    case BRAKE:
+    case BREAK:
       s_target_current = ACCERLATION_FORCE;
       s_target_velocity = 0;
       break;
