@@ -55,8 +55,8 @@ void run_fast_cycle() {
   run_can_tx_cycle();
   wait_tasks(1);
 
-  int16_t brake_position = INT16_MAX;
-  int16_t throttle_position = 0;
+  uint32_t brake_position = UINT32_MAX;
+  uint32_t throttle_position = 0;
 
   StatusCode status;
 
@@ -70,11 +70,11 @@ void run_fast_cycle() {
     // Sending messages
     if (!brake_position) {
       // Brake is not pressed - Send both readings, brake will be 0 and ignored by the receiver
-      set_pedal_output_brake_output((uint32_t)brake_position);
-      set_pedal_output_throttle_output((uint32_t)throttle_position);
+      set_pedal_output_brake_output(brake_position);
+      set_pedal_output_throttle_output(throttle_position);
     } else {
       // Brake is pressed - Send brake data with throttle as 0
-      set_pedal_output_brake_output((uint32_t)brake_position);
+      set_pedal_output_brake_output(brake_position);
       set_pedal_output_throttle_output(0);
     }
   }

@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #include "pedal_calib.h"
 #include "pedal_shared_resources_provider.h"
@@ -20,26 +21,27 @@ void pedal_data_init() {
   s_calib_blob = get_shared_pedal_calib_blob();
 }
 
-StatusCode read_pedal_data(int16_t *reading, MAX11600Channel channel) {
+StatusCode read_pedal_data(uint32_t *reading, MAX11600Channel channel) {
   status_ok_or_return(max11600_read_raw(s_max11600_storage));
   int32_t range = s_calib_blob->brake_calib.upper_value - s_calib_blob->brake_calib.lower_value;
 
-  *reading = (int16_t)s_max11600_storage->channel_readings[channel];
-  int32_t reading_upscaled = (int32_t)*reading * EE_PEDAL_VALUE_DENOMINATOR;
+  int32_t reading_upscaled =
+      (int32_t)s_max11600_storage->channel_readings[channel] * EE_PEDAL_VALUE_DENOMINATOR;
   reading_upscaled -= s_calib_blob->brake_calib.lower_value * EE_PEDAL_VALUE_DENOMINATOR;
   reading_upscaled *= 100;
 
   if (range != 0) {
     reading_upscaled /= (range * EE_PEDAL_VALUE_DENOMINATOR);
-    *reading = (int16_t)reading_upscaled;
+    // Return a reading between 0 and INT32_MAX, representing a percentage between 0 and 100
+    *reading = (uint32_t)((reading_upscaled / 100.0) * UINT32_MAX);
   }
   return STATUS_CODE_OK;
 }
 
-StatusCode read_throttle_data(int16_t *reading) {
+StatusCode read_throttle_data(uint32_t *reading) {
   return read_pedal_data(reading, THROTTLE_CHANNEL);
 }
 
-StatusCode read_brake_data(int16_t *reading) {
+StatusCode read_brake_data(uint32_t *reading) {
   return read_pedal_data(reading, BRAKE_CHANNEL);
 }
