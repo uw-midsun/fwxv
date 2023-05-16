@@ -19,11 +19,10 @@ SegDisplay speed_display = { SPD_DISP1, SPD_DISP2, SPD_DISP3, SPD_DISP4,
 SegDisplay batt_perc_display = { BATT_DISP1, BATT_DISP2, BATT_DISP3, BATT_DISP4,
                                  BATT_DISP5, BATT_DISP6, BATT_DISP7, BATT_DISP8 };
 
-seg_display_init(&cc_display);
-seg_display_init(&speed_display);
-seg_display_init(&batt_perc_display);
-
 void cc_displays_update(void) {
+  seg_display_init(&cc_display);
+  seg_display_init(&speed_display);
+  seg_display_init(&batt_perc_display);
   // Read data from CAN structs and update displays with those values
   uint8_t cruise_control_val = g_tx_struct.drive_output_cruise_control;
   // Convert motor_velocity value to speed by averaging the right and left, dividing by 100, and
