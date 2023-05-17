@@ -118,7 +118,7 @@ static StatusCode prv_check_channel_enabled(uint8_t channel) {
 // Must be called before ADC initialized
 StatusCode adc_add_channel(GpioAddress address) {
   if (s_adc_status.initialized) {
-    LOG_DEBUG("Chan2222nel already initialized\n");
+    LOG_DEBUG("Channel already initialized\n");
     return status_msg(STATUS_CODE_INVALID_ARGS,
                       "Channels must be initialized before adc_init called");
   }
@@ -181,10 +181,7 @@ void adc_deinit(void) {
 }
 
 static void adc_mock(uint8_t channel) {
-  // Use hardcoded value for now
   LOG_DEBUG("Reading ADC\n");
-  s_adc_stores[channel].reading = 0xAA;
-  s_adc_stores[ADC_Channel_Vrefint].reading = 0x1;
   delay_ms(100);
   mutex_unlock(&s_adc_status.converting);
 }
