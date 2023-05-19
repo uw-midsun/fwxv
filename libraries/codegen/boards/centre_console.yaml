@@ -163,7 +163,8 @@
     power_info:
       id: 47
       target:
-        - power_distribution_front
+        power_distribution_front:
+          watchdog: 0
       signals:
         hazard_state:
           length: 8
