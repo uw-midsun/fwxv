@@ -15,7 +15,9 @@ static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext *)context;
 
   // Start button pressed
-  if (gpio_get_state(&s_btn_start, GPIO_STATE_LOW)) {
+  GpioState start_state = GPIO_STATE_HIGH;
+  gpio_get_state(&s_btn_start, &start_state);
+  if (start_state == GPIO_STATE_LOW) {
     // Brake is pressed (any non-zero value)
     if (get_pedal_output_brake_output()) {
       state_context->target_state = POWER_FSM_STATE_AUX;
@@ -175,7 +177,7 @@ StatusCode init_power_fsm(void) {
   FsmSettings settings = {
     .state_list = s_power_fsm_states,
     .transitions = s_power_fsm_transitions,
-    .num_transitions = NUM_POWER_STATES,
+    .num_transitions = NUM_POWER_TRANSITIONS,
     .initial_state = POWER_FSM_STATE_OFF,
   };
   PowerFsmContext context = { 0 };
