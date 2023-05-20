@@ -172,8 +172,8 @@ typedef struct {
   Bq34z100g1Settings settings;
 } Bq34z100g1Storage;
 
-// CONTROL() SUBCOMMANDS
-
-StatusCode bq34z100g1_get_control_status(Bq34z100g1Storage *storage);
-StatusCode bq34z100g1_get_device_type(Bq34z100g1Storage *storage);
-StatusCode bq34z100g1_get_fw_version(Bq34z100g1Storage *storage);
+StatusCode bq34z100g1_get(Bq34z100g1Storage *storage, Bq34z100g1Command command,
+                          Bq34z100g1SubCommand subcommand, void *ret);
+StatusCode bq34z100g1_set(Bq34z100g1Storage *storage, Bq34z100g1Command command,
+                          Bq34z100g1SubCommand subcommand);
+StatusCode bq34z100g1_init(Bq34z100g1Storage *storage, Bq34z100g1Settings settings);
