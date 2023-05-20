@@ -12,18 +12,37 @@
 // Multiplication Factor to convert CAN Velocity in 100 * m/s to kph
 #define CONVERT_VELOCITY_TO_SPEED 0.018
 
-SegDisplay cc_display = { CC_DISP1, CC_DISP2, CC_DISP3, CC_DISP4,
-                          CC_DISP5, CC_DISP6, CC_DISP7, CC_DISP8 };
-SegDisplay speed_display = { SPD_DISP1, SPD_DISP2, SPD_DISP3, SPD_DISP4,
-                             SPD_DISP5, SPD_DISP6, SPD_DISP7, SPD_DISP8 };
-SegDisplay batt_perc_display = { BATT_DISP1, BATT_DISP2, BATT_DISP3, BATT_DISP4,
-                                 BATT_DISP5, BATT_DISP6, BATT_DISP7, BATT_DISP8 };
+SegDisplay cc_display = { .A = CC_DISP1,
+                          .B = CC_DISP2,
+                          .C = CC_DISP3,
+                          .D = CC_DISP4,
+                          .DP = CC_DISP5,
+                          .D1 = CC_DISP6,
+                          .D2 = CC_DISP7,
+                          .D3 = CC_DISP8 };
+SegDisplay speed_display = { .A = SPD_DISP1,
+                             .B = SPD_DISP2,
+                             .C = SPD_DISP3,
+                             .D = SPD_DISP4,
+                             .DP = SPD_DISP5,
+                             .D1 = SPD_DISP6,
+                             .D2 = SPD_DISP7,
+                             .D3 = SPD_DISP8 };
+SegDisplay batt_perc_display = { .A = BATT_DISP1,
+                                 .B = BATT_DISP2,
+                                 .C = BATT_DISP3,
+                                 .D = BATT_DISP4,
+                                 .DP = BATT_DISP5,
+                                 .D1 = BATT_DISP6,
+                                 .D2 = BATT_DISP7,
+                                 .D3 = BATT_DISP8 };
 
 void cc_displays_update(void) {
   seg_display_init(&cc_display);
   seg_display_init(&speed_display);
   seg_display_init(&batt_perc_display);
   // Read data from CAN structs and update displays with those values
+  // TODO: Get this value from the source when we have the cruise_control value
   uint8_t cruise_control_val = g_tx_struct.drive_output_cruise_control;
   // Convert motor_velocity value to speed by averaging the right and left, dividing by 100, and
   // multiplying by 3.6 to get kph

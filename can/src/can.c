@@ -1,4 +1,3 @@
-
 #include "can.h"
 
 #include "can_codegen.h"
