@@ -3,8 +3,10 @@
     transmit_msg1:
       id: 0
       target:
-        - centre_console
-        - new_can
+        centre_console:
+          watchdog: 3
+        new_can:
+          watchdog: 3
       critical: true
       signals:
         status:
@@ -13,8 +15,10 @@
     transmit_msg2:
       id: 1
       target:
-        - centre_console
-        - new_can
+        centre_console:
+          watchdog: 0
+        new_can:
+          watchdog: 0
       critical: true
       signals:
         signal:
@@ -25,7 +29,8 @@
     transmit_msg3:
       id: 2
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       critical: true
       signals:
         help:

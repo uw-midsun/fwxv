@@ -9,17 +9,12 @@
 #include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
+#include "master_task.h"
 #include "max11600.h"
 #include "pedal_data.h"
 #include "pedal_setters.h"
 #include "soft_timer.h"
 #include "tasks.h"
-
-#ifdef MS_PLATFORM_X86
-#define MASTER_MS_CYCLE_TIME 100
-#else
-#define MASTER_MS_CYCLE_TIME 1000
-#endif
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
@@ -77,20 +72,9 @@ void run_fast_cycle() {
   }
 }
 
-TASK(master_task, TASK_MIN_STACK_SIZE) {
-  int counter = 0;
-  while (true) {
-#ifdef TEST
-    xSemaphoreTake(test_cycle_start_sem);
-#endif
-    run_fast_cycle();
-#ifdef TEST
-    xSemaphoreGive(test_cycle_end_sem);
-#endif
-    vTaskDelay(pdMS_TO_TICKS(100));
-    ++counter;
-  }
-}
+void run_medium_cycle() {}
+
+void run_slow_cycle() {}
 
 int main() {
   tasks_init();
@@ -101,7 +85,7 @@ int main() {
   can_init(&s_can_storage, &can_settings);
   can_add_filter_in(SYSTEM_CAN_MESSAGE_PEDAL_PEDAL_OUTPUT);
 
-  tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
+  init_master_task();
   tasks_start();
   LOG_DEBUG("exiting main?\n");
   return 0;
