@@ -20,9 +20,9 @@ static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
   if (start_state == GPIO_STATE_LOW) {
     // Brake is pressed (any non-zero value)
     if (get_pedal_output_brake_output()) {
-      state_context->target_state = POWER_FSM_STATE_AUX;
-    } else {
       state_context->target_state = POWER_FSM_STATE_MAIN;
+    } else {
+      state_context->target_state = POWER_FSM_STATE_AUX;
     }
     fsm_transition(fsm, POWER_FSM_CONFIRM_AUX_STATUS);
   }

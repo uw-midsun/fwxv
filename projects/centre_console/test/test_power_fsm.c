@@ -34,7 +34,7 @@ void test_off_to_main(void) {
   gpio_set_state(&s_btn_start, GPIO_STATE_HIGH);
 
   // Transition to POWER_FSM_SEND_PD_BMS
-  g_rx_struct.power_select_status_status = 0x04;
+  g_rx_struct.power_select_status_status = 0x02;
   g_rx_struct.power_select_status_fault = 0x00;
   fsm_run_cycle(power);
   wait_tasks(1);
@@ -76,7 +76,7 @@ void test_off_to_main(void) {
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_POWER_MAIN_COMPLETE);
-  Todo (Bafran): Change value to real value
+  // Todo (Bafran): Change value to real value
   TEST_ASSERT_EQUAL(g_tx_struct.ready_to_drive_ready_state, 0x01);
 
   // Transition to POWER_FSM_STATE_MAIN
