@@ -13,8 +13,10 @@
     set_bms_power:
       id: 4
       target:
-        - power_distribution_front # front? rear? both?
-        - power_distribution_rear
+        power_distribution_front:
+          watchdog: 0
+        power_distribution_rear:
+          watchdog: 0
       critical: true
       signals:
         bms_power_on_notification:
@@ -23,8 +25,10 @@
     set_power_state:
       id: 5
       target:
-        - power_distribution_front # front? rear? both?
-        - power_distribution_rear
+        power_distribution_front:
+          watchdog: 0
+        power_distribution_rear:
+          watchdog: 0
       critical: true
       signals:
         turn_on_everything_notification:

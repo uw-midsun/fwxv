@@ -78,6 +78,8 @@
       target:
         bms_carrier:
           watchdog: 0
+        centre_console:
+          watchdog: 0
       signals:
         hv:
           length: 8

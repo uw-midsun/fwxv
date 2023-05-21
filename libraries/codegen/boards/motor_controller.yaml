@@ -97,7 +97,8 @@
     precharge_completed:
       id: 16
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       signals:
         notification:
           length: 8
