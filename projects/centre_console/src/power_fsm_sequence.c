@@ -89,8 +89,10 @@ void prv_power_fsm_confirm_battery_status_input(Fsm *fsm, void *context) {
 }
 
 void prv_power_fsm_close_battery_relays_output(void *context) {
-  set_set_relay_states_relay_mask(SET_CLOSE_RELAY_STATE_MASK);   // Todo (Bafran): Change value to real value
-  set_set_relay_states_relay_state(SET_CLOSE_RELAY_STATE_STATE);  // Todo (Bafran): Change value to real value
+  set_set_relay_states_relay_mask(
+      SET_CLOSE_RELAY_STATE_MASK);  // Todo (Bafran): Change value to real value
+  set_set_relay_states_relay_state(
+      SET_CLOSE_RELAY_STATE_STATE);  // Todo (Bafran): Change value to real value
   LOG_DEBUG("Transitioned to close battery relays\n");
 }
 
@@ -143,7 +145,7 @@ void prv_power_fsm_turn_on_everything_input(Fsm *fsm, void *context) {
   // No checks here, only "Turn on everything" message gets sent in the output function
   PowerFsmContext *state_context = (PowerFsmContext *)context;
 
-  if(state_context->target_state == POWER_FSM_STATE_MAIN) {
+  if (state_context->target_state == POWER_FSM_STATE_MAIN) {
     fsm_transition(fsm, POWER_FSM_POWER_MAIN_COMPLETE);
   } else {
     fsm_transition(fsm, POWER_FSM_STATE_AUX);

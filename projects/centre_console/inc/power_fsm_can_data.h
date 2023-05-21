@@ -1,8 +1,10 @@
+#pragma once
+
 #define AUX_STATUS_BITS 0x02
 #define AUX_FAULT_BITS 0xE0
 #define PD_FRONT_FAULT 0x00
 #define PD_REAR_FAULT 0x00
-#define SET_BMS_POWER_NOTIFY 0x01 // Todo (Bafran): Change value to real value
+#define SET_BMS_POWER_NOTIFY 0x01  // Todo (Bafran): Change value to real value
 #define BPS_HEARTBEAT 0x00
 #define SET_CLOSE_RELAY_STATE_MASK 0x01
 #define SET_CLOSE_RELAY_STATE_STATE 0x01
