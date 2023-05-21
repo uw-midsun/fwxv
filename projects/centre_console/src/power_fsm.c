@@ -32,8 +32,10 @@ static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
 static void prv_power_fsm_main_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext *)context;
 
+  GpioState start_state = GPIO_STATE_HIGH;
+  gpio_get_state(&s_btn_start, &start_state);
   // Assuming that pressing start again means we're turning off
-  if (gpio_get_state(&s_btn_start, GPIO_STATE_LOW)) {
+  if (start_state == GPIO_STATE_LOW) {
     state_context->target_state = POWER_FSM_STATE_OFF;
     fsm_transition(fsm, POWER_FSM_DISCHARGE_PRECHARGE);
   }
@@ -43,14 +45,16 @@ static void prv_power_fsm_main_input(Fsm *fsm, void *context) {
 static void prv_power_fsm_aux_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext *)context;
 
+  GpioState start_state = GPIO_STATE_HIGH;
+  gpio_get_state(&s_btn_start, &start_state);
   // If start button && brake are pressed
-  if (gpio_get_state(&s_btn_start, GPIO_STATE_LOW) && get_pedal_output_brake_output()) {
+  if (start_state == GPIO_STATE_LOW && get_pedal_output_brake_output()) {
     state_context->target_state = POWER_FSM_STATE_MAIN;
     fsm_transition(fsm, POWER_FSM_SEND_PD_BMS);
     // Todo (Bafran): How is off being done? press start again?
-  } else if (gpio_get_state(&s_btn_start, GPIO_STATE_LOW)) {
+  } else if (start_state == GPIO_STATE_LOW) {
     state_context->target_state = POWER_FSM_STATE_OFF;
-    fsm_transition(fsm, POWER_FSM_SEND_PD_BMS);
+    fsm_transition(fsm, POWER_FSM_DISCHARGE_PRECHARGE);
   }
   return;
 }
@@ -61,27 +65,27 @@ static void prv_power_fsm_fault_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_off_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  state_context->latest_state = POWER_FSM_STATE_OFF;
-  LOG_DEBUG("CENTRE CONSOLE POWER FSM OFF STATE\n");
+  // PowerFsmContext *state_context = (PowerFsmContext *)context;
+  // state_context->latest_state = POWER_FSM_STATE_OFF;
+  // LOG_DEBUG("CENTRE CONSOLE POWER FSM OFF STATE\n");
 }
 
 static void prv_power_fsm_main_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  state_context->latest_state = POWER_FSM_STATE_MAIN;
-  LOG_DEBUG("CENTRE CONSOLE POWER FSM MAIN STATE\n");
+  // PowerFsmContext *state_context = (PowerFsmContext *)context;
+  // state_context->latest_state = POWER_FSM_STATE_MAIN;
+  // LOG_DEBUG("CENTRE CONSOLE POWER FSM MAIN STATE\n");
 }
 
 static void prv_power_fsm_aux_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  state_context->latest_state = POWER_FSM_STATE_AUX;
-  LOG_DEBUG("CENTRE CONSOLE POWER FSM AUX STATE\n");
+  // PowerFsmContext *state_context = (PowerFsmContext *)context;
+  // state_context->latest_state = POWER_FSM_STATE_AUX;
+  // LOG_DEBUG("CENTRE CONSOLE POWER FSM AUX STATE\n");
 }
 
 static void prv_power_fsm_fault_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  state_context->latest_state = POWER_FSM_STATE_FAULT;
-  LOG_DEBUG("CENTRE CONSOLE POWER FSM FAULT STATE\n");
+  // PowerFsmContext *state_context = (PowerFsmContext *)context;
+  // state_context->latest_state = POWER_FSM_STATE_FAULT;
+  // LOG_DEBUG("CENTRE CONSOLE POWER FSM FAULT STATE\n");
 }
 
 // Declare states in state lists
@@ -136,7 +140,7 @@ static FsmTransition s_power_fsm_transitions[NUM_POWER_TRANSITIONS] = {
 
   // Sequence into MAIN state
   TRANSITION(POWER_FSM_STATE_OFF, POWER_FSM_CONFIRM_AUX_STATUS),
-  TRANSITION(POWER_FSM_STATE_AUX, POWER_FSM_CONFIRM_AUX_STATUS),
+  TRANSITION(POWER_FSM_STATE_AUX, POWER_FSM_SEND_PD_BMS),
   TRANSITION(POWER_FSM_CONFIRM_AUX_STATUS, POWER_FSM_SEND_PD_BMS),
   TRANSITION(POWER_FSM_SEND_PD_BMS, POWER_FSM_CONFIRM_BATTERY_STATUS),
   TRANSITION(POWER_FSM_CONFIRM_BATTERY_STATUS, POWER_FSM_CLOSE_BATTERY_RELAYS),
@@ -146,8 +150,8 @@ static FsmTransition s_power_fsm_transitions[NUM_POWER_TRANSITIONS] = {
   TRANSITION(POWER_FSM_POWER_MAIN_COMPLETE, POWER_FSM_STATE_MAIN),
 
   // Sequence into AUX state
-  TRANSITION(POWER_FSM_STATE_AUX, POWER_FSM_CONFIRM_AUX_STATUS),
   TRANSITION(POWER_FSM_CONFIRM_AUX_STATUS, POWER_FSM_TURN_ON_EVERYTHING),
+  TRANSITION(POWER_FSM_TURN_ON_EVERYTHING, POWER_FSM_STATE_AUX),
 
   // Failures when attempting OFF -> MAIN state
   TRANSITION(POWER_FSM_CONFIRM_AUX_STATUS, POWER_FSM_STATE_OFF),
@@ -172,13 +176,13 @@ static FsmTransition s_power_fsm_transitions[NUM_POWER_TRANSITIONS] = {
   TRANSITION(POWER_FSM_TURN_ON_EVERYTHING, POWER_FSM_STATE_OFF),
 };
 
-StatusCode init_power_fsm(void) {
+StatusCode init_power_fsm(PowerFsmStateId inital_state) {
   // Assuming GPIOs have already been initialized in main
   FsmSettings settings = {
     .state_list = s_power_fsm_states,
     .transitions = s_power_fsm_transitions,
     .num_transitions = NUM_POWER_TRANSITIONS,
-    .initial_state = POWER_FSM_STATE_OFF,
+    .initial_state = inital_state,
   };
   PowerFsmContext context = { 0 };
   fsm_init(power, settings, &context);

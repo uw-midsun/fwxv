@@ -27,7 +27,7 @@ void prv_power_fsm_confirm_aux_status_input(Fsm *fsm, void *context) {
     if (state_context->target_state == POWER_FSM_STATE_MAIN) {
       fsm_transition(fsm, POWER_FSM_SEND_PD_BMS);
     } else {
-      fsm_transition(fsm, POWER_FSM_STATE_AUX);
+      fsm_transition(fsm, POWER_FSM_TURN_ON_EVERYTHING);
     }
   } else {
     // Transition to last stable state
@@ -141,7 +141,13 @@ void prv_power_fsm_turn_on_everything_output(void *context) {
 
 void prv_power_fsm_turn_on_everything_input(Fsm *fsm, void *context) {
   // No checks here, only "Turn on everything" message gets sent in the output function
-  fsm_transition(fsm, POWER_FSM_POWER_MAIN_COMPLETE);
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
+
+  if(state_context->target_state == POWER_FSM_STATE_MAIN) {
+    fsm_transition(fsm, POWER_FSM_POWER_MAIN_COMPLETE);
+  } else {
+    fsm_transition(fsm, POWER_FSM_STATE_AUX);
+  }
   return;
 }
 

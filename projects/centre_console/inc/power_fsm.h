@@ -40,4 +40,4 @@ typedef struct PowerFsmContext {
   PowerFsmStateId target_state;
 } PowerFsmContext;
 
-StatusCode init_power_fsm(void);
+StatusCode init_power_fsm(PowerFsmStateId inital_state);
