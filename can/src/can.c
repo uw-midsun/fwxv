@@ -1,4 +1,3 @@
-
 #include "tasks.h"
 #include "notify.h"
 #include "semphr.h"
