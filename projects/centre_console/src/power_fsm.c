@@ -65,27 +65,27 @@ static void prv_power_fsm_fault_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_off_output(void *context) {
-  // PowerFsmContext *state_context = (PowerFsmContext *)context;
-  // state_context->latest_state = POWER_FSM_STATE_OFF;
-  // LOG_DEBUG("CENTRE CONSOLE POWER FSM OFF STATE\n");
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
+  state_context->latest_state = POWER_FSM_STATE_OFF;
+  LOG_DEBUG("CENTRE CONSOLE POWER FSM OFF STATE\n");
 }
 
 static void prv_power_fsm_main_output(void *context) {
-  // PowerFsmContext *state_context = (PowerFsmContext *)context;
-  // state_context->latest_state = POWER_FSM_STATE_MAIN;
-  // LOG_DEBUG("CENTRE CONSOLE POWER FSM MAIN STATE\n");
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
+  state_context->latest_state = POWER_FSM_STATE_MAIN;
+  LOG_DEBUG("CENTRE CONSOLE POWER FSM MAIN STATE\n");
 }
 
 static void prv_power_fsm_aux_output(void *context) {
-  // PowerFsmContext *state_context = (PowerFsmContext *)context;
-  // state_context->latest_state = POWER_FSM_STATE_AUX;
-  // LOG_DEBUG("CENTRE CONSOLE POWER FSM AUX STATE\n");
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
+  state_context->latest_state = POWER_FSM_STATE_AUX;
+  LOG_DEBUG("CENTRE CONSOLE POWER FSM AUX STATE\n");
 }
 
 static void prv_power_fsm_fault_output(void *context) {
-  // PowerFsmContext *state_context = (PowerFsmContext *)context;
-  // state_context->latest_state = POWER_FSM_STATE_FAULT;
-  // LOG_DEBUG("CENTRE CONSOLE POWER FSM FAULT STATE\n");
+  PowerFsmContext *state_context = (PowerFsmContext *)context;
+  state_context->latest_state = POWER_FSM_STATE_FAULT;
+  LOG_DEBUG("CENTRE CONSOLE POWER FSM FAULT STATE\n");
 }
 
 // Declare states in state lists
