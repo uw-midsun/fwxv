@@ -26,17 +26,25 @@ static const char s_list[QUEUE_LEN][ITEM_SZ] = {
 // Task static entities
 static uint8_t s_queue1_buf[BUF_SIZE];
 static Queue s_queue1 = {
-  .num_items = QUEUE_LENco,
+  .num_items = QUEUE_LEN,
   .item_size = ITEM_SZ,
-  .storage_buf = BUF_SIZE
+  .storage_buf = s_queue1_buf,
 };
 
 
 TASK(task1, TASK_STACK_512) {
   LOG_DEBUG("Task 1 initialized!\n");
   StatusCode ret;
+  int i = 0;
   while (true) {
-    // Your code goes here
+    for(int i = 0; i < QUEUE_LEN; i++) {
+      ret = queue_send(&s_queue1, &s_list[i], 0);
+      delay_ms(100);
+    
+      if (ret != STATUS_CODE_OK) {
+        LOG_DEBUG("write to queue failed\n");
+      }
+    }
   }
 }
 
@@ -45,13 +53,23 @@ TASK(task2, TASK_STACK_512) {
   const char outstr[ITEM_SZ];
   StatusCode ret;
   while (true) {
-    // Your code goes here
+    ret = queue_receive(&s_queue1, outstr, 0);
+    delay_ms(100);
+    
+    if (ret == STATUS_CODE_OK) {
+      LOG_DEBUG("Received: %s\n", outstr);
+    }
+
+    else {
+      LOG_DEBUG("Read from queue failed\n");
+    }
   }
 }
 
 int main(void) {
   log_init();
-  // Initialize queues here
+  tasks_init(); 
+  queue_init(&s_queue1);
 
   tasks_init_task(task1, TASK_PRIORITY(2), NULL);
   tasks_init_task(task2, TASK_PRIORITY(2), NULL);
