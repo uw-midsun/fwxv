@@ -2,9 +2,9 @@
 #include "centre_console_getters.h"
 #include "centre_console_setters.h"
 #include "power_fsm.h"
+#include "power_fsm_can_data.h"
 #include "power_fsm_sequence.h"
 #include "task_test_helpers.h"
-#include "power_fsm_can_data.h"
 #include "unity.h"
 
 #define PEDAL_PRESSED 0xFF
@@ -39,7 +39,7 @@ void test_off_to_main(void) {
 
   // Transition to POWER_FSM_SEND_PD_BMS
   g_rx_struct.power_select_status_status = AUX_STATUS_BITS;
-  g_rx_struct.power_select_status_fault = 0x00; // Not a fault
+  g_rx_struct.power_select_status_fault = 0x00;  // Not a fault
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_SEND_PD_BMS);
@@ -68,11 +68,12 @@ void test_off_to_main(void) {
 
   // Transition to POWER_FSM_TURN_ON_EVERYTHING
   g_rx_struct.power_select_status_status = DCDC_STATUS_BITS;
-  g_rx_struct.power_select_status_fault = 0x00; // No fault
+  g_rx_struct.power_select_status_fault = 0x00;  // No fault
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_TURN_ON_EVERYTHING);
-  TEST_ASSERT_EQUAL(g_tx_struct.set_power_state_turn_on_everything_notification, SET_TURN_ON_EVERYTHING_NOTIFICATION);
+  TEST_ASSERT_EQUAL(g_tx_struct.set_power_state_turn_on_everything_notification,
+                    SET_TURN_ON_EVERYTHING_NOTIFICATION);
 
   // Transition to POWER_FSM_POWER_MAIN_COMPLETE
   fsm_run_cycle(power);
@@ -101,11 +102,12 @@ void test_off_to_aux(void) {
 
   // Transition to POWER_FSM_TURN_ON_EVERYTHING
   g_rx_struct.power_select_status_status = AUX_STATUS_BITS;
-  g_rx_struct.power_select_status_fault = 0x00; // No fault
+  g_rx_struct.power_select_status_fault = 0x00;  // No fault
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_TURN_ON_EVERYTHING);
-  TEST_ASSERT_EQUAL(g_tx_struct.set_power_state_turn_on_everything_notification, SET_TURN_ON_EVERYTHING_NOTIFICATION);
+  TEST_ASSERT_EQUAL(g_tx_struct.set_power_state_turn_on_everything_notification,
+                    SET_TURN_ON_EVERYTHING_NOTIFICATION);
 }
 
 TEST_IN_TASK

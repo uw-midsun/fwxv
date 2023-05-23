@@ -1,6 +1,7 @@
 #pragma once
 
-// Aux battery status bits https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/3149398021/FWXV+Power+Select+Design
+// Aux battery status bits
+// https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/3149398021/FWXV+Power+Select+Design
 #define AUX_STATUS_BITS 0x04
 #define AUX_FAULT_BITS 0xE0
 
@@ -22,7 +23,8 @@
 #define CLOSE_HV_STATUS 0x01
 #define CLOSE_GND_STATUS 0x01
 
-// DCDC status bits https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/3149398021/FWXV+Power+Select+Design
+// DCDC status bits
+// https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/3149398021/FWXV+Power+Select+Design
 #define DCDC_STATUS_BITS 0x02
 #define DCDC_FAULT_BITS 0x1C
 

@@ -87,10 +87,8 @@ void prv_power_fsm_confirm_battery_status_input(Fsm *fsm, void *context) {
 }
 
 void prv_power_fsm_close_battery_relays_output(void *context) {
-  set_set_relay_states_relay_mask(
-      SET_CLOSE_RELAY_STATE_MASK);
-  set_set_relay_states_relay_state(
-      SET_CLOSE_RELAY_STATE_STATE);
+  set_set_relay_states_relay_mask(SET_CLOSE_RELAY_STATE_MASK);
+  set_set_relay_states_relay_state(SET_CLOSE_RELAY_STATE_STATE);
   LOG_DEBUG("Transitioned to close battery relays\n");
 }
 
