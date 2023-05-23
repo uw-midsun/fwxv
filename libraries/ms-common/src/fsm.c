@@ -44,7 +44,7 @@ void _fsm_task(void *context) {
       self->curr_state->inputs(self, self->context);
       // If transition has occurred, execute output function
       if (self->transitioned) {
-        self->curr_state->outputs(self);
+        self->curr_state->outputs(self->context);
         self->transitioned = false;
       }
     } else {
