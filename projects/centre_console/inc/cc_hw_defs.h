@@ -68,3 +68,53 @@
 #define SPDMTR_PWM_TIMER NUM_PWM_TIMERS
 #define SPDMTR_PWM_PIN \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+
+// Seven Segment Display GPIO Addresses for Centre Console
+#define CC_DISP1 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define CC_DISP2 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define CC_DISP3 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define CC_DISP4 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define CC_DISP5 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define CC_DISP6 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define CC_DISP7 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define CC_DISP8 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define SPD_DISP1 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define SPD_DISP2 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define SPD_DISP3 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define SPD_DISP4 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define SPD_DISP5 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define SPD_DISP6 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define SPD_DISP7 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define SPD_DISP8 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define BATT_DISP1 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define BATT_DISP2 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define BATT_DISP3 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define BATT_DISP4 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define BATT_DISP5 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define BATT_DISP6 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define BATT_DISP7 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+#define BATT_DISP8 \
+  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }

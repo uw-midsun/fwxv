@@ -2,6 +2,8 @@
 
 #include "log.h"
 
+void set_seg_display(SegDisplay *display, uint8_t disp_value, uint8_t pin_number);
+
 StatusCode seg_display_init(SegDisplay *display) {
   gpio_init_pin(&display->A, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&display->B, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
@@ -48,7 +50,6 @@ StatusCode seg_display_set_float(SegDisplay *display, float val) {
   }
 }
 
-void set_seg_display(SegDisplay *display, uint8_t disp_value, uint8_t pin_number);
 void set_seg_display(SegDisplay *display, uint8_t disp_value, uint8_t pin_number) {
   // Sets A-D with the binary digits of 8
   GpioState state_a = disp_value & 0x1;

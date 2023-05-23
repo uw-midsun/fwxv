@@ -19,10 +19,12 @@
       signals:
         status:
           length: 8
-
+    
     battery_vt:
       id: 30
       target:
+        centre_console:
+          watchdog: 0
         telemetry:
           watchdog: 0
       critical: false
@@ -33,7 +35,10 @@
           length: 16
         temperature:
           length: 16
-
+        # This field will change
+        batt_perc:
+          length: 16
+    
     battery_aggregate_vc:
       id: 33
       target:
