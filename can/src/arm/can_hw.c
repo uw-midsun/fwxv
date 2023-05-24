@@ -54,10 +54,6 @@ static void prv_add_filter_in(uint8_t filter_num, uint32_t mask, uint32_t filter
   CAN_FilterInit(&filter_cfg);
 }
 
-static void prv_add_filter_out(uint8_t filter_num, uint32_t mask, uint32_t filter) {
-  can_filters[filter_num] = filter;
-}
-
 StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   s_num_filters = 0;
 
@@ -71,7 +67,7 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   CAN_InitTypeDef can_cfg;
   CAN_StructInit(&can_cfg);
 
-  can_cfg.CAN_Mode = settings->loopback ? CAN_Mode_Silent_LoopBack : CAN_Mode_Normal;
+  can_cfg.CAN_Mode = settings->loopback ? CAN_Mode_LoopBack : CAN_Mode_Normal;
   can_cfg.CAN_SJW = CAN_SJW_1tq;
   can_cfg.CAN_ABOM = ENABLE;
   can_cfg.CAN_BS1 = s_timing[settings->bitrate].bs1;
@@ -126,30 +122,6 @@ StatusCode can_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extended) {
   uint32_t filter_val = (filter << offset) | ((uint32_t)extended << 2);
 
   prv_add_filter_in(s_num_filters, mask_val, filter_val);
-  s_num_filters++;
-  return STATUS_CODE_OK;
-}
-
-StatusCode can_hw_add_filter_out(uint32_t mask, uint32_t filter, bool extended) {
-  //check if s_can_filter_en has been set
-  if (s_can_filter_en == 0){
-    s_can_filter_en = 2;
-  }
-    if (s_num_filters >= CAN_HW_NUM_FILTER_BANKS) {
-    return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "CAN HW: Ran out of filter banks.");
-  } else if (s_can_filter_en != 2) {
-    return status_msg(STATUS_CODE_UNINITIALIZED, "CAN: CAN filter in is enabled already");
-  }
-
-  // 32-bit Filter - Identifer Mask
-  // STID[10:3] | STID[2:0] EXID[17:13] | EXID[12:5] | EXID[4:0] [IDE] [RTR] 0
-  size_t offset = extended ? 3 : 21;
-  // We always set the IDE bit for the mask so we distinguish between standard
-  // and extended
-  uint32_t mask_val = (mask << offset) | (1 << 2); 
-  uint32_t filter_val = (filter << offset) | ((uint32_t)extended << 2);
-
-  prv_add_filter_out(s_num_filters, mask_val, filter_val);
   s_num_filters++;
   return STATUS_CODE_OK;
 }
@@ -239,6 +211,7 @@ void USB_HP_CAN1_TX_IRQHandler(void) {
 void USB_LP_CAN1_RX0_IRQHandler(void) {
   // Handle Message Pending in RX0 Fifo
   // TODO: Fifo RX 1/0 interrupts also trigger on FIFO full/Fifo overrun
+  BaseType_t higher_woken = pdFALSE;
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET) {
     CanMessage rx_msg = { 0 };
     if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
@@ -252,16 +225,18 @@ void USB_LP_CAN1_RX0_IRQHandler(void) {
       }
       // If filter match, do not push to rx queue
       if (!s_filter_id_match){
-        can_queue_push(s_g_rx_queue, &rx_msg);
+        can_queue_push_from_isr(s_g_rx_queue, &rx_msg, &higher_woken);
       }
     }
   }
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_FMP0);
+  portYIELD_FROM_ISR(higher_woken);
 }
 
 void CAN1_RX1_IRQHandler(void) {
   // Handle Message Pending in RX1 Fifo
   // ISRs will not cause issues
+  BaseType_t higher_woken = pdFALSE;
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
     CanMessage rx_msg = { 0 };
     if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
@@ -275,11 +250,12 @@ void CAN1_RX1_IRQHandler(void) {
       }
       // If filter match, do not push to rx queue
       if (!s_filter_id_match){
-        can_queue_push(s_g_rx_queue, &rx_msg);
+        can_queue_push_from_isr(s_g_rx_queue, &rx_msg, &higher_woken);
       }
     }
   }
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_FMP1);
+  portYIELD_FROM_ISR(higher_woken);
 }
 
 void CAN1_SCE_IRQHandler(void) {

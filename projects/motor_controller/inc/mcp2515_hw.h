@@ -32,8 +32,6 @@ StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *sett
 
 // StatusCode mcp2515_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extended);
 
-// StatusCode mcp2515_hw_add_filter_out(uint32_t mask, uint32_t filter, bool extended);
-
 StatusCode mcp2515_hw_set_filter(CanMessageId *filters, bool loopback);
 
 CanHwBusStatus mcp2515_hw_bus_status(void);

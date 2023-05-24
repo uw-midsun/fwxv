@@ -45,7 +45,7 @@ StatusCode run_can_tx_cycle()
   return STATUS_CODE_OK;
 }
 
-TASK(CAN_RX, TASK_MIN_STACK_SIZE)
+TASK(CAN_RX, 512)
 {
   int counter = 0;
   while (true)
@@ -60,7 +60,7 @@ TASK(CAN_RX, TASK_MIN_STACK_SIZE)
   }
 }
 
-TASK(CAN_TX, TASK_MIN_STACK_SIZE)
+TASK(CAN_TX, 512)
 {
   int counter = 0;
   while (true)
@@ -160,27 +160,6 @@ StatusCode can_add_filter_in(CanMessageId msg_id) {
   mask.raw = (uint32_t)~mask.msg_id;
 
   return can_hw_add_filter_in(mask.raw, can_id.raw, false);
-}
-
-StatusCode can_add_filter_out(CanMessageId msg_id) {
-  //check if s_can_filter_in_en has been set
-  if (s_can_filter_in_en == 0){
-    s_can_filter_in_en = 2;
-  }
-
-  if (s_can_storage == NULL) {
-    return status_code(STATUS_CODE_UNINITIALIZED);
-  } else if (msg_id >= CAN_MSG_MAX_IDS) {
-    return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
-  } else if (s_can_filter_in_en != 2) {
-    return status_msg(STATUS_CODE_UNINITIALIZED, "CAN: CAN filter in is enabled already");
-  }
-
-  CanId can_id = { .raw = msg_id };
-  CanId mask = { 0 };
-  mask.raw = (uint32_t)~mask.msg_id;
-
-  return can_hw_add_filter_out(mask.raw, can_id.raw, false);
 }
 
 StatusCode clear_rx_struct()
