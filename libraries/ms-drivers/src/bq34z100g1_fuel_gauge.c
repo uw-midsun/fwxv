@@ -247,7 +247,10 @@ StatusCode prv_init_flash(Bq34z100g1Storage *storage) {
   status_ok_or_return(prv_write_flash(storage, GAS_GAUGING_STATE, 0, value));
 
   // Calibration Data Subclass
-
+  status_ok_or_return(prv_access_flash(storage, CALIBRATION_DATA, 0, value));
+  value[CC_GAIN_OFFSET % 32] = LOWER_BYTE(BQ34Z100G1_SENSE_RESISTOR_VALUE);
+  value[CC_DELTA_OFFSET % 32 + 1] = UPPER_BYTE(BQ34Z100G1_SENSE_RESISTOR_VALUE);
+  status_ok_or_return(prv_write_flash(storage, CALIBRATION_DATA, 0, value));
   return STATUS_CODE_OK;
 }
 
