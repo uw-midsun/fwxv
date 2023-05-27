@@ -7,7 +7,7 @@
 #include "fsm.h"
 #include "fsm_shared_mem.h"
 #include "log.h"
-#include "master_task.h"
+// #include "master_task.h"
 #include "power_fsm.h"
 #include "tasks.h"
 
@@ -34,7 +34,7 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   fsm_run_cycle(drive_fsm);
   fsm_run_cycle(centre_console_power_fsm);
-  wait_tasks(2);
+  wait_tasks(1);
   run_can_tx_cycle();
   // delay_ms(1000);
 }
@@ -63,7 +63,7 @@ int main() {
   init_drive_fsm();
   init_power_fsm();
 
-  init_master_task();
+  // init_master_task();
 
   tasks_start();
 

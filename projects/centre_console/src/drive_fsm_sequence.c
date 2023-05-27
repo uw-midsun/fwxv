@@ -1,4 +1,9 @@
 #include "drive_fsm_sequence.h"
+
+#include "centre_console_getters.h"
+#include "centre_console_setters.h"
+#include "power_fsm.h"
+
 #define DUMMY_VAL 1  // ask ShiCheng for corret values for precharge status
 #define BEGIN_PRECHARGE_SIGNAL 2
 #define PRECHARGE_STATE_COMPLETE 2
