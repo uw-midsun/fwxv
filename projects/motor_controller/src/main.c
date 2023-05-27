@@ -5,18 +5,13 @@
 #include "delay.h"
 #include "fsm.h"
 #include "log.h"
+#include "master_task.h"
 #include "mcp2515.h"
 #include "misc.h"
 #include "motor_can.h"
 #include "precharge_control.h"
 #include "soft_timer.h"
 #include "tasks.h"
-
-#ifdef MS_PLATFORM_X86
-#define MASTER_MS_CYCLE_TIME 20
-#else
-#define MASTER_MS_CYCLE_TIME 200
-#endif
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
@@ -45,25 +40,19 @@ PrechargeControlSettings precharge_settings = {
   .precharge_monitor2 = { GPIO_PORT_A, 8 },
 };
 
-TASK(master_task, TASK_MIN_STACK_SIZE) {
-  TickType_t previousWakeTime = xTaskGetTickCount();
-  while (true) {
-#ifdef TEST
-    xSemaphoreTake(test_cycle_start_sem);
-#endif
-    run_can_rx_cycle();
-    run_mcp2515_rx_cycle();
-    wait_tasks(2);
+void run_fast_cycle() {
+  run_can_rx_cycle();
+  run_mcp2515_rx_cycle();
+  wait_tasks(2);
 
-    run_can_tx_cycle();
-    run_mcp2515_tx_cycle();
-    wait_tasks(2);
-#ifdef TEST
-    xSemaphoreGive(test_cycle_end_sem);
-#endif
-    vTaskDelayUntil(&previousWakeTime, pdMS_TO_TICKS(MASTER_MS_CYCLE_TIME));
-  }
+  run_can_tx_cycle();
+  run_mcp2515_tx_cycle();
+  wait_tasks(2);
 }
+
+void run_medium_cycle() {}
+
+void run_slow_cycle() {}
 
 int main() {
   tasks_init();
@@ -74,7 +63,7 @@ int main() {
   init_motor_controller_can();
   LOG_DEBUG("Motor Controller Task\n");
 
-  tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
+  init_master_task();
 
   tasks_start();
 

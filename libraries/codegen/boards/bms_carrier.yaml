@@ -13,16 +13,20 @@
     bps_heartbeat:
       id: 0
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       critical: true
       signals:
         status:
           length: 8
-
+    
     battery_vt:
       id: 30
       target:
-        - telemetry
+        centre_console:
+          watchdog: 0
+        telemetry:
+          watchdog: 0
       critical: false
       signals:
         module_id:
@@ -31,11 +35,15 @@
           length: 16
         temperature:
           length: 16
-
+        # This field will change
+        batt_perc:
+          length: 16
+    
     battery_aggregate_vc:
       id: 33
       target:
-        - telemetry
+        telemetry:
+          watchdog: 0
       signals:
         voltage:
           length: 32
@@ -45,7 +53,8 @@
     battery_fan_state:
       id: 57
       target:
-        - bms_carrier
+        bms_carrier:
+          watchdog: 0
       signals:
         fan_1:
           length: 8
@@ -67,7 +76,8 @@
     battery_relay_state:
       id: 58
       target:
-        - bms_carrier
+        bms_carrier:
+          watchdog: 0
       signals:
         hv:
           length: 8

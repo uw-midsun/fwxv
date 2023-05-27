@@ -76,7 +76,7 @@ def write_template(env, template_name, file_path, data):
 
 def process_setter_data(board, src_board, data, master_data):
     for message, message_data in data["Messages"].items():
-        if board in message_data.get("target", []) and \
+        if board in message_data.get("target", {}).keys() and \
            message_data.get("signals", False): # extra check to make sure there's signals
             master_data["Messages"][message] = message_data
             master_data["Messages"][message]["src"] = src_board

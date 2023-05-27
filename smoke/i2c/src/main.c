@@ -92,9 +92,8 @@ TASK(smoke_i2c_task, TASK_STACK_512){
       LOG_DEBUG("Write failed: status code %d\n", status);
     }
   }
-}
 
-  if (SHOULD_READ) {
+    if (SHOULD_READ) {
     // Allocate space for the bytes we'll read
     uint8_t read_bytes[NUM_BYTES_TO_READ] = { 0 };
 
@@ -125,10 +124,12 @@ TASK(smoke_i2c_task, TASK_STACK_512){
       // Log an unsucessful read
       LOG_DEBUG("Read failed: status code %d\n", status);
     }
-  }  
+  } 
+} 
 }
 
 int main(void) {
+  gpio_init();
   tasks_init();
   log_init();
 
