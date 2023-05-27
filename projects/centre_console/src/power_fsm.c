@@ -60,7 +60,6 @@ static void prv_power_fsm_aux_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_fault_input(Fsm *fsm, void *context) {
-  // oh no
   return;
 }
 

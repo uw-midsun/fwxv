@@ -160,7 +160,6 @@ def check_yaml_file(data):
             raise Exception("Message " + message + " has no id")
         # No same ids for messages within a message
         if data["Messages"][message]["id"] in message_ids:
-            print(data["Messages"][message]["id"])
             raise Exception("Duplicate message id")
         # All ids are between 0-64
         elif data["Messages"][message]["id"] > 64 or data["Messages"][message]["id"] < 0:

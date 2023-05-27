@@ -6,8 +6,10 @@
 #include "power_fsm.h"
 #include "power_fsm_can_data.h"
 
+#define CYCLES_TIMEOUT 3
+
 // Number of cyces to wait before falling back to stable state
-static uint8_t cycle_timeout = 3;
+static uint8_t s_cycle_timeout = CYCLES_TIMEOUT;
 
 // Input/outputs for going into MAIN
 
@@ -49,14 +51,14 @@ void prv_power_fsm_send_pd_bms_input(Fsm *fsm, void *context) {
 
   if (rear_fault == PD_REAR_FAULT && front_fault == PD_FRONT_FAULT) {
     // Reset cycle counter
-    cycle_timeout = 3;
+    s_cycle_timeout = CYCLES_TIMEOUT;
     // Transition to next state
     fsm_transition(fsm, POWER_FSM_CONFIRM_BATTERY_STATUS);
-  } else if (cycle_timeout == 0) {
+  } else if (s_cycle_timeout == 0) {
     // Transition to last stable state
     fsm_transition(fsm, state_context->latest_state);
   } else {
-    cycle_timeout--;
+    s_cycle_timeout--;
   }
 
   return;
@@ -73,14 +75,14 @@ void prv_power_fsm_confirm_battery_status_input(Fsm *fsm, void *context) {
 
   if (status == BPS_HEARTBEAT) {
     // Reset cycle counter
-    cycle_timeout = 3;
+    s_cycle_timeout = CYCLES_TIMEOUT;
     // Transition to next state
     fsm_transition(fsm, POWER_FSM_CLOSE_BATTERY_RELAYS);
-  } else if (cycle_timeout == 0) {
+  } else if (s_cycle_timeout == 0) {
     // Transition to last stable state
     fsm_transition(fsm, state_context->latest_state);
   } else {
-    cycle_timeout--;
+    s_cycle_timeout--;
   }
 
   return;
