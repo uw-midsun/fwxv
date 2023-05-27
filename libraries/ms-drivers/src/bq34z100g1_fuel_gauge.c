@@ -286,7 +286,7 @@ StatusCode bq34z100g1_get(Bq34z100g1Storage *storage, Bq34z100g1Command command,
     case BQ34Z100G1_GRID_NUMBER:
     case BQ34Z100G1_LEARNED_STATUS:
       ret8 = ret;
-      status_ok_or_return(prv_send_command(storage, &command, 1, ret8, 1));
+      status_ok_or_return(prv_send_command(storage, (uint8_t *)&command, 1, ret8, 1));
       break;
     case BQ34Z100G1_REMAINING_CAPACITY:
     case BQ34Z100G1_FULL_CHARGE_CAPACITY:
