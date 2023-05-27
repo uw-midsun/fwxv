@@ -45,7 +45,7 @@ StatusCode run_can_tx_cycle()
   return STATUS_CODE_OK;
 }
 
-TASK(CAN_RX, 512)
+TASK(CAN_RX, TASK_STACK_512)
 {
   int counter = 0;
   while (true)
@@ -60,7 +60,7 @@ TASK(CAN_RX, 512)
   }
 }
 
-TASK(CAN_TX, 512)
+TASK(CAN_TX, TASK_STACK_512)
 {
   int counter = 0;
   while (true)
