@@ -9,7 +9,7 @@ FSM(drive_fsm, NUM_DRIVE_TRANSITIONS);
 
 #define NUM_DRIVE_FSM_BUTTONS 3
 
-#define PRECHARGE_STATE_COMPLETE 1  // delete/change to correct value (ask ShiCheng)
+#define PRECHARGE_STATE_COMPLETE 2
 
 DriveStorage drive_storage = { .state = NEUTRAL };
 
@@ -61,8 +61,6 @@ static void prv_drive_input(Fsm *fsm, void *context) {
      *  transition to TRANSMIT
      *
      */
-
-    // fsm_transition();
   }
   static void prv_drive_output(void *context) {}
 
@@ -85,8 +83,6 @@ static void prv_drive_input(Fsm *fsm, void *context) {
        *  transition to TRANSMIT
        *
        */
-
-      // fsm_transition();
     }
     static void prv_reverse_output(void *context) {}
 
