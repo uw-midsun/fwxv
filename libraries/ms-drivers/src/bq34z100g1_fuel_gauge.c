@@ -367,6 +367,6 @@ StatusCode bq34z100g1_init(Bq34z100g1Storage *storage, Bq34z100g1Settings settin
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
   storage->settings = settings;
-
+  prv_init_flash(storage);
   return STATUS_CODE_OK;
 }
