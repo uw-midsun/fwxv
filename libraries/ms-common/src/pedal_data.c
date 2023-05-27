@@ -1,9 +1,9 @@
 #include "pedal_data.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 
 #include "pedal_calib.h"
 #include "pedal_shared_resources_provider.h"
