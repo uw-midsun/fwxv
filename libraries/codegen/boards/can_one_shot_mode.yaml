@@ -3,7 +3,8 @@
     one_shot_msg:
       id: 0
       target:
-       - empty
+       empty:
+        watchdog: 0
       critical: true
       signals:
         status:

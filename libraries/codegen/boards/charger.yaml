@@ -13,7 +13,8 @@
     request_to_charge:
       id: 48
       target:
-        - centre_console
+        centre_console:
+          watchdog: 0
       signals:
         signal1:
           length: 8
@@ -21,7 +22,8 @@
     charger_connected_state:
       id: 50
       target:
-        - charger
+        charger:
+          watchdog: 0
       signals:
         is_connected:
           length: 8
@@ -29,7 +31,8 @@
     charger_fault:
       id: 53
       target:
-        - telemetry
+        telemetry:
+          watchdog: 0
       signals:
         fault:
           length: 8

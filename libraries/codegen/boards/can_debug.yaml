@@ -3,7 +3,8 @@
     test_debug:
       id: 0
       target:
-        - can_debug
+        can_debug:
+          watchdog: 0
       critical: true
       signals:
         operation:

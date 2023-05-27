@@ -42,3 +42,9 @@ StatusCode run_can_rx_cycle();
 
 // Run the can tx cycle
 StatusCode run_can_tx_cycle();
+
+// Clear RX struct
+StatusCode clear_rx_struct();
+
+// Clear TX struct
+StatusCode clear_tx_struct();
