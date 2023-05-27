@@ -1,6 +1,10 @@
 #include "soft_timer.h"
 
 StatusCode soft_timer_start(uint32_t duration_ms, SoftTimerCallback callback, SoftTimer *timer) {
+  if (timer->id != NULL) {
+    // timer already exist/inuse, delete the old timer
+    xTimerDelete(timer->id, 0);
+  }
   timer->id = xTimerCreateStatic(NULL, pdMS_TO_TICKS(duration_ms), pdFALSE,  //
                                  NULL, callback, &timer->buffer);
   if (xTimerStart(timer->id, 0) != pdPASS) {

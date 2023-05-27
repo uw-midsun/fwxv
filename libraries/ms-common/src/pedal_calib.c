@@ -1,6 +1,7 @@
 #include "pedal_calib.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "adc.h"
 #include "gpio.h"
@@ -8,7 +9,6 @@
 #include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
-#include "pedal_setters.h"
 
 StatusCode pedal_calib_init(PedalCalibrationStorage *storage) {
   memset(storage, 0, sizeof(*storage));

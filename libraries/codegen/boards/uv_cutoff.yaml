@@ -13,7 +13,8 @@
     uv_cutoff_notification:
       id: 45
       target:
-        - telemetry
+        telemetry:
+          watchdog: 0
       signals:
         signal1:
           length: 8

@@ -13,7 +13,8 @@
     babydriver:
       id: 63
       target:
-        - babydriver
+        babydriver:
+          watchdog: 0
       signals:
         id:
           length: 8

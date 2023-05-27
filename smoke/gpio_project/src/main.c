@@ -5,11 +5,6 @@
 #include "interrupt.h"
 #include "log.h"
 #include "tasks.h"
-#ifdef MS_PLATFORM_X86
-#define MASTER_MS_CYCLE_TIME 100
-#else
-#define MASTER_MS_CYCLE_TIME 1000
-#endif
 #define NUM_BTNS 16
 
 static GpioAddress btns[NUM_BTNS];

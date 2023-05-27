@@ -2,7 +2,7 @@
     "libs": [
         "FreeRTOS",
         "ms-common",
-        "core"
+        "master"
     ],
     "can": true
 }

@@ -1,10 +1,10 @@
-
 #include "tasks.h"
 #include "notify.h"
 #include "semphr.h"
 #include "event_groups.h"
 // #include "can.h"
 #include "can_codegen.h"
+#include "can_watchdog.h"
 
 #include "log.h"
 
@@ -68,7 +68,11 @@ TASK(CAN_TX, TASK_MIN_STACK_SIZE)
     LOG_DEBUG("can_tx called: %d!\n", counter);
     counter++;
 
+    check_can_watchdogs();
+
     can_tx_all();
+
+    clear_rx_received();
 
     send_task_end();
   }
@@ -176,4 +180,16 @@ StatusCode can_add_filter_out(CanMessageId msg_id) {
   mask.raw = (uint32_t)~mask.msg_id;
 
   return can_hw_add_filter_out(mask.raw, can_id.raw, false);
+}
+
+StatusCode clear_rx_struct()
+{
+  memset(&g_rx_struct, 0, sizeof(g_rx_struct));
+  return STATUS_CODE_OK;
+}
+
+StatusCode clear_tx_struct()
+{
+  memset(&g_tx_struct, 0, sizeof(g_tx_struct));
+  return STATUS_CODE_OK;
 }
