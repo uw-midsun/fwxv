@@ -1,5 +1,5 @@
-#include "log.h"
 #include "i2c.h"
+#include "log.h"
 #include "max11600.h"
 #include "test_helpers.h"
 #include "unity.h"
@@ -11,10 +11,10 @@
 
 static Max11600Storage max_storage = { 0 };
 static I2CSettings i2c_settings = {
-    .speed = I2C_SPEED_FAST,
-    .scl = { .port = GPIO_PORT_B, .pin = 10 },
-    .sda = { .port = GPIO_PORT_B, .pin = 11 },
-  };
+  .speed = I2C_SPEED_FAST,
+  .scl = { .port = GPIO_PORT_B, .pin = 10 },
+  .sda = { .port = GPIO_PORT_B, .pin = 11 },
+};
 
 void setup_test(void) {
   log_init();
