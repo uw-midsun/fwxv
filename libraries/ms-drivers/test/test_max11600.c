@@ -1,4 +1,5 @@
 #include "log.h"
+#include "i2c.h"
 #include "max11600.h"
 #include "test_helpers.h"
 #include "unity.h"
@@ -9,10 +10,16 @@
 #define MAX11600_WRITE_ADDRESS 0xC8
 
 static Max11600Storage max_storage = { 0 };
+static I2CSettings i2c_settings = {
+    .speed = I2C_SPEED_FAST,
+    .scl = { .port = GPIO_PORT_B, .pin = 10 },
+    .sda = { .port = GPIO_PORT_B, .pin = 11 },
+  };
 
 void setup_test(void) {
   log_init();
   LOG_DEBUG("here");
+  i2c_init(TEST_MAX11600_I2C_PORT, &i2c_settings);
   TEST_ASSERT_OK(max11600_init(&max_storage, TEST_MAX11600_I2C_PORT));
 }
 
