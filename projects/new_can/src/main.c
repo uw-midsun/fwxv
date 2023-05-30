@@ -6,6 +6,7 @@
 #include "delay.h"
 #include "log.h"
 #include "master_task.h"
+#include "new_can_getters.h"
 #include "new_can_setters.h"
 #include "tasks.h"
 
@@ -20,10 +21,22 @@ const CanSettings can_settings = {
 
 void run_fast_cycle() {}
 
+static uint8_t s_to_transmit;
 void run_medium_cycle() {
+  // We set the values we expect to receive, since all messages
+  // send will be received by new_can in loopback mode
   run_can_rx_cycle();
   wait_tasks(1);
+  LOG_DEBUG("Most Recent Received Data:\n");
+  LOG_DEBUG("MSG1: %d\n", get_transmit_msg1_status());
+  LOG_DEBUG("MSG2: %d\n", get_transmit_msg2_signal());
 
+  s_to_transmit = (s_to_transmit + 1) % 2;
+  set_transmit_msg1_status(s_to_transmit);
+  set_transmit_msg2_signal(s_to_transmit);
+  set_transmit_msg3_help(s_to_transmit);
+
+  LOG_DEBUG("Sending messages with data: %d\n", s_to_transmit);
   run_can_tx_cycle();
   wait_tasks(1);
 }

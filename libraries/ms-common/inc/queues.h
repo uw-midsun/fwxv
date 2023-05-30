@@ -21,9 +21,13 @@ StatusCode queue_init(Queue *queue);
 
 // Attempt to place an item into the queue, delaying for delay_ms in ms before timing out.
 StatusCode queue_send(Queue *queue, const void *item, uint32_t delay_ms);
+// This version must be inside of an interrupt
+StatusCode queue_send_from_isr(Queue *queue, const void *item, BaseType_t *higher_prio_woken);
 
 // Attempt to receive an item from the queue, delaying for delay_ms in ms before timing out.
 StatusCode queue_receive(Queue *queue, void *buf, uint32_t delay_ms);
+// This version must be inside of an interrupt
+StatusCode queue_receive_from_isr(Queue *queue, void *buf, BaseType_t *higher_prio_woken);
 
 // Attempt to receive an item from the queue without removing it from the queue, delaying for
 // delay_ms in ms before timing out.
