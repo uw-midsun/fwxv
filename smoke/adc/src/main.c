@@ -5,6 +5,11 @@
 #include "soft_timer.h"
 #include "log.h"
 #include "tasks.h"
+#include "stm32f10x_dma.h"
+#include "stm32f10x_interrupt.h"
+#include "stm32f10x_adc.h"
+
+#define ADC_TIMEOUT_MS 100
 
 static const GpioAddress adc_addy[] = {
   { .port = GPIO_PORT_A, .pin = 0 },   
@@ -32,6 +37,7 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
   GPIO_InitTypeDef GPIO_InitStructure = { 0 };
   RCC_ADCCLKConfig(RCC_PCLK2_Div2); 
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOA, ENABLE);
+  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
   GPIO_Init(GPIOA, &GPIO_InitStructure);
   for (int i = 0; i < 9; i++) {
     gpio_init_pin(&adc_addy[i], GPIO_ANALOG, GPIO_STATE_LOW);
@@ -39,20 +45,22 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
   
   // DMA initialization needed for multi-channel scan
   DMA_DeInit(DMA1_Channel1);
-  DMA_InitTypedef dma_init = {
-    .DMA_PeripheralBaseAddr = ADC1_DR_Address,
-    .DMA_MemoryBaseAddr = (uint32_t)&ADCConvertedValue,
+  DMA_InitTypeDef dma_init = {
+    .DMA_PeripheralBaseAddr = (uint32_t)&(ADC1->DR),
+    .DMA_MemoryBaseAddr = (uint32_t)adc_values,
     .DMA_DIR = DMA_DIR_PeripheralSRC,
     .DMA_BufferSize = 16,
     .DMA_PeripheralInc = DMA_PeripheralInc_Disable,
-    .DMA_MemoryInc = DMA_MemoryInc_Disable,
+    .DMA_MemoryInc = DMA_MemoryInc_Enable,
     .DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord,
     .DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord,
-    .DMA_Mode = DMA_Mode_Circular,
+    .DMA_Mode = DMA_Mode_Normal,
     .DMA_Priority = DMA_Priority_High,
     .DMA_M2M = DMA_M2M_Disable,
-  },
-  DMA_Init(DMA1_Channel1, &DMA_InitStructure),
+  };
+  DMA_Init(DMA1_Channel1, &dma_init);
+
+  DMA_ITConfig(DMA1_Channel1, DMA_IT_TC, ENABLE);
   DMA_Cmd(DMA1_Channel1, ENABLE);
 
   ADC_InitTypeDef ADC_InitStructure = { 0 };
@@ -90,6 +98,7 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
 
   // Enable the ADC
   ADC_Cmd(ADC1, ENABLE);
+  ADC_DMACmd(ADC1, ENABLE);
 
   /* Enable ADC1 reset calibration register */   
   ADC_ResetCalibration(ADC1);
@@ -101,15 +110,15 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
   /* Check the end of ADC1 calibration */
   while(ADC_GetCalibrationStatus(ADC1));
      
-  stm32f10x_interrupt_nvic_enable(ADC1_2_IRQn, INTERRUPT_PRIORITY_LOW);
-  ADC_ITConfig(ADC1, ADC_IT_EOC, true);
+  stm32f10x_interrupt_nvic_enable(DMA1_Channel1_IRQn, INTERRUPT_PRIORITY_LOW);
+  sem_init(&converting, 1, 1); 
 
    while(true) {
     ADC_SoftwareStartConvCmd(ADC1, ENABLE);
     /* Wait for the conversion to complete */
     sem_wait(&converting, ADC_TIMEOUT_MS);
     for (int i = 0; i < 16; i++) {
-      LOG_DEBUG("ADC %d: %d\n", i, adc_values[i]);
+      printf("ADC %d: %d\n\r", i, adc_values[i]);
     }
     
     /* Read the conversion result */
@@ -122,7 +131,6 @@ int main() {
    interrupt_init();
    gpio_init();
    log_init();
-   LOG_DEBUG("Welcome to ADC SMOKE TEST!\n\r");
 
    tasks_init_task(smoke_adc_task, TASK_PRIORITY(2), NULL);
 
@@ -132,7 +140,10 @@ int main() {
 }
 
 
-void ADC1_2_IRQHandler() { 
+void DMA1_Channel1_IRQHandler() { 
+  BaseType_t xHigherPriorityTaskWoken;
   xSemaphoreGiveFromISR(converting.handle, &xHigherPriorityTaskWoken);
+  DMA_ClearITPendingBit(DMA1_IT_TC1);
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
