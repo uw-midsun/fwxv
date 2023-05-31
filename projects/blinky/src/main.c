@@ -3,10 +3,15 @@
 #include <stddef.h>
 
 #include "gpio.h"
+#include "log.h"
 #include "interrupt.h"
 #include "gpio_it.h"
 #include "wait.h"
 #include "delay.h"
+#include "tasks.h"
+#include "notify.h"
+
+#define BTN_INT_EVENT 5
 
 // Controller Board LEDs
 static const GpioAddress leds[] = {
@@ -27,10 +32,25 @@ static InterruptSettings interrupt_settings = {
    .priority = INTERRUPT_PRIORITY_NORMAL,
 };
 
-// Callback Function
-void prv_my_gpio_it_callback(GpioAddress *address, void *context) {
-   for (size_t i = 0; i <  SIZEOF_ARRAY(leds); i++) {
-      gpio_toggle_state(&leds[i]);
+// Gpio Task
+TASK(gpio_task, TASK_STACK_512) {
+   gpio_init_pin(&leds[0], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+   gpio_init_pin(&leds[1], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+   gpio_init_pin(&leds[2], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+   gpio_init_pin(&leds[3], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+   gpio_init_pin(&buttons[0], GPIO_INPUT_PULL_DOWN, GPIO_STATE_LOW);
+
+   uint32_t notification;
+   Event event;
+
+   while (true) {
+      if (notify_get(&notification) == STATUS_CODE_OK) {              // Gets the notification value
+         if (notify_check_event(&notification, BTN_INT_EVENT)) {      // Checks if the notification is equal to BTN_INT_EVENT 
+            for (size_t i = 0; i <  SIZEOF_ARRAY(leds); i++) {
+            gpio_toggle_state(&leds[i]);
+            }
+         }
+      }
    }
 }
 
@@ -38,35 +58,18 @@ int main() {
    // Enables
    interrupt_init();
    gpio_init();
+   tasks_init();
+
    gpio_it_register_interrupt(&buttons[0], &interrupt_settings,
-                           INTERRUPT_EDGE_RISING, prv_my_gpio_it_callback,
-                           NULL);
+                              BTN_INT_EVENT, gpio_task);
+   
+   tasks_init_task(gpio_task, TASK_PRIORITY(1), NULL);
 
-   // LEDs Config
-   GpioSettings led_settings = {
-      .direction = GPIO_DIR_OUT,          // Output Pin
-      .state = GPIO_STATE_LOW,            // Start in low state
-      .alt_function = GPIO_ALTFN_NONE,     // No connections to peripherals
-      .resistor = GPIO_RES_NONE,          // No resistors needed
-   };
-
-   // Button Config
-   GpioSettings button_settings = {
-      .direction = GPIO_DIR_IN,          // Output Pin
-      .state = GPIO_STATE_LOW,            // Start in low state
-      .alt_function = GPIO_ALTFN_NONE,     // No connections to peripherals
-      .resistor = GPIO_RES_PULLDOWN,          // No resistors needed
-   };
-
-   // Init all the LEDs
-   for (size_t i = 0; i <  SIZEOF_ARRAY(leds); i++) {
-      gpio_init_pin(&leds[i], &led_settings);
-   }
+   tasks_start();
 
    while (true) {
-      wait();
-      gpio_it_trigger_interrupt();
-      delay_ms(100);
+      gpio_it_trigger_interrupt(&buttons[0]);
+      delay_ms(1000);
    }
 
    return 0;
