@@ -2,99 +2,11 @@
 
 #include <stdbool.h>
 
+#include "bq34z100g1_fuel_gauge_defs.h"
 #include "i2c.h"
 #include "log.h"
 #include "semaphore.h"
 
-// bq34z100g1 defines
-
-#define BQ34Z100G1_SEALED_TO_UNSEALED_KEY 0x36720414
-
-#define BQ34Z100G1_DESIGN_CAPACITY_VAL 1234U  // mAh
-#define BQ34Z100G1_DESIGN_ENERGY 1234U        // in mWh
-
-// value in celsius
-#define BQ34Z100G1_JEITA_TEMP1 0U
-#define BQ34Z100G1_JEITA_TEMP2 20U
-#define BQ34Z100G1_JEITA_TEMP3 40U
-#define BQ34Z100G1_JEITA_TEMP4 60U
-
-#define BQ34Z100G1_CELL_CHARGE_VOLT_T1_TO_T2 1000U
-#define BQ34Z100G1_CELL_CHARGE_VOLT_T2_TO_T3 1000U
-#define BQ34Z100G1_CELL_CHARGE_VOLT_T3_TO_T4 1000U
-
-#define BQ34Z100G1_NUM_OF_SERIES_CELLS 50
-#define BQ34Z100G1_PACK_CONFIGURATION_VAL 0x0000
-
-#define BQ34Z100G1_SENSE_RESISTOR_VALUE 100  // in mOhm
-
-#define BQ34Z100G1_CELL_TERMINATE_VOLTAGE 20  // in mV
-#define BQ34Z100G1_QUIT_CURRENT 100           // in mA
-#define BQ34Z100G1_QMAX_CELL0 2000            // in mA
-
-#define BQ34Z100G1_DEVICE_CHEMISTRY 0x00  // chem id
-
-/*
-CONTROL_STATUS register bit masks (p.13)
-            | Bit 7 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 | Bit 0 |
- High Byte  | RSVD  | FAS   | SS    | CALEN | CCA   | BCA   | CSV   | RSVD  |
- Low Byte   | RSVD  | RSVD  |FULLSLP| SLEEP | LDMD  |RUP_DIS| VOK   | QEN   |
-*/
-
-#define BQ34Z100G1_CTL_STS_FAS 1U << 6U    // indicates FULL ACCESS SEALED state, active when set
-#define BQ34Z100G1_CTL_STS_SS 1U << 5U     // indicates SEALED state, active when set
-#define BQ34Z100G1_CTL_STS_CALEN 1U << 4U  // indicates calibration function active, active when set
-#define BQ34Z100G1_CTL_STS_CCA \
-  1U << 3U  // indicates Coulomb Counter Calibration routine active, active when set
-#define BQ34Z100G1_CTL_STS_BCA \
-  1U << 2U  // indicates Board Calibration routine is active, active when set
-#define BQ34Z100G1_CTL_STS_CSV \
-  1U << 1U  // indicates valid data flash checksum has been generated, active when set
-#define BQ34Z100G1_CTL_STS_FULLSLEEP 1U << 5U  // indicates when in FULL SLEEP mode, true when set
-#define BQ34Z100G1_CTL_STS_SLEEP 1U << 4U      // indicates when in SLEEP mode, true when set
-#define BQ34Z100G1_CTL_STS_LDMD \
-  1U << 3U  // indicates Impedance Track algorithm using constant-power mode, true when set
-#define BQ34Z100G1_CTL_STS_RUP_DIS \
-  1U << 2U  // indicates Ra table updates are disabled, true when set
-#define BQ34Z100G1_CTL_STS_VOK \
-  1U << 1U  // indicates cell voltages OK for Qmax updates, true when set
-#define BQ34Z100G1_CTL_STS_QEN 1U << 0U  // indicates Qmax updates are enabled, true when set
-
-/*
-FLAGS register bit masks (p.13)
-            | Bit 7 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 | Bit 0 |
- High Byte  | OTC   | OTD   | BATHI | BATLOW|CHG_INH| XCHG  | FC    | CHG   |
- Low Byte   |OCVTAKN| RSVD  | RSVD  | CF    | RSVD  | SOC1  | SOCF  | DSG   |
-*/
-
-#define BQ34Z100G1_FLG_OTC 1U << 7U
-#define BQ34Z100G1_FLG_OTD 1U << 6U
-#define BQ34Z100G1_FLG_BATHI 1U << 5U
-#define BQ34Z100G1_FLG_BATLOW 1U << 4U
-#define BQ34Z100G1_FLG_CHG_INH 1U << 3U
-#define BQ34Z100G1_FLG_XCHG 1U << 2U
-#define BQ34Z100G1_FLG_FC 1U << 1U
-#define BQ34Z100G1_FLG_CHG 1U << 0U
-#define BQ34Z100G1_FLG_OCVTAKN 1U << 7U
-#define BQ34Z100G1_FLG_CF 1U << 4U
-#define BQ34Z100G1_FLG_SOC1 1U << 2U
-#define BQ34Z100G1_FLG_SOCF 1U << 1U
-#define BQ34Z100G1_FLG_DSG 1U << 0U
-
-/*
-FLAGSB register bit masks (p.13)
-            | Bit 7 | Bit 6 | Bit 5 | Bit 4 | Bit 3 | Bit 2 | Bit 1 | Bit 0 |
- High Byte  | SOH   | LIFE  |FRSTDOD| RSVD  | RSVD  | DODEOC| DTRC  | RSVD  |
- Low Byte   | RSVD  | RSVD  | RSVD  | RSVD  | RSVD  | RSVD  | RSVD  | RSVD  |
-*/
-
-#define BQ34Z100G1_FLGB_SOH 1U << 7U
-#define BQ34Z100G1_FLGB_LIFE 1U << 6U
-#define BQ34Z100G1_FLGB_FRSTDOD 1U << 5U
-#define BQ34Z100G1_FLGB_DODEOC 1U << 4U
-#define BQ34Z100G1_FLGB_DTRC 1U << 3U
-
-// If not specified these commands void *ret should be uint16_t
 typedef enum {
   // Standard Data Commands
   BQ34Z100G1_CONTROL = 0x00,
@@ -142,6 +54,7 @@ typedef enum {
 } Bq34z100g1Command;
 
 typedef enum {
+  // get commands
   BQ34Z100G1_CONTROL_STATUS = 0x0000,
   BQ34Z100G1_DEVICE_TYPE = 0x0001,
   BQ34Z100G1_FW_VERSION = 0x0002,
@@ -149,10 +62,11 @@ typedef enum {
   BQ34Z100G1_RESET_DATA = 0x0005,
   BQ34Z100G1_PREV_MACWRITE = 0x0007,
   BQ34Z100G1_CHEM_ID = 0x0008,
+  // set commands
   BQ34Z100G1_BOARD_OFFSET = 0x0009,
   BQ34Z100G1_CC_OFFSET = 0x000A,
   BQ34Z100G1_CC_OFFSET_SLAVE = 0x000B,
-  BQ34Z100G1_DF_VERSION = 0x000C,
+  BQ34Z100G1_DF_VERSION = 0x000C,  // get command
   BQ34Z100G1_SET_FULLSLEEP = 0x0010,
   BQ34Z100G1_STATIC_CHEM_CHKSUM = 0x0017,
   BQ34Z100G1_SEALED = 0x0020,
@@ -173,8 +87,51 @@ typedef struct {
   Bq34z100g1Settings settings;
 } Bq34z100g1Storage;
 
+/*
+Brief: Used to get register values from the fuel gauge using the Bq34z100g1Command commands
+Param:
+  storage - pointer to an initialized Bq34z100g1Storage, really just to store the i2c information
+  command - determines the value returned by ret. P.11 of the data sheet outlines the value
+            returned from each command. Note that some commands are for utility purposes and do
+            not return a value, if one of these commands is used in a call to this function it
+            will return STATUS_CODE_INVALID_ARGS.
+  subcommand - the BQ34Z100G1_CONTROL command requires a subcommand. Some of these subcommands
+               are used to set values, if one of these commands is used in a call to this function
+               it will return STATUS_CODE_INVALID_ARGS.
+  ret - array provided by user to hold value returned by fuel gauge. The least signigicant bit will
+        be stored in the first byte and most significat bit will be stored in the second. In case
+        of a command that only returns an 8 bit val, the upper byte will be set to 0x00.
+Return: Returns STATUS_CODE_OK on successful command, STATUS_CODE_INVALID_ARGS when incorrect
+        command used, and forwards error codes from any i2c driver failures
+
+*/
 StatusCode bq34z100g1_get(Bq34z100g1Storage *storage, Bq34z100g1Command command,
-                          Bq34z100g1SubCommand subcommand, void *ret);
+                          Bq34z100g1SubCommand subcommand, uint8_t ret[2]);
+
+/*
+Brief: Used to set register values from the fuel gauge using the BQ34Z100G1_CONTROL command and
+       the Bq34z100g1SubCommand subcommands.
+Param:
+  storage - pointer to an initialized Bq34z100g1Storage, really just to store the i2c information
+  command - only valid command is BQ34Z100G1_CONTROL, otherwise will return
+            STATUS_CODE_INVALID_ARGS
+  subcommand - the BQ34Z100G1_CONTROL command requires a subcommand P.11 of the data sheet
+               outlines. Some of these subcommands are used to get values, if one of these
+               commands is used in a call to this function it will return
+               STATUS_CODE_INVALID_ARGS.
+Return: Returns STATUS_CODE_OK on successful command, STATUS_CODE_INVALID_ARGS when incorrect
+        command used, and forwards error codes from any i2c driver failures
+*/
 StatusCode bq34z100g1_set(Bq34z100g1Storage *storage, Bq34z100g1Command command,
                           Bq34z100g1SubCommand subcommand);
+
+/*
+Brief: Initializes the i2c interface provided in the settings, configures the data flash
+       to the values configured in the #defines above
+Param:
+  storage - pointer to an unitialized storage struct
+  settings - i2c address for the fuel gauge and the i2c port connected to it
+Return: Returns STATUS_CODE_OK on successful command, STATUS_CODE_INVALID_ARGS when incorrect
+        command used, and forwards error codes from any i2c driver failures
+*/
 StatusCode bq34z100g1_init(Bq34z100g1Storage *storage, Bq34z100g1Settings settings);
