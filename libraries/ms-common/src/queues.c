@@ -23,8 +23,28 @@ StatusCode queue_send(Queue *queue, const void *item, uint32_t delay_ms) {
   return STATUS_CODE_OK;
 }
 
+StatusCode queue_send_from_isr(Queue *queue, const void *item, BaseType_t *higher_prio_woken) {
+  BaseType_t ret = xQueueSendFromISR(queue->handle, item, higher_prio_woken);
+
+  if (ret == errQUEUE_FULL) {
+    return STATUS_CODE_RESOURCE_EXHAUSTED;
+  }
+
+  return STATUS_CODE_OK;
+}
+
 StatusCode queue_receive(Queue *queue, void *buf, uint32_t delay_ms) {
   BaseType_t ret = xQueueReceive(queue->handle, buf, pdMS_TO_TICKS(delay_ms));
+
+  if (ret == pdFALSE) {
+    return STATUS_CODE_EMPTY;
+  }
+
+  return STATUS_CODE_OK;
+}
+
+StatusCode queue_receive_from_isr(Queue *queue, void *buf, BaseType_t *higher_prio_woken) {
+  BaseType_t ret = xQueueReceiveFromISR(queue->handle, buf, higher_prio_woken);
 
   if (ret == pdFALSE) {
     return STATUS_CODE_EMPTY;

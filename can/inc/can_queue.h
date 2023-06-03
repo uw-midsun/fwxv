@@ -24,11 +24,17 @@ typedef struct CanQueue {
 #define can_queue_push(can_queue, source)                           \
     queue_send(&(can_queue)->queue, (source), 0)
 
+#define can_queue_push_from_isr(can_queue, source, high_prio_woken) \
+    queue_send_from_isr(&(can_queue)->queue, (source), high_prio_woken)
+
 #define can_queue_peek(can_queue, dest)                             \
     queue_peek(&(can_queue)->queue, (dest), 0)
 
 #define can_queue_pop(can_queue, dest)                              \
     queue_receive(&(can_queue)->queue, (dest), 0)
+
+#define can_queue_pop_from_isr(can_queue, dest, higher_prio_woken)  \
+    queue_receive_from_isr(&(can_queue)->queue, (dest), high_prio_woken)
 
 #define can_queue_size(can_queue)                                   \
     queue_get_num_items(&(can_queue)->queue)

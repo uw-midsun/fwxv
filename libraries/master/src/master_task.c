@@ -45,7 +45,7 @@ void check_late_cycle(BaseType_t delay) {
   }
 }
 
-TASK(master_task, TASK_MIN_STACK_SIZE) {
+TASK(master_task, TASK_STACK_512) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
   uint32_t counter = 1;
   while (true) {
