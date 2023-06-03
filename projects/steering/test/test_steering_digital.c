@@ -78,7 +78,7 @@ void test_steering_input(void) {
 TEST_IN_TASK
 void test_steering_digital_input_horn() {
   steering_digital_input_init(digital_horn_input);
-  tasks_init_task(digital_horn_input, TASK_PRIORITY(4), NULL);
+  tasks_init_task(digital_horn_input, TASK_PRIORITY(1), NULL);
   // Test horn event & CAN message - press and unpress
   gpio_it_trigger_interrupt(&HORN);
   wait_tasks(1);
@@ -92,7 +92,7 @@ void test_steering_digital_input_horn() {
 TEST_IN_TASK
 void test_steering_cc_toggle() {
   steering_digital_input_init(digital_cc_toggle_input);
-  tasks_init_task(digital_cc_toggle_input, TASK_PRIORITY(4), NULL);
+  tasks_init_task(digital_cc_toggle_input, TASK_PRIORITY(2), NULL);
   // Test CC toggle event & CAN message - press and unpress
   gpio_it_trigger_interrupt(&CC_TOGGLE);
   wait_tasks(1);
