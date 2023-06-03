@@ -181,8 +181,8 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
 }
 
 static void prv_i2c_mock_tx(uint8_t data) {
-  delay(10);
   while (queue_receive(&data) == STATUS_CODE_OK) {
+    delay(10);
     printf("%u \n", data);
   }
 }
