@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include "delay.h"
 #include "log.h"
 #include "queues.h"
 #include "semaphore.h"
@@ -45,11 +46,11 @@ typedef struct {
 static uint8_t i2c_mock_buffer[I2C_MAX_NUM_DATA];
 
 static I2CPortData s_port[NUM_I2C_PORTS] = {
-  [I2C_PORT_1] = { .periph = RCC_APB1Periph_I2C1,
+  [I2C_PORT_1] = { .periph = RCC_APB1ENR_I2C1EN,  // RCC_APB1Periph_I2C1
                    .base = I2C1,
                    .ev_irqn = I2C1_EV_IRQn,
                    .err_irqn = I2C1_ER_IRQn },
-  [I2C_PORT_2] = { .periph = RCC_APB1Periph_I2C2,
+  [I2C_PORT_2] = { .periph = RCC_APB1ENR_I2C2EN,  // RCC_APB1Periph_I2C2
                    .base = I2C2,
                    .ev_irqn = I2C2_EV_IRQn,
                    .err_irqn = I2C2_ER_IRQn },
@@ -80,6 +81,9 @@ static void prv_recover_lockup(I2CPort port) {
 StatusCode i2c_set_data(uint8_t *data, uint8_t len) {
   if (len < I2C_MAX_NUM_DATA) {
     memcpy(data, i2c_mock_buffer, len);
+    return STATUS_CODE_OK;
+  } else {
+    return STATUS_CODE_EMPTY;
   }
 }
 
@@ -93,7 +97,8 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   s_port[i2c].settings = *settings;
 
   // Enable clock for I2C
-  RCC_APB1PeriphClockCmd(s_port[i2c].periph, ENABLE);
+  // RCC_APB1PeriphClockCmd(s_port[i2c].periph, ENABLE);
+  I2C_StretchClockCmd(s_port[i2c].periph, ENABLE);
 
   // Initialize pins to correct mode to operate I2C
   gpio_init_pin(&settings->scl, GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_LOW);
@@ -163,10 +168,6 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
     return STATUS_CODE_TIMEOUT;
   }
 
-  for (uint32_t i; i < I2C_MAX_NUM_DATA; i++) {
-    queue_send(i2c_mock_buffer[i]);
-  }
-
   // Receive data from queue
   // If less than requested is received, an error in the transaction has occurred
   for (size_t rx = 0; rx < rx_len; rx++) {
@@ -180,9 +181,9 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   return STATUS_CODE_OK;
 }
 
-static void prv_i2c_mock_tx(uint8_t data) {
-  while (queue_receive(&data) == STATUS_CODE_OK) {
-    delay(10);
+static void prv_i2c_mock_tx(Queue data) {
+  while (queue_receive(&data, &rx_data[rx], 0) == STATUS_CODE_OK) {
+    delay_ms(10);
     printf("%u \n", data);
   }
 }
@@ -203,6 +204,10 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
       prv_i2c_mock_tx(&tx_data[tx]);
       queue_reset(&s_port[i2c].i2c_buf.queue);
       mutex_unlock(&s_port[i2c].i2c_buf.mutex);
+
+      for (uint32_t i; i < I2C_MAX_NUM_DATA; i++) {
+        queue_send(i2c_mock_buffer[i], &tx_data[tx], 0);
+      }
       return STATUS_CODE_RESOURCE_EXHAUSTED;
     }
   }
