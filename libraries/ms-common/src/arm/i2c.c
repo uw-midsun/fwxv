@@ -26,7 +26,7 @@ typedef enum I2CMode {
 typedef struct {
   uint8_t buf[I2C_MAX_NUM_DATA];
   Queue queue;
-  Mutex mutex;
+  Semaphore mutex;
 } I2CBuffer;
 
 typedef struct {
@@ -86,9 +86,15 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   // Enable clock for I2C
   RCC_APB1PeriphClockCmd(s_port[i2c].periph, ENABLE);
 
+  // Enable GPIOB clock
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+
   // Initialize pins to correct mode to operate I2C
-  gpio_init_pin(&settings->scl, GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_LOW);
-  gpio_init_pin(&settings->sda, GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_LOW);
+  gpio_init_pin(&(settings->scl), GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_HIGH);
+  gpio_init_pin(&(settings->sda), GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_HIGH);
+
+  // Remap pins to I2C pins 8 & 9
+  GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);
 
   // Initialize I2C peripheral with settings
   I2C_InitTypeDef i2c_init;
@@ -101,6 +107,9 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   // Enable global interrupts
   stm32f10x_interrupt_nvic_enable(s_port[i2c].ev_irqn, INTERRUPT_PRIORITY_NORMAL);
   stm32f10x_interrupt_nvic_enable(s_port[i2c].err_irqn, INTERRUPT_PRIORITY_NORMAL);
+  NVIC_EnableIRQ(I2C1_EV_IRQn);
+  NVIC_SetPriority(I2C1_EV_IRQn, 2);
+
 
   // Mask interrupts while we are not in a transaction
   // This prevents TXE from continuously triggering
@@ -109,7 +118,7 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   s_port[i2c].i2c_buf.queue.num_items = I2C_MAX_NUM_DATA;
   s_port[i2c].i2c_buf.queue.item_size = sizeof(uint8_t);
   s_port[i2c].i2c_buf.queue.storage_buf = s_port[i2c].i2c_buf.buf;
-  status_ok_or_return(mutex_init(&s_port[i2c].i2c_buf.mutex));
+  status_ok_or_return(sem_init(&s_port[i2c].i2c_buf.mutex, 1, 0));
   status_ok_or_return(queue_init(&s_port[i2c].i2c_buf.queue));
 
   // Enable I2C peripheral
@@ -123,7 +132,7 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
   }
   // Lock I2C resource
-  status_ok_or_return(mutex_lock(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
+  status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
 
   // Check that bus is not busy - If it is, assume that lockup has occurred
   if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
@@ -147,10 +156,10 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
 
   // Wait for mutex to be unlocked from ISR
   // If we timeout, it means some issue has occurred, so we will dump queue
-  if (mutex_lock(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS)) {
+  if (sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS)) {
     I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
     queue_reset(&s_port[i2c].i2c_buf.queue);
-    mutex_unlock(&s_port[i2c].i2c_buf.mutex);
+    sem_post(&s_port[i2c].i2c_buf.mutex);
     return STATUS_CODE_TIMEOUT;
   }
 
@@ -158,11 +167,11 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   // If less than requested is received, an error in the transaction has occurred
   for (size_t rx = 0; rx < rx_len; rx++) {
     if (queue_receive(&s_port[i2c].i2c_buf.queue, &rx_data[rx], 0)) {
-      mutex_unlock(&s_port[i2c].i2c_buf.mutex);
+      sem_post(&s_port[i2c].i2c_buf.mutex);
       return STATUS_CODE_INTERNAL_ERROR;
     }
   }
-  mutex_unlock(&s_port[i2c].i2c_buf.mutex);
+  sem_post(&s_port[i2c].i2c_buf.mutex);
   return STATUS_CODE_OK;
 }
 
@@ -170,7 +179,7 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   if (i2c >= NUM_I2C_PORTS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
   }
-  status_ok_or_return(mutex_lock(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
+  status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
   // Check that bus is not busy - If it is, assume that lockup has occurred
   if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
     prv_recover_lockup(i2c);
@@ -180,7 +189,7 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   for (size_t tx = 0; tx < tx_len; tx++) {
     if (queue_send(&s_port[i2c].i2c_buf.queue, &tx_data[tx], 0)) {
       queue_reset(&s_port[i2c].i2c_buf.queue);
-      mutex_unlock(&s_port[i2c].i2c_buf.mutex);
+      sem_post(&s_port[i2c].i2c_buf.mutex);
       return STATUS_CODE_RESOURCE_EXHAUSTED;
     }
   }
@@ -192,17 +201,18 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   // Start an I2C transaction by enabling start bit. Transfers occur in IT handler
   // Start bit is cleared when I2C_GetITStatus() and I2C_SendData() called in succession
   I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, ENABLE);
+  // I2C1->CR2 |= I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN;
   I2C_GenerateSTART(s_port[i2c].base, ENABLE);
 
   // Wait for ISR to unlock mutex when transaction finished
   // If we timeout, it means some issue has occurred, so we will dump queue
-  if (mutex_lock(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS)) {
+  if (sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS)) {
     I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
     queue_reset(&s_port[i2c].i2c_buf.queue);
-    mutex_unlock(&s_port[i2c].i2c_buf.mutex);
+    sem_post(&s_port[i2c].i2c_buf.mutex);
     return STATUS_CODE_TIMEOUT;
   }
-  mutex_unlock(&s_port[i2c].i2c_buf.mutex);
+  sem_post(&s_port[i2c].i2c_buf.mutex);
   return STATUS_CODE_OK;
 }
 
