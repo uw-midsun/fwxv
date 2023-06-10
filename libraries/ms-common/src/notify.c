@@ -24,12 +24,7 @@ StatusCode event_from_notification(uint32_t *notification, Event *event) {
   // Clear bit
   *notification = *notification & ~(1u << *event);
 
-  // Check if there are still bits to clear
-  if (*notification == 0) {
-    return STATUS_CODE_OK;
-  } else {
-    return STATUS_CODE_INCOMPLETE;
-  }
+  return STATUS_CODE_INCOMPLETE;
 }
 
 bool notify_check_event(uint32_t *notification, Event event) {
