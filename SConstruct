@@ -124,7 +124,7 @@ VARS = {
 env["VARS"] = VARS
 
 # Add flags when compiling a test
-TEST_CFLAGS = ['-DMS_TEST']
+TEST_CFLAGS = ['-DMS_TEST=1']
 if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
     env['CCFLAGS'] += TEST_CFLAGS
 
