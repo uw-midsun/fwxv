@@ -24,8 +24,8 @@ typedef struct {
 
 // Holds info for the select pin state
 typedef struct {
-  GpioState *select_state_stm32;
-  Pca9555GpioState *select_state_pca9555;
+  GpioState select_state_stm32;
+  Pca9555GpioState select_state_pca9555;
 } Bts7xxxSelectPinState;
 
 // Holds info for a BTS load switch output
@@ -55,9 +55,3 @@ StatusCode bts_output_get_enabled(BtsLoadSwitchOutput *loadSwitch);
 
 // Read the latest current input current measurement, in mA.
 StatusCode bts_output_get_current(BtsLoadSwitchOutput *loadSwitch, uint16_t *current);
-
-// gpio and pca init must be called before using load switch
-// GPIO_OUTPUT_OPEN_DRAIN ?? -> init_pin
-// Should pin_enabled specicially return a StatusCode for both cases
-// what does setting the state do in regards to select pin
-// scons run properly
