@@ -54,20 +54,17 @@ StatusCode bts_switch_select_state(BtsLoadSwitchOutput *loadSwitch) {
       return gpio_set_state(loadSwitch->select_pin->pin_stm32,
                             loadSwitch->select_state.select_state_stm32);
     case BTS7XXX_PIN_PCA9555:
-      return gpio_set_state(loadSwitch->select_pin->pin_pca9555,
-                            loadSwitch->select_state.select_state_pca9555);
-    default:  // NUM_BTS7XXX_PIN_TYPES - single output BTS
+      return pca9555_gpio_set_state(loadSwitch->select_pin->pin_pca9555,
+                                    loadSwitch->select_state.select_state_pca9555);
+    default:
       break;
   }
   return STATUS_CODE_OK;
 }
 
 StatusCode bts_switch_init(BtsLoadSwitchOutput *loadSwitch) {
-  // sense pin
   status_ok_or_return(gpio_init_pin(loadSwitch->sense_pin, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW));
-  // select pin
   status_ok_or_return(bts_switch_init_pin(loadSwitch->select_pin));
-  // enable pin
   return bts_switch_init_pin(loadSwitch->enable_pin);
 }
 
