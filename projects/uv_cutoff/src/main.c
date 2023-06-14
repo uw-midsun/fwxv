@@ -54,7 +54,7 @@ void uv_logic() {
   }
   if (uv_value == GPIO_STATE_LOW) {
     state = UV_CUTOFF_DISCONNECTED;
-  } else {
+  } else { 
     state = UV_CUTOFF_ACTIVE;
   }
 

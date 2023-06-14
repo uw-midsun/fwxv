@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-// #include "can.h"
+#include "can.h"
 #include "gpio.h"
 #include "can_board_ids.h"
 #include "delay.h"
@@ -9,7 +9,7 @@
 #include "misc.h"
 #include "soft_timer.h"
 #include "tasks.h"
-#include "..\projects\uv_cutoff\inc\uv_cutoff.h"
+#include "uv_cutoff.h"
 #include "uv_cutoff_getters.h"
 #include "uv_cutoff_setters.h"
 
@@ -113,7 +113,14 @@ void uv_smoke_logic() {
 }
 
 TASK(smoke_task, TASK_MIN_STACK_SIZE) {
+  
+  //TEST 1 - Disconnected UV status
+  gpio_set_state(&uv_status,GPIO_STATE_LOW);
   uv_smoke_logic();
+  assert( g_tx_struct.uv_cutoff_notification_signal1 == UV_CUTOFF_DISCONNECTED );
+
+  //TEST 2 - 
+
 }
 
 int main() {
