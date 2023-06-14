@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#include "..\can\inc\can.h"
+// #include "can.h"
 #include "gpio.h"
 #include "can_board_ids.h"
 #include "delay.h"
