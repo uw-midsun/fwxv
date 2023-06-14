@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-// #include "can.h"
+#include "..\can\inc\can.h"
 #include "gpio.h"
 #include "can_board_ids.h"
 #include "delay.h"
@@ -9,7 +9,7 @@
 #include "misc.h"
 #include "soft_timer.h"
 #include "tasks.h"
-#include "uv_cutoff.h"
+#include "..\projects\uv_cutoff\inc\uv_cutoff.h"
 #include "uv_cutoff_getters.h"
 #include "uv_cutoff_setters.h"
 
