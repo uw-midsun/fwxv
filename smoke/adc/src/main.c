@@ -29,7 +29,19 @@ static const GpioAddress tmp =
 
 static Semaphore converting;
 
-volatile uint16_t adc_values[16];
+#define NUM_READINGS 3
+volatile uint16_t adc_values[NUM_READINGS];
+
+// Temp sensor avg voltage @25 celcius and avg temp slope (mV/C)
+// Defined in section 5 of the datasheet 
+#define V25_CALIB_VAL 1430
+#define TEMP_AVG_SLOPE 4
+
+// Returns the temperature in celsius*1000
+uint16_t convert_temp(uint16_t raw_val) {
+  return (V25_CALIB_VAL-raw_val)*1000/TEMP_AVG_SLOPE + 25;
+}
+
 
 TASK(smoke_adc_task, TASK_STACK_1024) {
 
@@ -49,12 +61,12 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
     .DMA_PeripheralBaseAddr = (uint32_t)&(ADC1->DR),
     .DMA_MemoryBaseAddr = (uint32_t)adc_values,
     .DMA_DIR = DMA_DIR_PeripheralSRC,
-    .DMA_BufferSize = 16,
+    .DMA_BufferSize = NUM_READINGS,
     .DMA_PeripheralInc = DMA_PeripheralInc_Disable,
     .DMA_MemoryInc = DMA_MemoryInc_Enable,
     .DMA_PeripheralDataSize = DMA_PeripheralDataSize_HalfWord,
     .DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord,
-    .DMA_Mode = DMA_Mode_Normal,
+    .DMA_Mode = DMA_Mode_Circular,
     .DMA_Priority = DMA_Priority_High,
     .DMA_M2M = DMA_M2M_Disable,
   };
@@ -65,39 +77,35 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
 
   ADC_InitTypeDef ADC_InitStructure = { 0 };
 
-  // By default, enable vref and temp sensor for voltage conversions
-  ADC_TempSensorVrefintCmd(ENABLE);
   /* ADC1 configuration ------------------------------------------------------*/
   ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
   ADC_InitStructure.ADC_ScanConvMode = ENABLE;
-  ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
+  ADC_InitStructure.ADC_ContinuousConvMode = DISABLE; // ENABLE;
   ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
   ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
-  ADC_InitStructure.ADC_NbrOfChannel = 16;
+  ADC_InitStructure.ADC_NbrOfChannel = NUM_READINGS;
   ADC_Init(ADC1, &ADC_InitStructure);
 
-  ADC_TempSensorVrefintCmd(ENABLE);
   ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 2, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 3, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_3, 4, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_4, 5, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 6, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_6, 7, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_7, 8, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 9, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_9, 10, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_16, 11, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_16, 12, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 13, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 14, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 15, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 16, ADC_SampleTime_55Cycles5);
-  ADC_TempSensorVrefintCmd(ENABLE);
-
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 2, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 3, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_3, 4, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_4, 5, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 6, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_6, 7, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_7, 8, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 9, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_9, 10, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_16, 11, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_16, 2, ADC_SampleTime_55Cycles5);
+  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 3, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 14, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 15, ADC_SampleTime_55Cycles5);
+  // ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 16, ADC_SampleTime_55Cycles5);
 
   // Enable the ADC
   ADC_Cmd(ADC1, ENABLE);
+  ADC_TempSensorVrefintCmd(ENABLE);
   ADC_DMACmd(ADC1, ENABLE);
 
   /* Enable ADC1 reset calibration register */   
@@ -117,12 +125,33 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
     ADC_SoftwareStartConvCmd(ADC1, ENABLE);
     /* Wait for the conversion to complete */
     sem_wait(&converting, ADC_TIMEOUT_MS);
-    for (int i = 0; i < 16; i++) {
-      printf("ADC %d: %d\n\r", i, adc_values[i]);
-    }
-    
-    /* Read the conversion result */
+    // for (int i = 0; i < 16; i++) {
+    //   printf("ADC %d: %d\n\r", i, adc_values[i]);
+    // }
+    printf("ADC VALUE: %d\r\n", ( adc_values[0]*adc_values[2]) / 4095);
+    printf("TEMP VALUE: %d\r\n", (convert_temp(adc_values[1]) * adc_values[2]) / 4095);
+
+    // 
+    // /* Read the conversion result */
+    // delay_ms(1000);
+    // ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 1, ADC_SampleTime_55Cycles5);
+    // ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+    // while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
+    // uint16_t vref = ADC_GetConversionValue(ADC1);
+
+    // ADC_RegularChannelConfig(ADC1, ADC_Channel_16, 1, ADC_SampleTime_55Cycles5);
+    // ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+    // while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
+    // uint16_t temp = ADC_GetConversionValue(ADC1);
+
+
+    // ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_55Cycles5);
+    // ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+    // while (!ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC));
+    //printf("ADC VALUE: %d\r\n", (ADC_GetConversionValue(ADC1) * vref) / 4095);
+    //printf("TEMP VALUE: %d\r\n", (convert_temp(temp) * vref) / 4095);
     delay_ms(1000);
+    
    }
 }
 
@@ -138,6 +167,7 @@ int main() {
 
    return 0;
 }
+
 
 
 void DMA1_Channel1_IRQHandler() { 
