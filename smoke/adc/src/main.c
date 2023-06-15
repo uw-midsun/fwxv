@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include "delay.h"
 #include "gpio.h"
+#include "adc.h"
 #include "interrupt.h"
-#include "soft_timer.h"
 #include "log.h"
 #include "tasks.h"
-#include "stm32f10x_dma.h"
-#include "stm32f10x_interrupt.h"
-#include "stm32f10x_adc.h"
 
 #define ADC_TIMEOUT_MS 100
 
@@ -43,8 +40,7 @@ uint16_t convert_temp(uint16_t raw_val) {
 }
 
 
-TASK(smoke_adc_task, TASK_STACK_1024) {
-
+TASK(smoke_adc_task1, TASK_STACK_1024) {
   // GPIO/RCC Initialization
   GPIO_InitTypeDef GPIO_InitStructure = { 0 };
   RCC_ADCCLKConfig(RCC_PCLK2_Div2); 
@@ -87,21 +83,6 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
   ADC_Init(ADC1, &ADC_InitStructure);
 
   ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 2, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 3, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_3, 4, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_4, 5, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_5, 6, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_6, 7, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_7, 8, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_8, 9, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_9, 10, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_16, 11, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_16, 2, ADC_SampleTime_55Cycles5);
-  ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 3, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 14, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 15, ADC_SampleTime_55Cycles5);
-  // ADC_RegularChannelConfig(ADC1, ADC_Channel_17, 16, ADC_SampleTime_55Cycles5);
 
   // Enable the ADC
   ADC_Cmd(ADC1, ENABLE);
@@ -118,7 +99,7 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
   /* Check the end of ADC1 calibration */
   while(ADC_GetCalibrationStatus(ADC1));
      
-  stm32f10x_interrupt_nvic_enable(DMA1_Channel1_IRQn, INTERRUPT_PRIORITY_LOW);
+  //stm32f10x_interrupt_nvic_enable(DMA1_Channel1_IRQn, INTERRUPT_PRIORITY_LOW);
   sem_init(&converting, 1, 1); 
 
    while(true) {
@@ -155,6 +136,25 @@ TASK(smoke_adc_task, TASK_STACK_1024) {
    }
 }
 
+TASK(smoke_adc_task, TASK_MIN_STACK_SIZE) {
+   for (uint8_t i = 0; i < SIZEOF_ARRAY(adc_addy); i++) {
+      gpio_init_pin(&adc_addy[i], GPIO_ANALOG, GPIO_STATE_LOW);
+      adc_add_channel(adc_addy[i]);
+   }
+
+   adc_init();
+
+   while(true) {
+      uint16_t data = 0;
+      adc_run();
+      for (uint8_t i = 0; i < SIZEOF_ARRAY(adc_addy); i++) {
+        adc_read_converted(adc_addy[i], &data);
+        LOG_DEBUG("%d%d: %d\n", adc_addy[i].port, adc_addy[i].pin, data);
+      }
+      delay_ms(1000);
+   }
+}
+
 int main() {
    tasks_init();
    interrupt_init();
@@ -166,14 +166,5 @@ int main() {
    tasks_start();
 
    return 0;
-}
-
-
-
-void DMA1_Channel1_IRQHandler() { 
-  BaseType_t xHigherPriorityTaskWoken;
-  xSemaphoreGiveFromISR(converting.handle, &xHigherPriorityTaskWoken);
-  DMA_ClearITPendingBit(DMA1_IT_TC1);
-  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
