@@ -32,7 +32,7 @@ void run_fast_cycle() {}
 
 void run_medium_cycle() {
   run_can_rx_cycle();
-  fsm_run_cycle(drive_fsm);
+  fsm_run_cycle(drive);
   fsm_run_cycle(centre_console_power_fsm);
   wait_tasks(1);
   run_can_tx_cycle();

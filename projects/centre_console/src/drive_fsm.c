@@ -5,7 +5,7 @@
 #include "drive_fsm_sequence.h"
 #include "power_fsm.h"
 
-FSM(drive_fsm, NUM_DRIVE_TRANSITIONS);
+FSM(drive, NUM_DRIVE_TRANSITIONS);
 
 #define NUM_DRIVE_FSM_BUTTONS 3
 
@@ -18,14 +18,10 @@ StatusCode error_state = STATUS_CODE_OK;
 static uint32_t notification = 0;
 static Event drive_fsm_event;
 
-// this needs to be deleted. Just here as a placeholder
-#define FAKE_GPIO_ADDR \
-  { .port = GPIO_PORT_B, .pin = 1 }
-
 static GpioAddress s_drive_fsm_button_lookup_table[NUM_DRIVE_FSM_BUTTONS] = {
-  [NEUTRAL_BUTTON] = FAKE_GPIO_ADDR,
-  [DRIVE_BUTTON] = FAKE_GPIO_ADDR,
-  [REVERSE_BUTTON] = FAKE_GPIO_ADDR,
+  [NEUTRAL_BUTTON] = FAKE_NEUTRAL_GPIO_ADDR,
+  [DRIVE_BUTTON] = FAKE_DRIVE_GPIO_ADDR,
+  [REVERSE_BUTTON] = FAKE_REVERSE_GPIO_ADDR,
 };
 
 static Event s_drive_fsm_event_lookup_table[NUM_DRIVE_FSM_EVENTS] = {
@@ -194,9 +190,14 @@ StatusCode init_drive_fsm(void) {
     .type = INTERRUPT_TYPE_INTERRUPT,
     .edge = INTERRUPT_EDGE_RISING,  // not sure if this needs to be rising or falling
   };
+
   // Add gpio init pins
   // Add gpio register interrupts
+  for (int i = 0; i < NUM_DRIVE_FSM_BUTTONS; i++) {
+    status_ok_or_return(gpio_init_pin(&s_drive_fsm_button_lookup_table[i], GPIO_INPUT_PULL_UP, GPIO_STATE_LOW));
+    gpio_it_register_interrupt(&s_drive_fsm_button_lookup_table[i], &it_settings, s_drive_fsm_event_lookup_table[i], NULL); // need to add task thing
+  }
 
-  fsm_init(drive_fsm, settings, NULL);
+  fsm_init(drive, settings, NULL);
   return STATUS_CODE_OK;
 }

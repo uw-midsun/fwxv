@@ -12,7 +12,7 @@
 #define NUM_DRIVE_STATES 5
 #define NUM_DRIVE_TRANSITIONS 9
 
-DECLARE_FSM(drive_fsm);
+DECLARE_FSM(drive);
 
 typedef enum driveState {
   NEUTRAL = 0,
@@ -35,6 +35,16 @@ typedef enum driveEvents {
   REVERSE_BUTTON_EVENT,
   NUM_DRIVE_FSM_EVENTS,
 } driveEvents;
+
+// this needs to be deleted. Just here as a placeholder
+#define FAKE_NEUTRAL_GPIO_ADDR \
+  { .port = GPIO_PORT_B, .pin = 1 }
+  
+#define FAKE_DRIVE_GPIO_ADDR \
+  { .port = GPIO_PORT_B, .pin = 2 }
+
+#define FAKE_REVERSE_GPIO_ADDR \
+  { .port = GPIO_PORT_B, .pin = 3 }
 
 typedef struct DriveStorage {
   StateId state;  // NEUTRAL will be used as a default state
