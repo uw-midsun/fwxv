@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "can.h"
+#include "assert.h"
 #include "gpio.h"
 #include "can_board_ids.h"
 #include "delay.h"
@@ -149,7 +150,7 @@ TASK(smoke_task, TASK_MIN_STACK_SIZE) {
   assert(state_val == GPIO_STATE_LOW);
   //TEST 6 - Lights state LOW
   gpio_set_state(&uv_status,GPIO_STATE_HIGH);
-  gpio_set_state(&lights,GPIO_STATE_LOw);
+  gpio_set_state(&lights,GPIO_STATE_LOW);
   lights_check = 1;
   uv_smoke_logic();
   assert(status == STATUS_CODE_OK);
