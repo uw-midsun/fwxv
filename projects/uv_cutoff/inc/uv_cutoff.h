@@ -6,4 +6,3 @@ typedef enum UVCutoffState {
 } UVCutoffState;
 
 void uv_ligc() {}
-

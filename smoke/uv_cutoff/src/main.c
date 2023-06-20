@@ -115,7 +115,7 @@ void uv_smoke_logic() {
 }
 
 TASK(smoke_task, TASK_MIN_STACK_SIZE) {
-  
+  //
   //TEST 1 - Disconnected UV status
   gpio_set_state(&uv_status,GPIO_STATE_LOW);
   uv_smoke_logic();
