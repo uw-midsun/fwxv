@@ -5,5 +5,5 @@ typedef enum UVCutoffState {
   UV_CUTOFF_DISCONNECTED,
 } UVCutoffState;
 
-void uv_ligc () {};
+void uv_ligc() {}
 
