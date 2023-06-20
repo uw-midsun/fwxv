@@ -142,7 +142,7 @@ TASK(smoke_task, TASK_MIN_STACK_SIZE) {
   assert(state_val == GPIO_STATE_HIGH);
   //TEST 5 - Horn state LOW
   gpio_set_state(&uv_status,GPIO_STATE_HIGH);
-  gpio_set_state(&horn,GPIO_STATE_LOw);
+  gpio_set_state(&horn,GPIO_STATE_LOW);
   lights_check = 0;
   uv_smoke_logic();
   assert(status == STATUS_CODE_OK);
