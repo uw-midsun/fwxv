@@ -46,7 +46,7 @@ int main() {
 
   // Setup analog inputs and initialize adc
   steering_analog_adc_init();
-  adc_init(ADC_MODE_SINGLE);
+  adc_init();
   steering_digital_input_init(get_master_task());
 
   can_init(&s_can_storage, &can_settings);

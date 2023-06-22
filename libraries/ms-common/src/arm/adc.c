@@ -86,10 +86,10 @@ StatusCode adc_get_channel(GpioAddress address, uint8_t *adc_channel) {
 }
 
 // Formula obtained from section 11.10 of the reference manual
-// Returns the temperature in celsius*1000
+// Returns the temperature in celsius*100
 static uint16_t prv_get_temp(uint16_t reading, uint16_t vref) {
   if (V25_CALIB_VAL - reading > 0) {
-    return (V25_CALIB_VAL - reading) * 1000 / TEMP_AVG_SLOPE + 25;
+    return (V25_CALIB_VAL - reading) * 100 / TEMP_AVG_SLOPE + 25;
   }
   return 0;
 }
@@ -194,11 +194,11 @@ StatusCode adc_init(void) {
   // Calibrate ADC
   // Reset Calibration regs, wait for flag to be cleared
   ADC_ResetCalibration(ADC1);
-  while (ADC_GetResetCalibrationStatus(ADC1))
-    ;
+  while (ADC_GetResetCalibrationStatus(ADC1)) {
+  }
   ADC_StartCalibration(ADC1);
-  while (ADC_GetCalibrationStatus(ADC1))
-    ;
+  while (ADC_GetCalibrationStatus(ADC1)) {
+  }
 
   // Enable interrupts for the end of each full conversion
   stm32f10x_interrupt_nvic_enable(DMA1_Channel1_IRQn, INTERRUPT_PRIORITY_LOW);
@@ -219,6 +219,9 @@ StatusCode adc_run(void) {
 }
 
 StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
+  if (!reading) {
+    return STATUS_CODE_INVALID_ARGS;
+  }
   uint8_t channel;
   status_ok_or_return(adc_get_channel(address, &channel));
   status_ok_or_return(prv_check_channel_enabled(channel));

@@ -44,7 +44,7 @@ TASK(steering_analog_input_off, TASK_STACK_512) {
 
 TEST_IN_TASK
 void test_steering_analog_left(void) {
-  adc_init(ADC_MODE_SINGLE);
+  adc_init();
   // adc_add_channel(s_ctrl_stk_address);
   control_stalk_data = STEERING_CONTROL_STALK_LEFT_SIGNAL_VOLTAGE_MV;
   adc_set_reading(s_ctrl_stk_address, control_stalk_data);
@@ -55,7 +55,7 @@ void test_steering_analog_left(void) {
 
 TEST_IN_TASK
 void test_steering_analog_right(void) {
-  adc_init(ADC_MODE_SINGLE);
+  adc_init();
   control_stalk_data = STEERING_CONTROL_STALK_RIGHT_SIGNAL_VOLTAGE_MV;
   adc_set_reading(s_ctrl_stk_address, control_stalk_data);
   tasks_init_task(steering_analog_input_right, TASK_PRIORITY(2), NULL);
@@ -65,7 +65,7 @@ void test_steering_analog_right(void) {
 
 TEST_IN_TASK
 void test_steering_analog_off(void) {
-  adc_init(ADC_MODE_SINGLE);
+  adc_init();
   control_stalk_data = 0;
   adc_set_reading(s_ctrl_stk_address, control_stalk_data);
   tasks_init_task(steering_analog_input_off, TASK_PRIORITY(3), NULL);

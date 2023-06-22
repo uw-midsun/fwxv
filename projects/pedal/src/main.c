@@ -39,7 +39,7 @@ void init_pedal_controls() {
   };
   i2c_init(I2C_PORT_2, &i2c_settings);
   GpioAddress ready_pin = { .port = GPIO_PORT_B, .pin = 2 };
-  adc_init(ADC_MODE_SINGLE);
+  adc_init();
   max11600_init(&s_max11600_storage, I2C_PORT_2);
 }
 
