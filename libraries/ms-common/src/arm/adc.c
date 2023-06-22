@@ -17,13 +17,17 @@
 #define MAX_ADC_READINGS 16
 
 // Temp sensor avg voltage @25 celcius and avg temp slope (mV/C)
-// Defined in section 5 of the datasheet 
+// Defined in section 5 of the datasheet
 #define V25_CALIB_VAL 1430
 #define TEMP_AVG_SLOPE 4
 
+// Vref is used as a 1200mV reference signal
+// For more accurate voltage readings
+#define VREFINT_MV 1200
+
 typedef struct AdcStatus {
   bool initialized;
-  uint8_t active_channels;    // Keeps track of how many channels have been registered with the ADC
+  uint8_t active_channels;  // Keeps track of how many channels have been registered with the ADC
   Semaphore converting;
 } AdcStatus;
 
@@ -32,7 +36,7 @@ static AdcStatus s_adc_status;
 // Store of ranks for each channel, at their channel index
 static uint8_t s_adc_ranks[NUM_ADC_CHANNELS];
 
-// Array of readings, in order of rank, which DMA will write to 
+// Array of readings, in order of rank, which DMA will write to
 static volatile uint16_t s_adc_readings[MAX_ADC_READINGS];
 
 // Mock Gpio addresses for internal channels
@@ -84,8 +88,8 @@ StatusCode adc_get_channel(GpioAddress address, uint8_t *adc_channel) {
 // Formula obtained from section 11.10 of the reference manual
 // Returns the temperature in celsius*1000
 static uint16_t prv_get_temp(uint16_t reading, uint16_t vref) {
-  if (V25_CALIB_VAL-reading > 0 ) {
-    return (V25_CALIB_VAL-reading)*1000/TEMP_AVG_SLOPE + 25;
+  if (V25_CALIB_VAL - reading > 0) {
+    return (V25_CALIB_VAL - reading) * 1000 / TEMP_AVG_SLOPE + 25;
   }
   return 0;
 }
@@ -114,9 +118,8 @@ StatusCode adc_add_channel(GpioAddress address) {
   }
 
   // Set rank for this channel index
-  if (s_adc_status.active_channels < NUM_ADC_CHANNELS) {
+  if (++s_adc_status.active_channels < NUM_ADC_CHANNELS) {
     s_adc_ranks[channel] = s_adc_status.active_channels;
-    s_adc_status.active_channels++;
   } else {
     return STATUS_CODE_INVALID_ARGS;
   }
@@ -131,15 +134,17 @@ StatusCode adc_init(void) {
     return STATUS_CODE_INVALID_ARGS;  // Need to have added channels
   }
 
+  adc_add_channel(ADC_REF);
+
   // Enable ADC1/DMA1 Clock
-  RCC_ADCCLKConfig(RCC_PCLK2_Div2); 
+  RCC_ADCCLKConfig(RCC_PCLK2_Div2);
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
   RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 
   // DMA initialization needed for multi-channel scan
   DMA_DeInit(DMA1_Channel1);
   DMA_InitTypeDef dma_init = {
-    .DMA_PeripheralBaseAddr = (uint32_t)&(ADC1->DR),
+    .DMA_PeripheralBaseAddr = (uint32_t) & (ADC1->DR),
     .DMA_MemoryBaseAddr = (uint32_t)s_adc_readings,
     .DMA_DIR = DMA_DIR_PeripheralSRC,
     .DMA_BufferSize = s_adc_status.active_channels,
@@ -164,7 +169,7 @@ StatusCode adc_init(void) {
   /* ADC1 configuration ------------------------------------------------------*/
   ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
   ADC_InitStructure.ADC_ScanConvMode = ENABLE;
-  ADC_InitStructure.ADC_ContinuousConvMode = DISABLE; // ENABLE;
+  ADC_InitStructure.ADC_ContinuousConvMode = DISABLE;  // ENABLE;
   ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
   ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
   ADC_InitStructure.ADC_NbrOfChannel = s_adc_status.active_channels;
@@ -180,7 +185,7 @@ StatusCode adc_init(void) {
 
   // By default, enable vref and temp sensor for voltage conversions
   ADC_TempSensorVrefintCmd(true);
-  
+
   // Enable the ADC
   ADC_Cmd(ADC1, true);
   ADC_TempSensorVrefintCmd(ENABLE);
@@ -189,9 +194,11 @@ StatusCode adc_init(void) {
   // Calibrate ADC
   // Reset Calibration regs, wait for flag to be cleared
   ADC_ResetCalibration(ADC1);
-  while (ADC_GetResetCalibrationStatus(ADC1));
+  while (ADC_GetResetCalibrationStatus(ADC1))
+    ;
   ADC_StartCalibration(ADC1);
-  while (ADC_GetCalibrationStatus(ADC1));
+  while (ADC_GetCalibrationStatus(ADC1))
+    ;
 
   // Enable interrupts for the end of each full conversion
   stm32f10x_interrupt_nvic_enable(DMA1_Channel1_IRQn, INTERRUPT_PRIORITY_LOW);
@@ -215,35 +222,42 @@ StatusCode adc_read_raw(GpioAddress address, uint16_t *reading) {
   uint8_t channel;
   status_ok_or_return(adc_get_channel(address, &channel));
   status_ok_or_return(prv_check_channel_enabled(channel));
-  *reading = s_adc_readings[s_adc_ranks[channel]];
+  // Index of reading is its rank - 1
+  *reading = s_adc_readings[s_adc_ranks[channel] - 1];
   return STATUS_CODE_OK;
 }
 
 StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
+  if (!reading) {
+    return STATUS_CODE_INVALID_ARGS;
+  }
   uint8_t channel;
   status_ok_or_return(adc_get_channel(address, &channel));
   status_ok_or_return(prv_check_channel_enabled(channel));
 
-  uint16_t adc_reading = s_adc_readings[s_adc_ranks[channel]];
-  uint16_t vref = s_adc_readings[s_adc_ranks[ADC_Channel_Vrefint]];
+  uint16_t adc_reading = s_adc_readings[s_adc_ranks[channel] - 1];
+  uint16_t vref = s_adc_readings[s_adc_ranks[ADC_Channel_Vrefint] - 1];
 
   if (channel == ADC_Channel_TempSensor) {
-      *reading = prv_get_temp(adc_reading, vref);
-      return STATUS_CODE_OK;
+    *reading = prv_get_temp(adc_reading, vref);
+    return STATUS_CODE_OK;
   }
-  
+
   // Get latest vref value to convert read value to a voltage
-  *reading = (adc_reading * vref) / ADC_MAX_VAL;
+  if (vref) {
+    *reading = (adc_reading * VREFINT_MV) / vref;
+  } else {
+    *reading = 0;
+  }
   return STATUS_CODE_OK;
 }
 
 // Don't need to do anything on ARM
 void adc_deinit(void) {}
 
-void DMA1_Channel1_IRQHandler() { 
+void DMA1_Channel1_IRQHandler() {
   BaseType_t higher_prio;
   xSemaphoreGiveFromISR(s_adc_status.converting.handle, &higher_prio);
   DMA_ClearITPendingBit(DMA1_IT_TC1);
   portYIELD_FROM_ISR(higher_prio);
 }
-
