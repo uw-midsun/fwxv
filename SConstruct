@@ -127,7 +127,6 @@ env["VARS"] = VARS
 TEST_CFLAGS = ['-DMS_TEST=1']
 if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
     env['CCFLAGS'] += TEST_CFLAGS
-print(env['CCFLAGS'])
 # Parse asan / tsan and Adding Sanitizer Argument to Environment Flags
 # Note platform needs to be explicitly set to x86
 
