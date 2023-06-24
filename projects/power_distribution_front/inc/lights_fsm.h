@@ -38,5 +38,3 @@ typedef enum HazardStatus {
 } HazardStatus;
 
 StatusCode init_lights(void);
-
-StatusCode init_lights(void);

@@ -109,7 +109,6 @@ void test_steering_cc_toggle() {
   test_end_take();
   TEST_ASSERT_EQUAL(0, DIGITAL_INPUT & DIGITAL_SIGNAL_CC_TOGGLE_MASK);
 }
-//
 
 TEST_IN_TASK
 void test_steering_regen_brake() {
@@ -127,7 +126,7 @@ void test_steering_regen_brake() {
   test_end_take();
   TEST_ASSERT_EQUAL(0, DIGITAL_INPUT & DIGITAL_SIGNAL_REGEN_BRAKE_MASK);
 }
-//
+
 TEST_IN_TASK
 void test_steering_cc_increase_decrease() {
   steering_digital_input_init(digital_cc_increase_decrease_input);
