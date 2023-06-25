@@ -49,6 +49,9 @@ static StatusCode bts_switch_get_pin_enabled(Bts7xxxPin *pin) {
 }
 
 StatusCode bts_switch_select_state(BtsLoadSwitchOutput *loadSwitch) {
+  if (loadSwitch->select_pin == NULL) {
+    return STATUS_CODE_OK;
+  }
   switch (loadSwitch->select_pin->pin_type) {
     case BTS7XXX_PIN_STM32:
       return gpio_set_state(loadSwitch->select_pin->pin_stm32,
@@ -64,7 +67,9 @@ StatusCode bts_switch_select_state(BtsLoadSwitchOutput *loadSwitch) {
 
 StatusCode bts_switch_init(BtsLoadSwitchOutput *loadSwitch) {
   status_ok_or_return(gpio_init_pin(loadSwitch->sense_pin, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW));
-  status_ok_or_return(bts_switch_init_pin(loadSwitch->select_pin));
+  if (loadSwitch->select_pin != NULL) {
+    status_ok_or_return(bts_switch_init_pin(loadSwitch->select_pin));
+  }
   return bts_switch_init_pin(loadSwitch->enable_pin);
 }
 

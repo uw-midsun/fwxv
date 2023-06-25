@@ -42,7 +42,7 @@ typedef struct {
 } BtsLoadSwitchOutput;
 
 // Initialize the BTS load switch.
-StatusCode bts_output_init(BtsLoadSwitchOutput *loadSwitch);
+StatusCode bts_switch_init(BtsLoadSwitchOutput *loadSwitch);
 
 // Enable output by pulling the IN pin high.
 StatusCode bts_output_enable_output(BtsLoadSwitchOutput *loadSwitch);
@@ -51,7 +51,7 @@ StatusCode bts_output_enable_output(BtsLoadSwitchOutput *loadSwitch);
 StatusCode bts_output_disable_output(BtsLoadSwitchOutput *loadSwitch);
 
 // Returns whether the output is enabled or disabled.
-StatusCode bts_output_get_enabled(BtsLoadSwitchOutput *loadSwitch);
+StatusCode bts_output_get_output_enabled(BtsLoadSwitchOutput *loadSwitch);
 
 // Read the latest current input current measurement, in mA.
 StatusCode bts_output_get_current(BtsLoadSwitchOutput *loadSwitch, uint16_t *current);
