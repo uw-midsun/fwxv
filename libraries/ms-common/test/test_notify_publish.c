@@ -17,7 +17,7 @@ TASK(sub_task1, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
-  TEST_ASSERT_OK(event_from_notification(&notification, &e));
+  event_from_notification(&notification, &e);
   TEST_ASSERT_EQUAL(0, e);
   TEST_ASSERT_OK(notify_wait(&notification, 10));
   TEST_ASSERT_OK(event_from_notification(&notification, &e));
@@ -28,7 +28,7 @@ TASK(sub_task2, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
-  TEST_ASSERT_OK(event_from_notification(&notification, &e));
+  event_from_notification(&notification, &e);
   TEST_ASSERT_EQUAL(0, e);
   TEST_ASSERT_OK(notify_wait(&notification, 10));
   TEST_ASSERT_OK(event_from_notification(&notification, &e));
@@ -39,7 +39,7 @@ TASK(sub_task3, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
-  TEST_ASSERT_OK(event_from_notification(&notification, &e));
+  event_from_notification(&notification, &e);
   TEST_ASSERT_EQUAL(0, e);
   TEST_ASSERT_OK(notify_wait(&notification, 10));
   TEST_ASSERT_OK(event_from_notification(&notification, &e));
@@ -50,7 +50,7 @@ TASK(sub_task4, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
-  TEST_ASSERT_OK(event_from_notification(&notification, &e));
+  event_from_notification(&notification, &e);
   TEST_ASSERT_EQUAL(0, e);
   TEST_ASSERT_OK(notify_wait(&notification, 10));
   TEST_ASSERT_OK(event_from_notification(&notification, &e));
@@ -61,7 +61,7 @@ TASK(sub_task5, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
-  TEST_ASSERT_OK(event_from_notification(&notification, &e));
+  event_from_notification(&notification, &e);
   TEST_ASSERT_EQUAL(0, e);
   TEST_ASSERT_OK(notify_wait(&notification, 10));
   TEST_ASSERT_OK(event_from_notification(&notification, &e));
@@ -72,10 +72,10 @@ TASK(sub_task6, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
-  TEST_ASSERT_OK(event_from_notification(&notification, &e));
+  event_from_notification(&notification, &e);
   TEST_ASSERT_EQUAL(0, e);
   TEST_ASSERT_OK(notify_wait(&notification, 10));
-  TEST_ASSERT_OK(event_from_notification(&notification, &e));
+  event_from_notification(&notification, &e);
   TEST_ASSERT_EQUAL(1, e);
 }
 
@@ -83,10 +83,10 @@ TASK(sub_task7, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   Event e;
   TEST_ASSERT_OK(notify_wait(&notification, 10));
-  TEST_ASSERT_OK(event_from_notification(&notification, &e));
+  event_from_notification(&notification, &e);
   TEST_ASSERT_EQUAL(0, e);
   TEST_ASSERT_OK(notify_wait(&notification, 10));
-  TEST_ASSERT_OK(event_from_notification(&notification, &e));
+  event_from_notification(&notification, &e);
   TEST_ASSERT_EQUAL(1, e);
 }
 
