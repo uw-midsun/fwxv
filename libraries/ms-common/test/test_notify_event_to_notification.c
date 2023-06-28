@@ -83,7 +83,7 @@ void test_single_notification(void) {
   event = 0;
   notification = 0x00000001;
   result = event_from_notification(&notification, &event);
-  TEST_ASSERT_OK(result);
+  TEST_ASSERT_EQUAL(result, STATUS_CODE_INCOMPLETE);
   TEST_ASSERT_EQUAL(T0, event);
   TEST_ASSERT_EQUAL(0, notification);
 }
@@ -100,16 +100,15 @@ void test_all_notifications(void) {
 
   // Run event from notification 32 times
   // Each parsed event should be 1 less than the previous
-  for (TestNotifyEvent out = T31; out > T0; out--) {
+  for (TestNotifyEvent out = NUM_T_EVENTS; out > T0; out--) {
     result = event_from_notification(&notification, &event);
     TEST_ASSERT_EQUAL(STATUS_CODE_INCOMPLETE, result);
-    TEST_ASSERT_EQUAL(out, event);
+    TEST_ASSERT_EQUAL(out - 1, event);
   }
 
   // Parse last notification, should return OK
   result = event_from_notification(&notification, &event);
   TEST_ASSERT_OK(result);
-  TEST_ASSERT_EQUAL(T0, event);
   TEST_ASSERT_EQUAL(0, notification);
 }
 
@@ -129,6 +128,6 @@ void test_interspersed_notifications(void) {
     TEST_ASSERT_EQUAL(out, event);
     out -= 2;
   }
-  TEST_ASSERT_EQUAL(T1, event);
+  TEST_ASSERT_EQUAL(NUM_T_EVENTS, event);
   TEST_ASSERT_EQUAL(0, notification);
 }
