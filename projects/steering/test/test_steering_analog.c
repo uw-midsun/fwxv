@@ -16,14 +16,17 @@ uint16_t control_stalk_data;
 
 void setup_test(void) {
   log_init();
+  adc_deinit();
+  steering_analog_adc_init();
+  adc_init();
 }
 
 void teardown_test(void) {}
 
 TASK(steering_analog_input_left, TASK_STACK_512) {
   LOG_DEBUG("steering_analog_input_left started\n");
-  steering_analog_adc_init();
   steering_analog_input();
+  send_task_end();
   while (true) {
   }
 }
@@ -31,6 +34,7 @@ TASK(steering_analog_input_left, TASK_STACK_512) {
 TASK(steering_analog_input_right, TASK_STACK_512) {
   LOG_DEBUG("steering_analog_input_right started\n");
   steering_analog_input();
+  send_task_end();
   while (true) {
   }
 }
@@ -38,14 +42,13 @@ TASK(steering_analog_input_right, TASK_STACK_512) {
 TASK(steering_analog_input_off, TASK_STACK_512) {
   LOG_DEBUG("steering_analog_input_off started\n");
   steering_analog_input();
+  send_task_end();
   while (true) {
   }
 }
 
 TEST_IN_TASK
 void test_steering_analog_left(void) {
-  adc_init();
-  // adc_add_channel(s_ctrl_stk_address);
   control_stalk_data = STEERING_CONTROL_STALK_LEFT_SIGNAL_VOLTAGE_MV;
   adc_set_reading(s_ctrl_stk_address, control_stalk_data);
   tasks_init_task(steering_analog_input_left, TASK_PRIORITY(1), NULL);

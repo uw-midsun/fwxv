@@ -72,5 +72,5 @@ void adc_deinit(void);
 
 // Setter for adc testing
 #ifdef MS_PLATFORM_X86
-void adc_set_reading(GpioAddress sample_address, uint16_t adc_reading);
+StatusCode adc_set_reading(GpioAddress sample_address, uint16_t adc_reading);
 #endif

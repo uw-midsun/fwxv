@@ -189,9 +189,11 @@ StatusCode adc_read_converted(GpioAddress address, uint16_t *reading) {
   }
   return STATUS_CODE_OK;
 }
-void adc_set_reading(GpioAddress sample_address, uint16_t adc_reading) {
+StatusCode adc_set_reading(GpioAddress sample_address, uint16_t adc_reading) {
   uint8_t adc_channel;
-  adc_get_channel(sample_address, &adc_channel);
-  // This should mimic what adc_mock would to be doing
-  s_adc_readings[s_adc_ranks[adc_channel] - 1] = adc_reading;
+  status_ok_or_return(adc_get_channel(sample_address, &adc_channel));
+  status_ok_or_return(prv_check_channel_enabled(adc_channel));
+  // We will convert our passed value in mV to a raw reading
+  s_adc_readings[s_adc_ranks[adc_channel] - 1] = (adc_reading * MOCK_VREFINT) / VREFINT_MV;
+  return STATUS_CODE_OK;
 }

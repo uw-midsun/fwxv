@@ -53,17 +53,17 @@ void test_adc_init(void) {
   gpio_init_pin(&address, GPIO_ANALOG, GPIO_STATE_LOW);
 
   // adc_init cannot be called with no channels
-  TEST_ASSERT_NOT_OK(adc_init(ADC_MODE_SINGLE));
+  TEST_ASSERT_NOT_OK(adc_init());
 
   // Add channel and init
   TEST_ASSERT_OK(adc_add_channel(address));
   TEST_ASSERT_NOT_OK(adc_add_channel(address));
-  TEST_ASSERT_OK(adc_init(ADC_MODE_SINGLE));
+  TEST_ASSERT_OK(adc_init());
 
   // Channels can't be init'd after adc_init
   TEST_ASSERT_NOT_OK(adc_add_channel(address));
   // adc_init can't be called twice
-  TEST_ASSERT_NOT_OK(adc_init(ADC_MODE_SINGLE));
+  TEST_ASSERT_NOT_OK(adc_init());
   adc_deinit();
 }
 
@@ -85,7 +85,7 @@ void test_adc_pin_to_channel_conversion() {
   };
   gpio_init_pin(&address, GPIO_ANALOG, GPIO_STATE_LOW);
   TEST_ASSERT_OK(adc_add_channel(address));
-  TEST_ASSERT_OK(adc_init(ADC_MODE_SINGLE));
+  TEST_ASSERT_OK(adc_init());
   tasks_init_task(adc_read1, TASK_PRIORITY(1), NULL);
   uint16_t reading;
   TEST_ASSERT_OK(adc_read_raw(address, &reading));
@@ -104,7 +104,7 @@ void test_adc_pin_to_channel_conversion() {
 //   };
 //   gpio_init_pin(&address, GPIO_ANALOG);
 //   TEST_ASSERT_OK(adc_add_channel(address));
-//   TEST_ASSERT_OK(adc_init(ADC_MODE_SINGLE));
+//   TEST_ASSERT_OK(adc_init());
 //
 //   for (address.pin = 0; address.pin < 8; ++address.pin) {
 //     TEST_ASSERT_OK(adc_set_channel(address, true));
@@ -129,7 +129,7 @@ void test_adc_pin_to_channel_conversion() {
 // }
 
 // void test_adc_read_temp() {
-//   adc_init(ADC_MODE_SINGLE);
+//   adc_init();
 //   adc_set_channel(ADC_TEMP, true);
 //
 //   uint16_t reading;
@@ -166,7 +166,7 @@ void test_adc_pin_to_channel_conversion() {
 // void test_pin_read_single(void) {
 //   // Check that both the raw readings and converted readings are within the
 //   // expected range
-//   adc_init(ADC_MODE_SINGLE);
+//   adc_init();
 //
 //   adc_set_channel(s_address[0], true);
 //   adc_register_event(s_address[0], test_task, 0);
@@ -187,7 +187,7 @@ void test_adc_pin_to_channel_conversion() {
 //
 // // test to help with other tests
 // void test_adc_mock_reading() {
-//   adc_init(ADC_MODE_SINGLE);
+//   adc_init();
 //   GpioAddress address = { .port = GPIO_PORT_A, .pin = 0 };
 //
 //   adc_set_channel(address, true);
@@ -201,7 +201,7 @@ void test_adc_pin_to_channel_conversion() {
 // void test_pin_single() {
 //   uint16_t reading;
 //   // Initialize the ADC to single mode and configure the channels
-//   adc_init(ADC_MODE_SINGLE);
+//   adc_init();
 //
 //   for (uint8_t i = 0; i < SIZEOF_ARRAY(s_address); i++) {
 //     adc_set_channel(s_address[i], true);
