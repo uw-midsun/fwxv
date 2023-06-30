@@ -53,9 +53,13 @@ static I2CPortData s_port[NUM_I2C_PORTS] = {
 };
 
 // Generated using the I2C timing configuration tool (STSW-STM32126)
+// static const uint32_t s_i2c_timing[] = {
+//   [I2C_SPEED_STANDARD] = 0x10805E89,  // 100 kHz
+//   [I2C_SPEED_FAST] = 0x00901850,      // 400 kHz
+// };
 static const uint32_t s_i2c_timing[] = {
-  [I2C_SPEED_STANDARD] = 0x10805E89,  // 100 kHz
-  [I2C_SPEED_FAST] = 0x00901850,      // 400 kHz
+  [I2C_SPEED_STANDARD] = 100000,  // 100 kHz
+  [I2C_SPEED_FAST] = 100000,      // 400 kHz
 };
 
 static void prv_recover_lockup(I2CPort port) {
@@ -132,7 +136,7 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
   }
   // Lock I2C resource
-  status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
+  // status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, 5 * I2C_TIMEOUT_MS));
 
   // Check that bus is not busy - If it is, assume that lockup has occurred
   if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
@@ -179,7 +183,7 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   if (i2c >= NUM_I2C_PORTS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
   }
-  status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
+  // status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
   // Check that bus is not busy - If it is, assume that lockup has occurred
   if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
     prv_recover_lockup(i2c);
