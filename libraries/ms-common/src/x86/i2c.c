@@ -79,8 +79,8 @@ static void prv_recover_lockup(I2CPort port) {
 }
 
 StatusCode i2c_set_data(I2CPortData i2c, uint8_t *tx_data, size_t tx_len) {
-  if (len < I2C_MAX_NUM_DATA) {
-    memcpy(data, i2c_mock_buffer, len);
+  if (tx_len < I2C_MAX_NUM_DATA) {
+    memcpy(tx_data, i2c_mock_buffer, tx_len);
     return STATUS_CODE_OK;
   } else {
     return STATUS_CODE_EMPTY;
@@ -181,7 +181,7 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   return STATUS_CODE_OK;
 }
 
-static void prv_i2c_mock_tx(Queue data) {
+static void prv_i2c_mock_tx(uint8_t data) {
   while (queue_receive(&data, &i2c_mock_buffer, 0) == STATUS_CODE_OK) {
     delay_ms(10);
     printf("%u \n", data);
