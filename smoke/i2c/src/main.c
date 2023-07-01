@@ -12,7 +12,7 @@
 
 // Fill in these variables with the port and address to write to.
 #define WRITE_I2C_PORT I2C_PORT_1 //Could be I2C_Port_2
-#define WRITE_I2C_ADDRESS 0x74
+#define WRITE_I2C_ADDRESS 0x04
 
 // Fill in this array with the bytes to write.
 static const uint8_t bytes_to_write[] = { 0x10, 0x2F };
@@ -54,7 +54,7 @@ static const uint8_t bytes_to_write[] = { 0x10, 0x2F };
   { .port = GPIO_PORT_B, .pin = 10 }
 
 static I2CSettings i2c_settings = {
-  .speed = I2C_SPEED_FAST,  
+  .speed = I2C_SPEED_STANDARD,  
   .sda = { .port = GPIO_PORT_B, .pin = 9 }, 
   .scl = { .port = GPIO_PORT_B, .pin = 8 }, 
 };

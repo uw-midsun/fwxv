@@ -59,7 +59,7 @@ static I2CPortData s_port[NUM_I2C_PORTS] = {
 // };
 static const uint32_t s_i2c_timing[] = {
   [I2C_SPEED_STANDARD] = 100000,  // 100 kHz
-  [I2C_SPEED_FAST] = 100000,      // 400 kHz
+  [I2C_SPEED_FAST] = 400000,      // 400 kHz
 };
 
 static void prv_recover_lockup(I2CPort port) {
@@ -93,8 +93,10 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   // Enable GPIOB clock
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
-  // Remap pins to I2C pins 8 & 9
-  GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);
+  // Remap pins to I2C pins 8 & 9 on Port 1
+  if(i2c == I2C_PORT_1) {
+    GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);
+  }
 
   // Initialize pins to correct mode to operate I2C
   gpio_init_pin(&(settings->scl), GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_HIGH);
@@ -179,6 +181,7 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   return STATUS_CODE_OK;
 }
 
+// Address needs to be just the device address, read/write bit is taken care of in hardware
 StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_len) {
   if (i2c >= NUM_I2C_PORTS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
@@ -199,7 +202,7 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   }
 
   // Store address for this transaction
-  s_port[i2c].current_addr = addr;
+  s_port[i2c].current_addr = (addr) << 1;
   s_port[i2c].curr_mode = I2C_MODE_TRANSMIT;
 
   // Start an I2C transaction by enabling start bit. Transfers occur in IT handler
@@ -244,19 +247,14 @@ StatusCode i2c_write_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *tx_
   return STATUS_CODE_OK;
 }
 
-// IRQ functionality for the I2C event interrupt
+// IRQ functionality for the I2C event interruptd
 // Since activity is the same for both ports, use one IRQ handler
 // Flags are cleared automatically by respective reads and writes
 static void prv_ev_irq_handler(I2CPort i2c) {
   BaseType_t xTaskWoken = pdFALSE;
-  // First event triggered when start bit is sent
-  if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_SB) == SET) {
-    // Send address, with LSB set for Read, reset for Write
-    // Reading IT status and writing Data Reg clears Start bit
-    I2C_Send7bitAddress(s_port[i2c].base, s_port[i2c].current_addr, s_port[i2c].curr_mode);
 
-    // Second event is I2C_IT_ADDR being set once address is sent
-  } else if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_ADDR) == SET) {
+  // Second event is I2C_IT_ADDR being set once address is sent
+  if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_ADDR) == SET) {
     // Reading SR2 register clears ADDR IT flag
     (void)(s_port[i2c].base->SR2);
 
@@ -267,8 +265,15 @@ static void prv_ev_irq_handler(I2CPort i2c) {
       I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
       xSemaphoreGiveFromISR(s_port[i2c].i2c_buf.mutex.handle, &xTaskWoken);
     }
+  }
 
-    // In write (tx) mode, send a byte whenever TX register is empty
+  // First event triggered when start bit is sent
+  if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_SB) == SET) {
+    // Send address, with LSB set for Read, reset for Write
+    // Reading IT status and writing Data Reg clears Start bit
+    I2C_Send7bitAddress(s_port[i2c].base, s_port[i2c].current_addr, s_port[i2c].curr_mode);
+
+  // In write (tx) mode, send a byte whenever TX register is empty
   } else if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_TXE)) {
     uint8_t tx_data = 0;
     if (xQueueReceiveFromISR(s_port[i2c].i2c_buf.queue.handle, &tx_data, &xTaskWoken)) {
