@@ -93,12 +93,12 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   // Enable GPIOB clock
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
+  // Remap pins to I2C pins 8 & 9
+  GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);
+
   // Initialize pins to correct mode to operate I2C
   gpio_init_pin(&(settings->scl), GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_HIGH);
   gpio_init_pin(&(settings->sda), GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_HIGH);
-
-  // Remap pins to I2C pins 8 & 9
-  GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);
 
   // Initialize I2C peripheral with settings
   I2C_InitTypeDef i2c_init;
