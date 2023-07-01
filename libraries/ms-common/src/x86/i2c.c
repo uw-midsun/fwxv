@@ -3,11 +3,12 @@
 // the middle of a transaction. By clocking SCL, we hopefully complete the
 // slave's transaction and transition it into an idle state for the next valid
 // transaction.
+#include "i2c.h"
+
 #include <stdbool.h>
 #include <string.h>
 
 #include "delay.h"
-#include "i42c.h"
 #include "log.h"
 #include "queues.h"
 #include "semaphore.h"
