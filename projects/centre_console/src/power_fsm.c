@@ -4,20 +4,23 @@
 #include "centre_console_getters.h"
 #include "delay.h"
 #include "log.h"
+#include "gpio_it.h"
 #include "power_fsm_sequence.h"
 #include "task.h"
+
+#define START_BUTTON_EVENT 0
 
 static const GpioAddress s_btn_start = CC_BTN_PUSH_START;
 
 FSM(power, NUM_POWER_STATES);
 
 static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
+  // Start button pressed
   PowerFsmContext *state_context = (PowerFsmContext *)context;
 
-  // Start button pressed
-  GpioState start_state = GPIO_STATE_HIGH;
-  gpio_get_state(&s_btn_start, &start_state);
-  if (start_state == GPIO_STATE_LOW) {
+  uint32_t notifications = 0;
+  notify_get(&notifications);
+  if (notifications & (1 << START_BUTTON_EVENT)) {
     // Brake is pressed (any non-zero value)
     if (get_pedal_output_brake_output()) {
       state_context->target_state = POWER_FSM_STATE_MAIN;
@@ -51,7 +54,6 @@ static void prv_power_fsm_aux_input(Fsm *fsm, void *context) {
   if (start_state == GPIO_STATE_LOW && get_pedal_output_brake_output()) {
     state_context->target_state = POWER_FSM_STATE_MAIN;
     fsm_transition(fsm, POWER_FSM_SEND_PD_BMS);
-    // Todo (Bafran): How is off being done? press start again?
   } else if (start_state == GPIO_STATE_LOW) {
     state_context->target_state = POWER_FSM_STATE_OFF;
     fsm_transition(fsm, POWER_FSM_DISCHARGE_PRECHARGE);
@@ -185,5 +187,13 @@ StatusCode init_power_fsm(PowerFsmStateId inital_state) {
   };
   PowerFsmContext context = { 0 };
   fsm_init(power, settings, &context);
+
+  // Start button interrupt
+  InterruptSettings it_settings = {
+    .priority = INTERRUPT_PRIORITY_NORMAL,
+    .type = INTERRUPT_TYPE_INTERRUPT,
+    .edge = INTERRUPT_EDGE_RISING, // Todo (Bafran): Double check if this is normally open
+  };
+  gpio_it_register_interrupt(&s_btn_start, &it_settings, START_BUTTON_EVENT, power);
   return STATUS_CODE_OK;
 }
