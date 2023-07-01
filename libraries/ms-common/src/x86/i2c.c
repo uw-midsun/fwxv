@@ -3,12 +3,11 @@
 // the middle of a transaction. By clocking SCL, we hopefully complete the
 // slave's transaction and transition it into an idle state for the next valid
 // transaction.
-#include "i2c.h"
-
 #include <stdbool.h>
 #include <string.h>
 
 #include "delay.h"
+#include "i42c.h"
 #include "log.h"
 #include "queues.h"
 #include "semaphore.h"
@@ -78,7 +77,7 @@ static void prv_recover_lockup(I2CPort port) {
   I2C_SoftwareResetCmd(s_port[port].base, DISABLE);
 }
 
-StatusCode i2c_set_data(uint8_t *data, uint8_t len) {
+StatusCode i2c_set_data(I2CPortData i2c, uint8_t *tx_data, size_t tx_len) {
   if (len < I2C_MAX_NUM_DATA) {
     memcpy(data, i2c_mock_buffer, len);
     return STATUS_CODE_OK;
@@ -182,7 +181,7 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
 }
 
 static void prv_i2c_mock_tx(Queue data) {
-  while (queue_receive(&data, &rx_data[rx], 0) == STATUS_CODE_OK) {
+  while (queue_receive(&data, &i2c_mock_buffer, 0) == STATUS_CODE_OK) {
     delay_ms(10);
     printf("%u \n", data);
   }
