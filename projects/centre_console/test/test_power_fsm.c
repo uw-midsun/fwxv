@@ -24,19 +24,17 @@ void test_off_to_main(void) {
   init_power_fsm(POWER_FSM_STATE_OFF);
 
   // Stay in off with no inputs
-  gpio_set_state(&s_btn_start, GPIO_STATE_HIGH);
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_STATE_OFF);
 
   // Transition to CONFIRM_AUX_STATUS
-  gpio_set_state(&s_btn_start, GPIO_STATE_LOW);
+  notify(power, START_BUTTON_EVENT);
   g_rx_struct.pedal_output_brake_output = PEDAL_PRESSED;
   g_rx_struct.received_pedal_output = true;
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_CONFIRM_AUX_STATUS);
-  gpio_set_state(&s_btn_start, GPIO_STATE_HIGH);
 
   // Transition to POWER_FSM_SEND_PD_BMS
   g_rx_struct.power_select_status_status = AUX_STATUS_BITS;
@@ -99,14 +97,13 @@ void test_off_to_aux(void) {
   init_power_fsm(POWER_FSM_STATE_OFF);
 
   // Transition to CONFIRM_AUX_STATUS
-  gpio_set_state(&s_btn_start, GPIO_STATE_LOW);
+  notify(power, START_BUTTON_EVENT);
   // Brake is not pressed
   g_rx_struct.pedal_output_brake_output = PEDAL_RELEASED;
   g_rx_struct.received_pedal_output = true;
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_CONFIRM_AUX_STATUS);
-  gpio_set_state(&s_btn_start, GPIO_STATE_HIGH);
 
   // Transition to POWER_FSM_TURN_ON_EVERYTHING
   g_rx_struct.power_select_status_status = AUX_STATUS_BITS;
@@ -123,13 +120,12 @@ void test_aux_to_main(void) {
   init_power_fsm(POWER_FSM_STATE_AUX);
 
   // Transition to POWER_FSM_SEND_PD_BMS
-  gpio_set_state(&s_btn_start, GPIO_STATE_LOW);
+  notify(power, START_BUTTON_EVENT);
   g_rx_struct.pedal_output_brake_output = PEDAL_PRESSED;
   g_rx_struct.received_pedal_output = true;
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_SEND_PD_BMS);
-  gpio_set_state(&s_btn_start, GPIO_STATE_HIGH);
 
   // If we've gotten this far, the rest of the transitions are already tested in test_off_to_main
 }
@@ -139,7 +135,7 @@ void test_power_to_off(void) {
   init_power_fsm(POWER_FSM_STATE_MAIN);
 
   // Transition to POWER_FSM_DISCHARGE_PRECHARGE
-  gpio_set_state(&s_btn_start, GPIO_STATE_LOW);
+  notify(power, START_BUTTON_EVENT);
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_DISCHARGE_PRECHARGE);

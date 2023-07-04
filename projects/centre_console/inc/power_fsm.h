@@ -10,6 +10,8 @@
 #define NUM_POWER_STATES 14
 #define NUM_POWER_TRANSITIONS 40
 
+#define START_BUTTON_EVENT 0
+
 DECLARE_FSM(power);
 
 typedef enum PowerFsmStateId {

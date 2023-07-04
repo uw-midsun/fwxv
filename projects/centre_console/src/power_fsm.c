@@ -8,8 +8,6 @@
 #include "power_fsm_sequence.h"
 #include "task.h"
 
-#define START_BUTTON_EVENT 0
-
 static const GpioAddress s_btn_start = CC_BTN_PUSH_START;
 
 FSM(power, NUM_POWER_STATES);
@@ -35,10 +33,10 @@ static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
 static void prv_power_fsm_main_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext *)context;
 
-  GpioState start_state = GPIO_STATE_HIGH;
-  gpio_get_state(&s_btn_start, &start_state);
+  uint32_t notifications = 0;
+  notify_get(&notifications);
   // Assuming that pressing start again means we're turning off
-  if (start_state == GPIO_STATE_LOW) {
+  if (notifications & (1 << START_BUTTON_EVENT)) {
     state_context->target_state = POWER_FSM_STATE_OFF;
     fsm_transition(fsm, POWER_FSM_DISCHARGE_PRECHARGE);
   }
@@ -48,13 +46,13 @@ static void prv_power_fsm_main_input(Fsm *fsm, void *context) {
 static void prv_power_fsm_aux_input(Fsm *fsm, void *context) {
   PowerFsmContext *state_context = (PowerFsmContext *)context;
 
-  GpioState start_state = GPIO_STATE_HIGH;
-  gpio_get_state(&s_btn_start, &start_state);
+  uint32_t notifications = 0;
+  notify_get(&notifications);
   // If start button && brake are pressed
-  if (start_state == GPIO_STATE_LOW && get_pedal_output_brake_output()) {
+  if (notifications & (1 << START_BUTTON_EVENT) && get_pedal_output_brake_output()) {
     state_context->target_state = POWER_FSM_STATE_MAIN;
     fsm_transition(fsm, POWER_FSM_SEND_PD_BMS);
-  } else if (start_state == GPIO_STATE_LOW) {
+  } else if (notifications & (1 << START_BUTTON_EVENT)) {
     state_context->target_state = POWER_FSM_STATE_OFF;
     fsm_transition(fsm, POWER_FSM_DISCHARGE_PRECHARGE);
   }
