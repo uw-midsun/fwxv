@@ -62,6 +62,31 @@ static const uint32_t s_i2c_timing[] = {
   [I2C_SPEED_FAST] = 0x00901850,      // 400 kHz
 };
 
+static void prv_recover_lockup(I2CPort port) {
+  I2CSettings *settings = &s_port[port].settings;
+
+  // Manually clock SCL
+  gpio_init_pin(&settings->scl, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  for (size_t i = 0; i < 16; i++) {
+    gpio_toggle_state(&settings->scl);
+  }
+
+  gpio_init_pin(&settings->scl, GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_LOW);
+
+  // Reset I2C
+  I2C_SoftwareResetCmd(s_port[port].base, ENABLE);
+  I2C_SoftwareResetCmd(s_port[port].base, DISABLE);
+}
+
+StatusCode i2c_set_data(uint8_t *data, uint8_t len) {
+  if (len < I2C_MAX_NUM_DATA) {
+    memcpy(data, i2c_mock_buffer, len);
+    return STATUS_CODE_OK;
+  } else {
+    return STATUS_CODE_EMPTY;
+  }
+}
+
 StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   if (i2c >= NUM_I2C_PORTS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
@@ -154,6 +179,13 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   mutex_unlock(&s_port[i2c].i2c_buf.mutex);
   queue_reset(&s_port[i2c].i2c_buf.queue);
   return STATUS_CODE_OK;
+}
+
+static void prv_i2c_mock_tx(Queue data) {
+  while (queue_receive(&data, &rx_data[rx], 0) == STATUS_CODE_OK) {
+    delay_ms(10);
+    printf("%u \n", data);
+  }
 }
 
 StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_len) {
