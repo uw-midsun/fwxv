@@ -78,9 +78,9 @@ static void prv_recover_lockup(I2CPort port) {
   I2C_SoftwareResetCmd(s_port[port].base, DISABLE);
 }
 
-StatusCode i2c_set_data(uint8_t *data, uint8_t len) {
-  if (len < I2C_MAX_NUM_DATA) {
-    memcpy(data, i2c_mock_buffer, len);
+StatusCode i2c_set_data(I2CPort i2c, uint8_t *tx_data, size_t tx_len) {
+  if (tx_len < I2C_MAX_NUM_DATA) {
+    memcpy(tx_data, i2c_mock_buffer, tx_len);
     return STATUS_CODE_OK;
   } else {
     return STATUS_CODE_EMPTY;
@@ -98,7 +98,7 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
 
   // Enable clock for I2C
   // RCC_APB1PeriphClockCmd(s_port[i2c].periph, ENABLE);
-  I2C_StretchClockCmd(s_port[i2c].periph, ENABLE);
+  I2C_StretchClockCmd(&(s_port[i2c].periph), ENABLE);
 
   // Initialize pins to correct mode to operate I2C
   gpio_init_pin(&settings->scl, GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_LOW);
@@ -181,10 +181,14 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   return STATUS_CODE_OK;
 }
 
-static void prv_i2c_mock_tx(Queue data) {
-  while (queue_receive(&data, &rx_data[rx], 0) == STATUS_CODE_OK) {
+static void prv_i2c_mock_tx(Queue queue, uint8_t data) {
+  queue_send(&queue, data, 0);
+
+  while (queue_receive(&queue, i2c_mock_buffer, 0) == STATUS_CODE_OK) {
     delay_ms(10);
-    printf("%u \n", data);
+    for (uint32_t i = 0; i < queue.num_items; i++) {
+      printf("%u ", i2c_mock_buffer[i]);
+    }
   }
 }
 
@@ -199,15 +203,10 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   }
 
   // Copy data into queue
-  for (size_t tx = 0; tx < tx_len; tx++) {
+  for (uint8_t tx = 0; tx < tx_len; tx++) {
     if (queue_send(&s_port[i2c].i2c_buf.queue, &tx_data[tx], 0)) {
-      prv_i2c_mock_tx(&tx_data[tx]);
       queue_reset(&s_port[i2c].i2c_buf.queue);
       mutex_unlock(&s_port[i2c].i2c_buf.mutex);
-
-      for (uint32_t i; i < I2C_MAX_NUM_DATA; i++) {
-        queue_send(i2c_mock_buffer[i], &tx_data[tx], 0);
-      }
       return STATUS_CODE_RESOURCE_EXHAUSTED;
     }
   }
