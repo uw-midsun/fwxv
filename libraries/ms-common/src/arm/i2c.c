@@ -89,7 +89,7 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
   // Remap pins to I2C pins 8 & 9 on Port 1
-  if(i2c == I2C_PORT_1) {
+  if (i2c == I2C_PORT_1) {
     GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);
   }
 
@@ -110,7 +110,6 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   stm32f10x_interrupt_nvic_enable(s_port[i2c].err_irqn, INTERRUPT_PRIORITY_NORMAL);
   NVIC_EnableIRQ(I2C1_EV_IRQn);
   NVIC_SetPriority(I2C1_EV_IRQn, 2);
-
 
   // Mask interrupts while we are not in a transaction
   // This prevents TXE from continuously triggering
@@ -270,7 +269,7 @@ static void prv_ev_irq_handler(I2CPort i2c) {
     // Reading IT status and writing Data Reg clears Start bit
     I2C_Send7bitAddress(s_port[i2c].base, s_port[i2c].current_addr, s_port[i2c].curr_mode);
 
-  // In write (tx) mode, send a byte whenever TX register is empty
+    // In write (tx) mode, send a byte whenever TX register is empty
   } else if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_TXE)) {
     uint8_t tx_data = 0;
     if (xQueueReceiveFromISR(s_port[i2c].i2c_buf.queue.handle, &tx_data, &xTaskWoken)) {
