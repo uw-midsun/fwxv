@@ -2,6 +2,7 @@
 #include "fsm.h"
 #include "log.h"
 #include "semaphore.h"
+#include "fsm_shared_mem.h"
 
 typedef struct FSMStorage {
   StateId power_state;

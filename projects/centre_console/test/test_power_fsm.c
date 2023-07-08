@@ -29,9 +29,9 @@ void test_off_to_main(void) {
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_STATE_OFF);
 
   // Transition to CONFIRM_AUX_STATUS
-  notify(power, START_BUTTON_EVENT);
   g_rx_struct.pedal_output_brake_output = PEDAL_PRESSED;
   g_rx_struct.received_pedal_output = true;
+  notify(power, START_BUTTON_EVENT);
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_CONFIRM_AUX_STATUS);

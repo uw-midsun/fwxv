@@ -6,9 +6,11 @@
 #include "log.h"
 #include "gpio_it.h"
 #include "power_fsm_sequence.h"
+#include "fsm_shared_mem.h"
 #include "task.h"
 
 static const GpioAddress s_btn_start = CC_BTN_PUSH_START;
+static FSMStorage shared_mem;
 
 FSM(power, NUM_POWER_STATES);
 
@@ -66,24 +68,28 @@ static void prv_power_fsm_fault_input(Fsm *fsm, void *context) {
 static void prv_power_fsm_off_output(void *context) {
   PowerFsmContext *state_context = (PowerFsmContext *)context;
   state_context->latest_state = POWER_FSM_STATE_OFF;
+  state_context->shared_mem->power_state = POWER_FSM_STATE_OFF;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM OFF STATE\n");
 }
 
 static void prv_power_fsm_main_output(void *context) {
   PowerFsmContext *state_context = (PowerFsmContext *)context;
   state_context->latest_state = POWER_FSM_STATE_MAIN;
+  state_context->shared_mem->power_state = POWER_FSM_STATE_MAIN;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM MAIN STATE\n");
 }
 
 static void prv_power_fsm_aux_output(void *context) {
   PowerFsmContext *state_context = (PowerFsmContext *)context;
   state_context->latest_state = POWER_FSM_STATE_AUX;
+  state_context->shared_mem->power_state = POWER_FSM_STATE_AUX;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM AUX STATE\n");
 }
 
 static void prv_power_fsm_fault_output(void *context) {
   PowerFsmContext *state_context = (PowerFsmContext *)context;
   state_context->latest_state = POWER_FSM_STATE_FAULT;
+  state_context->shared_mem->power_state = POWER_FSM_STATE_FAULT;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM FAULT STATE\n");
 }
 
@@ -183,7 +189,9 @@ StatusCode init_power_fsm(PowerFsmStateId inital_state) {
     .num_transitions = NUM_POWER_TRANSITIONS,
     .initial_state = inital_state,
   };
+  fsm_shared_mem_init(&shared_mem);
   PowerFsmContext context = { 0 };
+  context.shared_mem = &shared_mem;
   fsm_init(power, settings, &context);
 
   // Start button interrupt
