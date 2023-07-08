@@ -70,8 +70,8 @@ TASK(smoke_i2c_task, TASK_STACK_512){
   i2c_init(I2C_PORT_1, &i2c_settings);
   gpio_init_pin(&test_pin ,GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
   while (true) {
-    // i2c_write(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, bytes_to_write, tx_len);
-    i2c_read(READ_I2C_PORT, READ_I2C_ADDRESS, rx_buf, 6);
+    i2c_write(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, bytes_to_write, tx_len);
+    // i2c_read(READ_I2C_PORT, READ_I2C_ADDRESS, rx_buf, 6);
     gpio_toggle_state(&test_pin);
     delay_ms(100);
   }
