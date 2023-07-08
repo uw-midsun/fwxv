@@ -52,11 +52,6 @@ static I2CPortData s_port[NUM_I2C_PORTS] = {
                    .err_irqn = I2C2_ER_IRQn },
 };
 
-// Generated using the I2C timing configuration tool (STSW-STM32126)
-// static const uint32_t s_i2c_timing[] = {
-//   [I2C_SPEED_STANDARD] = 0x10805E89,  // 100 kHz
-//   [I2C_SPEED_FAST] = 0x00901850,      // 400 kHz
-// };
 static const uint32_t s_i2c_timing[] = {
   [I2C_SPEED_STANDARD] = 100000,  // 100 kHz
   [I2C_SPEED_FAST] = 400000,      // 400 kHz
@@ -211,7 +206,6 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   // Start an I2C transaction by enabling start bit. Transfers occur in IT handler
   // Start bit is cleared when I2C_GetITStatus() and I2C_SendData() called in succession
   I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, ENABLE);
-  // I2C1->CR2 |= I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN;
   I2C_GenerateSTART(s_port[i2c].base, ENABLE);
 
   // Wait for ISR to unlock mutex when transaction finished
