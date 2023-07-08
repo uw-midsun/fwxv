@@ -124,7 +124,7 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   s_port[i2c].i2c_buf.queue.num_items = I2C_MAX_NUM_DATA;
   s_port[i2c].i2c_buf.queue.item_size = sizeof(uint8_t);
   s_port[i2c].i2c_buf.queue.storage_buf = s_port[i2c].i2c_buf.buf;
-  status_ok_or_return(sem_init(&s_port[i2c].i2c_buf.mutex, 1, 0));
+  status_ok_or_return(sem_init(&s_port[i2c].i2c_buf.mutex, 1, 1));
   status_ok_or_return(queue_init(&s_port[i2c].i2c_buf.queue));
 
   // Enable I2C peripheral
@@ -138,7 +138,7 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
   }
   // Lock I2C resource
-  // status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, 5 * I2C_TIMEOUT_MS));
+  status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, 5 * I2C_TIMEOUT_MS));
 
   // Check that bus is not busy - If it is, assume that lockup has occurred
   if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
@@ -186,7 +186,10 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   if (i2c >= NUM_I2C_PORTS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
   }
-  // status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
+
+  // Lock I2C resource
+  status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
+
   // Check that bus is not busy - If it is, assume that lockup has occurred
   if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
     prv_recover_lockup(i2c);
