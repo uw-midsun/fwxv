@@ -78,19 +78,39 @@ static void prv_run_gpio_callbacks(uint8_t lower_bound, uint8_t upper_bound) {
   }
 }
 
-// IV Handler for pins 0, 1.
-void EXTI0_1_IRQHandler(void) {
-  prv_run_gpio_callbacks(0, 1);
+// IV Handler for pins 0.
+void EXTI0_IRQHandler(void) {
+  prv_run_gpio_callbacks(0, 0);
 }
 
-// IV Handler for pins 2, 3.
-void EXTI2_3_IRQHandler(void) {
-  prv_run_gpio_callbacks(2, 3);
+// IV Handler for pins 1.
+void EXTI1_IRQHandler(void) {
+  prv_run_gpio_callbacks(1, 1);
 }
 
-// IV Handler for pins 4 - 15.
-void EXTI4_15_IRQHandler(void) {
-  prv_run_gpio_callbacks(4, 15);
+// IV Handler for pins 2.
+void EXTI2_IRQHandler(void) {
+  prv_run_gpio_callbacks(2, 2);
+}
+
+// IV Handler for pins 3.
+void EXTI3_IRQHandler(void) {
+  prv_run_gpio_callbacks(3, 3);
+}
+
+// IV Handler for pins 4.
+void EXTI4_IRQHandler(void) {
+  prv_run_gpio_callbacks(4, 4);
+}
+
+// IV Handler for pins 5 to 9.
+void EXTI9_5_IRQHandler(void) {
+  prv_run_gpio_callbacks(5, 9);
+}
+
+// IV Handler for pins 10 to 15.
+void EXTI15_10_IRQHandler(void) {
+  prv_run_gpio_callbacks(10, 15);
 }
 
 StatusCode gpio_it_mask_interrupt(const GpioAddress *address, bool masked) {
