@@ -8,10 +8,7 @@
 
 
 Pca9555GpioAddress addy[] = {
-   {.i2c_address = I2C_ADDRESS_1, .pin = PCA9555_PIN_IO0_0},
-   {.i2c_address = I2C_ADDRESS_1, .pin = PCA9555_PIN_IO0_0},
-   {.i2c_address = I2C_ADDRESS_1, .pin = PCA9555_PIN_IO0_0},
-   {.i2c_address = I2C_ADDRESS_1, .pin = PCA9555_PIN_IO0_0},
+   {.i2c_address = I2C_ADDRESS_1, .pin = PCA9555_PIN_IO1_0},
    // add more addresses to test as needed.
 };
 

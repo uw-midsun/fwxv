@@ -19,11 +19,15 @@ TASK(leds_task, TASK_STACK_512) {
   }
 
   while (true) {
-#ifdef MS_PLATFORM_X86
     LOG_DEBUG("blink\n");
-#endif
+// #ifdef MS_PLATFORM_X86
+// #endif
     for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
-      gpio_toggle_state(&leds[i]);
+      gpio_set_state(&leds[i], GPIO_STATE_HIGH);
+      delay_ms(50);
+    }
+    for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
+      gpio_set_state(&leds[i], GPIO_STATE_LOW);
       delay_ms(50);
     }
   }

@@ -253,6 +253,7 @@ if PLATFORM == 'arm' and TYPE == 'project':
     def flash_run(target, source, env):
         OPENOCD = 'openocd'
         OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
+        # PROBE = 'stlink-v2'
         PROBE = 'cmsis-dap'
         OPENOCD_CFG = [
             OPENOCD,
