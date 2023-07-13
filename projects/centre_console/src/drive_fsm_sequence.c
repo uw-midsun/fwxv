@@ -4,12 +4,13 @@
 #include "centre_console_setters.h"
 #include "power_fsm.h"
 
-#define DUMMY_VAL 1  // ask ShiCheng for corret values for precharge status
-#define BEGIN_PRECHARGE_SIGNAL 2
-#define PRECHARGE_STATE_COMPLETE 2
-#define NUMBER_OF_CYCLES_TO_WAIT 10
-
 int cycles_counter = 0;
+
+void prv_fault_to_neutral(Fsm *fsm) {
+  drive_storage.state = NEUTRAL;
+  set_drive_output_drive_state(drive_storage.state);
+  fsm_transition(fsm, NEUTRAL);
+}
 
 void prv_do_precharge_input(Fsm *fsm, void *context) {
   /**
@@ -22,8 +23,6 @@ void prv_do_precharge_input(Fsm *fsm, void *context) {
    *  transition to NEUTRAL
    *
    */
-  prv_set_or_get_error_state();
-  LOG_DEBUG("DO_PRECHARGE\n");
 
   if (get_mc_status_precharge_status() == PRECHARGE_STATE_COMPLETE) {
     fsm_transition(fsm, TRANSMIT);
@@ -33,24 +32,22 @@ void prv_do_precharge_input(Fsm *fsm, void *context) {
 
   StateId power_state = fsm_shared_mem_get_power_state(&cc_storage);
   if (power_state != POWER_FSM_STATE_MAIN) {
-    fsm_transition(fsm, NEUTRAL);
+    prv_fault_to_neutral(fsm);
   }
-
-  // might need to add error handling and return to neutral
-  // like if power state is not main anymore
 
   cycles_counter++;
   if (cycles_counter == NUMBER_OF_CYCLES_TO_WAIT) {
-    fsm_transition(fsm, NEUTRAL);  // this is a fail case | going back to neutral
+    // this is a fail case | going back to neutral
+    prv_fault_to_neutral(fsm);
   }
 }
 void prv_do_precharge_output(void *context) {
-  set_begin_precharge_signal1(BEGIN_PRECHARGE_SIGNAL);
-  cycles_counter = 0;
   /**
    * Send out precharge request to MCI
    *
    */
+  set_begin_precharge_signal1(BEGIN_PRECHARGE_SIGNAL);
+  cycles_counter = 0;
 }
 
 void prv_transmit_input(Fsm *fsm, void *context) {
@@ -64,21 +61,19 @@ void prv_transmit_input(Fsm *fsm, void *context) {
    *  transition to NEUTRAL
    *
    */
-  prv_set_or_get_error_state();
-  LOG_DEBUG("TRANSMIT\n");
 
   // either need to get an ack or just assume MCI gets it
-  if (drive_storage.state == DRIVE) {
-    fsm_transition(fsm, DRIVE);
-  } else if (drive_storage.state == REVERSE) {
-    fsm_transition(fsm, REVERSE);
-  } else {
-    fsm_transition(fsm, NEUTRAL);
-  }
-
   StateId power_state = fsm_shared_mem_get_power_state(&cc_storage);
   if (power_state != POWER_FSM_STATE_MAIN) {
-    fsm_transition(fsm, NEUTRAL);
+    prv_fault_to_neutral(fsm);
+  } else {
+    if (drive_storage.state == DRIVE) {
+      fsm_transition(fsm, DRIVE);
+    } else if (drive_storage.state == REVERSE) {
+      fsm_transition(fsm, REVERSE);
+    } else {
+      fsm_transition(fsm, NEUTRAL);
+    }
   }
 }
 void prv_transmit_output(void *context) {
@@ -87,6 +82,5 @@ void prv_transmit_output(void *context) {
    *
    * state can be drive, reverse, or neutral
    */
-  LOG_DEBUG("drive_storage->state: %d \n", drive_storage.state);
   set_drive_output_drive_state(drive_storage.state);
 }

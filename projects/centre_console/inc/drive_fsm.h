@@ -36,10 +36,10 @@ typedef enum driveEvents {
   NUM_DRIVE_FSM_EVENTS,
 } driveEvents;
 
-// this needs to be deleted. Just here as a placeholder
+// this needs to be changed or deleted. Just here as a placeholder
 #define FAKE_NEUTRAL_GPIO_ADDR \
   { .port = GPIO_PORT_B, .pin = 1 }
-  
+
 #define FAKE_DRIVE_GPIO_ADDR \
   { .port = GPIO_PORT_B, .pin = 2 }
 
