@@ -12,20 +12,30 @@
 static const GpioAddress s_btn_start = CC_BTN_PUSH_START;
 static FSMStorage shared_mem;
 
+PowerFsmContext power_context = {0};
+
 FSM(power, NUM_POWER_STATES);
 
 static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
   // Start button pressed
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
 
   uint32_t notifications = 0;
+  printf("TESTINGGGGG notification: %d \n", notifications);
   notify_get(&notifications);
+  printf("TESTINGGGGG notification numba 2: %d \n", notifications);
+
   if (notifications & (1 << START_BUTTON_EVENT)) {
+    printf("thing is working. This is state: %d, expecting %d\n", power_context.target_state, POWER_FSM_STATE_OFF);
     // Brake is pressed (any non-zero value)
     if (get_pedal_output_brake_output()) {
-      state_context->target_state = POWER_FSM_STATE_MAIN;
+      printf("thing is working with going to MAIN \n");
+      power_context.target_state = POWER_FSM_STATE_MAIN;
+      printf("STATE CONTEXT: %d, expecting %d\n", power_context.target_state, POWER_FSM_STATE_MAIN);
     } else {
-      state_context->target_state = POWER_FSM_STATE_AUX;
+      printf("thing is working with going to AUX \n");
+      power_context.target_state = POWER_FSM_STATE_AUX;
+      printf("STATE CONTEXT: %d, expecting %d\n", power_context.target_state, POWER_FSM_STATE_AUX);
     }
     fsm_transition(fsm, POWER_FSM_CONFIRM_AUX_STATUS);
   }
@@ -33,29 +43,29 @@ static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_main_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
 
   uint32_t notifications = 0;
   notify_get(&notifications);
   // Assuming that pressing start again means we're turning off
   if (notifications & (1 << START_BUTTON_EVENT)) {
-    state_context->target_state = POWER_FSM_STATE_OFF;
+    power_context.target_state = POWER_FSM_STATE_OFF;
     fsm_transition(fsm, POWER_FSM_DISCHARGE_PRECHARGE);
   }
   return;
 }
 
 static void prv_power_fsm_aux_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
 
   uint32_t notifications = 0;
   notify_get(&notifications);
   // If start button && brake are pressed
   if (notifications & (1 << START_BUTTON_EVENT) && get_pedal_output_brake_output()) {
-    state_context->target_state = POWER_FSM_STATE_MAIN;
+    power_context.target_state = POWER_FSM_STATE_MAIN;
     fsm_transition(fsm, POWER_FSM_SEND_PD_BMS);
   } else if (notifications & (1 << START_BUTTON_EVENT)) {
-    state_context->target_state = POWER_FSM_STATE_OFF;
+    power_context.target_state = POWER_FSM_STATE_OFF;
     fsm_transition(fsm, POWER_FSM_DISCHARGE_PRECHARGE);
   }
   return;
@@ -66,30 +76,30 @@ static void prv_power_fsm_fault_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_off_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  state_context->latest_state = POWER_FSM_STATE_OFF;
-  state_context->shared_mem->power_state = POWER_FSM_STATE_OFF;
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
+  power_context.latest_state = POWER_FSM_STATE_OFF;
+  power_context.shared_mem->power_state = POWER_FSM_STATE_OFF;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM OFF STATE\n");
 }
 
 static void prv_power_fsm_main_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  state_context->latest_state = POWER_FSM_STATE_MAIN;
-  state_context->shared_mem->power_state = POWER_FSM_STATE_MAIN;
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
+  power_context.latest_state = POWER_FSM_STATE_MAIN;
+  power_context.shared_mem->power_state = POWER_FSM_STATE_MAIN;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM MAIN STATE\n");
 }
 
 static void prv_power_fsm_aux_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  state_context->latest_state = POWER_FSM_STATE_AUX;
-  state_context->shared_mem->power_state = POWER_FSM_STATE_AUX;
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
+  power_context.latest_state = POWER_FSM_STATE_AUX;
+  power_context.shared_mem->power_state = POWER_FSM_STATE_AUX;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM AUX STATE\n");
 }
 
 static void prv_power_fsm_fault_output(void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  state_context->latest_state = POWER_FSM_STATE_FAULT;
-  state_context->shared_mem->power_state = POWER_FSM_STATE_FAULT;
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
+  power_context.latest_state = POWER_FSM_STATE_FAULT;
+  power_context.shared_mem->power_state = POWER_FSM_STATE_FAULT;
   LOG_DEBUG("CENTRE CONSOLE POWER FSM FAULT STATE\n");
 }
 
@@ -190,9 +200,11 @@ StatusCode init_power_fsm(PowerFsmStateId inital_state) {
     .initial_state = inital_state,
   };
   fsm_shared_mem_init(&shared_mem);
-  PowerFsmContext context = { 0 };
-  context.shared_mem = &shared_mem;
-  fsm_init(power, settings, &context);
+  // PowerFsmContext context = { 0 };
+  power_context.shared_mem = &shared_mem;
+  power_context.latest_state = 0;
+  power_context.target_state = 0;
+  fsm_init(power, settings, NULL);
 
   // Start button interrupt
   InterruptSettings it_settings = {

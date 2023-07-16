@@ -44,4 +44,6 @@ typedef struct PowerFsmContext {
   FSMStorage* shared_mem;
 } PowerFsmContext;
 
+extern PowerFsmContext power_context; 
+
 StatusCode init_power_fsm(PowerFsmStateId inital_state);

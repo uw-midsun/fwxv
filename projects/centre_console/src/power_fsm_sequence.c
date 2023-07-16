@@ -12,7 +12,7 @@
   do {                                               \
     if (!data_recv) {                                \
       if (s_cycle_timeout == 0) {                    \
-        fsm_transition(fsm, context->latest_state);  \
+        fsm_transition(fsm, context.latest_state);  \
         s_cycle_timeout = CYCLES_TIMEOUT;            \
       }                                              \
       s_cycle_timeout--;                             \
@@ -36,8 +36,8 @@ void prv_power_fsm_confirm_aux_status_output(void *context) {
 }
 
 void prv_power_fsm_confirm_aux_status_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  FSM_CHECK_DATA_RECV(fsm, state_context, get_received_power_select_status());
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
+  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_power_select_status());
 
   uint8_t status = get_power_select_status_status();
   uint8_t fault = get_power_select_status_fault();
@@ -45,14 +45,14 @@ void prv_power_fsm_confirm_aux_status_input(Fsm *fsm, void *context) {
   // Status bit 2 is AUX, fault bits 5,6,7 are AUX
   if ((status & AUX_STATUS_BITS) && !(fault & AUX_FAULT_BITS)) {
     // Transition to next state
-    if (state_context->target_state == POWER_FSM_STATE_MAIN) {
+    if (power_context.target_state == POWER_FSM_STATE_MAIN) {
       FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_SEND_PD_BMS);
     } else {
       FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_TURN_ON_EVERYTHING);
     }
   } else {
     // Transition to last stable state
-    FSM_TRANSITION_AND_RESET(fsm, state_context->latest_state);
+    FSM_TRANSITION_AND_RESET(fsm, power_context.latest_state);
   }
   return;
 }
@@ -63,9 +63,9 @@ void prv_power_fsm_send_pd_bms_output(void *context) {
 }
 
 void prv_power_fsm_send_pd_bms_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  FSM_CHECK_DATA_RECV(fsm, state_context, get_received_rear_pd_fault());
-  FSM_CHECK_DATA_RECV(fsm, state_context, get_received_front_pd_fault());
+  //  = (PowerFsmContext *)context;
+  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_rear_pd_fault());
+  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_front_pd_fault());
 
   uint8_t rear_fault = get_rear_pd_fault_fault_data();
   uint8_t front_fault = get_front_pd_fault_fault_data();
@@ -77,7 +77,7 @@ void prv_power_fsm_send_pd_bms_input(Fsm *fsm, void *context) {
     FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_CONFIRM_BATTERY_STATUS);
   } else if (s_cycle_timeout == 0) {
     // Transition to last stable state
-    FSM_TRANSITION_AND_RESET(fsm, state_context->latest_state);
+    FSM_TRANSITION_AND_RESET(fsm, power_context.latest_state);
   } else {
     s_cycle_timeout--;
   }
@@ -90,8 +90,8 @@ void prv_power_fsm_confirm_battery_status_output(void *context) {
 }
 
 void prv_power_fsm_confirm_battery_status_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  FSM_CHECK_DATA_RECV(fsm, state_context, get_received_bps_heartbeat());
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
+  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_bps_heartbeat());
 
   uint8_t status = get_bps_heartbeat_status();
 
@@ -102,7 +102,7 @@ void prv_power_fsm_confirm_battery_status_input(Fsm *fsm, void *context) {
     FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_CLOSE_BATTERY_RELAYS);
   } else if (s_cycle_timeout == 0) {
     // Transition to last stable state
-    FSM_TRANSITION_AND_RESET(fsm, state_context->latest_state);
+    FSM_TRANSITION_AND_RESET(fsm, power_context.latest_state);
   } else {
     s_cycle_timeout--;
   }
@@ -117,8 +117,8 @@ void prv_power_fsm_close_battery_relays_output(void *context) {
 }
 
 void prv_power_fsm_close_battery_relays_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  FSM_CHECK_DATA_RECV(fsm, state_context, get_received_battery_relay_state());
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
+  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_battery_relay_state());
 
   uint8_t hv_status = get_battery_relay_state_hv();
   uint8_t gnd_status = get_battery_relay_state_gnd();
@@ -129,7 +129,7 @@ void prv_power_fsm_close_battery_relays_input(Fsm *fsm, void *context) {
     FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_CONFIRM_DC_DC);
   } else {
     // Transition to last stable state
-    FSM_TRANSITION_AND_RESET(fsm, state_context->latest_state);
+    FSM_TRANSITION_AND_RESET(fsm, power_context.latest_state);
   }
   return;
 }
@@ -139,8 +139,8 @@ void prv_power_fsm_confirm_dc_dc_output(void *context) {
 }
 
 void prv_power_fsm_confirm_dc_dc_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  FSM_CHECK_DATA_RECV(fsm, state_context, get_received_power_select_status());
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
+  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_power_select_status());
 
   uint8_t status = get_power_select_status_status();
   uint8_t fault = get_power_select_status_fault();
@@ -151,7 +151,7 @@ void prv_power_fsm_confirm_dc_dc_input(Fsm *fsm, void *context) {
     FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_TURN_ON_EVERYTHING);
   } else {
     // Transition to last stable state
-    FSM_TRANSITION_AND_RESET(fsm, state_context->latest_state);
+    FSM_TRANSITION_AND_RESET(fsm, power_context.latest_state);
   }
 
   return;
@@ -164,9 +164,9 @@ void prv_power_fsm_turn_on_everything_output(void *context) {
 
 void prv_power_fsm_turn_on_everything_input(Fsm *fsm, void *context) {
   // No checks here, only "Turn on everything" message gets sent in the output function
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
 
-  if (state_context->target_state == POWER_FSM_STATE_MAIN) {
+  if (power_context.target_state == POWER_FSM_STATE_MAIN) {
     FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_POWER_MAIN_COMPLETE);
   } else {
     FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_STATE_AUX);
@@ -198,8 +198,8 @@ void prv_power_fsm_discharge_precharge_output(void *context) {
 }
 
 void prv_power_fsm_discharge_precharge_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
-  FSM_CHECK_DATA_RECV(fsm, state_context, get_received_precharge_completed());
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
+  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_precharge_completed());
 
   uint8_t precharge = get_precharge_completed_notification();
 
@@ -208,7 +208,7 @@ void prv_power_fsm_discharge_precharge_input(Fsm *fsm, void *context) {
     FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_TURN_OFF_EVERYTHING);
   } else {
     // Transition to last stable state
-    FSM_TRANSITION_AND_RESET(fsm, state_context->latest_state);
+    FSM_TRANSITION_AND_RESET(fsm, power_context.latest_state);
   }
 
   return;
@@ -232,7 +232,7 @@ void prv_power_fsm_open_relays_output(void *context) {
 }
 
 void prv_power_fsm_open_relays_input(Fsm *fsm, void *context) {
-  PowerFsmContext *state_context = (PowerFsmContext *)context;
+  // PowerFsmContext *power_context = (PowerFsmContext *)context;
 
   uint8_t hv_status = get_battery_relay_state_hv();
   uint8_t gnd_status = get_battery_relay_state_gnd();
@@ -243,7 +243,7 @@ void prv_power_fsm_open_relays_input(Fsm *fsm, void *context) {
     FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_STATE_OFF);
   } else {
     // Transition to last stable state
-    FSM_TRANSITION_AND_RESET(fsm, state_context->latest_state);
+    FSM_TRANSITION_AND_RESET(fsm, power_context.latest_state);
   }
 
   return;
