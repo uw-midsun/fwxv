@@ -12,7 +12,7 @@
   do {                                               \
     if (!data_recv) {                                \
       if (s_cycle_timeout == 0) {                    \
-        fsm_transition(fsm, context.latest_state);  \
+        fsm_transition(fsm, context.latest_state);   \
         s_cycle_timeout = CYCLES_TIMEOUT;            \
       }                                              \
       s_cycle_timeout--;                             \
@@ -36,7 +36,6 @@ void prv_power_fsm_confirm_aux_status_output(void *context) {
 }
 
 void prv_power_fsm_confirm_aux_status_input(Fsm *fsm, void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
   FSM_CHECK_DATA_RECV(fsm, power_context, get_received_power_select_status());
 
   uint8_t status = get_power_select_status_status();
@@ -90,7 +89,6 @@ void prv_power_fsm_confirm_battery_status_output(void *context) {
 }
 
 void prv_power_fsm_confirm_battery_status_input(Fsm *fsm, void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
   FSM_CHECK_DATA_RECV(fsm, power_context, get_received_bps_heartbeat());
 
   uint8_t status = get_bps_heartbeat_status();
@@ -117,7 +115,6 @@ void prv_power_fsm_close_battery_relays_output(void *context) {
 }
 
 void prv_power_fsm_close_battery_relays_input(Fsm *fsm, void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
   FSM_CHECK_DATA_RECV(fsm, power_context, get_received_battery_relay_state());
 
   uint8_t hv_status = get_battery_relay_state_hv();
@@ -139,7 +136,6 @@ void prv_power_fsm_confirm_dc_dc_output(void *context) {
 }
 
 void prv_power_fsm_confirm_dc_dc_input(Fsm *fsm, void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
   FSM_CHECK_DATA_RECV(fsm, power_context, get_received_power_select_status());
 
   uint8_t status = get_power_select_status_status();
@@ -164,8 +160,6 @@ void prv_power_fsm_turn_on_everything_output(void *context) {
 
 void prv_power_fsm_turn_on_everything_input(Fsm *fsm, void *context) {
   // No checks here, only "Turn on everything" message gets sent in the output function
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
-
   if (power_context.target_state == POWER_FSM_STATE_MAIN) {
     FSM_TRANSITION_AND_RESET(fsm, POWER_FSM_POWER_MAIN_COMPLETE);
   } else {
@@ -198,7 +192,6 @@ void prv_power_fsm_discharge_precharge_output(void *context) {
 }
 
 void prv_power_fsm_discharge_precharge_input(Fsm *fsm, void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
   FSM_CHECK_DATA_RECV(fsm, power_context, get_received_precharge_completed());
 
   uint8_t precharge = get_precharge_completed_notification();
@@ -232,8 +225,6 @@ void prv_power_fsm_open_relays_output(void *context) {
 }
 
 void prv_power_fsm_open_relays_input(Fsm *fsm, void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
-
   uint8_t hv_status = get_battery_relay_state_hv();
   uint8_t gnd_status = get_battery_relay_state_gnd();
 

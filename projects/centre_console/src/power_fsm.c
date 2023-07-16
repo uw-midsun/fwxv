@@ -3,39 +3,29 @@
 #include "cc_hw_defs.h"
 #include "centre_console_getters.h"
 #include "delay.h"
-#include "log.h"
-#include "gpio_it.h"
-#include "power_fsm_sequence.h"
 #include "fsm_shared_mem.h"
+#include "gpio_it.h"
+#include "log.h"
+#include "power_fsm_sequence.h"
 #include "task.h"
 
 static const GpioAddress s_btn_start = CC_BTN_PUSH_START;
 static FSMStorage shared_mem;
 
-PowerFsmContext power_context = {0};
+PowerFsmContext power_context = { 0 };
 
 FSM(power, NUM_POWER_STATES);
 
 static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
   // Start button pressed
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
-
   uint32_t notifications = 0;
-  printf("TESTINGGGGG notification: %d \n", notifications);
   notify_get(&notifications);
-  printf("TESTINGGGGG notification numba 2: %d \n", notifications);
-
   if (notifications & (1 << START_BUTTON_EVENT)) {
-    printf("thing is working. This is state: %d, expecting %d\n", power_context.target_state, POWER_FSM_STATE_OFF);
     // Brake is pressed (any non-zero value)
     if (get_pedal_output_brake_output()) {
-      printf("thing is working with going to MAIN \n");
       power_context.target_state = POWER_FSM_STATE_MAIN;
-      printf("STATE CONTEXT: %d, expecting %d\n", power_context.target_state, POWER_FSM_STATE_MAIN);
     } else {
-      printf("thing is working with going to AUX \n");
       power_context.target_state = POWER_FSM_STATE_AUX;
-      printf("STATE CONTEXT: %d, expecting %d\n", power_context.target_state, POWER_FSM_STATE_AUX);
     }
     fsm_transition(fsm, POWER_FSM_CONFIRM_AUX_STATUS);
   }
@@ -43,8 +33,6 @@ static void prv_power_fsm_off_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_main_input(Fsm *fsm, void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
-
   uint32_t notifications = 0;
   notify_get(&notifications);
   // Assuming that pressing start again means we're turning off
@@ -56,8 +44,6 @@ static void prv_power_fsm_main_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_aux_input(Fsm *fsm, void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
-
   uint32_t notifications = 0;
   notify_get(&notifications);
   // If start button && brake are pressed
@@ -210,7 +196,7 @@ StatusCode init_power_fsm(PowerFsmStateId inital_state) {
   InterruptSettings it_settings = {
     .priority = INTERRUPT_PRIORITY_NORMAL,
     .type = INTERRUPT_TYPE_INTERRUPT,
-    .edge = INTERRUPT_EDGE_RISING, // Todo (Bafran): Double check if this is normally open
+    .edge = INTERRUPT_EDGE_RISING,  // Todo (Bafran): Double check if this is normally open
   };
   gpio_it_register_interrupt(&s_btn_start, &it_settings, START_BUTTON_EVENT, power);
   return STATUS_CODE_OK;

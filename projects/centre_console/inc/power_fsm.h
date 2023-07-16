@@ -2,10 +2,10 @@
 
 #include "delay.h"
 #include "fsm.h"
+#include "fsm_shared_mem.h"
 #include "gpio.h"
 #include "log.h"
 #include "power_fsm_sequence.h"
-#include "fsm_shared_mem.h"
 #include "task.h"
 
 #define NUM_POWER_STATES 14
@@ -41,9 +41,9 @@ typedef enum PowerFsmStateId {
 typedef struct PowerFsmContext {
   PowerFsmStateId latest_state;
   PowerFsmStateId target_state;
-  FSMStorage* shared_mem;
+  FSMStorage *shared_mem;
 } PowerFsmContext;
 
-extern PowerFsmContext power_context; 
+extern PowerFsmContext power_context;
 
 StatusCode init_power_fsm(PowerFsmStateId inital_state);
