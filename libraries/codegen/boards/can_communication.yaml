@@ -1,0 +1,13 @@
+---
+  Messages:
+    one_shot_msg:
+      id: 0
+      target:
+       can_communication:
+        watchdog: 0
+      critical: true
+      signals:
+        sig1:
+          length: 16
+        sig2:
+          length: 16
