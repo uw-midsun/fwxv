@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "can.h"
+#include "gpio.h"
 #include "can_board_ids.h"
 #include "can_watchdog.h"
 #include "delay.h"
@@ -16,7 +17,7 @@ const CanSettings can_settings = {
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
-  .loopback = true,
+  .loopback = false,
 };
 
 void run_fast_cycle() {}
@@ -44,6 +45,7 @@ void run_medium_cycle() {
 void run_slow_cycle() {}
 
 int main() {
+  gpio_init();
   tasks_init();
   log_init();
 

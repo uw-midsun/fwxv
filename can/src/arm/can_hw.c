@@ -20,11 +20,11 @@ typedef struct CanHwTiming {
 // from the calculated value to compenstate. The same is true for the prescaler,
 // but the library subtracts 1 internally. The total time quanta is thus (BS1 +
 // 1) + (BS2 + 1) + SJW (1) ~= 16 tq.
-static CanHwTiming s_timing[NUM_CAN_HW_BITRATES] = {  // For 48MHz clock
-  [CAN_HW_BITRATE_125KBPS] = { .prescaler = 24, .bs1 = 12, .bs2 = 1 },
-  [CAN_HW_BITRATE_250KBPS] = { .prescaler = 12, .bs1 = 12, .bs2 = 1 },
-  [CAN_HW_BITRATE_500KBPS] = { .prescaler = 6, .bs1 = 12, .bs2 = 1 },
-  [CAN_HW_BITRATE_1000KBPS] = { .prescaler = 3, .bs1 = 12, .bs2 = 1 }
+static CanHwTiming s_timing[NUM_CAN_HW_BITRATES] = {  // For 32MHz clock
+  [CAN_HW_BITRATE_125KBPS] = { .prescaler = 16, .bs1 = 12, .bs2 = 1 },
+  [CAN_HW_BITRATE_250KBPS] = { .prescaler = 8, .bs1 = 12, .bs2 = 1 },
+  [CAN_HW_BITRATE_500KBPS] = { .prescaler = 4, .bs1 = 12, .bs2 = 1 },
+  [CAN_HW_BITRATE_1000KBPS] = { .prescaler = 2, .bs1 = 12, .bs2 = 1 }
 };
 static uint8_t s_num_filters;
 static CanQueue *s_g_rx_queue;
@@ -55,12 +55,11 @@ static void prv_add_filter_in(uint8_t filter_num, uint32_t mask, uint32_t filter
 }
 
 StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
-  s_num_filters = 0;
-
   gpio_init_pin(&settings->tx, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&settings->rx, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
 
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN1, ENABLE);
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_CAN2, ENABLE);
 
   CAN_DeInit(CAN_HW_BASE);
 
