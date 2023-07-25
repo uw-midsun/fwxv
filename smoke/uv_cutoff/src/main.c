@@ -54,39 +54,29 @@ void uv_smoke_logic() {
   if (state == UV_CUTOFF_DISCONNECTED) {
     return;
   }
-
-   
-  GpioState horn_val;
-  gpio_get_state(&horn,&horn_val);
-  // LOG_DEBUG("Horn actual state = %d\n", horn_val);
-  if (horn_val == (GpioState) GPIO_STATE_LOW) {
-    status = gpio_set_state(&horn, GPIO_STATE_HIGH);
-    g_rx_struct.horn_and_lights_horn_state = GPIO_STATE_HIGH;
+  
+  if (get_horn_and_lights_horn_state()) {
+    status = gpio_set_state(&horn, GPIO_STATE_LOW);
     if (status == STATUS_CODE_OK) {
       gpio_get_state(&horn, &state_val);
     }
   } else {
-    status = gpio_set_state(&horn, GPIO_STATE_LOW);
-    g_rx_struct.horn_and_lights_horn_state = GPIO_STATE_LOW;
+    status = gpio_set_state(&horn, GPIO_STATE_HIGH);
     if (status == STATUS_CODE_OK) {
       gpio_get_state(&horn, &state_val);
     }
     
   }
 
-  GpioState light_val;
   if(lights_check) {
-    gpio_get_state(&lights, &light_val);
-    if ( light_val == (GpioState) GPIO_STATE_LOW) {
-      status = gpio_set_state(&lights, GPIO_STATE_HIGH);
-      g_rx_struct.horn_and_lights_lights_state = GPIO_STATE_HIGH;
+    if (get_horn_and_lights_lights_state()) {
+      status = gpio_set_state(&lights, GPIO_STATE_LOW);
       if (status == STATUS_CODE_OK) {
         gpio_get_state(&lights, &state_val);
       }
       
     } else {
-      status = gpio_set_state(&lights, GPIO_STATE_LOW);
-      g_rx_struct.horn_and_lights_lights_state = GPIO_STATE_LOW;
+      status = gpio_set_state(&lights, GPIO_STATE_HIGH);
       if (status == STATUS_CODE_OK) {
         gpio_get_state(&lights, &state_val);
       }
@@ -103,7 +93,7 @@ TASK(smoke_task, TASK_MIN_STACK_SIZE) {
   uv_smoke_logic();
   assert( g_tx_struct.uv_cutoff_notification_signal1 == UV_CUTOFF_DISCONNECTED );
   LOG_DEBUG("uv_cutoff notification signal set to 'UV_CUTOFF_DISCONNECTED'\n");
-  delay_ms(1000);
+  // delay_ms(1000);
   //TEST 2 - Active UV status
   LOG_DEBUG("Running test for UV Active state\n");
   gpio_set_state(&uv_status,GPIO_STATE_HIGH);
@@ -115,6 +105,7 @@ TASK(smoke_task, TASK_MIN_STACK_SIZE) {
   LOG_DEBUG("Running test for Horn in state HIGH\n");
   gpio_set_state(&uv_status,GPIO_STATE_HIGH);
   gpio_set_state(&horn,GPIO_STATE_HIGH);
+  g_rx_struct.horn_and_lights_horn_state = GPIO_STATE_HIGH;
   lights_check = 0;
   uv_smoke_logic();
   assert(status == STATUS_CODE_OK);
@@ -125,6 +116,7 @@ TASK(smoke_task, TASK_MIN_STACK_SIZE) {
   LOG_DEBUG("Running test for Lights in state HIGH\n");
   gpio_set_state(&uv_status,GPIO_STATE_HIGH);
   gpio_set_state(&lights,GPIO_STATE_HIGH);
+  g_rx_struct.horn_and_lights_lights_state = GPIO_STATE_HIGH;
   lights_check = 1;
   uv_smoke_logic();
   assert(status == STATUS_CODE_OK);
@@ -135,6 +127,7 @@ TASK(smoke_task, TASK_MIN_STACK_SIZE) {
   LOG_DEBUG("Running test for Horn in state LOW\n");
   gpio_set_state(&uv_status,GPIO_STATE_HIGH);
   gpio_set_state(&horn,GPIO_STATE_LOW);
+  g_rx_struct.horn_and_lights_horn_state = GPIO_STATE_LOW;
   lights_check = 0;
   uv_smoke_logic();
   assert(status == STATUS_CODE_OK);
@@ -145,6 +138,7 @@ TASK(smoke_task, TASK_MIN_STACK_SIZE) {
   LOG_DEBUG("Running test for Lights in state LOW\n");
   gpio_set_state(&uv_status,GPIO_STATE_HIGH);
   gpio_set_state(&lights,GPIO_STATE_LOW);
+  g_rx_struct.horn_and_lights_lights_state = GPIO_STATE_LOW;
   lights_check = 1;
   uv_smoke_logic();
   assert(status == STATUS_CODE_OK);
@@ -160,6 +154,7 @@ int main() {
   
   gpio_init();
 
+  //IT SHOULD BE GPIO_INPUT_PULL_UP BUT CHANGED FOR TESTING PURPOSES ONLY
   gpio_init_pin(&uv_status, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
   gpio_init_pin(&horn, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&lights, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
