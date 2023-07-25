@@ -93,7 +93,7 @@ TASK(smoke_task, TASK_MIN_STACK_SIZE) {
   uv_smoke_logic();
   assert( g_tx_struct.uv_cutoff_notification_signal1 == UV_CUTOFF_DISCONNECTED );
   LOG_DEBUG("uv_cutoff notification signal set to 'UV_CUTOFF_DISCONNECTED'\n");
-  // delay_ms(1000);
+  delay_ms(1000);
   //TEST 2 - Active UV status
   LOG_DEBUG("Running test for UV Active state\n");
   gpio_set_state(&uv_status,GPIO_STATE_HIGH);

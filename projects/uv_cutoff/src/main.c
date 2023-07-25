@@ -108,7 +108,7 @@ int main() {
   can_init(&s_can_storage, &can_settings);
   gpio_init();
 
-  gpio_init_pin(&uv_status, GPIO_INPUT_PULL_UP, GPIO_STATE_HIGH);  
+  gpio_init_pin(&uv_status, GPIO_INPUT_PULL_UP, GPIO_STATE_HIGH);
   gpio_init_pin(&horn, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&lights, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
 
