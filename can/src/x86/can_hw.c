@@ -57,6 +57,9 @@ static uint32_t prv_get_delay(CanHwBitrate bitrate) {
   return delay_us[bitrate];
 }
 
+static SemaphoreHandle_t s_prv_can_tx_sem_handle;
+static StaticSemaphore_t s_prv_can_tx_sem;
+
 static void *prv_rx_thread(void *arg) {
   LOG_DEBUG("CAN HW RX thread started\n");
 
@@ -110,6 +113,12 @@ static void *prv_rx_thread(void *arg) {
           // TODO: I should check if they return status code ok or not
           can_hw_receive(&rx_msg.id.raw, (bool*) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc);
           can_queue_push(rx_queue, &rx_msg);
+
+          // For ensuring tx has succeeded
+          BaseType_t ret = xSemaphoreGive(s_prv_can_tx_sem_handle);
+          if (ret == pdFALSE) {
+            LOG_CRITICAL("Failed to give s_prv_can_tx_sem_handle!");
+          }
         }
 
         // Limit how often we can receive messages to simulate bus speed
@@ -214,6 +223,8 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   // Start RX thread
   s_keep_alive = true;
   pthread_create(&s_rx_pthread_id, NULL, prv_rx_thread, rx_queue);
+  s_prv_can_tx_sem_handle = xSemaphoreCreateBinaryStatic(&s_prv_can_tx_sem);
+  configASSERT(s_prv_can_tx_sem_handle);
 
   LOG_DEBUG("CAN HW initialized on %s\n", CAN_HW_DEV_INTERFACE);
 
@@ -270,6 +281,8 @@ StatusCode can_hw_transmit(uint32_t id, bool extended, const uint8_t *data, size
     //       s_socket_data.handlers[CAN_HW_EVENT_TX_READY].context);
     // }
   }
+  // Ensure that socket has consumed the transmission
+  xSemaphoreTake(s_prv_can_tx_sem_handle, portMAX_DELAY);
 
   return STATUS_CODE_OK;
 }

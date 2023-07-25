@@ -6,6 +6,7 @@
 #include "can_communication_getters.h"
 #include "can_communication_setters.h"
 #include "unity.h"
+#include "delay.h"
 
 #define DEAD 0xDEAD
 #define BEEF 0xBEEF
@@ -67,7 +68,7 @@ void test_can_task(void) {
     wait_tasks(1);
     
     // Cycle 5 times
-    for (size_t i = 0; i < 1; ++i) {
+    for (size_t i = 0; i < 5; ++i) {
         run_can_rx_cycle();
         wait_tasks(1);
         check_inputs();
