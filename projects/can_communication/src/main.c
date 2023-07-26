@@ -68,7 +68,7 @@ int main() {
   prv_init_leds();
 
   LOG_DEBUG("Welcome to CAN_ONE_SHOT_MODE!\n");
-  
+
   // // Adding a filter
   // can_add_filter_in(0x5AD);
 
