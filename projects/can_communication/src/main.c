@@ -48,7 +48,7 @@ TASK(testing_task, TASK_STACK_256) {
       LOG_DEBUG("Data:\n");
       for (i = 0; i < msg.dlc; i++) {
         byte = msg.data >> (i * 8);
-        snprintf(&log_message[i * 2], sizeof(&log_message[i * 2]), "%x ", byte);
+        snprintf(&log_message[i * 2], sizeof(log_message), "%x ", byte);
       }
       LOG_DEBUG("\t%s\n", log_message);
 
