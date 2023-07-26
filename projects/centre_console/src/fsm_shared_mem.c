@@ -10,7 +10,8 @@ void fsm_shared_mem_init(FSMStorage *storage) {
   }
   // storage->power_state hard coded to POWER_FSM_STATE_OFF
   storage->power_state = 0;
-  storage->error_code = STATUS_CODE_OK;
+  storage->power_error_code = STATUS_CODE_OK;
+  storage->drive_error_code = STATUS_CODE_OK;
 }
 
 // set power_state
@@ -28,17 +29,32 @@ StateId fsm_shared_mem_get_power_state(FSMStorage *storage) {
   return state;
 }
 
-// set error_code
-void fsm_shared_mem_set_error_code(FSMStorage *storage, StatusCode code) {
+// set power error_code
+void fsm_shared_mem_set_power_error_code(FSMStorage *storage, StatusCode code) {
   mutex_lock(&storage->mutex, BLOCK_INDEFINITELY);
-  storage->error_code = code;
+  storage->power_error_code = code;
   mutex_unlock(&storage->mutex);
 }
 
-// read error_code from FSMStorage
-StatusCode fsm_shared_mem_get_error_code(FSMStorage *storage) {
+// read power error_code from FSMStorage
+StatusCode fsm_shared_mem_get_power_error_code(FSMStorage *storage) {
   mutex_lock(&storage->mutex, BLOCK_INDEFINITELY);
-  StatusCode error = storage->error_code;
+  StatusCode error = storage->power_error_code;
+  mutex_unlock(&storage->mutex);
+  return error;
+}
+
+// set drive error_code
+void fsm_shared_mem_set_drive_error_code(FSMStorage *storage, StatusCode code) {
+  mutex_lock(&storage->mutex, BLOCK_INDEFINITELY);
+  storage->drive_error_code = code;
+  mutex_unlock(&storage->mutex);
+}
+
+// read drive error_code from FSMStorage
+StatusCode fsm_shared_mem_get_drive_error_code(FSMStorage *storage) {
+  mutex_lock(&storage->mutex, BLOCK_INDEFINITELY);
+  StatusCode error = storage->drive_error_code;
   mutex_unlock(&storage->mutex);
   return error;
 }

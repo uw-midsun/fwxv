@@ -41,24 +41,12 @@ void run_medium_cycle() {
 
 void run_slow_cycle() {}
 
-// TASK(master_task, TASK_MIN_STACK_SIZE) {
-//   int counter = 0;
-//   while (true) {
-//     run_fast_cycle();
-//     if (!(counter % 10)) run_medium_cycle();
-//     if (!(counter % 100)) run_slow_cycle();
-//     vTaskDelay(pdMS_TO_TICKS(1000));
-//     ++counter;
-//   }
-// }
-
 int main() {
   log_init();
   tasks_init();
   can_init(&s_can_storage, &can_settings);
 
   LOG_DEBUG("Welcome to TEST! \n");
-  // fsm_shared_mem_init(&cc_storage);
 
   init_drive_fsm();
   init_power_fsm();

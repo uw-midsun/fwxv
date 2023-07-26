@@ -9,8 +9,12 @@
 #include "notify.h"
 #include "task.h"
 
-#define NUM_DRIVE_STATES 5
-#define NUM_DRIVE_TRANSITIONS 9
+#define NUM_DRIVE_STATES 4
+#define NUM_DRIVE_TRANSITIONS 8
+
+#define BEGIN_PRECHARGE_SIGNAL 2
+#define PRECHARGE_STATE_COMPLETE 2
+#define NUMBER_OF_CYCLES_TO_WAIT 10
 
 DECLARE_FSM(drive);
 
@@ -19,38 +23,29 @@ typedef enum driveState {
   DRIVE,
   REVERSE,
   DO_PRECHARGE,  // turn on precharge and get ack
-  TRANSMIT,      // send drive state (NEUTRAL, DRIVE, or REVERSE) to MCI
 } driveState;
 
 typedef enum driveButtons {
-  NEUTRAL_BUTTON,
+  NEUTRAL_BUTTON = 0,
   DRIVE_BUTTON,
   REVERSE_BUTTON,
   NUM_DRIVE_FSM_BUTTONS,
 } driveButtons;
 
 typedef enum driveEvents {
-  NEUTRAL_BUTTON_EVENT,
+  NEUTRAL_BUTTON_EVENT = 0,
   DRIVE_BUTTON_EVENT,
   REVERSE_BUTTON_EVENT,
   NUM_DRIVE_FSM_EVENTS,
 } driveEvents;
 
-// this needs to be changed or deleted. Just here as a placeholder
-#define FAKE_NEUTRAL_GPIO_ADDR \
-  { .port = GPIO_PORT_B, .pin = 1 }
+#define NEUTRAL_GPIO_ADDR \
+  { .port = GPIO_PORT_A, .pin = 6 }
 
-#define FAKE_DRIVE_GPIO_ADDR \
-  { .port = GPIO_PORT_B, .pin = 2 }
+#define DRIVE_GPIO_ADDR \
+  { .port = GPIO_PORT_A, .pin = 9 }
 
-#define FAKE_REVERSE_GPIO_ADDR \
-  { .port = GPIO_PORT_B, .pin = 3 }
-
-typedef struct DriveStorage {
-  StateId state;  // NEUTRAL will be used as a default state
-} DriveStorage;
-
-extern DriveStorage drive_storage;
+#define REVERSE_GPIO_ADDR \
+  { .port = GPIO_PORT_A, .pin = 7 }
 
 StatusCode init_drive_fsm(void);
-void prv_set_or_get_error_state();
