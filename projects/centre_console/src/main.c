@@ -47,6 +47,7 @@ int main() {
   can_init(&s_can_storage, &can_settings);
 
   LOG_DEBUG("Welcome to TEST! \n");
+  // fsm_shared_mem_init(&cc_storage);
 
   init_drive_fsm();
   init_power_fsm();
