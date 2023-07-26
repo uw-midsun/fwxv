@@ -14,6 +14,7 @@
 #include "i2c.h"
 #include "bts_load_switch.h"
 #include "pca9555_gpio_expander.h"
+#include "pin_defs.h"
 
 // Please don't change the numerical values of the outputs so downstream tools can rely on them.
 // Add any new outputs at the end, and if a spare gets a proper name, just rename the spare output.
@@ -85,7 +86,7 @@ typedef enum {
   // Lights
   OUTPUT_GROUP_LEFT_TURN,
   OUTPUT_GROUP_RIGHT_TURN,
-  OUTPUT_GROUP_HAZARD_TURN,
+  OUTPUT_GROUP_HAZARD,
   NUM_OUTPUT_GROUPS,
 
 } OutputGroup;
@@ -100,7 +101,7 @@ typedef struct OutputGroupDef {
 } OutputGroupDef;
 
 extern const BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS];
-extern const Output *g_output_group_map[NUM_OUTPUT_GROUPS][NUM_OUTPUTS];
+extern const OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS];
 
 // Initializes all outputs
 StatusCode pd_output_init(void);

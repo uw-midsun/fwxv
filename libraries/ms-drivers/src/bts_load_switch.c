@@ -5,7 +5,7 @@
 // Broad function to initialize the pin passed in.
 // If using with PCA9555, pca9555_gpio_init must be called on the i2c port and address of this pin
 // prior to calling this function.
-static StatusCode bts_switch_init_pin(Bts7xxxPin *pin) {
+static StatusCode prv_bts_switch_init_pin(Bts7xxxPin *pin) {
   if (pin->pin_type == BTS7XXX_PIN_STM32) {
     return gpio_init_pin(pin->pin_stm32, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   } else {
@@ -18,7 +18,7 @@ static StatusCode bts_switch_init_pin(Bts7xxxPin *pin) {
 }
 
 // Broad function to enable the pin passed in.
-static StatusCode bts_switch_enable_pin(Bts7xxxPin *pin) {
+static StatusCode prv_bts_switch_enable_pin(Bts7xxxPin *pin) {
   if (pin->pin_type == BTS7XXX_PIN_STM32) {
     return gpio_set_state(pin->pin_stm32, GPIO_STATE_HIGH);
   } else {
@@ -27,7 +27,7 @@ static StatusCode bts_switch_enable_pin(Bts7xxxPin *pin) {
 }
 
 // Broad function to disable the pin passed in.
-static StatusCode bts_switch_disable_pin(Bts7xxxPin *pin) {
+static StatusCode prv_bts_switch_disable_pin(Bts7xxxPin *pin) {
   if (pin->pin_type == BTS7XXX_PIN_STM32) {
     return gpio_set_state(pin->pin_stm32, GPIO_STATE_LOW);
   } else {
@@ -36,7 +36,7 @@ static StatusCode bts_switch_disable_pin(Bts7xxxPin *pin) {
 }
 
 // Broad function to get whether the pin passed in is enabled.
-static StatusCode bts_switch_get_pin_enabled(Bts7xxxPin *pin) {
+static StatusCode prv_bts_switch_get_pin_enabled(Bts7xxxPin *pin) {
   if (pin->pin_type == BTS7XXX_PIN_STM32) {
     GpioState pin_state;
     StatusCode status = gpio_get_state(pin->pin_stm32, &pin_state);
@@ -64,26 +64,26 @@ StatusCode bts_switch_select_state(BtsLoadSwitchOutput *loadSwitch) {
 
 StatusCode bts_switch_init(BtsLoadSwitchOutput *loadSwitch) {
   status_ok_or_return(gpio_init_pin(loadSwitch->sense_pin, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW));
-  status_ok_or_return(bts_switch_init_pin(loadSwitch->select_pin));
-  return bts_switch_init_pin(loadSwitch->enable_pin);
+  status_ok_or_return(prv_bts_switch_init_pin(loadSwitch->select_pin));
+  return prv_bts_switch_init_pin(loadSwitch->enable_pin);
 }
 
 StatusCode bts_output_enable_output(BtsLoadSwitchOutput *loadSwitch) {
-  status_ok_or_return(bts_switch_select_state(loadSwitch));
-  return bts_switch_enable_pin(loadSwitch->enable_pin);
+  status_ok_or_return(prv_bts_switch_select_state(loadSwitch));
+  return prv_bts_switch_enable_pin(loadSwitch->enable_pin);
 }
 
 StatusCode bts_output_disable_output(BtsLoadSwitchOutput *loadSwitch) {
-  status_ok_or_return(bts_switch_select_state(loadSwitch));
-  return bts_switch_disable_pin(loadSwitch->enable_pin);
+  status_ok_or_return(prv_bts_switch_select_state(loadSwitch));
+  return prv_bts_switch_disable_pin(loadSwitch->enable_pin);
 }
 
 StatusCode bts_output_get_output_enabled(BtsLoadSwitchOutput *loadSwitch) {
-  status_ok_or_return(bts_switch_select_state(loadSwitch));
-  return bts_switch_get_pin_enabled(loadSwitch->enable_pin);
+  status_ok_or_return(prv_bts_switch_select_state(loadSwitch));
+  return prv_bts_switch_get_pin_enabled(loadSwitch->enable_pin);
 }
 
 StatusCode bts_output_get_current(BtsLoadSwitchOutput *loadSwitch, uint16_t *current) {
-  status_ok_or_return(bts_switch_select_state(loadSwitch));
+  status_ok_or_return(prv_bts_switch_select_state(loadSwitch));
   return adc_read_converted(*(loadSwitch->sense_pin), current);
 }
