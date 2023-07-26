@@ -1,13 +1,15 @@
 #include "can_hw.h"
+
 #include <string.h>
-#include "stm32f10x_interrupt.h"
+
 #include "log.h"
 #include "stm32f10x.h"
+#include "stm32f10x_interrupt.h"
 
 #define CAN_HW_BASE CAN1
 #define CAN_HW_NUM_FILTER_BANKS 14
 #define MAX_TX_RETRIES 3
-#define MAX_TX_MS_TIMEOUT 500 // CAN Messages should only be sent max every 1s
+#define MAX_TX_MS_TIMEOUT 500  // CAN Messages should only be sent max every 1s
 
 typedef struct CanHwTiming {
   uint16_t prescaler;
@@ -33,12 +35,11 @@ static SemaphoreHandle_t s_can_tx_ready_sem_handle;
 static StaticSemaphore_t s_can_tx_ready_sem;
 static bool s_tx_full = false;
 
-//takes 1 for filter_in, 2 for filter_out and default is 0
-static int s_can_filter_en = 0;         
+// takes 1 for filter_in, 2 for filter_out and default is 0
+static int s_can_filter_en = 0;
 static uint32_t can_filters[CAN_HW_NUM_FILTER_BANKS];
 
 static void prv_add_filter_in(uint8_t filter_num, uint32_t mask, uint32_t filter) {
-
   CAN_FilterInitTypeDef filter_cfg = {
     .CAN_FilterNumber = filter_num,
     .CAN_FilterMode = CAN_FilterMode_IdMask,
@@ -54,7 +55,7 @@ static void prv_add_filter_in(uint8_t filter_num, uint32_t mask, uint32_t filter
   CAN_FilterInit(&filter_cfg);
 }
 
-StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
+StatusCode can_hw_init(const CanQueue *rx_queue, const CanSettings *settings) {
   gpio_init_pin(&settings->tx, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&settings->rx, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
 
@@ -101,8 +102,8 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
 }
 
 StatusCode can_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extended) {
-  //check if s_can_filter_en has been set
-  if (s_can_filter_en == 0){
+  // check if s_can_filter_en has been set
+  if (s_can_filter_en == 0) {
     s_can_filter_en = 1;
   }
 
@@ -149,13 +150,11 @@ StatusCode can_hw_transmit(uint32_t id, bool extended, const uint8_t *data, size
 
   uint8_t tx_mailbox;
   // Enabling 3 retries
-  for (size_t i = 0; i < MAX_TX_RETRIES; ++i)
-  {
+  for (size_t i = 0; i < MAX_TX_RETRIES; ++i) {
     tx_mailbox = CAN_Transmit(CAN_HW_BASE, &tx_msg);
     if (tx_mailbox == CAN_TxStatus_NoMailBox) {
       s_tx_full = true;
-      if (xSemaphoreTake(s_can_tx_ready_sem_handle, pdMS_TO_TICKS(MAX_TX_MS_TIMEOUT)) == pdFALSE)
-      {
+      if (xSemaphoreTake(s_can_tx_ready_sem_handle, pdMS_TO_TICKS(MAX_TX_MS_TIMEOUT)) == pdFALSE) {
         LOG_WARN("CAN HW TX failed");
       }
     } else {
@@ -197,7 +196,7 @@ bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
 
 // TX handler
 void USB_HP_CAN1_TX_IRQHandler(void) {
-  //TX Irq only called if Transmit Mailbox Empty IT flag set
+  // TX Irq only called if Transmit Mailbox Empty IT flag set
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_TME) == SET) {
     if (s_tx_full) {
       xSemaphoreGiveFromISR(s_can_tx_ready_sem_handle, NULL);
@@ -213,17 +212,17 @@ void USB_LP_CAN1_RX0_IRQHandler(void) {
   BaseType_t higher_woken = pdFALSE;
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET) {
     CanMessage rx_msg = { 0 };
-    if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
-      //check id against filter out, if matches any filter in filter out then dont push
+    if (can_hw_receive(&rx_msg.id.raw, (bool *)&rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
+      // check id against filter out, if matches any filter in filter out then dont push
       bool s_filter_id_match = false;
-      for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++){
-        if (can_filters[i] == rx_msg.id.raw){
+      for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++) {
+        if (can_filters[i] == rx_msg.id.raw) {
           s_filter_id_match = true;
           break;
         }
       }
       // If filter match, do not push to rx queue
-      if (!s_filter_id_match){
+      if (!s_filter_id_match) {
         can_queue_push_from_isr(s_g_rx_queue, &rx_msg, &higher_woken);
       }
     }
@@ -238,17 +237,17 @@ void CAN1_RX1_IRQHandler(void) {
   BaseType_t higher_woken = pdFALSE;
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
     CanMessage rx_msg = { 0 };
-    if (can_hw_receive(&rx_msg.id.raw, (bool *) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
-      //check id against filter out, if matches any filter in filter out then dont push
+    if (can_hw_receive(&rx_msg.id.raw, (bool *)&rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
+      // check id against filter out, if matches any filter in filter out then dont push
       bool s_filter_id_match = false;
-      for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++){
-        if (can_filters[i] == rx_msg.id.raw){
+      for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++) {
+        if (can_filters[i] == rx_msg.id.raw) {
           s_filter_id_match = true;
           break;
         }
       }
       // If filter match, do not push to rx queue
-      if (!s_filter_id_match){
+      if (!s_filter_id_match) {
         can_queue_push_from_isr(s_g_rx_queue, &rx_msg, &higher_woken);
       }
     }
@@ -261,4 +260,3 @@ void CAN1_SCE_IRQHandler(void) {
   // TODO(Mitch) Add error notififcations
   CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_ERR);
 }
-
