@@ -114,18 +114,11 @@ BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
     .select_pin = NULL, 
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN,
   },
-  // TODO: Brake light will be put on separate line in next rev
-  //[REAR_OUTPUT_BRAKE_LIGHT] = {
-  //  .enable_pin = &s_front_pin_daytime_running_lights_en,
-  //  .select_pin = , 
-  //  .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN,
-  //},
   [FRONT_OUTPUT_CAMERA_DISPLAY] = {
     .enable_pin = &s_front_pin_main_pi_camera_display_en,
     .select_pin = NULL, 
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN,
   },
-
   [REAR_OUTPUT_BMS] = {
     .enable_pin = &s_rear_pin_bms_en,
     .select_pin = NULL, 
@@ -154,3 +147,36 @@ BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN,
   },  
 }
+
+// Output Group Definitions
+static OutputGroupDef s_output_group_left_signal = {
+  .num_outputs = 1,
+  .outputs = { FRONT_OUTPUT_LEFT_FRONT_TURN_LIGHT },
+};
+
+static OutputGroupDef s_output_group_right_signal = {
+  .num_outputs = 1,
+  .outputs = { FRONT_OUTPUT_RIGHT_FRONT_TURN_LIGHT },
+};
+
+static OutputGroupDef s_output_group_hazards = {
+  .num_outputs = 2,
+  .outputs = { FRONT_OUTPUT_LEFT_FRONT_TURN_LIGHT,FRONT_OUTPUT_RIGHT_FRONT_TURN_LIGHT},
+}
+
+OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS] = {
+  [OUTPUT_GROUP_ALL] = NULL, // Special case
+  [OUTPUT_GROUP_LEFT_TURN] = &s_output_group_left_signal,
+  [OUTPUT_GROUP_RIGHT_TURN] = &s_output_group_right_signal,
+  [OUTPUT_GROUP_HAZARD] = &s_output_group_hazards,
+};
+
+
+
+
+
+
+
+
+
+

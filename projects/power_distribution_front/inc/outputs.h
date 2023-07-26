@@ -50,25 +50,25 @@ typedef enum {
   REAR_OUTPUT_SOLAR_SENSE,
   REAR_OUTPUT_BPS_STROBE_LIGHT,
   REAR_OUTPUT_FAN_1,  
-  REAR_OUTPUT_FAN_2,
-  REAR_OUTPUT_LEFT_REAR_TURN_LIGHT,
-  REAR_OUTPUT_RIGHT_REAR_TURN_LIGHT,
-  REAR_OUTPUT_BRAKE_LIGHT,
-  REAR_OUTPUT_REAR_CAMERA,
+  // REAR_OUTPUT_FAN_2,
+  // REAR_OUTPUT_LEFT_REAR_TURN_LIGHT,
+  // REAR_OUTPUT_RIGHT_REAR_TURN_LIGHT,
+  // REAR_OUTPUT_BRAKE_LIGHT,
+  // REAR_OUTPUT_REAR_CAMERA,
 
-  REAR_OUTPUT_5V_SPARE_1,
-  REAR_OUTPUT_5V_SPARE_2,
-  REAR_OUTPUT_SPARE_1,   // on Telemetry
-  REAR_OUTPUT_SPARE_2,   // on Left Display 
-  REAR_OUTPUT_SPARE_3, 
-  REAR_OUTPUT_SPARE_4,   // on pedal's BTS7200 channel
-  REAR_OUTPUT_SPARE_5,   // on steering's BTS7200 channel
-  REAR_OUTPUT_SPARE_6,   // on right camera's BTS7200 channel
-  REAR_OUTPUT_SPARE_7,   // on main pi's BTS7200 channel
-  REAR_OUTPUT_SPARE_8,   // on driver display's BTS7200 channel
-  REAR_OUTPUT_SPARE_9,   // on centre console's BTS7200 channel
-  REAR_OUTPUT_SPARE_10,  // on rear display's BTS7200 channel
-  REAR_OUTPUT_SPARE_11,  // UV_cutoff_Pwr
+  // REAR_OUTPUT_5V_SPARE_1,
+  // REAR_OUTPUT_5V_SPARE_2,
+  // REAR_OUTPUT_SPARE_1,   // on Telemetry
+  // REAR_OUTPUT_SPARE_2,   // on Left Display 
+  // REAR_OUTPUT_SPARE_3, 
+  // REAR_OUTPUT_SPARE_4,   // on pedal's BTS7200 channel
+  // REAR_OUTPUT_SPARE_5,   // on steering's BTS7200 channel
+  // REAR_OUTPUT_SPARE_6,   // on right camera's BTS7200 channel
+  // REAR_OUTPUT_SPARE_7,   // on main pi's BTS7200 channel
+  // REAR_OUTPUT_SPARE_8,   // on driver display's BTS7200 channel
+  // REAR_OUTPUT_SPARE_9,   // on centre console's BTS7200 channel
+  // REAR_OUTPUT_SPARE_10,  // on rear display's BTS7200 channel
+  // REAR_OUTPUT_SPARE_11,  // UV_cutoff_Pwr
 
   NUM_OUTPUTS,
 } Output;
@@ -81,16 +81,12 @@ typedef enum {
 
 // List of output groups that can be controlled as individual entity
 typedef enum {
-  // Main power states
-  //OUTPUT_OFF,
-  OUTPUT_AUX,
-  OUTPUT_MAIN,
-  
+  OUTPUT_GROUP_ALL = 0, // Reserved Value
   // Lights
-  OUTPUT_LEFT_TURN,
-  OUTPUT_RIGHT_TURN,
-  OUTPUT_HAZARD_TURN,
-  OUTPUT_HAZARD_TURN,
+  OUTPUT_GROUP_LEFT_TURN,
+  OUTPUT_GROUP_RIGHT_TURN,
+  OUTPUT_GROUP_HAZARD_TURN,
+  NUM_OUTPUT_GROUPS,
 
 } OutputGroup;
 
@@ -98,8 +94,13 @@ typedef struct OutputMeasurementConfig {
   uint8_t mux_val;
 } OutputMeasurementConfig;
 
+typedef struct OutputGroupDef {
+  uint8_t num_outputs;
+  Output outputs[];
+} OutputGroupDef;
+
 extern const BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS];
-extern const Output g_output_group_map[NUM_OUTPUTS_STATES];
+extern const Output *g_output_group_map[NUM_OUTPUT_GROUPS][NUM_OUTPUTS];
 
 // Initializes all outputs
 StatusCode pd_output_init(void);
