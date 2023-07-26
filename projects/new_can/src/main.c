@@ -1,10 +1,10 @@
 #include <stdio.h>
 
 #include "can.h"
-#include "gpio.h"
 #include "can_board_ids.h"
 #include "can_watchdog.h"
 #include "delay.h"
+#include "gpio.h"
 #include "log.h"
 #include "master_task.h"
 #include "new_can_getters.h"
