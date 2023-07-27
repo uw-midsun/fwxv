@@ -1,3 +1,4 @@
+#pragma once
 // Aliases of pin addresses on front and rear power distribution.
 
 // PCA9555 and I2C definitions
@@ -128,4 +129,3 @@
 #define REAR_MUX_SEL_REAR_CAMERA_SPARE_6 12
 #define REAR_MUX_SEL_BMS 13
 #define REAR_MUX_SEL_FAN_1_2 14
-

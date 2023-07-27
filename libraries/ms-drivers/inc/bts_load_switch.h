@@ -39,7 +39,7 @@ typedef struct {
   int32_t bias;       // experimental bias to be subtracted from the resulting current, in mA
   uint16_t min_fault_voltage_mv;  // min voltage representing a fault, in mV
   uint16_t reading_out;           // Reading from IN pin, in mA
-  uint8_t mux_val; // Optional mux val when sense is connected via mux
+  uint8_t mux_val;                // Optional mux val when sense is connected via mux
 } BtsLoadSwitchOutput;
 
 // Initialize the BTS load switch.

@@ -10,9 +10,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "bts_load_switch.h"
 #include "gpio.h"
 #include "i2c.h"
-#include "bts_load_switch.h"
 #include "pca9555_gpio_expander.h"
 #include "pin_defs.h"
 
@@ -35,22 +35,22 @@ typedef enum {
   FRONT_OUTPUT_REAR_DISPLAY,
   FRONT_OUTPUT_LEFT_DISPLAY,
   FRONT_OUTPUT_RIGHT_DISPLAY,
-  FRONT_OUTPUT_SPEAKER, // If not using speaker
+  FRONT_OUTPUT_SPEAKER,  // If not using speaker
 
   FRONT_OUTPUT_5V_SPARE_1,
   FRONT_OUTPUT_5V_SPARE_2,
-  FRONT_OUTPUT_SPARE_1, // Spare_1_Telemetry_PWR
-  FRONT_OUTPUT_SPARE_2, // MCI_PWR
+  FRONT_OUTPUT_SPARE_1,  // Spare_1_Telemetry_PWR
+  FRONT_OUTPUT_SPARE_2,  // MCI_PWR
   FRONT_OUTPUT_SPARE_3,
   FRONT_OUTPUT_SPARE_4,  // on rear fan 1's BTS7200 channel
   FRONT_OUTPUT_SPARE_5,  // on rear fan 2's BTS7200 channel
- 
+
   // Outputs for rear power distribution
   REAR_OUTPUT_BMS,
   REAR_OUTPUT_MCI,
   REAR_OUTPUT_SOLAR_SENSE,
   REAR_OUTPUT_BPS_STROBE_LIGHT,
-  REAR_OUTPUT_FAN_1,  
+  REAR_OUTPUT_FAN_1,
   // REAR_OUTPUT_FAN_2,
   // REAR_OUTPUT_LEFT_REAR_TURN_LIGHT,
   // REAR_OUTPUT_RIGHT_REAR_TURN_LIGHT,
@@ -60,8 +60,8 @@ typedef enum {
   // REAR_OUTPUT_5V_SPARE_1,
   // REAR_OUTPUT_5V_SPARE_2,
   // REAR_OUTPUT_SPARE_1,   // on Telemetry
-  // REAR_OUTPUT_SPARE_2,   // on Left Display 
-  // REAR_OUTPUT_SPARE_3, 
+  // REAR_OUTPUT_SPARE_2,   // on Left Display
+  // REAR_OUTPUT_SPARE_3,
   // REAR_OUTPUT_SPARE_4,   // on pedal's BTS7200 channel
   // REAR_OUTPUT_SPARE_5,   // on steering's BTS7200 channel
   // REAR_OUTPUT_SPARE_6,   // on right camera's BTS7200 channel
@@ -82,13 +82,12 @@ typedef enum {
 
 // List of output groups that can be controlled as individual entity
 typedef enum {
-  OUTPUT_GROUP_ALL = 0, // Reserved Value
+  OUTPUT_GROUP_ALL = 0,  // Reserved Value
   // Lights
   OUTPUT_GROUP_LEFT_TURN,
   OUTPUT_GROUP_RIGHT_TURN,
   OUTPUT_GROUP_HAZARD,
   NUM_OUTPUT_GROUPS,
-
 } OutputGroup;
 
 typedef struct OutputMeasurementConfig {
@@ -108,5 +107,3 @@ StatusCode pd_output_init(void);
 
 // Sets an output group to an output state
 StatusCode pd_set_output_group(OutputGroup group, OutputState state);
-
-

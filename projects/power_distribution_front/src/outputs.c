@@ -1,8 +1,10 @@
 #include "outputs.h"
+
+#include "bts_load_switch.h"
 #include "status.h"
 
 StatusCode pd_output_init(void) {
-  for(uint8_t out = 0; out < NUM_OUTPUTS; out++) {
+  for (uint8_t out = 0; out < NUM_OUTPUTS; out++) {
     // If output is configured, we will init it
     if (g_output_config[out].enable_pin != NULL) {
       status_ok_or_return(bts_output_init(&g_output_config[out]));
@@ -17,7 +19,7 @@ StatusCode pd_set_output_group(OutputGroup group, OutputState state) {
   }
 
   if (group == OUTPUT_GROUP_ALL) {
-    for(uint8_t out = 0; out < NUM_OUTPUTS; out++) {
+    for (uint8_t out = 0; out < NUM_OUTPUTS; out++) {
       if (state == OUTPUT_STATE_ON) {
         status_ok_or_return(bts_output_enable_output(&g_output_config[out]));
       } else {
@@ -26,22 +28,19 @@ StatusCode pd_set_output_group(OutputGroup group, OutputState state) {
     }
   } else {
     // Get specific group, iterate through set of outputs
-    OutputGroupDef *grp = g_output_group_map[group]; 
+    OutputGroupDef *grp = g_output_group_map[group];
     if (!grp) {
       return STATUS_CODE_UNINITIALIZED;
     }
 
-    for(uint8_t out = 0; out < grp->num_outputs; out++) {
-       Output output = grp->outputs[out];
-       if (state == OUTPUT_STATE_ON) {
+    for (uint8_t out = 0; out < grp->num_outputs; out++) {
+      Output output = grp->outputs[out];
+      if (state == OUTPUT_STATE_ON) {
         status_ok_or_return(bts_output_enable_output(&g_output_config[output]));
       } else {
         status_ok_or_return(bts_output_disable_output(&g_output_config[output]));
       }
     }
   }
-    return STATUS_CODE_OK;
+  return STATUS_CODE_OK;
 }
-
-
-
