@@ -16,9 +16,9 @@
 #define EE_PEDAL_VALUE_DENOMINATOR (1 << 12)
 
 // Definitions for mock pedal calibrations
-#define MOCK_THROTTLE_CALIB_LOWER 0
-#define MOCK_THROTTLE_CALIB_UPPER 200
-#define MOCK_BRAKE_CALIB_LOWER 0
+#define MOCK_THROTTLE_CALIB_LOWER 5
+#define MOCK_THROTTLE_CALIB_UPPER 250
+#define MOCK_BRAKE_CALIB_LOWER 5
 #define MOCK_BRAKE_CALIB_UPPER 250
 
 // Definitions for mock pedal values
@@ -50,7 +50,9 @@ PedalCalibBlob s_calib_blob_instance = {
 };
 
 PedalCalibBlob *s_calib_blob_mock = &s_calib_blob_instance;
-Max11600Storage max11600_storage_mock;
+
+Max11600Storage max11600_storage_instance;
+Max11600Storage *max11600_storage_mock = &max11600_storage_instance;
 
 // Mock function for max11600_read_raw
 StatusCode TEST_MOCK(max11600_read_raw)(Max11600Storage *storage) {
@@ -69,22 +71,21 @@ void setup_test(void) {
   };
 
   i2c_init(I2C_PORT_2, &i2c_settings);
-  max11600_init(&max11600_storage_mock, I2C_PORT_2);
-  pedal_data_init(max11600_storage_mock, s_calib_blob_mock);
+  max11600_init(max11600_storage_mock, I2C_PORT_2);
+  pedal_resources_init(max11600_storage_mock, &s_calib_blob_instance);
+  pedal_data_init(max11600_storage_mock, &s_calib_blob_instance);
 }
 
 void teardown_test(void) {}
 
 void test_pedal_cycle(void) {
-  uint32_t throttle_value = 100;
-  uint32_t brake_value = 100;
+  uint32_t throttle_value = 0;
+  uint32_t brake_value = 0;
   uint32_t *throttle_reading = &throttle_value;
   uint32_t *brake_reading = &brake_value;
 
   // Read throttle and brake values
-  printf("\n\nBefore read_pedal_data func call\n");
   StatusCode status_throttle = read_throttle_data(throttle_reading);
-  printf("\n\nAfter first read_pedal_data func call\n");
   StatusCode status_brake = read_brake_data(brake_reading);
 
   TEST_ASSERT_OK(status_throttle);
@@ -95,8 +96,8 @@ void test_pedal_cycle(void) {
   set_pedal_output_brake_output(*brake_reading);
 
   // Print the values after setting
-  printf("\n\nExpected throttle value: %f\n", EXPECTED_THROTTLE_VALUE);
-  printf("Expected brake value: %f\n", EXPECTED_BRAKE_VALUE);
+  printf("\n\nExpected throttle value: %f\n", (float)EXPECTED_THROTTLE_VALUE / UINT32_MAX);
+  printf("Expected brake value: %f\n", (float)EXPECTED_BRAKE_VALUE / UINT32_MAX);
 
   printf("\nSet throttle value: %d\n", g_tx_struct.pedal_output_throttle_output);
   printf("Set brake value: %d\n", g_tx_struct.pedal_output_brake_output);
