@@ -79,7 +79,7 @@ jobs:
         id: build-test
         run: |
           # Setting up vcan
-          sudo apt-get install can-utils
+          sudo apt-get install -y linux-modules-extra-$(uname -r)
           sudo modprobe can
           sudo modprobe can_raw
           sudo modprobe vcan
