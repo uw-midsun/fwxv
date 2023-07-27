@@ -16,7 +16,7 @@
 static PedalCalibBlob *s_calib_blob;
 static Max11600Storage *s_max11600_storage;
 
-void pedal_data_init(Max11600Storage *storage, PedalCalibBlob *calib_blob) {
+void pedal_data_init() {
   s_max11600_storage = get_shared_max11600_storage();
   s_calib_blob = get_shared_pedal_calib_blob();
 }
