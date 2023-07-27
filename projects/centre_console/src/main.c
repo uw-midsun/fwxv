@@ -26,8 +26,6 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
-// FSMStorage cc_storage = {0}; not sure why this is breaking, might be a linking issue
-
 void run_fast_cycle() {}
 
 void run_medium_cycle() {
@@ -36,7 +34,6 @@ void run_medium_cycle() {
   fsm_run_cycle(centre_console_power_fsm);
   wait_tasks(2);
   run_can_tx_cycle();
-  // delay_ms(1000);
 }
 
 void run_slow_cycle() {}
@@ -47,7 +44,7 @@ int main() {
   can_init(&s_can_storage, &can_settings);
 
   LOG_DEBUG("Welcome to TEST! \n");
-  // fsm_shared_mem_init(&cc_storage);
+  fsm_shared_mem_init();
 
   init_drive_fsm();
   init_power_fsm();

@@ -10,12 +10,10 @@ typedef struct FSMStorage {
   Mutex mutex;
 } FSMStorage;
 
-void fsm_shared_mem_init(FSMStorage *storage);
-void fsm_shared_mem_set_power_state(FSMStorage *storage, StateId state);
-StateId fsm_shared_mem_get_power_state(FSMStorage *storage);
-void fsm_shared_mem_set_power_error_code(FSMStorage *storage, StatusCode code);
-StatusCode fsm_shared_mem_get_power_error_code(FSMStorage *storage);
-void fsm_shared_mem_set_drive_error_code(FSMStorage *storage, StatusCode code);
-StatusCode fsm_shared_mem_get_drive_error_code(FSMStorage *storage);
-
-extern FSMStorage cc_storage;
+void fsm_shared_mem_init();
+void fsm_shared_mem_set_power_state(StateId state);
+StateId fsm_shared_mem_get_power_state();
+void fsm_shared_mem_set_power_error_code(StatusCode code);
+StatusCode fsm_shared_mem_get_power_error_code();
+void fsm_shared_mem_set_drive_error_code(StatusCode code);
+StatusCode fsm_shared_mem_get_drive_error_code();

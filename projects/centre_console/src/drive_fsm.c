@@ -11,8 +11,6 @@ FSM(drive, NUM_DRIVE_TRANSITIONS);
 
 StateId next_state = NEUTRAL;
 
-FSMStorage cc_storage = { 0 };
-
 static uint32_t notification = 0;
 static Event drive_fsm_event;
 
@@ -63,9 +61,9 @@ static bool prv_speed_is_negative(void) {
  * @return Transitions to DO_PRECHARGE, DRIVE, OR REVERSE
  */
 static void prv_neutral_input(Fsm *fsm, void *context) {
-  StatusCode power_error_state = fsm_shared_mem_get_power_error_code(&cc_storage);
+  StatusCode power_error_state = fsm_shared_mem_get_power_error_code();
 
-  StateId power_state = fsm_shared_mem_get_power_state(&cc_storage);
+  StateId power_state = fsm_shared_mem_get_power_state();
   int precharge_state = get_mc_status_precharge_status();  // needs to be got from MCI
 
   if (notify_get(&notification) == STATUS_CODE_OK && power_error_state == STATUS_CODE_OK) {
@@ -91,13 +89,13 @@ static void prv_neutral_output(void *context) {
  * @return Transitions to DRIVE OR REVERSE
  */
 void prv_do_precharge_input(Fsm *fsm, void *context) {
-  StatusCode power_error_state = fsm_shared_mem_get_power_error_code(&cc_storage);
+  StatusCode power_error_state = fsm_shared_mem_get_power_error_code();
   if (power_error_state != STATUS_CODE_OK) {
     next_state = NEUTRAL;
     fsm_transition(fsm, NEUTRAL);
   }
 
-  StateId power_state = fsm_shared_mem_get_power_state(&cc_storage);
+  StateId power_state = fsm_shared_mem_get_power_state();
   if (power_state != POWER_FSM_STATE_MAIN) {
     next_state = NEUTRAL;
     fsm_transition(fsm, NEUTRAL);
@@ -112,7 +110,7 @@ void prv_do_precharge_input(Fsm *fsm, void *context) {
   cycles_counter++;
   if (cycles_counter == NUMBER_OF_CYCLES_TO_WAIT) {
     // this is a fail case | going back to neutral
-    fsm_shared_mem_set_drive_error_code(&cc_storage, STATUS_CODE_TIMEOUT);
+    fsm_shared_mem_set_drive_error_code(STATUS_CODE_TIMEOUT);
     next_state = NEUTRAL;
     fsm_transition(fsm, NEUTRAL);
   }
@@ -127,13 +125,13 @@ void prv_do_precharge_output(void *context) {
  * @return Transitions to NEUTRAL
  */
 static void prv_drive_input(Fsm *fsm, void *context) {
-  StatusCode power_error_state = fsm_shared_mem_get_power_error_code(&cc_storage);
+  StatusCode power_error_state = fsm_shared_mem_get_power_error_code();
   if (power_error_state != STATUS_CODE_OK) {
     next_state = NEUTRAL;
     fsm_transition(fsm, NEUTRAL);
   }
 
-  StateId power_state = fsm_shared_mem_get_power_state(&cc_storage);
+  StateId power_state = fsm_shared_mem_get_power_state();
   if (power_state != POWER_FSM_STATE_MAIN) {
     next_state = NEUTRAL;
     fsm_transition(fsm, NEUTRAL);
@@ -150,7 +148,7 @@ static void prv_drive_input(Fsm *fsm, void *context) {
 }
 static void prv_drive_output(void *context) {
   set_drive_output_drive_state(DRIVE);
-  fsm_shared_mem_set_drive_error_code(&cc_storage, STATUS_CODE_OK);
+  fsm_shared_mem_set_drive_error_code(STATUS_CODE_OK);
 }
 
 /**
@@ -158,13 +156,13 @@ static void prv_drive_output(void *context) {
  * @return Transitions to NEUTRAL
  */
 static void prv_reverse_input(Fsm *fsm, void *context) {
-  StatusCode power_error_state = fsm_shared_mem_get_power_error_code(&cc_storage);
+  StatusCode power_error_state = fsm_shared_mem_get_power_error_code();
   if (power_error_state != STATUS_CODE_OK) {
     next_state = NEUTRAL;
     fsm_transition(fsm, NEUTRAL);
   }
 
-  StateId power_state = fsm_shared_mem_get_power_state(&cc_storage);
+  StateId power_state = fsm_shared_mem_get_power_state();
   if (power_state != POWER_FSM_STATE_MAIN) {
     next_state = NEUTRAL;
     fsm_transition(fsm, NEUTRAL);
@@ -181,7 +179,7 @@ static void prv_reverse_input(Fsm *fsm, void *context) {
 }
 static void prv_reverse_output(void *context) {
   set_drive_output_drive_state(REVERSE);
-  fsm_shared_mem_set_drive_error_code(&cc_storage, STATUS_CODE_OK);
+  fsm_shared_mem_set_drive_error_code(STATUS_CODE_OK);
 }
 
 // Declare states in state list
@@ -220,7 +218,6 @@ static FsmTransition s_drive_transitions[NUM_DRIVE_TRANSITIONS] = {
 };
 
 StatusCode init_drive_fsm(void) {
-  fsm_shared_mem_init(&cc_storage);
   FsmSettings settings = {
     .state_list = s_drive_state_list,
     .transitions = s_drive_transitions,
