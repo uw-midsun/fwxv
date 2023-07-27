@@ -34,4 +34,4 @@ typedef enum MciFsmStateId {
   POWER_FSM_OPEN_RELAYS
 } MciFsmStateId;
 
-StatusCode init_centre_console_power_fsm(void);
+StatusCode init_power_fsm(void);
