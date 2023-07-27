@@ -25,11 +25,6 @@
 
 static const uint8_t i2c_read_address = MAX11600_READ_ADDRESS;
 static const uint8_t i2c_write_address = MAX11600_WRITE_ADDRESS;
-static const I2CSettings i2c_settings = {
-  .speed = I2C_SPEED_FAST,
-  .scl = { .port = GPIO_PORT_B, 10 },
-  .sda = { .port = GPIO_PORT_B, 11 },
-};
 
 // We assume that the channels will always be read in the order AIN0 -> AIN2
 StatusCode max11600_init(Max11600Storage *storage, I2CPort i2c_port) {
@@ -40,7 +35,6 @@ StatusCode max11600_init(Max11600Storage *storage, I2CPort i2c_port) {
 
   // send config and setup byte
   // initialize/send correct setup byte with proper scanning pattern to scan from AIN0 -> AIN2
-  i2c_init(i2c_port, &i2c_settings);
   uint8_t setup_byte = MAX11600_SETUP_BYTE;
   uint8_t config_byte = MAX11600_CONFIG_BYTE;
   status = i2c_write(i2c_port, i2c_write_address, &setup_byte, 1);

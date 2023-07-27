@@ -1,18 +1,19 @@
 #include <stdio.h>
 
 #include "adc.h"
+#include "calib.h"
 #include "can.h"
 #include "can_board_ids.h"
 #include "can_msg.h"
-#include "gpio.h"
-#include "gpio_it.h"
 #include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
 #include "master_task.h"
 #include "max11600.h"
+#include "pedal_calib.h"
 #include "pedal_data.h"
 #include "pedal_setters.h"
+#include "pedal_shared_resources_provider.h"
 #include "soft_timer.h"
 #include "tasks.h"
 
@@ -25,11 +26,16 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
-void init_pedal_controls() {
+// These variables are passed to the shared resources provider, which then get used by the rest of
+// the pedal project
+static PedalCalibBlob s_calib_blob = { 0 };
+static Max11600Storage s_max11600_storage = { 0 };
+
+void pedal_init() {
   // Initialize GPIOs needed for the throttle
   interrupt_init();
-  gpio_init();
-  gpio_it_init();
+  calib_init(&s_calib_blob, sizeof(s_calib_blob), false);
+  pedal_resources_init(&s_max11600_storage, calib_blob());
 
   // Initializes ADC for ADC readings
   I2CSettings i2c_settings = {
@@ -38,7 +44,6 @@ void init_pedal_controls() {
     .sda = { .port = GPIO_PORT_B, .pin = 11 },
   };
   i2c_init(I2C_PORT_2, &i2c_settings);
-  GpioAddress ready_pin = { .port = GPIO_PORT_B, .pin = 2 };
   adc_init();
   max11600_init(&s_max11600_storage, I2C_PORT_2);
 }
@@ -47,8 +52,8 @@ void run_fast_cycle() {
   run_can_tx_cycle();
   wait_tasks(1);
 
-  int16_t brake_position = INT16_MAX;
-  int16_t throttle_position = 0;
+  uint32_t brake_position = UINT32_MAX;
+  uint32_t throttle_position = 0;
 
   StatusCode status;
 
@@ -62,11 +67,11 @@ void run_fast_cycle() {
     // Sending messages
     if (!brake_position) {
       // Brake is not pressed - Send both readings, brake will be 0 and ignored by the receiver
-      set_pedal_output_brake_output((uint32_t)brake_position);
-      set_pedal_output_throttle_output((uint32_t)throttle_position);
+      set_pedal_output_brake_output(brake_position);
+      set_pedal_output_throttle_output(throttle_position);
     } else {
       // Brake is pressed - Send brake data with throttle as 0
-      set_pedal_output_brake_output((uint32_t)brake_position);
+      set_pedal_output_brake_output(brake_position);
       set_pedal_output_throttle_output(0);
     }
   }
@@ -81,7 +86,7 @@ int main() {
   log_init();
 
   LOG_DEBUG("Welcome to CAN!\n");
-  init_pedal_controls();
+  pedal_init();
   can_init(&s_can_storage, &can_settings);
   can_add_filter_in(SYSTEM_CAN_MESSAGE_PEDAL_PEDAL_OUTPUT);
 

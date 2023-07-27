@@ -2,12 +2,13 @@
 
 #include "can.h"
 #include "gpio.h"
-#include "gpio_it.h"
 #include "lights_fsm.h"
 #include "log.h"
 #include "master_task.h"
 #include "power_seq_fsm.h"
 #include "tasks.h"
+
+#define DEVICE_ID 0x04
 
 #define DEVICE_ID 0x04
 

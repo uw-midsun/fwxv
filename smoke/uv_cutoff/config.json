@@ -1,0 +1,10 @@
+{
+    "libs": [
+        "FreeRTOS",
+        "ms-common"
+    ],
+    "include": [
+        "#/projects/uv_cutoff/inc"
+    ],
+    "can": true
+}
