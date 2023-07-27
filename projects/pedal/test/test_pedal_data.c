@@ -17,13 +17,13 @@
 
 // Definitions for mock pedal calibrations
 #define MOCK_THROTTLE_CALIB_LOWER 0
-#define MOCK_THROTTLE_CALIB_UPPER 1000
+#define MOCK_THROTTLE_CALIB_UPPER 200
 #define MOCK_BRAKE_CALIB_LOWER 0
-#define MOCK_BRAKE_CALIB_UPPER 1000
+#define MOCK_BRAKE_CALIB_UPPER 250
 
 // Definitions for mock pedal values
-#define MOCK_THROTTLE_VALUE (500)
-#define MOCK_BRAKE_VALUE (600)
+#define MOCK_THROTTLE_VALUE (150)
+#define MOCK_BRAKE_VALUE (100)
 
 // Expected values for pedal readings
 #define EXPECTED_THROTTLE_READING_UPSCALED \
@@ -70,40 +70,10 @@ void setup_test(void) {
 
   i2c_init(I2C_PORT_2, &i2c_settings);
   max11600_init(&max11600_storage_mock, I2C_PORT_2);
+  pedal_data_init(max11600_storage_mock, s_calib_blob_mock);
 }
-
-Max11600Storage *s_max11600_storage_mock = &max11600_storage_mock;
 
 void teardown_test(void) {}
-
-static StatusCode read_pedal_data(uint32_t *reading, MAX11600Channel channel) {
-  status_ok_or_return(max11600_read_raw(s_max11600_storage_mock));
-  int32_t range;
-  int32_t lower_value;
-
-  if (channel == THROTTLE_CHANNEL) {
-    range = s_calib_blob_mock->throttle_calib.upper_value -
-            s_calib_blob_mock->throttle_calib.lower_value;
-    lower_value = s_calib_blob_mock->throttle_calib.lower_value;
-  } else if (channel == BRAKE_CHANNEL) {
-    range = s_calib_blob_mock->brake_calib.upper_value - s_calib_blob_mock->brake_calib.lower_value;
-    lower_value = s_calib_blob_mock->brake_calib.lower_value;
-  } else {
-    // Return an error status code if an unexpected channel is used
-    return STATUS_CODE_INVALID_ARGS;
-  }
-
-  int32_t reading_upscaled =
-      (int32_t)s_max11600_storage_mock->channel_readings[channel] * EE_PEDAL_VALUE_DENOMINATOR;
-  reading_upscaled -= lower_value * EE_PEDAL_VALUE_DENOMINATOR;
-  reading_upscaled *= 100;
-
-  if (range != 0) {
-    reading_upscaled /= (range * EE_PEDAL_VALUE_DENOMINATOR);
-    *reading = (uint32_t)((reading_upscaled / 100.0) * UINT32_MAX);
-  }
-  return STATUS_CODE_OK;
-}
 
 void test_pedal_cycle(void) {
   uint32_t throttle_value = 100;
@@ -112,8 +82,10 @@ void test_pedal_cycle(void) {
   uint32_t *brake_reading = &brake_value;
 
   // Read throttle and brake values
-  StatusCode status_throttle = read_pedal_data(throttle_reading, THROTTLE_CHANNEL);
-  StatusCode status_brake = read_pedal_data(brake_reading, BRAKE_CHANNEL);
+  printf("\n\nBefore read_pedal_data func call\n");
+  StatusCode status_throttle = read_throttle_data(throttle_reading);
+  printf("\n\nAfter first read_pedal_data func call\n");
+  StatusCode status_brake = read_brake_data(brake_reading);
 
   TEST_ASSERT_OK(status_throttle);
   TEST_ASSERT_OK(status_brake);

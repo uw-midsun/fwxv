@@ -16,12 +16,42 @@
 static PedalCalibBlob *s_calib_blob;
 static Max11600Storage *s_max11600_storage;
 
-void pedal_data_init() {
+void pedal_data_init(Max11600Storage *storage, PedalCalibBlob *calib_blob) {
   s_max11600_storage = get_shared_max11600_storage();
   s_calib_blob = get_shared_pedal_calib_blob();
+
+  s_max11600_storage = storage;
+  s_calib_blob = calib_blob;
+
+  if (s_max11600_storage != NULL) {
+    printf(
+        "s_max11600_storage is not NULL after get_shared_max11600_storage call.\n");  // Debugging
+                                                                                      // statement
+  } else {
+    printf("s_max11600_storage is NULL after get_shared_max11600_storage call.\n");  // Debugging
+                                                                                     // statement
+  }
+  if (s_calib_blob != NULL) {
+    printf("s_calib_blob is not NULL after get_shared_pedal_calib_blob call.\n");  // Debugging
+                                                                                   // statement
+  } else {
+    printf(
+        "s_calib_blob is NULL after get_shared_pedal_calib_blob call.\n");  // Debugging statement
+  }
 }
 
 StatusCode read_pedal_data(uint32_t *reading, MAX11600Channel channel) {
+  // NULL checks
+  if (!s_calib_blob) {
+    printf("s_calib_blob is NULL\n");
+    return STATUS_CODE_INVALID_ARGS;
+  }
+
+  if (!s_max11600_storage) {
+    printf("s_max11600_storage is NULL\n");
+    return STATUS_CODE_INVALID_ARGS;
+  }
+
   status_ok_or_return(max11600_read_raw(s_max11600_storage));
   int32_t range = s_calib_blob->brake_calib.upper_value - s_calib_blob->brake_calib.lower_value;
 
