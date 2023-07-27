@@ -36,10 +36,8 @@ StatusCode gpio_it_get_edge(const GpioAddress *address, InterruptEdge *edge) {
 
 StatusCode gpio_it_register_interrupt(const GpioAddress *address, const InterruptSettings *settings,
                                       const Event event, const Task *task) {
-  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED) {
-    return STATUS_CODE_UNREACHABLE;
-  } else if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT ||
-             event >= INVALID_EVENT) {
+  if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT ||
+      event >= INVALID_EVENT) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   } else if (s_gpio_it_interrupts[address->pin].task != NULL) {
     return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Pin already used.");
