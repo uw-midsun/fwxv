@@ -62,30 +62,30 @@ static void prv_power_fsm_fault_input(Fsm *fsm, void *context) {
 }
 
 static void prv_power_fsm_off_output(void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
   power_context.latest_state = POWER_FSM_STATE_OFF;
-  power_context.shared_mem->power_state = POWER_FSM_STATE_OFF;
+  fsm_shared_mem_set_power_state(POWER_FSM_STATE_OFF);
+  fsm_shared_mem_set_power_error_code(STATUS_CODE_OK);
   LOG_DEBUG("CENTRE CONSOLE POWER FSM OFF STATE\n");
 }
 
 static void prv_power_fsm_main_output(void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
   power_context.latest_state = POWER_FSM_STATE_MAIN;
-  power_context.shared_mem->power_state = POWER_FSM_STATE_MAIN;
+  fsm_shared_mem_set_power_state(POWER_FSM_STATE_MAIN);
+  fsm_shared_mem_set_power_error_code(STATUS_CODE_OK);
   LOG_DEBUG("CENTRE CONSOLE POWER FSM MAIN STATE\n");
 }
 
 static void prv_power_fsm_aux_output(void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
   power_context.latest_state = POWER_FSM_STATE_AUX;
-  power_context.shared_mem->power_state = POWER_FSM_STATE_AUX;
+  fsm_shared_mem_set_power_state(POWER_FSM_STATE_AUX);
+  fsm_shared_mem_set_power_error_code(STATUS_CODE_OK);
   LOG_DEBUG("CENTRE CONSOLE POWER FSM AUX STATE\n");
 }
 
 static void prv_power_fsm_fault_output(void *context) {
-  // PowerFsmContext *power_context = (PowerFsmContext *)context;
   power_context.latest_state = POWER_FSM_STATE_FAULT;
-  power_context.shared_mem->power_state = POWER_FSM_STATE_FAULT;
+  fsm_shared_mem_set_power_state(POWER_FSM_STATE_FAULT);
+  fsm_shared_mem_set_power_error_code(STATUS_CODE_OK);
   LOG_DEBUG("CENTRE CONSOLE POWER FSM FAULT STATE\n");
 }
 
@@ -185,9 +185,7 @@ StatusCode init_power_fsm(PowerFsmStateId inital_state) {
     .num_transitions = NUM_POWER_TRANSITIONS,
     .initial_state = inital_state,
   };
-  fsm_shared_mem_init(&shared_mem);
-  // PowerFsmContext context = { 0 };
-  power_context.shared_mem = &shared_mem;
+  fsm_shared_mem_init();
   power_context.latest_state = 0;
   power_context.target_state = 0;
   fsm_init(power, settings, NULL);

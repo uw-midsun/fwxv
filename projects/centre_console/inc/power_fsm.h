@@ -41,7 +41,6 @@ typedef enum PowerFsmStateId {
 typedef struct PowerFsmContext {
   PowerFsmStateId latest_state;
   PowerFsmStateId target_state;
-  FSMStorage *shared_mem;
 } PowerFsmContext;
 
 extern PowerFsmContext power_context;
