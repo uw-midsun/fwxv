@@ -9,6 +9,9 @@
 #include "power_fsm_sequence.h"
 #include "task.h"
 
+// Todo(Bafran): Update to real value
+#define BRAKE_THRES 0x0F
+
 static const GpioAddress s_btn_start = CC_BTN_PUSH_START;
 static FSMStorage shared_mem;
 
