@@ -57,6 +57,11 @@ static uint32_t prv_get_delay(CanHwBitrate bitrate) {
   return delay_us[bitrate];
 }
 
+#ifdef MS_TEST
+static SemaphoreHandle_t s_prv_can_tx_sem_handle;
+static StaticSemaphore_t s_prv_can_tx_sem;
+#endif
+
 static void *prv_rx_thread(void *arg) {
   LOG_DEBUG("CAN HW RX thread started\n");
 
@@ -69,9 +74,9 @@ static void *prv_rx_thread(void *arg) {
   pfd.revents = 0;
   pfd.events = POLLIN;
 
-// TODO: will consider not having a thread if we're sending messages directly to rx queue
-// but will use socket anyway
-// Cons: with a network socket we could potentially connect this another application
+  // TODO: will consider not having a thread if we're sending messages directly to rx queue
+  // but will use socket anyway
+  // Cons: with a network socket we could potentially connect this another application
   // if (s_socket_data.loopback) {
   //   return NULL;
   // }
@@ -84,18 +89,13 @@ static void *prv_rx_thread(void *arg) {
     // just constant polling
     int res = poll(&pfd, 1, -1);
 
-    if (res == -1)
-    {
-        // Have to do this since poll can't  be restarted
-        // https://unix.stackexchange.com/questions/509375/what-is-interrupted-system-call
-        if (errno == EINTR)
-          continue;
-        s_keep_alive = false;
-    }
-    else
-    {
-      if (pfd.revents & POLLIN)
-      {
+    if (res == -1) {
+      // Have to do this since poll can't  be restarted
+      // https://unix.stackexchange.com/questions/509375/what-is-interrupted-system-call
+      if (errno == EINTR) continue;
+      s_keep_alive = false;
+    } else {
+      if (pfd.revents & POLLIN) {
         // TODO: May need an read_all function? Maybe maybe
         int bytes =
             read(s_socket_data.can_fd, &s_socket_data.rx_frame, sizeof(s_socket_data.rx_frame));
@@ -104,12 +104,19 @@ static void *prv_rx_thread(void *arg) {
         // TODO: push to the rx queue here
         // should also have sem to push onto queue
         // also error if queue is full
-        if (s_socket_data.rx_frame_valid)
-        {
+        if (s_socket_data.rx_frame_valid) {
           // TODO: go through hw_filters here to get rid of messages
           // TODO: I should check if they return status code ok or not
-          can_hw_receive(&rx_msg.id.raw, (bool*) &rx_msg.extended, &rx_msg.data, &rx_msg.dlc);
+          can_hw_receive(&rx_msg.id.raw, (bool *)&rx_msg.extended, &rx_msg.data, &rx_msg.dlc);
           can_queue_push(rx_queue, &rx_msg);
+
+#ifdef MS_TEST
+          // For ensuring tx has succeeded
+          BaseType_t ret = xSemaphoreGive(s_prv_can_tx_sem_handle);
+          if (ret == pdFALSE) {
+            LOG_CRITICAL("Failed to give s_prv_can_tx_sem_handle!");
+          }
+#endif
         }
 
         // Limit how often we can receive messages to simulate bus speed
@@ -121,7 +128,7 @@ static void *prv_rx_thread(void *arg) {
   return NULL;
 }
 
-StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
+StatusCode can_hw_init(const CanQueue *rx_queue, const CanSettings *settings) {
   // In case socket exists or function called twice
   if (s_socket_data.can_fd != -1) {
     // LOG_DEBUG("Exiting CAN HW\n");
@@ -149,7 +156,7 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "CAN HW: Failed to open socket");
   }
 
-// Will consider this. Faking loopback and directly pushing onto rx queue
+  // Will consider this. Faking loopback and directly pushing onto rx queue
   // Rather than using real loopback, we short-circuit the socket manually to improve determinism
   // in tests by eliminating varying network delay.
   // int no_loopback = (int)false;
@@ -157,27 +164,18 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   //   setsockopt(s_socket_data.can_fd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &no_loopback,
   //                sizeof(no_loopback)) < 0) {
   //   // LOG_CRITICAL("CAN HW: Failed to set loopback mode on socket\n");
-  //   return status_msg(STATUS_CODE_INTERNAL_ERROR, "CAN HW: Failed to set loopback mode on socket");
+  //   return status_msg(STATUS_CODE_INTERNAL_ERROR, "CAN HW: Failed to set loopback mode on
+  //   socket");
   // }
   // Set loopback options
   // Technically loopback is enabled by default, but lets just do it explicitly here
-  if (setsockopt(
-          s_socket_data.can_fd,
-          SOL_CAN_RAW,
-          CAN_RAW_LOOPBACK,
-          &s_socket_data.loopback,
-          sizeof(s_socket_data.loopback)) < 0)
-  {
+  if (setsockopt(s_socket_data.can_fd, SOL_CAN_RAW, CAN_RAW_LOOPBACK, &s_socket_data.loopback,
+                 sizeof(s_socket_data.loopback)) < 0) {
     LOG_DEBUG("CAN HW: Failed to set loopback mode on socket\n");
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "CAN HW: Failed to set loopback mode on socket");
   }
-  if (setsockopt(
-          s_socket_data.can_fd,
-          SOL_CAN_RAW,
-          CAN_RAW_RECV_OWN_MSGS,
-          &s_socket_data.loopback,
-          sizeof(s_socket_data.loopback)) < 0)
-  {
+  if (setsockopt(s_socket_data.can_fd, SOL_CAN_RAW, CAN_RAW_RECV_OWN_MSGS, &s_socket_data.loopback,
+                 sizeof(s_socket_data.loopback)) < 0) {
     LOG_DEBUG("CAN HW: Failed to set recv own msg on socket\n");
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "CAN HW: Failed to set recv own msg on socket");
   }
@@ -185,28 +183,25 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   // Set non-blocking socket
   // TODO: Why do I need to do this? If it's blocking then maybe I can just
   // block on read() and not use poll()
-  if (fcntl(s_socket_data.can_fd, F_SETFL, O_NONBLOCK) < 0)
-  {
+  if (fcntl(s_socket_data.can_fd, F_SETFL, O_NONBLOCK) < 0) {
     LOG_DEBUG("CAN HW: Failed to set non-blocking socket\n");
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "CAN HW: Failed to set non-blocking socket");
   }
 
   // Setting interface index
-  struct ifreq ifr = {0};
+  struct ifreq ifr = { 0 };
   snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s", CAN_HW_DEV_INTERFACE);
-  if (ioctl(s_socket_data.can_fd, SIOCGIFINDEX, &ifr) < 0)
-  {
+  if (ioctl(s_socket_data.can_fd, SIOCGIFINDEX, &ifr) < 0) {
     LOG_CRITICAL("CAN HW: Device %s not found\n", CAN_HW_DEV_INTERFACE);
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "CAN HW: Device not found");
   }
 
   // Bind socket
   struct sockaddr_can addr = {
-      .can_family = AF_CAN,
-      .can_ifindex = ifr.ifr_ifindex,
+    .can_family = AF_CAN,
+    .can_ifindex = ifr.ifr_ifindex,
   };
-  if (bind(s_socket_data.can_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0)
-  {
+  if (bind(s_socket_data.can_fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
     LOG_DEBUG("CAN HW: Failed to bind socket\n");
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "CAN HW: Failed to bind socket");
   }
@@ -214,6 +209,10 @@ StatusCode can_hw_init(const CanQueue* rx_queue, const CanSettings *settings) {
   // Start RX thread
   s_keep_alive = true;
   pthread_create(&s_rx_pthread_id, NULL, prv_rx_thread, rx_queue);
+#ifdef MS_TEST
+  s_prv_can_tx_sem_handle = xSemaphoreCreateBinaryStatic(&s_prv_can_tx_sem);
+  configASSERT(s_prv_can_tx_sem_handle);
+#endif
 
   LOG_DEBUG("CAN HW initialized on %s\n", CAN_HW_DEV_INTERFACE);
 
@@ -264,18 +263,23 @@ StatusCode can_hw_transmit(uint32_t id, bool extended, const uint8_t *data, size
 
     // TODO: Add back if getting rid of SocketCAN
     // Apply filters that would normally be applied within socketcan
-    
+
     // if (filter_match && s_socket_data.handlers[CAN_HW_EVENT_MSG_RX].callback != NULL) {
     //   s_socket_data.handlers[CAN_HW_EVENT_MSG_RX].callback(
     //       s_socket_data.handlers[CAN_HW_EVENT_TX_READY].context);
     // }
+
+#ifdef MS_TEST
+    // Not needed in regular program since `master_task` will get cycles over
+    // Need in order to ensure that socket has consumed the transmission
+    xSemaphoreTake(s_prv_can_tx_sem_handle, portMAX_DELAY);
+#endif
   }
 
   return STATUS_CODE_OK;
 }
 
 bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
-
   if (!s_socket_data.rx_frame_valid) {
     return false;
   }
@@ -291,4 +295,3 @@ bool can_hw_receive(uint32_t *id, bool *extended, uint64_t *data, size_t *len) {
 
   return true;
 }
-

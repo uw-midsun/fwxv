@@ -4,6 +4,7 @@
 #include "can_board_ids.h"
 #include "can_watchdog.h"
 #include "delay.h"
+#include "gpio.h"
 #include "log.h"
 #include "master_task.h"
 #include "new_can_getters.h"
@@ -44,6 +45,7 @@ void run_medium_cycle() {
 void run_slow_cycle() {}
 
 int main() {
+  gpio_init();
   tasks_init();
   log_init();
 

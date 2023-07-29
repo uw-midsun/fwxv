@@ -120,13 +120,13 @@ StatusCode can_receive(const CanMessage *msg)
   // TODO: Figure out the ack_request
   StatusCode ret = can_queue_pop(&s_can_storage->rx_queue, msg);
 
-  if (ret == STATUS_CODE_OK)
-  {
-    // LOG_DEBUG("Source Id: %d\n", msg->id);
-    // LOG_DEBUG("Data: %lx\n", msg->data);
-    // LOG_DEBUG("DLC: %ld\n", msg->dlc);
-    // LOG_DEBUG("ret: %d\n", ret);
-  }
+  // if (ret == STATUS_CODE_OK)
+  // {
+  //   LOG_DEBUG("Source Id: %d\n", msg->id);
+  //   LOG_DEBUG("Data: %lx\n", msg->data);
+  //   LOG_DEBUG("DLC: %ld\n", msg->dlc);
+  //   LOG_DEBUG("ret: %d\n", ret);
+  // }
 
   return ret;
 }

@@ -39,6 +39,7 @@ typedef enum {
 } CanMode;
 
 typedef struct CanSettings {
+  // TODO: Check that every message uses the same device_id
   uint16_t device_id;
   CanHwBitrate bitrate;
   GpioAddress tx;
