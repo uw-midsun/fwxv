@@ -8,8 +8,8 @@
 
 #define BLOCK_INDEFINITELY UINT16_MAX
 
-// Mutex handle is used to access Mutex
 // Mutex Objects must be declared statically
+// Mutexes should NOT be used from ISRs (only sems)
 typedef struct Semaphore {
   SemaphoreHandle_t handle;
   StaticSemaphore_t buffer;
