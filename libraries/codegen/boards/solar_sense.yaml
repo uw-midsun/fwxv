@@ -1,0 +1,142 @@
+# Message Definitions in plaintext are on the wiki at:
+# https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
+#
+# If you are making changes to this file please update the corresponding entry
+# on the wiki. If you need to add a new message use a reasonable
+# reserved ID. The higher ID the lower the priority. Generally
+# - 0-13: Critical messages (have ACK)
+# - 14-30: Actionable messages (trigger a change in another system)
+# - 30-63: Data messages (usually not actionable by an onboard device)
+
+---
+  Messages:
+    mppt_0:
+      id: 20
+      target:
+        telemetry:
+          watchdog: 0
+      signals:
+        current:
+          length: 16
+        voltage:
+          length: 16
+        pwm:
+          length: 16
+        status:
+          length: 16
+    mppt_1:
+      id: 21
+      target:
+        telemetry:
+          watchdog: 0
+      signals:
+        current:
+          length: 16
+        voltage:
+          length: 16
+        pwm:
+          length: 16
+        status:
+          length: 16
+    mppt_2:
+      id: 22
+      target:
+        telemetry:
+          watchdog: 0
+      signals:
+        current:
+          length: 16
+        voltage:
+          length: 16
+        pwm:
+          length: 16
+        status:
+          length: 16
+    mppt_3:
+      id: 23
+      target:
+        telemetry:
+          watchdog: 0
+      signals:
+        current:
+          length: 16
+        voltage:
+          length: 16
+        pwm:
+          length: 16
+        status:
+          length: 16
+    mppt_4:
+      id: 24
+      target:
+        telemetry:
+          watchdog: 0
+      signals:
+        current:
+          length: 16
+        voltage:
+          length: 16
+        pwm:
+          length: 16
+        status:
+          length: 16
+    mppt_5:
+      id: 25
+      target:
+        telemetry:
+          watchdog: 0
+      signals:
+        current:
+          length: 16
+        voltage:
+          length: 16
+        pwm:
+          length: 16
+        status:
+          length: 16
+
+    current_sense:
+      id: 26
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        current: # cA
+          length: 16
+        voltage: # cV
+          length: 16
+        relay_status:
+          length: 8
+    
+    thermal_status:
+      id: 27
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        overtemp:
+          length: 8
+        fullspeed:
+          length: 8
+        fan_fail:
+          length: 8
+        temp_1:
+          length: 16
+        temp_2:
+          length: 16
+    
+    thermal_data:
+      id: 28
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        temp_3:
+          length: 16
+        temp_4:
+          length: 16
+        temp_5:
+          length: 16
+        temp_6:
+          length: 16
+        
