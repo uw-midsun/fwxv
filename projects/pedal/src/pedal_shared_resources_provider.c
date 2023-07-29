@@ -13,11 +13,6 @@ StatusCode pedal_resources_init(Max11600Storage *storage, PedalCalibBlob *calib_
   s_max11600_storage = storage;
   s_pedal_calib_blob = calib_blob;
 
-  LOG_DEBUG("THROTTLE UPPER: %d \n", s_pedal_calib_blob->throttle_calib.upper_value);
-  LOG_DEBUG("THROTTLE LOWER: %d \n", s_pedal_calib_blob->throttle_calib.lower_value);
-  LOG_DEBUG("BRAKE UPPER: %d \n", s_pedal_calib_blob->brake_calib.upper_value);
-  LOG_DEBUG("BRAKE LOWER: %d \n", s_pedal_calib_blob->brake_calib.lower_value);
-
   return STATUS_CODE_OK;
 }
 

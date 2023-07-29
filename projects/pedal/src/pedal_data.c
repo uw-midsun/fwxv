@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "log.h"
 #include "pedal_calib.h"
 #include "pedal_shared_resources_provider.h"
 #include "status.h"
@@ -33,8 +34,9 @@ StatusCode read_pedal_data(uint32_t *reading, MAX11600Channel channel) {
 
   if (range != 0) {
     reading_upscaled /= (range * EE_PEDAL_VALUE_DENOMINATOR);
-    // Return a reading between 0 and INT32_MAX, representing a percentage between 0 and 100
-    *reading = (uint32_t)((reading_upscaled / 100.0) * UINT32_MAX);
+    // Return a reading between 0 and UINT32_MAX, representing a percentage between 0 and 100
+    // Todo(Bafran): Make sure the data type is good with MCI
+    *reading = (uint32_t)((reading_upscaled / 100.0) * UINT16_MAX);
   }
 
   return STATUS_CODE_OK;
