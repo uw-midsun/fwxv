@@ -1,11 +1,5 @@
 #pragma once
-// CAN application interface
-// Requires GPIO, soft timers, event queue, and interrupts to be initialized.
-//
-// Application code should only use functions in this header.
-// Note that the CAN FSM must be clocked. Call `can_process_event(&e)` in your
-// event loop.
-//
+
 #include "can.h"
 #include "mcp2515_defs.h"
 #include "mcp2515_hw.h"

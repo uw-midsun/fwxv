@@ -40,12 +40,12 @@ typedef enum DriveState {
 static float s_target_current;
 static float s_target_velocity;
 
-static float prv_get_float(uint32_t f) {
+static float prv_get_float(uint32_t u) {
   union {
     float f;
     uint32_t u;
-  } fu = { .f = f };
-  return fu.u;
+  } fu = { .u = u };
+  return fu.f;
 }
 
 static void prv_update_target_current_velocity() {
