@@ -84,6 +84,7 @@ void test_pedal_cycle(void) {
   set_pedal_output_brake_output(brake_reading);
 
   // Check the correct values for the throttle and brake signals are in the g_tx_struct
-  TEST_ASSERT_EQUAL(EXPECTED_THROTTLE_VALUE, prv_get_float(g_tx_struct.pedal_output_throttle_output));
+  TEST_ASSERT_EQUAL(EXPECTED_THROTTLE_VALUE,
+                    prv_get_float(g_tx_struct.pedal_output_throttle_output));
   TEST_ASSERT_EQUAL(EXPECTED_BRAKE_VALUE, prv_get_float(g_tx_struct.pedal_output_brake_output));
 }

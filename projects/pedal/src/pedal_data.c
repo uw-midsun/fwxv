@@ -21,7 +21,7 @@ static uint32_t prv_get_uint32(float f) {
   union {
     float f;
     uint32_t u;
-  } fu = {.f = f};
+  } fu = { .f = f };
   return fu.u;
 }
 
