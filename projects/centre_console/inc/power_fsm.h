@@ -2,16 +2,20 @@
 
 #include "delay.h"
 #include "fsm.h"
+#include "fsm_shared_mem.h"
 #include "gpio.h"
 #include "log.h"
 #include "power_fsm_sequence.h"
 #include "task.h"
 
-#define NUM_CENTRE_CONSOLE_POWER_STATES 14
-#define NUM_CENTRE_CONSOLE_POWER_TRANSITIONS 40
-DECLARE_FSM(centre_console_power_fsm);
+#define NUM_POWER_STATES 14
+#define NUM_POWER_TRANSITIONS 40
 
-typedef enum MciFsmStateId {
+#define START_BUTTON_EVENT 0
+
+DECLARE_FSM(power);
+
+typedef enum PowerFsmStateId {
   POWER_FSM_STATE_OFF = 0,
   // -> MAIN Sequence
   POWER_FSM_CONFIRM_AUX_STATUS,
@@ -32,6 +36,13 @@ typedef enum MciFsmStateId {
   POWER_FSM_DISCHARGE_PRECHARGE,
   POWER_FSM_TURN_OFF_EVERYTHING,
   POWER_FSM_OPEN_RELAYS
-} MciFsmStateId;
+} PowerFsmStateId;
 
-StatusCode init_power_fsm(void);
+typedef struct PowerFsmContext {
+  PowerFsmStateId latest_state;
+  PowerFsmStateId target_state;
+} PowerFsmContext;
+
+extern PowerFsmContext power_context;
+
+StatusCode init_power_fsm(PowerFsmStateId inital_state);

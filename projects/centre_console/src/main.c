@@ -31,7 +31,7 @@ void run_fast_cycle() {}
 void run_medium_cycle() {
   run_can_rx_cycle();
   fsm_run_cycle(drive);
-  fsm_run_cycle(centre_console_power_fsm);
+  fsm_run_cycle(power);
   wait_tasks(2);
   run_can_tx_cycle();
 }
@@ -47,7 +47,7 @@ int main() {
   fsm_shared_mem_init();
 
   init_drive_fsm();
-  init_power_fsm();
+  init_power_fsm(POWER_FSM_STATE_OFF);
 
   init_master_task();
 

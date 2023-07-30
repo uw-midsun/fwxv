@@ -11,7 +11,7 @@
 ---
   Messages:
     bps_heartbeat:
-      id: 0
+      id: 64
       target:
         centre_console:
           watchdog: 0
@@ -77,6 +77,8 @@
       id: 58
       target:
         bms_carrier:
+          watchdog: 0
+        centre_console:
           watchdog: 0
       signals:
         hv:

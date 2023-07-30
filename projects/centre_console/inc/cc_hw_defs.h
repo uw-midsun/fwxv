@@ -11,7 +11,7 @@
 
 // Button Inputs and backlit LEDS
 #define CC_BTN_PUSH_START \
-  { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
+  { .port = NUM_GPIO_PORTS - 1, .pin = GPIO_PINS_PER_PORT - 1 }
 #define CC_BTN_STATE_DRIVE \
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
 #define CC_BTN_STATE_NEUTRAL \
