@@ -10,20 +10,6 @@
 
 ---
   Messages:
-    mppt_0:
-      id: 20
-      target:
-        telemetry:
-          watchdog: 0
-      signals:
-        current:
-          length: 16
-        voltage:
-          length: 16
-        pwm:
-          length: 16
-        status:
-          length: 16
     mppt_1:
       id: 21
       target:
@@ -94,6 +80,20 @@
           length: 16
         status:
           length: 16
+    mppt_6:
+      id: 20
+      target:
+        telemetry:
+          watchdog: 0
+      signals:
+        current:
+          length: 16
+        voltage:
+          length: 16
+        pwm:
+          length: 16
+        status:
+          length: 16
 
     current_sense:
       id: 26
@@ -125,7 +125,7 @@
         temp_2:
           length: 16
     
-    thermal_data:
+    thermal_temps:
       id: 28
       target:
         centre_console:
