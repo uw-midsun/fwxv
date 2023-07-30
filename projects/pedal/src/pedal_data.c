@@ -17,6 +17,14 @@
 static PedalCalibBlob *s_calib_blob;
 static Max11600Storage *s_max11600_storage;
 
+static uint32_t prv_get_uint32(float f) {
+  union {
+    float f;
+    uint32_t u;
+  } fu = {.f = f};
+  return fu.u;
+}
+
 void pedal_data_init() {
   s_max11600_storage = get_shared_max11600_storage();
   s_calib_blob = get_shared_pedal_calib_blob();
@@ -34,9 +42,8 @@ StatusCode read_pedal_data(uint32_t *reading, MAX11600Channel channel) {
 
   if (range != 0) {
     reading_upscaled /= (range * EE_PEDAL_VALUE_DENOMINATOR);
-    // Return a reading between 0 and UINT32_MAX, representing a percentage between 0 and 100
     // Todo(Bafran): Make sure the data type is good with MCI
-    *reading = (uint32_t)((reading_upscaled / 100.0) * UINT16_MAX);
+    *reading = prv_get_uint32(reading_upscaled / 100.0);
   }
 
   return STATUS_CODE_OK;
