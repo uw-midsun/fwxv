@@ -1,4 +1,4 @@
-// Remove event queue and replace with FreeRTOS
+// Remove event queue
 #pragma once
 // Driver for LTC6811 AFE chip
 

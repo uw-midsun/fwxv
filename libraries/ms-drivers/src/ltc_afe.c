@@ -1,7 +1,6 @@
-// Remove critical section
+// Remove critical section and replace events
 #include "ltc_afe.h"
 
-// #include "critical_section.h"
 #include "ltc_afe_fsm.h"
 #include "ltc_afe_impl.h"
 
@@ -17,11 +16,9 @@ StatusCode ltc_afe_set_result_cbs(LtcAfeStorage *afe, LtcAfeResultCallback cell_
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
-  // bool disabled = critical_section_start();
   settings->cell_result_cb = cell_result_cb;
   settings->aux_result_cb = aux_result_cb;
   settings->result_context = context;
-  // critical_section_end(disabled);
 
   return STATUS_CODE_OK;
 }
