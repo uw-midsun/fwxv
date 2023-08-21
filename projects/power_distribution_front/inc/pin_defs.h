@@ -87,7 +87,7 @@
 #define MUX_SEL_LEFT_RIGHT_REAR_CAMERA 12
 #define MUX_SEL_INFOTAINMENT_DISPLAY_BMS 13  // aka main display
 #define MUX_SEL_FAN_1_2 14
-#define FRONT_MUX_SEL_UV_VBAT 15
+#define MUX_SEL_UV_VBAT 15
 
 // Rear power distribution
 // Enable pins
