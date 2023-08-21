@@ -142,7 +142,11 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
     if "include" in config:
         for i in config["include"]:
             inc_dirs.append(Dir(i))
-    
+
+    if "sources" in config:
+        for i in config["sources"]:
+            srcs.append(File(i))
+
     # Glob the source files from OBJ_DIR because it's a variant dir
     # See: https://scons.org/doc/1.2.0/HTML/scons-user/x3346.html
     # str(entry) is e.g. 'projects/example', so this is like build/obj/projects/example/src

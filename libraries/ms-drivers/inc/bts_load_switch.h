@@ -52,7 +52,7 @@ StatusCode bts_output_enable_output(BtsLoadSwitchOutput *loadSwitch);
 StatusCode bts_output_disable_output(BtsLoadSwitchOutput *loadSwitch);
 
 // Returns whether the output is enabled or disabled.
-StatusCode bts_output_get_enabled(BtsLoadSwitchOutput *loadSwitch);
+StatusCode bts_output_get_output_enabled(BtsLoadSwitchOutput *loadSwitch, uint8_t *pin_state);
 
 // Read the latest current input current measurement, in mA.
 StatusCode bts_output_get_current(BtsLoadSwitchOutput *loadSwitch, uint16_t *current);

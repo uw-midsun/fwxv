@@ -5,6 +5,10 @@
 #define PD_I2C_PORT I2C_PORT_1
 #define PD_PCA9555_I2C_ADDRESS_0 0x24
 #define PD_PCA9555_I2C_ADDRESS_1 0x26
+#define PD_I2C_SDA \
+  { GPIO_PORT_B, 9 }
+#define PD_I2C_SCL \
+  { GPIO_PORT_B, 8 }
 #define PCA9555_IO_INT1 \
   { GPIO_PORT_B, 14 }
 #define PCA9555_IO_INT2 \

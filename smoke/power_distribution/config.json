@@ -1,0 +1,14 @@
+{
+    "libs": [
+        "FreeRTOS",
+        "ms-common",
+        "ms-drivers"
+    ],
+    "include": [
+        "#/projects/power_distribution_front/inc"
+    ],
+    "sources": [
+        "#/projects/power_distribution_front/src/outputs.c",
+        "#/projects/power_distribution_front/src/output_config.c"
+    ]
+}
