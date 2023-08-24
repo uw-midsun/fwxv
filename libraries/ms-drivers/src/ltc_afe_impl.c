@@ -1,10 +1,10 @@
-// Add in crc15
 #include "ltc_afe_impl.h"
 
 #include <stddef.h>
 #include <string.h>
 
-// #include "crc15.h"
+// Will port in crc15 for now. Worth discussing in the future if we really need it tbh
+#include "crc15.h"
 #include "delay.h"
 #include "log.h"
 #include "ltc6811.h"
@@ -129,7 +129,7 @@ static StatusCode prv_aux_write_comm_register(LtcAfeStorage *afe, uint8_t device
   packet.reg.fcom0 = LTC6811_FCOM_CSBM_HIGH;
   packet.reg.icom1 = LTC6811_ICOM_NO_TRANSMIT;
   packet.reg.icom2 = LTC6811_ICOM_NO_TRANSMIT;
-  // uint16_t comm_pec = crc15_calculate((uint8_t *)&packet.reg, sizeof(LtcAfeCommRegisterData));
+  uint16_t comm_pec = crc15_calculate((uint8_t *)&packet.reg, sizeof(LtcAfeCommRegisterData));
 
   prv_wakeup_idle(afe);
   return spi_exchange(settings->spi_port, (uint8_t *)&packet, sizeof(LtcAfeWriteCommRegPacket),
@@ -179,7 +179,7 @@ static StatusCode prv_write_config(LtcAfeStorage *afe, uint8_t gpio_enable_pins)
     // GPIO 1 is used to read data from the mux
     config_packet.devices[curr_device].reg.gpio = (enable >> 3);
 
-    // uint16_t cfgr_pec = crc15_calculate((uint8_t *)&config_packet.devices[curr_device].reg, 6);
+    uint16_t cfgr_pec = crc15_calculate((uint8_t *)&config_packet.devices[curr_device].reg, 6);
     config_packet.devices[curr_device].pec = SWAP_UINT16(cfgr_pec);
   }
 
@@ -233,7 +233,7 @@ StatusCode ltc_afe_impl_init(LtcAfeStorage *afe, const LtcAfeSettings *settings)
   memcpy(&afe->settings, settings, sizeof(afe->settings));
 
   prv_calc_offsets(afe);
-  // crc15_init_table();
+  crc15_init_table();
 
   SpiSettings spi_config = {
     .baudrate = settings->spi_baudrate,  //
@@ -286,7 +286,7 @@ StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
 
       // the Packet Error Code is transmitted after the cell data (see p.45)
       uint16_t received_pec = SWAP_UINT16(voltage_register[device].pec);
-      // uint16_t data_pec = crc15_calculate((uint8_t *)&voltage_register[device], 6);
+      uint16_t data_pec = crc15_calculate((uint8_t *)&voltage_register[device], 6);
       if (received_pec != data_pec) {
         // return early on failure
         return status_code(STATUS_CODE_INTERNAL_ERROR);
@@ -316,7 +316,7 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t device_cell) {
     }
 
     uint16_t received_pec = SWAP_UINT16(register_data[device].pec);
-    // uint16_t data_pec = crc15_calculate((uint8_t *)&register_data[device], 6);
+    uint16_t data_pec = crc15_calculate((uint8_t *)&register_data[device], 6);
     if (received_pec != data_pec) {
       return status_code(STATUS_CODE_INTERNAL_ERROR);
     }

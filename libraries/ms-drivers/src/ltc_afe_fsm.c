@@ -1,5 +1,3 @@
-// Change some syntactical stuff with how the FSM's are declared/used, soft timers
-// Remove references to the event queue
 #include "ltc_afe_fsm.h"
 
 #include "log.h"
@@ -8,151 +6,191 @@
 
 FSM(ltc_afe_fsm, NUM_LTC_AFE_FSM_STATES);
 
-static void prv_cell_conv_timeout(SoftTimerId timer_id, void *context) {
-  LtcAfeStorage *afe = context;
-  LtcAfeEventList *afe_events = &afe->settings.ltc_events;
+// Global variables for now
+static volatile bool trigger_cells = false;
+static volatile bool trigger_aux = false;
+static volatile bool raise_fault = false;
 
-  event_raise(afe_events->cell_conv_complete_event, 0);
+static void prv_cell_conv_timeout(SoftTimerId timer_id, void *context) {
+  // Directly go to the read_cells state after the trigger_cell passes
+  trigger_cells = true;
 }
 
 static void prv_aux_conv_timeout(SoftTimerId timer_id, void *context) {
-  LtcAfeStorage *afe = context;
-  LtcAfeEventList *afe_events = &afe->settings.ltc_events;
+  // Directly go to the read_aux state after the trigger_aux passes
+  trigger_aux = true;
+}
 
-  event_raise(afe_events->aux_conv_complete_event, afe->aux_index);
+static void prv_afe_idle_output(void *context) {
+  LOG_DEBUG("Transitioned to IDLE state.\n");
+  // Coming back to IDLE indicates a period of doing nothing
+}
+
+static void prv_afe_idle_input(Fsm *fsm, void *context) {
+  LtcAfeStorage *afe = context;
+  // Transition to trigger_cell_conv or trigger_aux_conv state
+  // from notification when function to do so is called
+  uint32_t notif;
+  if (notify_get(&notif) == STATUS_CODE_OK) {
+    if (notify_check_event(&notif, TRIGGER_CELL_EVENT_START)) {
+      fsm_transition(fsm, LTC_AFE_TRIGGER_CELL_CONV);
+    } else if (notify_check_event(&notif, TRIGGER_AUX_EVENT_START)) {
+      fsm_transition(fsm, LTC_AFE_TRIGGER_AUX_CONV);
+    }
+  }
 }
 
 static void prv_afe_trigger_cell_conv_output(void *context) {
+  LtcAfeStorage *afe = context;
+  trigger_cells = false;
+  StatusCode ret = ltc_afe_impl_trigger_cell_conv(afe);
+  if (ret == STATUS_CODE_OK) {
+    static SoftTimer s_trigger;
+    soft_timer_start(LTC_AFE_FSM_CELL_CONV_DELAY_MS, prv_cell_conv_timeout, &s_trigger);
+  }
+  else {
+    raise_fault = true;
+  }
   LOG_DEBUG("Transitioned to TRIGGER CELLS CONVERSION state.\n");
 }
 
 static void prv_afe_trigger_cell_conv_input(Fsm *fsm, void *context) {
+  // Transition to read_cells or idle state
   LtcAfeStorage *afe = context;
-  // LtcAfeEventList *afe_events = &afe->settings.ltc_events;
-
-  StatusCode ret = ltc_afe_impl_trigger_cell_conv(afe);
-  // if (ret == STATUS_CODE_OK) {
-  //   soft_timer_start_millis(LTC_AFE_FSM_CELL_CONV_DELAY_MS, prv_cell_conv_timeout, afe, NULL);
-  // } else {
-  //   event_raise_priority(EVENT_PRIORITY_HIGHEST, afe_events->fault_event,
-  //                        LTC_AFE_FSM_FAULT_TRIGGER_CELL_CONV);
-  // }
+  if (raise_fault) {
+    fsm_transition(fsm, LTC_AFE_FAULT);
+  }
+  if (trigger_cells) {
+    fsm_transition(fsm, LTC_AFE_READ_CELLS);
+  }
 }
 
 static void prv_afe_read_cells_output(void *context) {
+  LtcAfeStorage *afe = context;
+
+  StatusCode ret = ltc_afe_impl_read_cells(afe);
+
+  if (ret == STATUS_CODE_OK) {
+    // Take any actions that is appropriate after the read is complete
+  } else {
+    raise_fault = true;
+  }
   LOG_DEBUG("Transitioned to READ CELLS state.\n")
 }
 
 static void prv_afe_read_cells_input(Fsm *fsm, void *context) {
-  LtcAfeStorage *afe = context;
-  // LtcAfeEventList *afe_events = &afe->settings.ltc_events;
-
-  StatusCode ret = ltc_afe_impl_read_cells(afe);
-
-  // if (status_ok(ret)) {
-  //   // Raise the event first in case the user raises a trigger conversion event in the callback
-  //   afe->retry_count = 0;
-  //   event_raise(afe_events->callback_run_event, 0);
-
-  if (afe->settings.cell_result_cb != NULL) {
-    afe->settings.cell_result_cb(afe->cell_voltages, afe->settings.num_cells,
-                                 afe->settings.result_context);
+  // Transition to trigger aux if no faults have occurred
+  if (raise_fault) {
+    fsm_transition(fsm, LTC_AFE_FAULT);
   }
-  // } else if (afe->retry_count < LTC_AFE_FSM_MAX_RETRY_COUNT) {
-  //   afe->retry_count++;
-  //   soft_timer_start_millis(LTC_AFE_FSM_CELL_CONV_DELAY_MS, prv_cell_conv_timeout, afe, NULL);
-  // } else {
-  //   event_raise_priority(EVENT_PRIORITY_HIGHEST, afe_events->fault_event,
-  //                        LTC_AFE_FSM_FAULT_READ_ALL_CELLS);
-  // }
+  fsm_transition(fsm, LTC_AFE_TRIGGER_AUX_CONV);
 }
 
 static void prv_afe_trigger_aux_conv_output(void *context) {
+  LtcAfeStorage *afe = context;
+  trigger_aux = false;
+  uint32_t device_cell = afe->device_cell;
+  StatusCode ret = ltc_afe_impl_trigger_aux_conv(afe, device_cell);
+  if (ret == STATUS_CODE_OK) {
+    afe->aux_index = device_cell;
+    static SoftTimer s_trigger;
+    soft_timer_start(LTC_AFE_FSM_AUX_CONV_DELAY_MS, prv_aux_conv_timeout, &s_trigger);
+  } else {
+    raise_fault = true;
+  }
   LOG_DEBUG("Transitioned to TRIGGER AUX CONVERSION state.");
 }
 
 static void prv_afe_trigger_aux_conv_input(Fsm *fsm, void *context) {
+  // Transition to read_aux or idle state
   LtcAfeStorage *afe = context;
-  // LtcAfeEventList *afe_events = &afe->settings.ltc_events;
-
-  // uint32_t device_cell = e->data;
-  StatusCode ret = ltc_afe_impl_trigger_aux_conv(afe, device_cell);
-  // if (status_ok(ret)) {
-  //   afe->aux_index = device_cell;
-  //   soft_timer_start_millis(LTC_AFE_FSM_AUX_CONV_DELAY_MS, prv_aux_conv_timeout, afe, NULL);
-  // } else {
-  //   event_raise_priority(EVENT_PRIORITY_HIGHEST, afe_events->fault_event,
-  //                        LTC_AFE_FSM_FAULT_TRIGGER_AUX_CONV);
-  // }
+  if (raise_fault) {
+    fsm_transition(fsm, LTC_AFE_FAULT);
+  }
+  if (trigger_aux) {
+    fsm_transition(fsm, LTC_AFE_READ_AUX);
+  }
 }
 
 static void prv_afe_read_aux_output(void *context) {
+  LtcAfeStorage *afe = context;
+  uint16_t device_cell = afe->device_cell;
+  StatusCode ret = ltc_afe_impl_read_aux(afe, device_cell);
+  if (ret == STATUS_CODE_OK) {
+    afe->cell_number++;
+  } else {
+    raise_fault = true;
+  }
   LOG_DEBUG("Transitioned to READ AUX OUTPUT state.");
 }
 
 static void prv_afe_read_aux_input(Fsm *fsm, void *context) {
+  // Transition to aux_complete, read_aux, trigger_aux_conv, or idle state
   LtcAfeStorage *afe = context;
-  // LtcAfeEventList *afe_events = &afe->settings.ltc_events;
-
-  uint16_t device_cell = e->data;
-
-  StatusCode ret = ltc_afe_impl_read_aux(afe, device_cell);
-  // if (status_ok(ret)) {
-  //   // Kick-off the next aux conversion
-  //   afe->retry_count = 0;
-  //   // event_raise(afe_events->trigger_aux_conv_event, device_cell + 1);
-  // } else if (afe->retry_count < LTC_AFE_FSM_MAX_RETRY_COUNT) {
-  //   // Attempt to retry the read after delaying
-  //   afe->retry_count++;
-  //   soft_timer_start_millis(LTC_AFE_FSM_AUX_CONV_DELAY_MS, prv_aux_conv_timeout, afe, NULL);
-  // } else {
-  //   event_raise_priority(EVENT_PRIORITY_HIGHEST, afe_events->fault_event,
-  //                        LTC_AFE_FSM_FAULT_READ_AUX);
-  // }
+  if (raise_fault) {
+    fsm_transition(fsm, LTC_AFE_FAULT);
+  }
+  if (afe->cell_number == LTC_AFE_MAX_CELLS_PER_DEVICE) {
+    afe->cell_number = 0;
+    fsm_transition(fsm, LTC_AFE_AUX_COMPLETE);
+  } else {
+    fsm_transition(fsm, LTC_AFE_TRIGGER_AUX_CONV);
+  }
 }
 
-static void prv_afe_aux_complete_output(void *context) {}
+static void prv_afe_aux_complete_output(void *context) {
+  LOG_DEBUG("Transitioned to AUX COMPLETE state.");
+}
 
 static void prv_afe_aux_complete_input(Fsm *fsm, void *context) {
+  // Transition to idle state
+  // We can add broadcasting functionality here later (MVP for now)
   LtcAfeStorage *afe = context;
-  // LtcAfeEventList *afe_events = &afe->settings.ltc_events;
+  fsm_transition(fsm, LTC_AFE_IDLE);
+}
 
-  // Raise the event first in case the user raises a trigger conversion event in the callback
-  // event_raise(afe_events->callback_run_event, 0);
+static void prv_afe_fault_output(void *context) {
+  raise_fault = false;
+  LOG_DEBUG("Transitioned to FAULT state.");
+}
 
-  // 12 aux conversions complete - the array should be fully populated
-  if (afe->settings.aux_result_cb != NULL) {
-    afe->settings.aux_result_cb(afe->aux_voltages, afe->settings.num_cells,
-                                afe->settings.result_context);
-  }
+static void prv_afe_fault_input(Fsm *fsm, void *context) {
+  // Just transition to IDLE for now. Will implement more sophisticated fault stuff later
+  fsm_transition(fsm, LTC_AFE_IDLE);
 }
 
 // Declare states
 static FsmState s_ltc_afe_state_list[NUM_LTC_AFE_FSM_STATES] = {
-  STATE(LTC_AFE_IDLE, NULL, NULL),
+  STATE(LTC_AFE_IDLE, prv_afe_idle_input, prv_afe_idle_output),
   STATE(LTC_AFE_TRIGGER_CELL_CONV, prv_afe_trigger_cell_conv_input,
         prv_afe_trigger_cell_conv_output),
   STATE(LTC_AFE_READ_CELLS, prv_afe_read_cells_input, prv_afe_read_cells_output),
   STATE(LTC_AFE_TRIGGER_AUX_CONV, prv_afe_trigger_aux_conv_input, prv_afe_trigger_aux_conv_output),
   STATE(LTC_AFE_READ_AUX, prv_afe_read_aux_input, prv_afe_read_aux_output),
-  STATE(LTC_AFE_AUX_COMPLETE, prv_afe_aux_complete_input, prv_afe_aux_complete_output)
+  STATE(LTC_AFE_AUX_COMPLETE, prv_afe_aux_complete_input, prv_afe_aux_complete_output),
+  STATE(LTC_AFE_FAULT, prv_afe_fault_input, prv_afe_fault_output)
 };
 
 // Declare transitions
 static FsmTransition s_ltc_afe_transitions[NUM_LTC_AFE_FSM_TRANSITIONS] = {
   TRANSITION(LTC_AFE_IDLE, LTC_AFE_TRIGGER_CELL_CONV),
   TRANSITION(LTC_AFE_IDLE, LTC_AFE_TRIGGER_AUX_CONV),
+  TRANSITION(LTC_AFE_IDLE, LTC_AFE_IDLE),
   TRANSITION(LTC_AFE_TRIGGER_CELL_CONV, LTC_AFE_READ_CELLS),
   TRANSITION(LTC_AFE_TRIGGER_CELL_CONV, LTC_AFE_IDLE),
+  TRANSITION(LTC_AFE_TRIGGER_CELL_CONV, LTC_AFE_FAULT),
   TRANSITION(LTC_AFE_READ_CELLS, LTC_AFE_IDLE),
+  TRANSITION(LTC_AFE_READ_CELLS, LTC_AFE_TRIGGER_AUX_CONV),
   TRANSITION(LTC_AFE_READ_CELLS, LTC_AFE_READ_CELLS),
+  TRANSITION(LTC_AFE_READ_CELLS, LTC_AFE_FAULT),
   TRANSITION(LTC_AFE_TRIGGER_AUX_CONV, LTC_AFE_READ_AUX),
   TRANSITION(LTC_AFE_TRIGGER_AUX_CONV, LTC_AFE_IDLE),
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_AUX_COMPLETE),
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_READ_AUX),
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_TRIGGER_AUX_CONV),
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_IDLE),
-  TRANSITION(LTC_AFE_AUX_COMPLETE, LTC_AFE_IDLE)
+  TRANSITION(LTC_AFE_AUX_COMPLETE, LTC_AFE_IDLE),
+  TRANSITION(LTC_AFE_FAULT, LTC_AFE_IDLE)
 };
 
 StatusCode init_ltc_afe_fsm(void) {

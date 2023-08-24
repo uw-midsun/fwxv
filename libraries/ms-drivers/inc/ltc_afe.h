@@ -1,22 +1,19 @@
-// Remove event queue
 #pragma once
 // Driver for LTC6811 AFE chip
 
-// TODO(SOFT-9): Need to update GPIO/ADC part
-
-// Requires GPIO, Interrupts, Soft Timers, and Event Queue to be initialized
+// Requires GPIO, Interrupts and Soft Timers
 
 // Note that all units are in 100uV.
 
 // This module supports AFEs with >=12 cells using the |cell/aux_bitset|.
-// Note that due to the long conversion delays required, we use an FSM to return control to the
-// application.
+// TODO: We might have to address the problem of long conversion delays if each conversion exceeds
+// the 1 cycle/10 ms at which our FSM runs. We do not want the conversion to continue from one cycle
+// to the next
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "event_queue.h"
 #include "fsm.h"
 #include "gpio.h"
 #include "spi.h"
@@ -35,9 +32,6 @@
 #define _PACKED
 #endif
 
-// Function to run when a conversion is complete
-typedef void (*LtcAfeResultCallback)(uint16_t *result_arr, size_t len, void *context);
-
 // select the ADC mode (trade-off between speed or minimizing noise)
 // see p.50 for conversion times and p.23 for noise
 typedef enum {
@@ -54,15 +48,6 @@ typedef struct LtcAfeBitset {
   uint16_t cell_bitset;
   uint16_t aux_bitset;
 } LtcAfeBitset;
-
-typedef struct LtcAfeEventList {
-  EventId trigger_cell_conv_event;
-  EventId cell_conv_complete_event;
-  EventId trigger_aux_conv_event;
-  EventId aux_conv_complete_event;
-  EventId callback_run_event;
-  EventId fault_event;
-} LtcAfeEventList;
 
 typedef struct LtcAfeSettings {
   GpioAddress cs;
@@ -82,9 +67,6 @@ typedef struct LtcAfeSettings {
   size_t num_cells;
   size_t num_thermistors;
 
-  LtcAfeEventList ltc_events;
-  LtcAfeResultCallback cell_result_cb;
-  LtcAfeResultCallback aux_result_cb;
   void *result_context;
 } LtcAfeSettings;
 
@@ -94,6 +76,7 @@ typedef struct LtcAfeStorage {
   // Only used for storage in the FSM so we store data for the correct cells
   uint16_t aux_index;
   uint16_t retry_count;
+  uint16_t cell_number;
 
   uint16_t cell_voltages[LTC_AFE_MAX_CELLS];
   uint16_t aux_voltages[LTC_AFE_MAX_THERMISTORS];
@@ -103,6 +86,8 @@ typedef struct LtcAfeStorage {
   uint16_t cell_result_lookup[LTC_AFE_MAX_CELLS];
   uint16_t aux_result_lookup[LTC_AFE_MAX_THERMISTORS];
   uint16_t discharge_cell_lookup[LTC_AFE_MAX_CELLS];
+
+  uint16_t device_cell;
 
   LtcAfeSettings settings;
 } LtcAfeStorage;
@@ -114,15 +99,9 @@ typedef struct LtcAfeStorage {
 // conversion is completed.
 StatusCode ltc_afe_init(LtcAfeStorage *afe, const LtcAfeSettings *settings);
 
-StatusCode ltc_afe_set_result_cbs(LtcAfeStorage *afe, LtcAfeResultCallback cell_result_cb,
-                                  LtcAfeResultCallback aux_result_cb, void *context);
-
 // Raises trigger conversion events. These events must be processed.
 StatusCode ltc_afe_request_cell_conversion(LtcAfeStorage *afe);
 StatusCode ltc_afe_request_aux_conversion(LtcAfeStorage *afe);
-
-// Process events
-bool ltc_afe_process_event(LtcAfeStorage *afe, const Event *e);
 
 // Mark cell for discharging (takes effect after config is re-written)
 // |cell| should be [0, settings.num_cells)

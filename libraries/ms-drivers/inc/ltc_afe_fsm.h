@@ -13,9 +13,6 @@
 #define NUM_LTC_AFE_FSM_STATES 6
 #define NUM_LTC_AFE_FSM_TRANSITIONS 14
 
-// AFE fault event is raised with this data field
-// Just for debug - has no meaning
-
 DECLARE_FSM(ltc_afe_fsm);
 
 typedef enum LtcAfeFsmStateId {
@@ -24,9 +21,12 @@ typedef enum LtcAfeFsmStateId {
   LTC_AFE_READ_CELLS,
   LTC_AFE_TRIGGER_AUX_CONV,
   LTC_AFE_READ_AUX,
-  LTC_AFE_AUX_COMPLETE
+  LTC_AFE_AUX_COMPLETE,
+  LTC_AFE_FAULT
 } LtcAfeFsmStateId;
 
+// We can raise a fault using this when transitioning to LTC_AFE_FAULT to identify where it came
+// from
 typedef enum {
   LTC_AFE_FSM_FAULT_TRIGGER_CELL_CONV = 0,
   LTC_AFE_FSM_FAULT_READ_ALL_CELLS,
