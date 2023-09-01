@@ -8,6 +8,9 @@
 #include "power_distrbution.h"
 #include "outputs.h"
 
+static uint8_t out_state = OUTPUT_STATE_ON;
+static uint8_t out_grp = 1;
+
 static StatusCode prv_check_pd_output_group(OutputGroup group, OutputState state) {
   if (group >= NUM_OUTPUT_GROUPS || state >= NUM_OUTPUT_STATES) {
     return STATUS_CODE_INVALID_ARGS;
@@ -23,7 +26,7 @@ static StatusCode prv_check_pd_output_group(OutputGroup group, OutputState state
   } else {
     // Get specific group, iterate through set of outputs
     OutputGroupDef *grp = g_output_group_map[group];
-    if (!grp) {
+    if (grp == NULL) {
       return STATUS_CODE_UNINITIALIZED;
     }
 
@@ -38,42 +41,40 @@ static StatusCode prv_check_pd_output_group(OutputGroup group, OutputState state
   return STATUS_CODE_OK;
 }
 
-TASK(master_task, TASK_MIN_STACK_SIZE) {
-  while (true) {
-    for(uint8_t i = 1; i < NUM_OUTPUT_GROUPS; ++i) {
-      // Turn pin on, read state and validate if HIGH
-      CHECK_EQUAL(STATUS_CODE_OK, pd_set_output_group(i, OUTPUT_STATE_ON));
-      CHECK_EQUAL(STATUS_CODE_OK, prv_check_pd_output_group(i, OUTPUT_STATE_ON));
-      
-      // LOG_DEBUG("sense current = %u\n", &switches[i].reading_out);
-      delay_ms(100);
+void run_fast_cycle() {}
 
-      // Turn pin off, read state and validate if LOW
-      CHECK_EQUAL(STATUS_CODE_OK, pd_set_output_group(i, OUTPUT_STATE_OFF));
-      CHECK_EQUAL(STATUS_CODE_OK, prv_check_pd_output_group(i, OUTPUT_STATE_OFF));
-      
-      delay_ms(100);
+void run_medium_cycle() {}
+
+void run_slow_cycle() {
+  CHECK_EQUAL(STATUS_CODE_OK, pd_set_output_group(out_grp, out_state));
+  CHECK_EQUAL(STATUS_CODE_OK, prv_check_pd_output_group(out_grp, out_state));
+  if(out_state == OUTPUT_STATE_OFF) {
+    out_state = OUTPUT_STATE_ON;
+    out_grp++;
+    if(out_grp == NUM_OUTPUT_GROUPS) {
+      out_grp = 1;
     }
+  } else {
+    out_state = OUTPUT_STATE_OFF;
   }
 }
 
-
 int main() {
-   tasks_init();
-   log_init();
-   gpio_init();
-   adc_init();
-   i2c_init(0, &i2c_settings);
-   pca9555_gpio_init(0, 0); // second param (i2c_address) isn't needed/used by pca init
-   pd_output_init();
-   // TODO(devAdhiraj): add pd sense init and print out pd sense values in main task
+  tasks_init();
+  log_init();
+  gpio_init();
+  adc_init();
+  i2c_init(0, &i2c_settings);
+  pca9555_gpio_init(0, 0); // second param (i2c_address) isn't needed/used by pca init
+  pd_output_init();
+  // TODO(devAdhiraj): add pd sense init and print out pd sense values in main task
 
-   LOG_DEBUG("PD Smoke!\n");
-   tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
+  LOG_DEBUG("PD Smoke!\n");
+  init_master_task();
 
-   tasks_start();
+  tasks_start();
 
-   LOG_DEBUG("exiting main?");
-   return 0;
+  LOG_DEBUG("exiting main?");
+  return 0;
 }
 

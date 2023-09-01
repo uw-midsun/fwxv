@@ -2,7 +2,8 @@
     "libs": [
         "FreeRTOS",
         "ms-common",
-        "ms-drivers"
+        "ms-drivers",
+        "master"
     ],
     "include": [
         "#/projects/power_distribution_front/inc"
