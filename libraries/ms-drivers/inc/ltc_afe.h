@@ -99,10 +99,6 @@ typedef struct LtcAfeStorage {
 // conversion is completed.
 StatusCode ltc_afe_init(LtcAfeStorage *afe, const LtcAfeSettings *settings);
 
-// Raises trigger conversion events. These events must be processed.
-StatusCode ltc_afe_request_cell_conversion(LtcAfeStorage *afe);
-StatusCode ltc_afe_request_aux_conversion(LtcAfeStorage *afe);
-
 // Mark cell for discharging (takes effect after config is re-written)
 // |cell| should be [0, settings.num_cells)
 StatusCode ltc_afe_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell, bool discharge);

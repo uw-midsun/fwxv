@@ -35,4 +35,10 @@ typedef enum {
   NUM_LTC_AFE_FSM_FAULTS
 } LtcAfeFsmFault;
 
+typedef enum {
+  LTC_TRIGGER_CELL_EVENT_START = 0,
+  LTC_TRIGGER_AUX_EVENT_START,
+  NUM_LTC_AFE_ADC_MODES
+} LtcAfeOutputEvent;
+
 StatusCode ltc_afe_fsm_init(Fsm *fsm, LtcAfeStorage *afe);

@@ -22,22 +22,15 @@ static void prv_aux_conv_timeout(SoftTimerId timer_id, void *context) {
 }
 
 static void prv_afe_idle_output(void *context) {
+  raise_fault = false;
   LOG_DEBUG("Transitioned to IDLE state.\n");
-  // Coming back to IDLE indicates a period of doing nothing
 }
 
 static void prv_afe_idle_input(Fsm *fsm, void *context) {
   LtcAfeStorage *afe = context;
-  // Transition to trigger_cell_conv or trigger_aux_conv state
-  // from notification when function to do so is called
-  uint32_t notif;
-  if (notify_get(&notif) == STATUS_CODE_OK) {
-    if (notify_check_event(&notif, TRIGGER_CELL_EVENT_START)) {
-      fsm_transition(fsm, LTC_AFE_TRIGGER_CELL_CONV);
-    } else if (notify_check_event(&notif, TRIGGER_AUX_EVENT_START)) {
-      fsm_transition(fsm, LTC_AFE_TRIGGER_AUX_CONV);
-    }
-  }
+  // Always transition to trigger_aux
+  // We should only ever come back here in case of a fault
+  fsm_transition(fsm, LTC_AFE_TRIGGER_CELL_CONV);
 }
 
 static void prv_afe_trigger_cell_conv_output(void *context) {
@@ -47,8 +40,7 @@ static void prv_afe_trigger_cell_conv_output(void *context) {
   if (ret == STATUS_CODE_OK) {
     static SoftTimer s_trigger;
     soft_timer_start(LTC_AFE_FSM_CELL_CONV_DELAY_MS, prv_cell_conv_timeout, &s_trigger);
-  }
-  else {
+  } else {
     raise_fault = true;
   }
   LOG_DEBUG("Transitioned to TRIGGER CELLS CONVERSION state.\n");
@@ -58,7 +50,7 @@ static void prv_afe_trigger_cell_conv_input(Fsm *fsm, void *context) {
   // Transition to read_cells or idle state
   LtcAfeStorage *afe = context;
   if (raise_fault) {
-    fsm_transition(fsm, LTC_AFE_FAULT);
+    fsm_transition(fsm, LTC_AFE_IDLE);
   }
   if (trigger_cells) {
     fsm_transition(fsm, LTC_AFE_READ_CELLS);
@@ -75,14 +67,17 @@ static void prv_afe_read_cells_output(void *context) {
   } else {
     raise_fault = true;
   }
-  LOG_DEBUG("Transitioned to READ CELLS state.\n")
+  LOG_DEBUG("Transitioned to READ CELLS state.\n");
 }
 
 static void prv_afe_read_cells_input(Fsm *fsm, void *context) {
   // Transition to trigger aux if no faults have occurred
+  LtcAfeStorage *afe = context;
   if (raise_fault) {
-    fsm_transition(fsm, LTC_AFE_FAULT);
+    fsm_transition(fsm, LTC_AFE_IDLE);
   }
+  prv_extract_read_cell_result(afe->aux_voltages, afe->settings.num_cells,
+                               afe->settings.result_context);
   fsm_transition(fsm, LTC_AFE_TRIGGER_AUX_CONV);
 }
 
@@ -105,7 +100,7 @@ static void prv_afe_trigger_aux_conv_input(Fsm *fsm, void *context) {
   // Transition to read_aux or idle state
   LtcAfeStorage *afe = context;
   if (raise_fault) {
-    fsm_transition(fsm, LTC_AFE_FAULT);
+    fsm_transition(fsm, LTC_AFE_IDLE);
   }
   if (trigger_aux) {
     fsm_transition(fsm, LTC_AFE_READ_AUX);
@@ -128,7 +123,7 @@ static void prv_afe_read_aux_input(Fsm *fsm, void *context) {
   // Transition to aux_complete, read_aux, trigger_aux_conv, or idle state
   LtcAfeStorage *afe = context;
   if (raise_fault) {
-    fsm_transition(fsm, LTC_AFE_FAULT);
+    fsm_transition(fsm, LTC_AFE_IDLE);
   }
   if (afe->cell_number == LTC_AFE_MAX_CELLS_PER_DEVICE) {
     afe->cell_number = 0;
@@ -146,17 +141,9 @@ static void prv_afe_aux_complete_input(Fsm *fsm, void *context) {
   // Transition to idle state
   // We can add broadcasting functionality here later (MVP for now)
   LtcAfeStorage *afe = context;
-  fsm_transition(fsm, LTC_AFE_IDLE);
-}
-
-static void prv_afe_fault_output(void *context) {
-  raise_fault = false;
-  LOG_DEBUG("Transitioned to FAULT state.");
-}
-
-static void prv_afe_fault_input(Fsm *fsm, void *context) {
-  // Just transition to IDLE for now. Will implement more sophisticated fault stuff later
-  fsm_transition(fsm, LTC_AFE_IDLE);
+  // 12 aux conversions complete - the array should be fully populated
+  prv_extract_cell_result(afe->aux_voltages, afe->settings.num_cells, afe->settings.result_context);
+  fsm_transition(fsm, LTC_AFE_TRIGGER_CELL_CONV);
 }
 
 // Declare states
@@ -168,7 +155,6 @@ static FsmState s_ltc_afe_state_list[NUM_LTC_AFE_FSM_STATES] = {
   STATE(LTC_AFE_TRIGGER_AUX_CONV, prv_afe_trigger_aux_conv_input, prv_afe_trigger_aux_conv_output),
   STATE(LTC_AFE_READ_AUX, prv_afe_read_aux_input, prv_afe_read_aux_output),
   STATE(LTC_AFE_AUX_COMPLETE, prv_afe_aux_complete_input, prv_afe_aux_complete_output),
-  STATE(LTC_AFE_FAULT, prv_afe_fault_input, prv_afe_fault_output)
 };
 
 // Declare transitions
@@ -178,19 +164,16 @@ static FsmTransition s_ltc_afe_transitions[NUM_LTC_AFE_FSM_TRANSITIONS] = {
   TRANSITION(LTC_AFE_IDLE, LTC_AFE_IDLE),
   TRANSITION(LTC_AFE_TRIGGER_CELL_CONV, LTC_AFE_READ_CELLS),
   TRANSITION(LTC_AFE_TRIGGER_CELL_CONV, LTC_AFE_IDLE),
-  TRANSITION(LTC_AFE_TRIGGER_CELL_CONV, LTC_AFE_FAULT),
   TRANSITION(LTC_AFE_READ_CELLS, LTC_AFE_IDLE),
   TRANSITION(LTC_AFE_READ_CELLS, LTC_AFE_TRIGGER_AUX_CONV),
   TRANSITION(LTC_AFE_READ_CELLS, LTC_AFE_READ_CELLS),
-  TRANSITION(LTC_AFE_READ_CELLS, LTC_AFE_FAULT),
   TRANSITION(LTC_AFE_TRIGGER_AUX_CONV, LTC_AFE_READ_AUX),
   TRANSITION(LTC_AFE_TRIGGER_AUX_CONV, LTC_AFE_IDLE),
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_AUX_COMPLETE),
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_READ_AUX),
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_TRIGGER_AUX_CONV),
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_IDLE),
-  TRANSITION(LTC_AFE_AUX_COMPLETE, LTC_AFE_IDLE),
-  TRANSITION(LTC_AFE_FAULT, LTC_AFE_IDLE)
+  TRANSITION(LTC_AFE_AUX_COMPLETE, LTC_AFE_IDLE)
 };
 
 StatusCode init_ltc_afe_fsm(void) {
