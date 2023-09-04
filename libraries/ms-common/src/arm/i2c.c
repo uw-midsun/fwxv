@@ -132,7 +132,7 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
   }
   // Lock I2C resource
-  status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, 5 * I2C_TIMEOUT_MS));
+  status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
 
   // Check that bus is not busy - If it is, assume that lockup has occurred
   if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
@@ -243,7 +243,7 @@ StatusCode i2c_write_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *tx_
   return STATUS_CODE_OK;
 }
 
-// IRQ functionality for the I2C event interruptd
+// IRQ functionality for the I2C event interrupt
 // Since activity is the same for both ports, use one IRQ handler
 // Flags are cleared automatically by respective reads and writes
 static void prv_ev_irq_handler(I2CPort i2c) {
