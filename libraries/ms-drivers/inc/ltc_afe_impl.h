@@ -1,4 +1,3 @@
-#pragma once
 // Helper functions for the LTC6811
 //
 // This module is mostly exposed for the FSM. Do not use functions in this module directly.
@@ -10,7 +9,6 @@
 // Note that all units are in 100uV.
 //
 // This module supports AFEs with fewer than 12 cells using the |input_bitset|.
-#include "ltc_afe.h"
 
 // Initialize the LTC6811.
 // |settings.cell_bitset| and |settings.aux_bitset| should be an array of bitsets where bits 0 to 11

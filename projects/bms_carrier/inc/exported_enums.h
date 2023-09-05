@@ -1,7 +1,5 @@
 #pragma once
 
-#include "can_msg_defs.h"
-
 // This file stores enums which are exported between projects to allow both
 // sides to use the same enums when sending and receiving CAN Messages over the
 // primary network. To make things easier all enums in this file must follow a

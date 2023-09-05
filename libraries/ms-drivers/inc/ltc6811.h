@@ -1,8 +1,6 @@
 #pragma once
 #include <assert.h>
 
-#include "ltc_afe.h"
-
 // used internally by the LTC AFE driver
 #define LTC6811_CELLS_IN_REG 3
 #define LTC6811_GPIOS_IN_REG 3
@@ -64,7 +62,7 @@ typedef struct {
   uint8_t swtrd : 1;
   uint8_t refon : 1;
 
-  uint8_t gpio : 5;            // GPIO pin control
+  uint8_t gpio : 5;  // GPIO pin control
 
   uint32_t undervoltage : 12;  // Undervoltage Comparison Voltage
   uint32_t overvoltage : 12;   // Overvoltage Comparison Voltage
