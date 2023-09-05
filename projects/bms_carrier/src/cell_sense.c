@@ -12,8 +12,8 @@
 #include "status.h"
 
 // Global variables for now
-// TODO: Create some kind of fault mechanism if driver function fails
 // For now, transition to IDLE
+// TODO: Create some kind of fault mechanism if driver function fails
 bool raise_fault = false;
 
 StatusCode prv_ltc_afe_init(LtcAfeStorage *afe, const LtcAfeSettings *settings) {
@@ -160,10 +160,9 @@ static void prv_afe_trigger_aux_conv_input(Fsm *fsm, void *context) {
 
 static void prv_afe_read_aux_output(void *context) {
   LtcAfeStorage *afe = context;
-  uint16_t device_cell = afe->device_cell;
-  StatusCode ret = ltc_afe_impl_read_aux(afe, device_cell);
+  StatusCode ret = ltc_afe_impl_read_aux(afe, afe->device_cell);
   if (ret == STATUS_CODE_OK) {
-    afe->cell_number++;
+    afe->device_cell++;
   } else {
     raise_fault = true;
   }
@@ -181,8 +180,8 @@ static void prv_afe_read_aux_input(Fsm *fsm, void *context) {
       fsm_transition(fsm, LTC_AFE_IDLE);
     }
   }
-  if (afe->cell_number == LTC_AFE_MAX_CELLS_PER_DEVICE) {
-    afe->cell_number = 0;
+  if (afe->device_cell == LTC_AFE_MAX_CELLS_PER_DEVICE) {
+    afe->device_cell = 0;
     fsm_transition(fsm, LTC_AFE_AUX_COMPLETE);
   } else {
     fsm_transition(fsm, LTC_AFE_TRIGGER_AUX_CONV);
