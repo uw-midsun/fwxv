@@ -11,17 +11,17 @@
 #include "soft_timer.h"
 #include "status.h"
 
+// Global variables for now
+// TODO: Create some kind of fault mechanism if driver function fails
+// For now, transition to IDLE
+bool raise_fault = false;
+
 StatusCode prv_ltc_afe_init(LtcAfeStorage *afe, const LtcAfeSettings *settings) {
   status_ok_or_return(ltc_afe_impl_init(afe, settings));
   return prv_init_ltc_afe_fsm(&afe->fsm, afe);
 }
 
 FSM(ltc_afe_fsm, NUM_LTC_AFE_FSM_STATES);
-
-// Global variables for now
-// TODO: Create some kind of fault mechanism if driver function fails
-// For now, transition to IDLE
-static volatile bool raise_fault = false;
 
 static CellSenseStorage s_storage = { 0 };
 
@@ -75,7 +75,9 @@ static void prv_afe_idle_output(void *context) {
 static void prv_afe_idle_input(Fsm *fsm, void *context) {
   LtcAfeStorage *afe = context;
   // Always transition to trigger_aux. Might remove this state tbh
-  fsm_transition(fsm, LTC_AFE_TRIGGER_CELL_CONV);
+  if (!raise_fault) {
+    fsm_transition(fsm, LTC_AFE_TRIGGER_CELL_CONV);
+  }
 }
 
 static void prv_afe_trigger_cell_conv_output(void *context) {
@@ -84,17 +86,19 @@ static void prv_afe_trigger_cell_conv_output(void *context) {
   if (ret != STATUS_CODE_OK) {
     raise_fault = true;
   }
+  afe->time_elapsed = 1000 * (xTaskGetTickCount() / 1024);
   LOG_DEBUG("Transitioned to TRIGGER CELLS CONVERSION state.\n");
 }
 
 static void prv_afe_trigger_cell_conv_input(Fsm *fsm, void *context) {
   // Transition to read_cells or idle state
   LtcAfeStorage *afe = context;
-  uint16_t time = 1000 * (xTaskGetTickCount() / 1024);
-  afe->time_elapsed = time - afe->time_elapsed;
+  if (raise_fault) {
+    fsm_transition(fsm, LTC_AFE_IDLE);
+  }
 
-  if (afe->time_elapsed > LTC_AFE_FSM_CELL_CONV_DELAY_MS) {
-    afe->time_elapsed = 0;
+  uint16_t current_time = 1000 * (xTaskGetTickCount() / 1024);
+  if (current_time - afe->time_elapsed > LTC_AFE_FSM_CELL_CONV_DELAY_MS) {
     afe->retry_count = 0;
     fsm_transition(fsm, LTC_AFE_READ_CELLS);
   }
@@ -136,6 +140,7 @@ static void prv_afe_trigger_aux_conv_output(void *context) {
   } else {
     raise_fault = true;
   }
+  afe->time_elapsed = 1000 * (xTaskGetTickCount() / 1024);
   LOG_DEBUG("Transitioned to TRIGGER AUX CONVERSION state.");
 }
 
@@ -145,11 +150,9 @@ static void prv_afe_trigger_aux_conv_input(Fsm *fsm, void *context) {
   if (raise_fault) {
     fsm_transition(fsm, LTC_AFE_IDLE);
   }
-  uint16_t time = 1000 * (xTaskGetTickCount() / 1024);
-  afe->time_elapsed = time - afe->time_elapsed;
 
-  if (afe->time_elapsed > LTC_AFE_FSM_AUX_CONV_DELAY_MS) {
-    afe->time_elapsed = 0;
+  uint16_t current_time = 1000 * (xTaskGetTickCount() / 1024);
+  if (current_time - afe->time_elapsed > LTC_AFE_FSM_AUX_CONV_DELAY_MS) {
     afe->retry_count = 0;
     fsm_transition(fsm, LTC_AFE_READ_AUX);
   }
