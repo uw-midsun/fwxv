@@ -161,18 +161,17 @@ typedef struct CellSenseStorage {
   CellSenseSettings settings;
 } CellSenseStorage;
 
-// Initialize the LTC6811.
-// |settings.cell_bitset| and |settings.aux_bitset| should be an array of bitsets where bits 0 to 11
-// represent whether we should monitor the cell input for the given device.
-// |settings.cell_result_cb| and |settings.aux_result_cb| will be called when the corresponding
-// conversion is completed.
-StatusCode ltc_afe_init(LtcAfeStorage *afe, const LtcAfeSettings *settings);
-
-// Mark cell for discharging (takes effect after config is re-written)
-// |cell| should be [0, settings.num_cells)
-StatusCode ltc_afe_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell, bool discharge);
+// First initialize the cell_sense module.
+// Since it is the only module using the LTC6811, we can also initialize that and the corresponding
+// FSM. Initialize the LTC6811. |settings.cell_bitset| and |settings.aux_bitset| should be an array
+// of bitsets where bits 0 to 11 represent whether we should monitor the cell input for the given
+// device. prv_extract_cell_result and prv_extract_aux_result will be called when the
+// corresponding conversion is completed.
 
 StatusCode cell_sense_init(const CellSenseSettings *settings, AfeReadings *readings,
                            LtcAfeStorage *afe);
 
-StatusCode ltc_afe_fsm_init(Fsm *fsm, LtcAfeStorage *afe);
+// Mark cell for discharging (takes effect after config is re-written)
+// |cell| should be [0, settings.num_cells)
+
+StatusCode ltc_afe_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell, bool discharge);

@@ -11,13 +11,9 @@
 #include "soft_timer.h"
 #include "status.h"
 
-StatusCode ltc_afe_init(LtcAfeStorage *afe, const LtcAfeSettings *settings) {
+StatusCode prv_ltc_afe_init(LtcAfeStorage *afe, const LtcAfeSettings *settings) {
   status_ok_or_return(ltc_afe_impl_init(afe, settings));
-  return ltc_afe_fsm_init(&afe->fsm, afe);
-}
-
-StatusCode ltc_afe_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell, bool discharge) {
-  return ltc_afe_impl_toggle_cell_discharge(afe, cell, discharge);
+  return prv_init_ltc_afe_fsm(&afe->fsm, afe);
 }
 
 FSM(ltc_afe_fsm, NUM_LTC_AFE_FSM_STATES);
@@ -60,6 +56,7 @@ static void prv_extract_aux_result(uint16_t *result_arr, size_t len, void *conte
 
   for (size_t i = 0; i < len; ++i) {
     if (s_storage.readings->temps[i] > threshold) {
+      // TODO: Find what we should do when encountering faulty results
       fault_bps_set(EE_BPS_STATE_FAULT_AFE_TEMP);
       return;
     }
@@ -68,27 +65,17 @@ static void prv_extract_aux_result(uint16_t *result_arr, size_t len, void *conte
   fault_bps_clear(EE_BPS_STATE_FAULT_AFE_TEMP);
 }
 
-StatusCode cell_sense_init(const CellSenseSettings *settings, AfeReadings *afe_readings,
-                           LtcAfeStorage *afe) {
-  s_storage.afe = afe;
-  s_storage.readings = afe_readings;
-  memset(afe_readings, 0, sizeof(AfeReadings));
-  memcpy(&s_storage.settings, settings, sizeof(CellSenseSettings));
-  return ltc_afe_request_cell_conversion(afe);
-}
-
 static void prv_afe_idle_output(void *context) {
-  raise_fault = false;
+  if (raise_fault) {
+    // TODO: Implement some kind of error handling
+  }
   LOG_DEBUG("Transitioned to IDLE state.\n");
 }
 
 static void prv_afe_idle_input(Fsm *fsm, void *context) {
   LtcAfeStorage *afe = context;
-  // Always transition to trigger_aux
-  // We should only ever come back here in case of a fault
-  // Might just go to trigger_cell in the future instead of this
-  // Implement some kind of serious error handling?
-  // fsm_transition(fsm, LTC_AFE_TRIGGER_CELL_CONV);
+  // Always transition to trigger_aux. Might remove this state tbh
+  fsm_transition(fsm, LTC_AFE_TRIGGER_CELL_CONV);
 }
 
 static void prv_afe_trigger_cell_conv_output(void *context) {
@@ -204,7 +191,6 @@ static void prv_afe_aux_complete_output(void *context) {
 }
 
 static void prv_afe_aux_complete_input(Fsm *fsm, void *context) {
-  // Transition to idle state
   // We can add broadcasting functionality here later (MVP for now)
   LtcAfeStorage *afe = context;
   // 12 aux conversions complete - the array should be fully populated
@@ -237,10 +223,10 @@ static FsmTransition s_ltc_afe_transitions[NUM_LTC_AFE_FSM_TRANSITIONS] = {
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_READ_AUX),
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_TRIGGER_AUX_CONV),
   TRANSITION(LTC_AFE_READ_AUX, LTC_AFE_IDLE),
-  TRANSITION(LTC_AFE_AUX_COMPLETE, LTC_AFE_TRIGGER_CELL_CONV)
+  TRANSITION(LTC_AFE_AUX_COMPLETE, LTC_AFE_TRIGGER_CELL_CONV),
 };
 
-StatusCode init_ltc_afe_fsm(void) {
+StatusCode prv_init_ltc_afe_fsm(void) {
   FsmSettings settings = {
     .state_list = s_ltc_afe_state_list,
     .transitions = s_ltc_afe_transitions,
@@ -249,4 +235,17 @@ StatusCode init_ltc_afe_fsm(void) {
   };
   fsm_init(ltc_afe_fsm, settings, NULL);
   return STATUS_CODE_OK;
+}
+
+StatusCode cell_sense_init(const CellSenseSettings *settings, AfeReadings *afe_readings,
+                           LtcAfeStorage *afe) {
+  s_storage.afe = afe;
+  s_storage.readings = afe_readings;
+  memset(afe_readings, 0, sizeof(AfeReadings));
+  memcpy(&s_storage.settings, settings, sizeof(CellSenseSettings));
+  return prv_ltc_afe_init(afe, settings);
+}
+
+StatusCode ltc_afe_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell, bool discharge) {
+  return ltc_afe_impl_toggle_cell_discharge(afe, cell, discharge);
 }
