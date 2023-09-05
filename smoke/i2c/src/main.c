@@ -7,26 +7,14 @@
 
 // ==== WRITE PARAMETERS ====
 
-//Set this to true to perform an I2C write.
-#define SHOULD_WRITE true
-
 // Fill in these variables with the port and address to write to.
-#define WRITE_I2C_PORT I2C_PORT_1 //Could be I2C_Port_2
+#define WRITE_I2C_PORT I2C_PORT_1 // I2C_Port_2 is also available
 #define WRITE_I2C_ADDRESS 0x08
 
 // Fill in this array with the bytes to write.
 static const uint8_t bytes_to_write[] = { 0x10, 0x2F };
 
-// Set this to true to write to a register or false to write normally.
-#define SHOULD_WRITE_REGISTER false
-
-// If the previous parameter is true, fill in this variable with the register to write to.
-#define REGISTER_TO_WRITE 0x06
-
 // ==== READ PARAMETERS ====
-
-// Set this to true to perform an I2C read.
-#define SHOULD_READ false
 
 // Fill in these variables with the port and address to read from.
 #define READ_I2C_PORT I2C_PORT_1 
@@ -34,12 +22,6 @@ static const uint8_t bytes_to_write[] = { 0x10, 0x2F };
 
 // Fill in this variable with the number of bytes to read.
 #define NUM_BYTES_TO_READ 1
-
-// Set this to true to read from a register or false to read normally.
-#define SHOULD_READ_REGISTER true
-
-// If the previous parameter is true, fill in this variable with the register to read from.
-#define REGISTER_TO_READ 0x06
 
 // ==== END OF PARAMETERS ====
 
@@ -55,8 +37,8 @@ static const uint8_t bytes_to_write[] = { 0x10, 0x2F };
 
 static I2CSettings i2c_settings = {
   .speed = I2C_SPEED_STANDARD,  
-  .sda = { .port = GPIO_PORT_B, .pin = 9 }, 
-  .scl = { .port = GPIO_PORT_B, .pin = 8 }, 
+  .sda = I2C1_SDA, 
+  .scl = I2C1_SCL, 
 };
 
 static const GpioAddress test_pin = {
@@ -66,11 +48,13 @@ static const GpioAddress test_pin = {
 
 TASK(smoke_i2c_task, TASK_STACK_512){
   uint16_t tx_len = SIZEOF_ARRAY(bytes_to_write);
-  uint8_t rx_buf[8] = {0};
+  uint8_t rx_buf[SIZEOF_ARRAY(bytes_to_write)] = {0};
   i2c_init(I2C_PORT_1, &i2c_settings);
   gpio_init_pin(&test_pin ,GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
   while (true) {
+    // I2C write
     i2c_write(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, bytes_to_write, tx_len);
+    // I2C read (uncomment to test)
     // i2c_read(READ_I2C_PORT, READ_I2C_ADDRESS, rx_buf, 6);
     gpio_toggle_state(&test_pin);
     delay_ms(100);
