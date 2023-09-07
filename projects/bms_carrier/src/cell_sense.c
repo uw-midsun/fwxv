@@ -16,11 +16,6 @@
 // TODO: Create some kind of fault mechanism if driver function fails
 bool raise_fault = false;
 
-StatusCode prv_ltc_afe_init(LtcAfeStorage *afe, const LtcAfeSettings *settings) {
-  status_ok_or_return(ltc_afe_impl_init(afe, settings));
-  return prv_init_ltc_afe_fsm(&afe->fsm, afe);
-}
-
 FSM(ltc_afe_fsm, NUM_LTC_AFE_FSM_STATES);
 
 static CellSenseStorage s_storage = { 0 };
@@ -180,7 +175,7 @@ static void prv_afe_read_aux_input(Fsm *fsm, void *context) {
       fsm_transition(fsm, LTC_AFE_IDLE);
     }
   }
-  if (afe->device_cell == LTC_AFE_MAX_CELLS_PER_DEVICE) {
+  if (afe->device_cell == afe->settings.num_thermistors) {
     afe->device_cell = 0;
     fsm_transition(fsm, LTC_AFE_AUX_COMPLETE);
   } else {
@@ -197,7 +192,6 @@ static void prv_afe_aux_complete_input(Fsm *fsm, void *context) {
   LtcAfeStorage *afe = context;
   // 12 aux conversions complete - the array should be fully populated
   prv_extract_aux_result(afe->aux_voltages, afe->settings.num_cells, afe->settings.result_context);
-  fsm_transition(fsm, LTC_AFE_TRIGGER_CELL_CONV);
 }
 
 // Declare states
@@ -237,6 +231,11 @@ StatusCode prv_init_ltc_afe_fsm(void) {
   };
   fsm_init(ltc_afe_fsm, settings, NULL);
   return STATUS_CODE_OK;
+}
+
+StatusCode prv_ltc_afe_init(LtcAfeStorage *afe, const LtcAfeSettings *settings) {
+  status_ok_or_return(ltc_afe_impl_init(afe, settings));
+  return prv_init_ltc_afe_fsm(&afe->fsm, afe);
 }
 
 StatusCode cell_sense_init(const CellSenseSettings *settings, AfeReadings *afe_readings,
