@@ -1,3 +1,4 @@
+#pragma once
 // Helper functions for the LTC6811
 //
 // This module is mostly exposed for the FSM. Do not use functions in this module directly.
