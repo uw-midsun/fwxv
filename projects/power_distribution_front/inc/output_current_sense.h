@@ -10,7 +10,7 @@
 #include "pca9555_gpio_expander.h"
 #include "pin_defs.h"
 
-// initializes sense pin and mux sel pins
+// initializes sense pin and mux sel pins, must be called before adc_init()
 StatusCode pd_sense_init(void);
 
 // reads adc value of all pins in output group and stores the result in reading_out attr
