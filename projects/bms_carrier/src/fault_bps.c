@@ -7,7 +7,7 @@ static BmsStorage *s_storage;
 
 StatusCode fault_bps_init(BmsStorage *storage) {
   s_storage = storage;
-return STATUS_CODE_OK;
+  return STATUS_CODE_OK;
 }
 
 // TODO: These faulting mechanism will be changing substantially
