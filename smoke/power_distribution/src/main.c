@@ -5,7 +5,7 @@
 #include "master_task.h"
 #include "delay.h"
 #include "adc.h"
-#include "power_distrbution.h"
+#include "power_distribution.h"
 #include "outputs.h"
 
 static uint8_t out_state = OUTPUT_STATE_ON;
