@@ -40,7 +40,7 @@ static void prv_wakeup_idle(LtcAfeStorage *afe) {
     gpio_set_state(&settings->cs, GPIO_STATE_LOW);
     gpio_set_state(&settings->cs, GPIO_STATE_HIGH);
     // Wait for 300us - greater than tWAKE, less than tIDLE
-    delay_us(300);
+    delay_ms(0.3);
   }
 }
 

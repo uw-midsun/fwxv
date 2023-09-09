@@ -7,11 +7,9 @@
 #include "fault_bps.h"
 #include "log.h"
 #include "ltc_afe_impl.h"
-#include "passive_balance.h"
 #include "soft_timer.h"
 #include "status.h"
 
-// Global variables for now
 // For now, transition to IDLE
 // TODO: Create some kind of fault mechanism if driver function fails
 bool raise_fault = false;
@@ -31,9 +29,6 @@ static void prv_extract_cell_result(uint16_t *result_arr, size_t len, void *cont
       fault = true;
     }
   }
-
-  // Balance cells if needed
-  passive_balance(s_storage.readings->voltages, len, s_storage.afe);
 
   // TODO: Find what we should do when encountering faulty results
   if (fault) {
@@ -222,20 +217,15 @@ static FsmTransition s_ltc_afe_transitions[NUM_LTC_AFE_FSM_TRANSITIONS] = {
   TRANSITION(LTC_AFE_AUX_COMPLETE, LTC_AFE_TRIGGER_CELL_CONV),
 };
 
-StatusCode prv_init_ltc_afe_fsm(void) {
+StatusCode prv_init_ltc_afe_fsm(LtcAfeStorage *afe) {
   FsmSettings settings = {
     .state_list = s_ltc_afe_state_list,
     .transitions = s_ltc_afe_transitions,
     .num_transitions = NUM_LTC_AFE_FSM_TRANSITIONS,
     .initial_state = LTC_AFE_IDLE,
   };
-  fsm_init(ltc_afe_fsm, settings, NULL);
+  fsm_init(ltc_afe_fsm, settings, afe);
   return STATUS_CODE_OK;
-}
-
-StatusCode prv_ltc_afe_init(LtcAfeStorage *afe, const LtcAfeSettings *settings) {
-  status_ok_or_return(ltc_afe_impl_init(afe, settings));
-  return prv_init_ltc_afe_fsm(&afe->fsm, afe);
 }
 
 StatusCode cell_sense_init(const CellSenseSettings *settings, AfeReadings *afe_readings,
@@ -244,7 +234,7 @@ StatusCode cell_sense_init(const CellSenseSettings *settings, AfeReadings *afe_r
   s_storage.readings = afe_readings;
   memset(afe_readings, 0, sizeof(AfeReadings));
   memcpy(&s_storage.settings, settings, sizeof(CellSenseSettings));
-  return prv_ltc_afe_init(afe, settings);
+  return prv_init_ltc_afe_fsm(afe);
 }
 
 StatusCode ltc_afe_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell, bool discharge) {

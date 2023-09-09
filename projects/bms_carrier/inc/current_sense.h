@@ -28,5 +28,5 @@ typedef struct CurrentStorage {
 
 bool current_sense_is_charging();
 
-StatusCode current_sense_init(CurrentStorage *readings, SpiSettings *settings,
-                              uint32_t conv_period_ms);
+// StatusCode current_sense_init(CurrentStorage *readings, SpiSettings *settings,
+//                               uint32_t conv_period_ms);

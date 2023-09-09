@@ -7,6 +7,7 @@
 
 #include "fsm.h"
 #include "gpio.h"
+#include "ltc_afe.h"
 #include "spi.h"
 #include "status.h"
 
@@ -47,65 +48,6 @@
 #define AFE_SPI_MOSI \
   { .port = GPIO_PORT_A, .pin = 7 }
 
-// select the ADC mode (trade-off between speed or minimizing noise)
-// see p.50 for conversion times and p.23 for noise
-typedef enum {
-  LTC_AFE_ADC_MODE_27KHZ = 0,
-  LTC_AFE_ADC_MODE_7KHZ,
-  LTC_AFE_ADC_MODE_26HZ,
-  LTC_AFE_ADC_MODE_14KHZ,
-  LTC_AFE_ADC_MODE_3KHZ,
-  LTC_AFE_ADC_MODE_2KHZ,
-  NUM_LTC_AFE_ADC_MODES
-} LtcAfeAdcMode;
-
-typedef struct LtcAfeBitset {
-  uint16_t cell_bitset;
-  uint16_t aux_bitset;
-} LtcAfeBitset;
-
-typedef struct LtcAfeSettings {
-  GpioAddress cs;
-  GpioAddress mosi;
-  GpioAddress miso;
-  GpioAddress sclk;
-
-  const SpiPort spi_port;
-  uint32_t spi_baudrate;
-
-  LtcAfeAdcMode adc_mode;
-
-  uint16_t cell_bitset[LTC_AFE_MAX_DEVICES];
-  uint16_t aux_bitset[LTC_AFE_MAX_DEVICES];
-
-  size_t num_devices;
-  size_t num_cells;
-  size_t num_thermistors;
-
-  void *result_context;
-} LtcAfeSettings;
-
-typedef struct LtcAfeStorage {
-  Fsm fsm;
-
-  // Only used for storage in the FSM so we store data for the correct cells
-  uint16_t aux_index;
-  uint16_t retry_count;
-  uint16_t device_cell;
-  uint16_t time_elapsed;
-
-  uint16_t cell_voltages[LTC_AFE_MAX_CELLS];
-  uint16_t aux_voltages[LTC_AFE_MAX_THERMISTORS];
-
-  uint16_t discharge_bitset[LTC_AFE_MAX_DEVICES];
-
-  uint16_t cell_result_lookup[LTC_AFE_MAX_CELLS];
-  uint16_t aux_result_lookup[LTC_AFE_MAX_THERMISTORS];
-  uint16_t discharge_cell_lookup[LTC_AFE_MAX_CELLS];
-
-  LtcAfeSettings settings;
-} LtcAfeStorage;
-
 // Wraps the LTC AFE module and handles all the sequencing.
 // Requires LTC AFE, soft timers to be initialized.
 //
@@ -131,12 +73,6 @@ typedef enum {
   LTC_AFE_FSM_FAULT_READ_AUX,
   NUM_LTC_AFE_FSM_FAULTS
 } LtcAfeFsmFault;
-
-typedef enum {
-  LTC_TRIGGER_CELL_EVENT_START = 0,
-  LTC_TRIGGER_AUX_EVENT_START,
-  NUM_LTC_AFE_ADC_MODES
-} LtcAfeOutputEvent;
 
 typedef struct CellSenseSettings {
   // Units are 100 uV (or DeciMilliVolts)

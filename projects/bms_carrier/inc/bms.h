@@ -2,15 +2,10 @@
 
 #include <stdint.h>
 
-#include "debouncer.h"
-#include "i2c.h"
-#include "status.h"
-
-#include "bps_heartbeat.h"
 #include "cell_sense.h"
 #include "current_sense.h"
-#include "fan_control.h"
-#include "relay_sequence.h"
+#include "i2c.h"
+#include "status.h"
 
 #define BMS_PERIPH_I2C_PORT I2C_PORT_2
 #define BMS_PERIPH_I2C_SDA_PIN \
@@ -26,14 +21,15 @@
 #define BMS_FAN_CTRL_2_I2C_ADDR 0x5F
 #define NUM_BMS_FAN_CTRLS 2
 
+// Not dealing with debouncer here
 typedef struct BmsStorage {
-  RelayStorage relay_storage;
+  // RelayStorage relay_storage;
   CurrentStorage current_storage;
   AfeReadings afe_readings;
   LtcAfeStorage ltc_afe_storage;
   CellSenseStorage cell_storage;
-  FanStorage fan_storage_1;
-  FanStorage fan_storage_2;
-  DebouncerStorage killswitch_storage;
-  BpsStorage bps_storage;
+  // FanStorage fan_storage_1;
+  // FanStorage fan_storage_2;
+  // DebouncerStorage killswitch_storage;
+  // BpsStorage bps_storage;
 } BmsStorage;
