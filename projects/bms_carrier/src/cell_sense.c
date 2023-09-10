@@ -234,7 +234,7 @@ StatusCode cell_sense_init(const CellSenseSettings *settings, AfeReadings *afe_r
   s_storage.readings = afe_readings;
   memset(afe_readings, 0, sizeof(AfeReadings));
   memcpy(&s_storage.settings, settings, sizeof(CellSenseSettings));
-  ltc_afe_init(afe, ltc_settings);
+  status_ok_or_return(ltc_afe_init(afe, ltc_settings));
   return prv_init_ltc_afe_fsm(afe);
 }
 

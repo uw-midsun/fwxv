@@ -1,3 +1,4 @@
+// Individual AFE FSM module. Initialize it and then it should continuously run by itself
 #pragma once
 
 #include <assert.h>
