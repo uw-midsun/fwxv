@@ -11,19 +11,6 @@
 #include "spi.h"
 #include "status.h"
 
-// This is an arbitrary limitation, can be increased/decreased if needed
-#define LTC_AFE_MAX_DEVICES 5
-// This is a device limitation
-#define LTC_AFE_MAX_CELLS_PER_DEVICE 12
-#define LTC_AFE_MAX_CELLS (LTC_AFE_MAX_DEVICES * LTC_AFE_MAX_CELLS_PER_DEVICE)
-#define LTC_AFE_MAX_THERMISTORS LTC_AFE_MAX_CELLS
-
-#if defined(__GNUC__)
-#define _PACKED __attribute__((packed))
-#else
-#define _PACKED
-#endif
-
 #define LTC_AFE_FSM_CELL_CONV_DELAY_MS 10
 #define LTC_AFE_FSM_AUX_CONV_DELAY_MS 6
 // Maximum number of retry attempts to read cell/aux data once triggered
@@ -103,7 +90,7 @@ typedef struct CellSenseStorage {
 // corresponding conversion is completed.
 
 StatusCode cell_sense_init(const CellSenseSettings *settings, AfeReadings *readings,
-                           LtcAfeStorage *afe);
+                           LtcAfeStorage *afe, LtcAfeSettings *ltc_settings);
 
 // Mark cell for discharging (takes effect after config is re-written)
 // |cell| should be [0, settings.num_cells)

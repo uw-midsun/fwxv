@@ -229,11 +229,12 @@ StatusCode prv_init_ltc_afe_fsm(LtcAfeStorage *afe) {
 }
 
 StatusCode cell_sense_init(const CellSenseSettings *settings, AfeReadings *afe_readings,
-                           LtcAfeStorage *afe) {
+                           LtcAfeStorage *afe, LtcAfeSettings *ltc_settings) {
   s_storage.afe = afe;
   s_storage.readings = afe_readings;
   memset(afe_readings, 0, sizeof(AfeReadings));
   memcpy(&s_storage.settings, settings, sizeof(CellSenseSettings));
+  ltc_afe_init(afe, ltc_settings);
   return prv_init_ltc_afe_fsm(afe);
 }
 
