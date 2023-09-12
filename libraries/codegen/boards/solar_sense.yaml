@@ -1,4 +1,3 @@
-# Message Definitions in plaintext are on the wiki at:
 # https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
 #
 # If you are making changes to this file please update the corresponding entry
@@ -7,23 +6,18 @@
 # - 0-13: Critical messages (have ACK)
 # - 14-30: Actionable messages (trigger a change in another system)
 # - 30-63: Data messages (usually not actionable by an onboard device)
+
 ---
-  Boards:
-    - babydriver
-    - bms_carrier
-    - centre_console
-    - charger
-    - motor_controller
-    - pedal
-    - power_distribution_front
-    - power_distribution_rear
-    - power_select
-    - solar_5_mppts
-    - solar_6_mppts
-    - steering
-    - uv_cutoff
-    - solar_sense
-    - new_can
-    - can_one_shot_mode
-    - can_debug
-  
+Messages:
+  current_sense:
+    id: 14 
+    target:
+      telemetry:
+        watchdog: 0
+    signals:
+      current:
+        length: 16
+      voltage:  
+        length: 16
+      relay_status: 
+        length: 8
