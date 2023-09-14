@@ -62,21 +62,22 @@ static const uint32_t s_i2c_timing[] = {
   [I2C_SPEED_FAST] = 400000,      // 400 kHz
 };
 
-static void prv_recover_lockup(I2CPort port) {
-  I2CSettings *settings = &s_port[port].settings;
-
-  // Manually clock SCL
-  gpio_init_pin(&settings->scl, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  for (size_t i = 0; i < 16; i++) {
-    gpio_toggle_state(&settings->scl);
-  }
-
-  gpio_init_pin(&settings->scl, GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_LOW);
-
-  // Reset I2C
-  I2C_SoftwareResetCmd(s_port[port].base, ENABLE);
-  I2C_SoftwareResetCmd(s_port[port].base, DISABLE);
-}
+// static void prv_recover_lockup(I2CPort port) {
+//   I2C_DeInit(port);
+//   I2CSettings *settings = &s_port[port].settings;
+// 
+//   // Manually clock SCL
+//   gpio_init_pin(&settings->scl, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+//   for (size_t i = 0; i < 16; i++) {
+//     gpio_toggle_state(&settings->scl);
+//   }
+// 
+//   gpio_init_pin(&settings->scl, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_HIGH);
+// 
+//   // Reset I2C
+//   I2C_SoftwareResetCmd(s_port[port].base, ENABLE);
+//   I2C_SoftwareResetCmd(s_port[port].base, DISABLE);
+// }
 
 StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   if (i2c >= NUM_I2C_PORTS) {
@@ -99,7 +100,7 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   }
 
   // Initialize pins to correct mode to operate I2C
-  gpio_init_pin(&(settings->scl), GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_HIGH);
+  gpio_init_pin(&(settings->scl), GPIO_ALTFN_PUSH_PULL, GPIO_STATE_HIGH);
   gpio_init_pin(&(settings->sda), GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_HIGH);
 
   // Initialize I2C peripheral with settings
@@ -141,9 +142,9 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   // status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, 5 * I2C_TIMEOUT_MS));
 
   // Check that bus is not busy - If it is, assume that lockup has occurred
-  if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
-    prv_recover_lockup(i2c);
-  }
+  // if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
+  //   prv_recover_lockup(i2c);
+  // }
 
   // Set number of bytes to read
   s_port[i2c].num_rx_bytes = rx_len;
@@ -163,6 +164,7 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   // Wait for mutex to be unlocked from ISR
   // If we timeout, it means some issue has occurred, so we will dump queue
   if (sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS)) {
+    I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
     I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
     queue_reset(&s_port[i2c].i2c_buf.queue);
     sem_post(&s_port[i2c].i2c_buf.mutex);
@@ -188,9 +190,9 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   }
   // status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
   // Check that bus is not busy - If it is, assume that lockup has occurred
-  if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
-    prv_recover_lockup(i2c);
-  }
+  // if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
+  //   prv_recover_lockup(i2c);
+  // }
 
   // Copy data into queue
   for (size_t tx = 0; tx < tx_len; tx++) {
@@ -214,6 +216,7 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   // Wait for ISR to unlock mutex when transaction finished
   // If we timeout, it means some issue has occurred, so we will dump queue
   if (sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS)) {
+    I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
     I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
     queue_reset(&s_port[i2c].i2c_buf.queue);
     sem_post(&s_port[i2c].i2c_buf.mutex);

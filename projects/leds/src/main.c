@@ -14,22 +14,23 @@ static const GpioAddress leds[] = {
 };
 
 TASK(leds_task, TASK_STACK_512) {
-  for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
-    gpio_init_pin(&leds[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
-  }
+  // for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
+  //   gpio_init_pin(&leds[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
+  // }
 
   while (true) {
-    LOG_DEBUG("blink\n");
-// #ifdef MS_PLATFORM_X86
-// #endif
-    for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
-      gpio_set_state(&leds[i], GPIO_STATE_HIGH);
-      delay_ms(50);
-    }
-    for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
-      gpio_set_state(&leds[i], GPIO_STATE_LOW);
-      delay_ms(50);
-    }
+    delay_ms(10000);
+    //LOG_DEBUG("blink\n");
+// #//ifdef MS_PLATFORM_X86
+// #//endif
+    //for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
+    //  gpio_set_state(&leds[i], GPIO_STATE_HIGH);
+    //  delay_ms(50);
+    //}
+    //for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
+    //  gpio_set_state(&leds[i], GPIO_STATE_LOW);
+    //  delay_ms(50);
+    //}
   }
 }
 

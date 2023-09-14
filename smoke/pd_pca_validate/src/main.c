@@ -5,6 +5,7 @@
 #include "master_task.h"
 #include "delay.h"
 #include "pca_config.h"
+#include "gpio.h"
 
 
 Pca9555GpioAddress addy[] = {
@@ -24,9 +25,14 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
       pca9555_gpio_init_pin(&addy[i], &pca_settings);
    }
    while (true) {
-      for(unsigned int i = 0; i < num_pins; ++i) {
-         pca9555_gpio_toggle_state(&addy[i]);
-      }
+      uint8_t tx_data = 0xff;
+      // for(int i = 0; i < 8; i++) {
+      //   gpio_toggle_state(&sda);
+      // }
+      i2c_write(I2C_PORT_1, 0x24, &tx_data, 1);
+      // for(unsigned int i = 0; i < num_pins; ++i) {
+      //    pca9555_gpio_toggle_state(&addy[i]);
+      // }
       // for(unsigned int i = 0; i < num_pins; ++i) {
       //    pca9555_gpio_set_state(&addy[i], PCA9555_GPIO_STATE_HIGH);
       // }
@@ -34,7 +40,7 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
       // for(unsigned int i = 0; i < num_pins; ++i) {
       //    pca9555_gpio_set_state(&addy[i], PCA9555_GPIO_STATE_LOW);
       // }
-      delay_ms(200);
+      delay_ms(5000);
    }
 }
 
@@ -42,7 +48,9 @@ int main() {
    tasks_init();
    log_init();
    gpio_init();
-   gpio_it_init();
+   //gpio_it_init();
+   GpioAddress sda = {.port = i2c_settings.scl.port, .pin = i2c_settings.scl.pin };
+   gpio_init_pin(&sda, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
 
    i2c_init(0, &i2c_settings);
    pca9555_gpio_init(0, I2C_ADDRESS_1);
