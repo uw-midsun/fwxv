@@ -159,8 +159,27 @@ def get_test_list():
 
 def test_runner(target, source, env):
     test_list = get_test_list()
+    
     for test in test_list:
-        subprocess.run(test.get_path()).check_returncode()
+        if PLATFORM == "x86":
+            subprocess.run(test.get_path()).check_returncode()
+
+        elif PLATFORM == "arm":
+            OPENOCD = 'openocd'
+            OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
+            PROBE = 'cmsis-dap'
+            OPENOCD_CFG = [
+                OPENOCD,
+                '-s {}'.format(OPENOCD_SCRIPT_DIR),
+                '-f interface/{}.cfg'.format(PROBE),
+                '-f target/stm32f1x.cfg',
+                '-f {}/stm32f1-openocd.cfg'.format(PLATFORM_DIR),
+                '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
+                '-c "stm_flash {}"'.format(test),
+                '-c shutdown'
+            ]
+            cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
+            subprocess.run(cmd, shell=True)
 
 test = Command('test.txt', [], test_runner)
 Depends(test, get_test_list())
