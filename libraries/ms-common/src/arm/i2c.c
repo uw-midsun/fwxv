@@ -39,6 +39,7 @@ typedef struct {
   bool curr_mode;                 // Mode used in current transxn
   I2CAddress current_addr;        // Addr used in current transxn
   volatile uint8_t num_rx_bytes;  // Number of bytes left to receive in rx mode
+  volatile StatusCode exit;
 } I2CPortData;
 
 static I2CPortData s_port[NUM_I2C_PORTS] = {
@@ -52,13 +53,15 @@ static I2CPortData s_port[NUM_I2C_PORTS] = {
                    .err_irqn = I2C2_ER_IRQn },
 };
 
+// Generated using the I2C timing 
 static const uint32_t s_i2c_timing[] = {
   [I2C_SPEED_STANDARD] = 100000,  // 100 kHz
   [I2C_SPEED_FAST] = 400000,      // 400 kHz
 };
 
-static void prv_recover_lockup(I2CPort port) {
-  I2CSettings *settings = &s_port[port].settings;
+static void prv_recover_lockup(I2CPort i2c) {
+  I2C_DeInit(s_port[i2c].base);
+  I2CSettings *settings = &s_port[i2c].settings;
 
   // Manually clock SCL
   gpio_init_pin(&settings->scl, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
@@ -66,11 +69,19 @@ static void prv_recover_lockup(I2CPort port) {
     gpio_toggle_state(&settings->scl);
   }
 
-  gpio_init_pin(&settings->scl, GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_LOW);
+  gpio_init_pin(&settings->scl, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_HIGH);
 
   // Reset I2C
-  I2C_SoftwareResetCmd(s_port[port].base, ENABLE);
-  I2C_SoftwareResetCmd(s_port[port].base, DISABLE);
+  I2C_SoftwareResetCmd(s_port[i2c].base, ENABLE);
+  I2C_SoftwareResetCmd(s_port[i2c].base, DISABLE);
+
+  // Reinitialize
+  I2C_InitTypeDef i2c_init;
+  I2C_StructInit(&i2c_init);
+  i2c_init.I2C_Mode = I2C_Mode_I2C;
+  i2c_init.I2C_Ack = I2C_Ack_Enable;
+  i2c_init.I2C_ClockSpeed = s_i2c_timing[settings->speed];
+  I2C_Init(s_port[i2c].base, &i2c_init);
 }
 
 StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
@@ -83,18 +94,25 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   s_port[i2c].settings = *settings;
 
   // Enable clock for I2C
-  RCC_APB1PeriphClockCmd(s_port[i2c].periph, ENABLE);
+ RCC_APB1PeriphClockCmd(s_port[i2c].periph, ENABLE);
 
   // Enable GPIOB clock
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
   // Remap pins to I2C pins 8 & 9 on Port 1
-  if (i2c == I2C_PORT_1) {
+  if(i2c == I2C_PORT_1) {
     GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);
   }
 
-  // Initialize pins to correct mode to operate I2C
-  gpio_init_pin(&(settings->scl), GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_HIGH);
+  // NOTE(mitch): This shouldn't be required for I2C, was needed to get around
+  // Issue with SCL not being set high
+  gpio_init_pin(&(settings->scl), GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
+  gpio_init_pin(&(settings->sda), GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
+
+  // Initialize pins to correct mode to operate I2C (open drain)
+  // SCL should be open drain as well, but this was not working with hardware
+  // Since we only use one master shouldn't be an issue
+  gpio_init_pin(&(settings->scl), GPIO_ALTFN_PUSH_PULL, GPIO_STATE_HIGH);
   gpio_init_pin(&(settings->sda), GPIO_ALFTN_OPEN_DRAIN, GPIO_STATE_HIGH);
 
   // Initialize I2C peripheral with settings
@@ -110,15 +128,17 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   stm32f10x_interrupt_nvic_enable(s_port[i2c].err_irqn, INTERRUPT_PRIORITY_NORMAL);
   NVIC_EnableIRQ(I2C1_EV_IRQn);
   NVIC_SetPriority(I2C1_EV_IRQn, 2);
+  NVIC_EnableIRQ(I2C1_ER_IRQn);
+  NVIC_SetPriority(I2C1_ER_IRQn, 2);
 
   // Mask interrupts while we are not in a transaction
   // This prevents TXE from continuously triggering
   I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT | I2C_IT_BUF, DISABLE);
-
   s_port[i2c].i2c_buf.queue.num_items = I2C_MAX_NUM_DATA;
   s_port[i2c].i2c_buf.queue.item_size = sizeof(uint8_t);
   s_port[i2c].i2c_buf.queue.storage_buf = s_port[i2c].i2c_buf.buf;
-  status_ok_or_return(sem_init(&s_port[i2c].i2c_buf.mutex, 1, 1));
+  s_port[i2c].exit = STATUS_CODE_OK;
+  status_ok_or_return(sem_init(&s_port[i2c].i2c_buf.mutex, 1, 0));
   status_ok_or_return(queue_init(&s_port[i2c].i2c_buf.queue));
 
   // Enable I2C peripheral
@@ -128,6 +148,7 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
 }
 
 StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_len) {
+  StatusCode res = STATUS_CODE_OK;
   if (i2c >= NUM_I2C_PORTS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
   }
@@ -138,12 +159,14 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
     prv_recover_lockup(i2c);
   }
+  queue_reset(&s_port[i2c].i2c_buf.queue);
 
   // Set number of bytes to read
   s_port[i2c].num_rx_bytes = rx_len;
   // Store address for this transaction
-  s_port[i2c].current_addr = addr;
+  s_port[i2c].current_addr = (addr) << 1;
   s_port[i2c].curr_mode = I2C_MODE_RECEIVE;
+  s_port[i2c].exit = STATUS_CODE_OK;
 
   // Enable acknowlege, as it is disabled at end of every rx transaction
   I2C_AcknowledgeConfig(s_port[i2c].base, ENABLE);
@@ -157,8 +180,8 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   // Wait for mutex to be unlocked from ISR
   // If we timeout, it means some issue has occurred, so we will dump queue
   if (sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS)) {
+    I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
     I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
-    queue_reset(&s_port[i2c].i2c_buf.queue);
     sem_post(&s_port[i2c].i2c_buf.mutex);
     return STATUS_CODE_TIMEOUT;
   }
@@ -172,7 +195,8 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
     }
   }
   sem_post(&s_port[i2c].i2c_buf.mutex);
-  return STATUS_CODE_OK;
+  // Return status code ok unless an error has occurred
+  return s_port[i2c].exit;
 }
 
 // Address needs to be just the device address, read/write bit is taken care of in hardware
@@ -184,15 +208,17 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   // Lock I2C resource
   status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
 
+  status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS));
   // Check that bus is not busy - If it is, assume that lockup has occurred
   if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
     prv_recover_lockup(i2c);
   }
 
   // Copy data into queue
+  s_port[i2c].exit = STATUS_CODE_OK;
+  queue_reset(&s_port[i2c].i2c_buf.queue);
   for (size_t tx = 0; tx < tx_len; tx++) {
     if (queue_send(&s_port[i2c].i2c_buf.queue, &tx_data[tx], 0)) {
-      queue_reset(&s_port[i2c].i2c_buf.queue);
       sem_post(&s_port[i2c].i2c_buf.mutex);
       return STATUS_CODE_RESOURCE_EXHAUSTED;
     }
@@ -202,16 +228,17 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   s_port[i2c].current_addr = (addr) << 1;
   s_port[i2c].curr_mode = I2C_MODE_TRANSMIT;
 
-  // Start an I2C transaction by enabling start bit. Transfers occur in IT handler
-  // Start bit is cleared when I2C_GetITStatus() and I2C_SendData() called in succession
+  // Enable Interrupts 
   I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, ENABLE);
+
+  // Start an I2C transaction by enabling start bit. Transfers occur in IT handler
   I2C_GenerateSTART(s_port[i2c].base, ENABLE);
 
   // Wait for ISR to unlock mutex when transaction finished
   // If we timeout, it means some issue has occurred, so we will dump queue
   if (sem_wait(&s_port[i2c].i2c_buf.mutex, I2C_TIMEOUT_MS)) {
+    I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
     I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
-    queue_reset(&s_port[i2c].i2c_buf.queue);
     sem_post(&s_port[i2c].i2c_buf.mutex);
     return STATUS_CODE_TIMEOUT;
   }
@@ -243,7 +270,7 @@ StatusCode i2c_write_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *tx_
   return STATUS_CODE_OK;
 }
 
-// IRQ functionality for the I2C event interrupt
+// IRQ functionality for the I2C event interruptd
 // Since activity is the same for both ports, use one IRQ handler
 // Flags are cleared automatically by respective reads and writes
 static void prv_ev_irq_handler(I2CPort i2c) {
@@ -269,7 +296,7 @@ static void prv_ev_irq_handler(I2CPort i2c) {
     // Reading IT status and writing Data Reg clears Start bit
     I2C_Send7bitAddress(s_port[i2c].base, s_port[i2c].current_addr, s_port[i2c].curr_mode);
 
-    // In write (tx) mode, send a byte whenever TX register is empty
+  // In write (tx) mode, send a byte whenever TX register is empty
   } else if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_TXE)) {
     uint8_t tx_data = 0;
     if (xQueueReceiveFromISR(s_port[i2c].i2c_buf.queue.handle, &tx_data, &xTaskWoken)) {
@@ -308,6 +335,7 @@ static void prv_dump_queue_from_isr(I2CPort i2c) {
 }
 
 static void prv_err_irq_handler(I2CPort i2c) {
+  BaseType_t xTaskWoken = pdFALSE;
   // Bus error
   if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_BERR) == SET) {
     // if bus error has occurred, dump queue load. This will be caught by
@@ -320,13 +348,17 @@ static void prv_err_irq_handler(I2CPort i2c) {
     // Dump queue, so transaction will register as failed
     prv_dump_queue_from_isr(i2c);
     I2C_ClearITPendingBit(s_port[i2c].base, I2C_IT_AF);
-
+    I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
+    I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
+    s_port[i2c].exit = STATUS_CODE_UNREACHABLE;
+    xSemaphoreGiveFromISR(s_port[i2c].i2c_buf.mutex.handle, &xTaskWoken);
   } else {
     // This should not happen since we do not use multi-master.
     // Simply clear all other error flags
     I2C_ClearITPendingBit(s_port[i2c].base, I2C_IT_ARLO | I2C_IT_OVR | I2C_IT_TIMEOUT |
                                                 I2C_IT_PECERR | I2C_IT_SMBALERT);
   }
+  portYIELD_FROM_ISR(xTaskWoken);
 }
 
 void I2C1_EV_IRQHandler() {
