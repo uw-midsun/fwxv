@@ -53,7 +53,7 @@ static I2CPortData s_port[NUM_I2C_PORTS] = {
                    .err_irqn = I2C2_ER_IRQn },
 };
 
-// Generated using the I2C timing 
+// Generated using the I2C timing
 static const uint32_t s_i2c_timing[] = {
   [I2C_SPEED_STANDARD] = 100000,  // 100 kHz
   [I2C_SPEED_FAST] = 400000,      // 400 kHz
@@ -94,13 +94,13 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
   s_port[i2c].settings = *settings;
 
   // Enable clock for I2C
- RCC_APB1PeriphClockCmd(s_port[i2c].periph, ENABLE);
+  RCC_APB1PeriphClockCmd(s_port[i2c].periph, ENABLE);
 
   // Enable GPIOB clock
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
   // Remap pins to I2C pins 8 & 9 on Port 1
-  if(i2c == I2C_PORT_1) {
+  if (i2c == I2C_PORT_1) {
     GPIO_PinRemapConfig(GPIO_Remap_I2C1, ENABLE);
   }
 
@@ -228,7 +228,7 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   s_port[i2c].current_addr = (addr) << 1;
   s_port[i2c].curr_mode = I2C_MODE_TRANSMIT;
 
-  // Enable Interrupts 
+  // Enable Interrupts
   I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, ENABLE);
 
   // Start an I2C transaction by enabling start bit. Transfers occur in IT handler
@@ -296,7 +296,7 @@ static void prv_ev_irq_handler(I2CPort i2c) {
     // Reading IT status and writing Data Reg clears Start bit
     I2C_Send7bitAddress(s_port[i2c].base, s_port[i2c].current_addr, s_port[i2c].curr_mode);
 
-  // In write (tx) mode, send a byte whenever TX register is empty
+    // In write (tx) mode, send a byte whenever TX register is empty
   } else if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_TXE)) {
     uint8_t tx_data = 0;
     if (xQueueReceiveFromISR(s_port[i2c].i2c_buf.queue.handle, &tx_data, &xTaskWoken)) {
