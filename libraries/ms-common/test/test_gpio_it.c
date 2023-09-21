@@ -41,6 +41,7 @@ void setup_test(void) {}
 void teardown_test(void) {}
 
 static uint32_t triggered = 0;
+static uint32_t triggered_times = 0;
 
 TASK(handler, TASK_MIN_STACK_SIZE) {
   while (true) {
@@ -50,6 +51,7 @@ TASK(handler, TASK_MIN_STACK_SIZE) {
       if ((triggered & (1u << i)) != 0) {
         LOG_DEBUG("triggered pin %i\n", buttons[i].pin);
         gpio_toggle_state(&leds[i]);
+        triggered_times++;
       }
     }
   }
@@ -67,11 +69,13 @@ void test_gpio_it(void) {
 
   for (int i = 0; i < 5; ++i) {
     delay_ms(100);
-    gpio_it_trigger_interrupt(&buttons[0]);
+    gpio_it_trigger_interrupt(&buttons[i % 2]);
     delay_ms(100);
 
     triggered = 0;
   }
+
+  TEST_ASSERT_EQUAL(5, triggered_times);
 }
 
 // test for hardware, uncomment and test with tutorial boards. leds should toggle with the two

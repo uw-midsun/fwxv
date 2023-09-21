@@ -29,6 +29,7 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
 
+  adc_run();
   steering_analog_input();
   steering_digital_input();
 
@@ -46,7 +47,7 @@ int main() {
 
   // Setup analog inputs and initialize adc
   steering_analog_adc_init();
-  adc_init(ADC_MODE_SINGLE);
+  adc_init();
   steering_digital_input_init(get_master_task());
 
   can_init(&s_can_storage, &can_settings);

@@ -51,16 +51,20 @@ extern const GpioAddress ADC_REF;
 extern const GpioAddress ADC_TEMP;
 
 // Initialize the ADC to the desired conversion mode
-StatusCode adc_init(AdcMode adc_mode);
+StatusCode adc_init(void);
 
 // Configures a GPIO to be used as an ADC channel
 // Must be called for all pins in use before adc_init()
 StatusCode adc_add_channel(GpioAddress address);
 
-// Obtain the raw 12-bit value read by the specified pin
+// Initiates new conversion for all added channels
+StatusCode adc_run(void);
+
+// Obtain most recently converted raw value for address
 StatusCode adc_read_raw(GpioAddress address, uint16_t *reading);
 
-// Obtain the converted value at the specified pin, in mV
+// Obtain most recently converted value for address
+// Returns voltage in mV or degrees in celcius*1000
 StatusCode adc_read_converted(GpioAddress address, uint16_t *reading);
 
 // Used to clear state
@@ -68,5 +72,5 @@ void adc_deinit(void);
 
 // Setter for adc testing
 #ifdef MS_PLATFORM_X86
-void adc_set_reading(GpioAddress sample_address, uint16_t adc_reading);
+StatusCode adc_set_reading(GpioAddress sample_address, uint16_t adc_reading);
 #endif

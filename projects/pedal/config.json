@@ -5,5 +5,10 @@
         "master",
         "ms-drivers"
     ],
-    "can": true
+    "can": true,
+    "mocks": {
+        "pedal_data": [
+          "max11600_read_raw"
+        ]
+      }
 }

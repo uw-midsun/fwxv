@@ -98,7 +98,7 @@ StatusCode wait_tasks(uint16_t num_tasks) {
 StatusCode send_task_end() {
   if (xSemaphoreGive(s_end_task_handle) != pdTRUE) {
     // if giving to semaphore failed, we ran out of space in the buffer
-    LOG_CRITICAL("CRITICAL: Out of buffer space in semaphore.");
+    LOG_CRITICAL("CRITICAL: Out of buffer space in semaphore.\n");
     return STATUS_CODE_RESOURCE_EXHAUSTED;
   }
   return STATUS_CODE_OK;

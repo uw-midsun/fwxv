@@ -22,8 +22,9 @@
     - solar_6_mppts
     - steering
     - uv_cutoff
+    - solar_sense
 
     - new_can
-    - can_one_shot_mode
+    - can_communication
     - can_debug
   

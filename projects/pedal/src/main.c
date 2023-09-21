@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "adc.h"
 #include "calib.h"
 #include "can.h"
 #include "can_board_ids.h"
@@ -43,6 +44,7 @@ void pedal_init() {
     .sda = { .port = GPIO_PORT_B, .pin = 11 },
   };
   i2c_init(I2C_PORT_2, &i2c_settings);
+  adc_init();
   max11600_init(&s_max11600_storage, I2C_PORT_2);
 }
 
