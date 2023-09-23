@@ -150,7 +150,7 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
 // Do a transaction on the I2C bus
 static StatusCode prv_txn(I2CPort i2c, I2CAddress addr, uint8_t *data, size_t len, bool read) {
   // Check that bus is not busy - If it is, assume that lockup has occurred
-  if (I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
+  if (!s_port[i2c].multi_txn && I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
     status_ok_or_return(prv_recover_lockup(i2c));
   }
   queue_reset(&s_port[i2c].i2c_buf.queue);
@@ -173,8 +173,9 @@ static StatusCode prv_txn(I2CPort i2c, I2CAddress addr, uint8_t *data, size_t le
 
   // Enable Interrupts before setting start to begin txn
   s_port[i2c].exit = STATUS_CODE_OK;
-  I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, ENABLE);
+  I2C_GenerateSTOP(s_port[i2c].base, DISABLE);
   I2C_GenerateSTART(s_port[i2c].base, ENABLE);
+  I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, ENABLE);
   // Wait for signal that txn is finished from ISR, then disable IT and generate stop
   status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.wait_txn, I2C_TIMEOUT_MS));
   I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
@@ -201,6 +202,7 @@ StatusCode i2c_read(I2CPort i2c, I2CAddress addr, uint8_t *rx_data, size_t rx_le
   // Lock I2C resource
   StatusCode res = STATUS_CODE_OK;
   status_ok_or_return(mutex_lock(&s_port[i2c].mutex, I2C_TIMEOUT_MS));
+  s_port[i2c].multi_txn = false;
   res = prv_txn(i2c, addr, rx_data, rx_len, true);
   mutex_unlock(&s_port[i2c].mutex);
   // Return status code ok unless an error has occurred
@@ -215,6 +217,7 @@ StatusCode i2c_write(I2CPort i2c, I2CAddress addr, uint8_t *tx_data, size_t tx_l
   // Lock I2C resource
   StatusCode res = STATUS_CODE_OK;
   status_ok_or_return(mutex_lock(&s_port[i2c].mutex, I2C_TIMEOUT_MS));
+  s_port[i2c].multi_txn = false;
   res = prv_txn(i2c, addr, tx_data, tx_len, false);
   mutex_unlock(&s_port[i2c].mutex);
   return res;
@@ -249,13 +252,13 @@ StatusCode i2c_write_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *tx_
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid I2C port.");
   }
 
-  uint8_t write_data[I2C_MAX_NUM_DATA];
+  uint8_t write_data[I2C_MAX_NUM_DATA] = { 0 };
   write_data[0] = reg;
   for (size_t i = 1; i < tx_len + 1; i++) {
     write_data[i] = tx_data[i - 1];
   }
 
-  status_ok_or_return(i2c_write(i2c, addr, write_data, sizeof(write_data)));
+  status_ok_or_return(i2c_write(i2c, addr, write_data, tx_len + 1));
   return STATUS_CODE_OK;
 }
 
@@ -265,37 +268,37 @@ StatusCode i2c_write_reg(I2CPort i2c, I2CAddress addr, uint8_t reg, uint8_t *tx_
 static void prv_ev_irq_handler(I2CPort i2c) {
   BaseType_t xTaskWoken = pdFALSE;
 
-  // Second event is I2C_IT_ADDR being set once address is sent
-  if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_ADDR) == SET) {
-    // Reading SR2 register clears ADDR IT flag
-    (void)(s_port[i2c].base->SR2);
-
-    // If we only have one byte to receive, need to end now
-    if (s_port[i2c].curr_mode == I2C_MODE_RECEIVE && s_port[i2c].num_rx_bytes == 1) {
-      I2C_AcknowledgeConfig(s_port[i2c].base, DISABLE);
-      I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
-      xSemaphoreGiveFromISR(s_port[i2c].i2c_buf.wait_txn.handle, &xTaskWoken);
-    }
-  }
-
   // First event triggered when start bit is sent
   if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_SB) == SET) {
     // Send address, with LSB set for Read, reset for Write
     // Reading IT status and writing Data Reg clears Start bit
     I2C_Send7bitAddress(s_port[i2c].base, s_port[i2c].current_addr, s_port[i2c].curr_mode);
 
-    // In write (tx) mode, send a byte whenever TX register is empty
-  } else if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_TXE)) {
-    uint8_t tx_data = 0;
-    if (xQueueReceiveFromISR(s_port[i2c].i2c_buf.queue.handle, &tx_data, &xTaskWoken)) {
-      I2C_SendData(s_port[i2c].base, tx_data);
-    } else {  // If we have sent all data, stop transaction and signal task
-      I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
-      xSemaphoreGiveFromISR(s_port[i2c].i2c_buf.wait_txn.handle, &xTaskWoken);
-    }
+   } else if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_ADDR) == SET) {
+    // Second event is I2C_IT_ADDR being set once address is sent
+    // Reading SR2 register clears ADDR IT flag
+    (void)(s_port[i2c].base->SR2);
 
+    // If we only have one byte to receive, need to end now
+    if (s_port[i2c].curr_mode == I2C_MODE_RECEIVE && s_port[i2c].num_rx_bytes == 1) {
+      I2C_AcknowledgeConfig(s_port[i2c].base, DISABLE);
+      I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
+    }
+  } 
+
+  if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_TXE)) {
+    uint8_t tx_data = 0;
+    if (s_port[i2c].curr_mode == I2C_MODE_TRANSMIT ) {
+      if (xQueueReceiveFromISR(s_port[i2c].i2c_buf.queue.handle, &tx_data, &xTaskWoken)) {
+        I2C_SendData(s_port[i2c].base, tx_data);
+      } else {  // If we have sent all data, stop transaction and signal task
+        I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
+        xSemaphoreGiveFromISR(s_port[i2c].i2c_buf.wait_txn.handle, &xTaskWoken);
+      }
+    }
     // In read (rx) mode, read value from data in reg, send to queue
-  } else if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_RXNE)) {
+  }
+  if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_RXNE)) {
     uint8_t rx_data = I2C_ReceiveData(s_port[i2c].base);
     xQueueSendFromISR(s_port[i2c].i2c_buf.queue.handle, &rx_data, &xTaskWoken);
 
@@ -304,9 +307,11 @@ static void prv_ev_irq_handler(I2CPort i2c) {
       // If we only have one byte left, don't ack slave
       // This finishes the transaction after last byte sent
       I2C_AcknowledgeConfig(s_port[i2c].base, DISABLE);
-      I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
+      I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
     } else if (s_port[i2c].num_rx_bytes == 0) {
       // Unlock mutex after receiving last byte
+      I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
+      I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
       xSemaphoreGiveFromISR(s_port[i2c].i2c_buf.wait_txn.handle, &xTaskWoken);
     }
   }
