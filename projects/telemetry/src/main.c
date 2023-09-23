@@ -1,7 +1,7 @@
 #include "can.h"
+#include "can_board_ids.h"
 #include "log.h"
 #include "tasks.h"
-#include "can_board_ids.h"
 
 #define TARGET_HEX_MASK 0xF0
 #define TARGET_BIT_SHIFT 4
