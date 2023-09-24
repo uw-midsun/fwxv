@@ -83,8 +83,8 @@ void status_register_callback(StatusCallback callback);
 #define status_clear() status_msg(STATUS_CODE_OK, "Clear")
 
 // Use to forward failures or continue on success.
-#define status_ok_or_return(code)          \
-  ({                                       \
-    __typeof__(code) status_expr = (code); \
-    if (status_expr) return status_expr;   \
-  })
+#define status_ok_or_return(code)        \
+  do {                                   \
+    StatusCode status_expr = (code);     \
+    if (status_expr) return status_expr; \
+  } while (0)

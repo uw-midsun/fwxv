@@ -24,11 +24,7 @@
 //
 // To manually unregister a callback, use the cancel_callback function.
 
-#include <stdbool.h>
-
-#include "FreeRTOS.h"
 #include "notify.h"
-#include "tasks.h"
 
 // Each callback function must have the following signature.
 // Return value indicates whether or not the callback

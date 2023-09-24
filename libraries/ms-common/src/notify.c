@@ -1,5 +1,6 @@
 #include "notify.h"
 
+#include "FreeRTOS.h"
 #include "log.h"
 
 typedef struct Subscription {

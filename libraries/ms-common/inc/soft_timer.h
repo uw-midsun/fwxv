@@ -5,7 +5,6 @@
 // code running
 
 #include <stdbool.h>
-#include <stdint.h>
 
 #include "FreeRTOS.h"
 #include "status.h"

@@ -84,7 +84,7 @@ typedef struct CanQueue {
     queue_receive_from_isr(&(can_queue)->queue, (dest), high_prio_woken)
 
 /**
- * @brief get the number of items currently in the can queue
+ * @brief get the number of items the can queue can hold
  * 
  * @param can_queue Queue *, can queue
  * 

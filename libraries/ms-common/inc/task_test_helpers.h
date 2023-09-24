@@ -26,9 +26,6 @@
 //
 // See test_tasks.c for an example of using this library.
 
-#include <stddef.h>
-
-#include "FreeRTOS.h"
 #include "tasks.h"
 
 DECLARE_TASK(test_task);

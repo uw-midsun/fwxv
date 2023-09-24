@@ -1,7 +1,5 @@
 #pragma once
 
-#include <stdint.h>
-
 #include "gpio.h"
 #include "queues.h"
 #include "status.h"

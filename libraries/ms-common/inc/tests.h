@@ -1,8 +1,7 @@
 #pragma once
 
-#include "FreeRTOS.h"
-#include "projdefs.h"
-#include "semphr.h"
+#include <stdint.h>
+
 #include "status.h"
 
 // Initializes test end and test start semaphore

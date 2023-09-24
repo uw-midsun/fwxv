@@ -26,7 +26,6 @@
 //   tasks_start(); // Does not return!
 
 #include <stdbool.h>
-#include <stddef.h>
 
 #include "FreeRTOS.h"
 #include "semphr.h"

@@ -1,7 +1,6 @@
 #pragma once
 // Library encompassing task-to-task and interrupt to task notifications
 
-#include "FreeRTOS.h"
 #include "status.h"
 #include "tasks.h"
 

@@ -1,7 +1,5 @@
 #pragma once
 // Wrapper library for all mutex and semaphore usage
-#include <stdbool.h>
-
 #include "FreeRTOS.h"
 #include "semphr.h"
 #include "status.h"
