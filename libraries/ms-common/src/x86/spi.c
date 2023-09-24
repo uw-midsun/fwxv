@@ -1,6 +1,5 @@
 #include "spi.h"
 
-#include "log.h"
 #include "queues.h"
 #include "semaphore.h"
 #include "spi_mcu.h"

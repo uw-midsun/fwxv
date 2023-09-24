@@ -1,4 +1,7 @@
 #pragma once
+/**
+ * Watchdog implemented with soft timers.
+ */
 
 #include "soft_timer.h"
 

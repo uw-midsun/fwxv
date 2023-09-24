@@ -9,11 +9,25 @@
 
 #include <stdint.h>
 
-// Delay for a period in milliseconds.
+/**
+ * @brief delay the current task by `t` milliseconds,
+ * allows lower priority tasks to run while the current task is delayed.
+ *
+ * @param t milliseconds to delay
+ */
 void delay_ms(uint32_t t);
 
-// Non-blocking delay for a period in milliseconds.
+/**
+ * @brief non-blocking delay the current task by `t` milliseconds,
+ * while task is delayed with non-blocking delay, lower priorities tasks will not be able to run.
+ *
+ * @param t milliseconds to delay
+ */
 void non_blocking_delay_ms(uint32_t t);
 
-// Delay for a period in seconds.
+/**
+ * @brief delay the current task by `t` seconds.
+ *
+ * @param time uint32_t seconds to delay (time * 1000 should not exceed UINT32_MAX).
+ */
 #define delay_s(time) delay_ms((time)*1000)
