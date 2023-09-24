@@ -65,13 +65,13 @@ void run_motor_controller_cycle() {
   run_can_rx_cycle();
   run_mcp2515_rx_cycle();
   wait_tasks(2);
-  //   run_can_tx_cycle();
-  //   run_mcp2515_tx_cycle();
-  //   wait_tasks(2);
+  // run_can_tx_cycle();
+  run_mcp2515_tx_cycle();
+  wait_tasks(1);
 }
 
 void test_motor_controller(void) {
-  CanMessage msg = {};
-  can_queue_push(&s_can_storage.rx_queue, &msg);
+  // CanMessage msg = {};
+  // can_queue_push(&s_can_storage.rx_queue, &msg);
   run_motor_controller_cycle();
 }
