@@ -21,21 +21,75 @@ typedef struct CanQueue {
     queue_init(&(can_queue)->queue);                                \
   })
 
+/**
+ * @brief add a message to a can queue
+ * 
+ * @param can_queue Queue *, can queue to add the message to
+ * @param source CanMessage *, message to add
+ * 
+ * @return
+ * StatusCode: STATUS_CODE_OK if message was added successfully, otherwise STATUS_CODE_RESOURCE_EXHAUSTED
+ */
 #define can_queue_push(can_queue, source)                           \
     queue_send(&(can_queue)->queue, (source), 0)
 
+/**
+ * @brief add a message to a can queue from inside an interrupt
+ * 
+ * @param can_queue Queue *, can queue to add the message to
+ * @param source CanMessage *, message to add
+ * @param high_prio_woken BaseType_t *, pdTRUE if a higher priority task was woken by this queue push
+ * 
+ * @return
+ * StatusCode: STATUS_CODE_OK if message was added successfully, otherwise STATUS_CODE_RESOURCE_EXHAUSTED
+ */
 #define can_queue_push_from_isr(can_queue, source, high_prio_woken) \
     queue_send_from_isr(&(can_queue)->queue, (source), high_prio_woken)
 
+/**
+ * @brief peek the first message in the can queue
+ * 
+ * @param can_queue Queue *, can queue to peek the message from
+ * @param dest CanMessage *, address to store the message
+ * 
+ * @return
+ * StatusCode: STATUS_CODE_OK if there is a message, otherwise STATUS_CODE_EMPTY
+ */
 #define can_queue_peek(can_queue, dest)                             \
     queue_peek(&(can_queue)->queue, (dest), 0)
 
+/**
+ * @brief remove the first message in the can queue
+ * 
+ * @param can_queue Queue *, can queue to remove the message from
+ * @param dest CanMessage *, address to store the message
+ * 
+ * @return
+ * StatusCode: STATUS_CODE_OK if there is a message, otherwise STATUS_CODE_EMPTY
+ */
 #define can_queue_pop(can_queue, dest)                              \
     queue_receive(&(can_queue)->queue, (dest), 0)
 
+/**
+ * @brief remove the first message in the can queue from ISR
+ * 
+ * @param can_queue Queue *, can queue to remove the message from
+ * @param dest CanMessage *, address to store the message
+ * @param high_prio_woken BaseType_t *, pdTRUE if a higher priority task was woken by this queue pop
+ * 
+ * @return
+ * StatusCode: STATUS_CODE_OK if there is a message, otherwise STATUS_CODE_EMPTY
+ */
 #define can_queue_pop_from_isr(can_queue, dest, higher_prio_woken)  \
     queue_receive_from_isr(&(can_queue)->queue, (dest), high_prio_woken)
 
+/**
+ * @brief get the number of items currently in the can queue
+ * 
+ * @param can_queue Queue *, can queue
+ * 
+ * @return
+ * uint32_t: the number of items in the queue
+ */
 #define can_queue_size(can_queue)                                   \
     queue_get_num_items(&(can_queue)->queue)
-
