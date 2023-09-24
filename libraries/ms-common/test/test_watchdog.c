@@ -4,7 +4,7 @@
 #include "unity.h"
 #include "watchdog.h"
 
-static WatchDog s_watchdog;
+static Watchdog s_watchdog;
 
 bool callback_called = false;
 
