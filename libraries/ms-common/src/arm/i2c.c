@@ -274,7 +274,7 @@ static void prv_ev_irq_handler(I2CPort i2c) {
     // Reading IT status and writing Data Reg clears Start bit
     I2C_Send7bitAddress(s_port[i2c].base, s_port[i2c].current_addr, s_port[i2c].curr_mode);
 
-   } else if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_ADDR) == SET) {
+  } else if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_ADDR) == SET) {
     // Second event is I2C_IT_ADDR being set once address is sent
     // Reading SR2 register clears ADDR IT flag
     (void)(s_port[i2c].base->SR2);
@@ -282,13 +282,12 @@ static void prv_ev_irq_handler(I2CPort i2c) {
     // If we only have one byte to receive, need to end now
     if (s_port[i2c].curr_mode == I2C_MODE_RECEIVE && s_port[i2c].num_rx_bytes == 1) {
       I2C_AcknowledgeConfig(s_port[i2c].base, DISABLE);
-      I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
     }
-  } 
+  }
 
   if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_TXE)) {
     uint8_t tx_data = 0;
-    if (s_port[i2c].curr_mode == I2C_MODE_TRANSMIT ) {
+    if (s_port[i2c].curr_mode == I2C_MODE_TRANSMIT) {
       if (xQueueReceiveFromISR(s_port[i2c].i2c_buf.queue.handle, &tx_data, &xTaskWoken)) {
         I2C_SendData(s_port[i2c].base, tx_data);
       } else {  // If we have sent all data, stop transaction and signal task
@@ -310,8 +309,8 @@ static void prv_ev_irq_handler(I2CPort i2c) {
       I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
     } else if (s_port[i2c].num_rx_bytes == 0) {
       // Unlock mutex after receiving last byte
-      I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
       I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
+      I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
       xSemaphoreGiveFromISR(s_port[i2c].i2c_buf.wait_txn.handle, &xTaskWoken);
     }
   }

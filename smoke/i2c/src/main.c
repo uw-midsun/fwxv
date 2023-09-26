@@ -56,10 +56,9 @@ TASK(smoke_i2c_task, TASK_STACK_512){
     uint8_t rx_data[2] = { 0 };
 
 
-    StatusCode ret = i2c_write_reg(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, 0x02, &dat[1], 1);
+    StatusCode ret = i2c_write_reg(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, 0x02, dat, 2);
     // StatusCode ret = i2c_write(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, dat, 2);
-    delay_ms(100);
-    StatusCode ret1 = i2c_read_reg(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, 0x02, rx_data, 1);
+    StatusCode ret1 = i2c_read_reg(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, 0x02, rx_data, 2);
     LOG_DEBUG("ret: %d %d, DATA : %d %d\n\r", ret, ret1, rx_data[0], rx_data[1]);
     // I2C read (uncomment to test)
     // i2c_read(READ_I2C_PORT, READ_I2C_ADDRESS, rx_buf, 6);
