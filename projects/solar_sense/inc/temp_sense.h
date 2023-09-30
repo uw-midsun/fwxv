@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdio.h>
+
 #include "adc.h"
 #include "can.h"
 #include "gpio.h"
@@ -36,16 +37,27 @@ typedef enum {
 } TempSensePinsIndex;
 
 // GPIO pins
-#define TEMP_SENSE_GPIO0 { .port = GPIO_PORT_A, .pin = 0 }
-#define TEMP_SENSE_GPIO1 { .port = GPIO_PORT_A, .pin = 1 }
-#define TEMP_SENSE_GPIO2 { .port = GPIO_PORT_A, .pin = 2 }
-#define TEMP_SENSE_GPIO3 { .port = GPIO_PORT_A, .pin = 3 }
-#define TEMP_SENSE_GPIO4 { .port = GPIO_PORT_A, .pin = 4 }
-#define TEMP_SENSE_GPIO5 { .port = GPIO_PORT_A, .pin = 5 }
-#define TEMP_SENSE_OVERTEMP_GPIO { .port = GPIO_PORT_B, .pin = 5 }
-#define TEMP_SENSE_FULLSPEED_GPIO { .port = GPIO_PORT_B, .pin = 6 }
-#define TEMP_SENSE_FANFAIL_GPIO { .port = GPIO_PORT_B, .pin = 7 }
+#define TEMP_SENSE_GPIO0 \
+  { .port = GPIO_PORT_A, .pin = 0 }
+#define TEMP_SENSE_GPIO1 \
+  { .port = GPIO_PORT_A, .pin = 1 }
+#define TEMP_SENSE_GPIO2 \
+  { .port = GPIO_PORT_A, .pin = 2 }
+#define TEMP_SENSE_GPIO3 \
+  { .port = GPIO_PORT_A, .pin = 3 }
+#define TEMP_SENSE_GPIO4 \
+  { .port = GPIO_PORT_A, .pin = 4 }
+#define TEMP_SENSE_GPIO5 \
+  { .port = GPIO_PORT_A, .pin = 5 }
+#define TEMP_SENSE_OVERTEMP_GPIO \
+  { .port = GPIO_PORT_B, .pin = 5 }
+#define TEMP_SENSE_FULLSPEED_GPIO \
+  { .port = GPIO_PORT_B, .pin = 6 }
+#define TEMP_SENSE_FANFAIL_GPIO \
+  { .port = GPIO_PORT_B, .pin = 7 }
 
-uint16_t calculateTempDigital1(uint16_t temp_analog); // Calculates the temperature based on the analog input for A0 and A1
-uint16_t calculateTempDigital2(uint16_t temp_analog); // Calculates the temperature based on the analog input for A2 - A5
-StatusCode temp_sense_adc_init(); // Initializes the temp sense gpio pins and adc channels
+uint16_t calculateTempDigital1(
+    uint16_t temp_analog);  // Calculates the temperature based on the analog input for A0 and A1
+uint16_t calculateTempDigital2(
+    uint16_t temp_analog);  // Calculates the temperature based on the analog input for A2 - A5
+StatusCode temp_sense_adc_init();  // Initializes the temp sense gpio pins and adc channels
