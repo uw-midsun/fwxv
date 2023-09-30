@@ -159,6 +159,11 @@ def get_test_list():
 
 def test_runner(target, source, env):
     test_list = get_test_list()
+
+    if PLATFORM == "arm":
+        output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
+        device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
+        minicom = subprocess.Popen(["minicom", "-D", device_path], stdout=subprocess.PIPE)
     
     for test in test_list:
         if PLATFORM == "x86":
@@ -180,6 +185,9 @@ def test_runner(target, source, env):
             ]
             cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
             subprocess.run(cmd, shell=True)
+            # wait 
+    if PLATFORM == "arm":
+        minicom.kill()
 
 test = Command('test.txt', [], test_runner)
 Depends(test, get_test_list())
