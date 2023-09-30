@@ -165,9 +165,11 @@ def test_runner(target, source, env):
         device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
         minicom = subprocess.Popen(["minicom", "-D", device_path], stdout=subprocess.PIPE)
     
+    fails = 0
     for test in test_list:
         if PLATFORM == "x86":
-            subprocess.run(test.get_path()).check_returncode()
+            test_process = subprocess.run(test.get_path())
+            fails += (test_process.returncode != 0)
 
         elif PLATFORM == "arm":
             OPENOCD = 'openocd'
@@ -185,9 +187,21 @@ def test_runner(target, source, env):
             ]
             cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
             subprocess.run(cmd, shell=True)
-            # wait 
+            
+            # wait for test result from minicom
+            while True:
+                line = minicom.stdout.readline()
+                print(line)
+                if line == b"OK\n":
+                    break
+                elif line == b"FAIL\n":
+                    fails += 1
+                    break
+
     if PLATFORM == "arm":
         minicom.kill()
+
+    print(f"{len(test_list)} Files tested {fails} Failures")
 
 test = Command('test.txt', [], test_runner)
 Depends(test, get_test_list())
