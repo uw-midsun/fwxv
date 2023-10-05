@@ -4,5 +4,9 @@
         "ms-common",
         "master"
     ],
-    "can": true
+    "can": true,
+    "mocks": {
+        "precharge": ["mcp2515_hw_transmit"],
+        "integration": ["mcp2515_hw_transmit"]
+    }
 }

@@ -49,8 +49,6 @@ StatusCode run_precharge_rx_cycle() {
 }
 
 StatusCode precharge_control_init(const PrechargeControlSettings *settings) {
-  interrupt_init();
-
   s_precharge_control = settings->precharge_control;
 
   InterruptSettings monitor_it_settings = {

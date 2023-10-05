@@ -111,8 +111,8 @@ StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings
   if (settings->can_settings.mode == CAN_CONTINUOUS) {
     // Create RX and TX Tasks
     // ! Ensure the task priority is lower than the interrupt tasks in mcp2515_hw.c
-    status_ok_or_return(tasks_init_task(MCP2515_RX, TASK_PRIORITY(2), NULL));
     status_ok_or_return(tasks_init_task(MCP2515_TX, TASK_PRIORITY(2), NULL));
+    status_ok_or_return(tasks_init_task(MCP2515_RX, TASK_PRIORITY(2), NULL));
   }
 
   return STATUS_CODE_OK;

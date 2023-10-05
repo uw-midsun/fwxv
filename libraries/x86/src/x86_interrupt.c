@@ -88,6 +88,7 @@ static void prv_sig_state_handler(int signum, siginfo_t *info, void *ptr) {
 }
 
 void x86_interrupt_init(void) {
+  LOG_DEBUG("x86 init called\n");
   // Assign the s_pid to be the process id handling the interrupts. This
   // prevents subprocesses from sending a signal to itself instead.
   s_pid = getpid();

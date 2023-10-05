@@ -75,6 +75,8 @@ TASK(CAN_TX, TASK_STACK_512)
     clear_rx_received();
 
     send_task_end();
+
+    LOG_DEBUG("can_tx finished\n");
   }
 }
 

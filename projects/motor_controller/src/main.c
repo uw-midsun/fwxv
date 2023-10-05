@@ -4,6 +4,8 @@
 #include "can_board_ids.h"
 #include "delay.h"
 #include "fsm.h"
+#include "gpio_it.h"
+#include "interrupt.h"
 #include "log.h"
 #include "master_task.h"
 #include "mcp2515.h"
@@ -57,6 +59,8 @@ void run_slow_cycle() {}
 int main() {
   tasks_init();
   log_init();
+  interrupt_init();
+  gpio_it_init();
   can_init(&s_can_storage, &can_settings);
   mcp2515_init(&s_mcp2515_storage, &mcp2515_settings);
   precharge_control_init(&precharge_settings);
