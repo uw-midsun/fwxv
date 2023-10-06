@@ -57,10 +57,10 @@ static void prv_update_target_current_velocity() {
   bool regen = get_drive_output_regen_braking();
   bool cruise = get_drive_output_cruise_control();
 
-  if (cruise && throttle_percent > CRUISE_THROTTLE_THRESHOLD) {
-    drive_state = DRIVE;
+  if (cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
+    drive_state = CRUISE;
   }
-  if (brake_percent > 0 || throttle_percent == 0) {
+  if (brake_percent > 0 || (throttle_percent == 0 && !cruise)) {
     drive_state = regen ? BRAKE : NEUTRAL;
   }
 
@@ -102,8 +102,8 @@ static void motor_controller_tx_all() {
     .id.raw = DRIVER_CONTROL_BASE + 0x01,
     .dlc = 8,
   };
-  memcpy(&message.data_u32[0], &s_target_current, sizeof(s_target_current));
-  memcpy(&message.data_u32[1], &s_target_velocity, sizeof(s_target_velocity));
+  memcpy(&message.data_u32[0], &s_target_current, sizeof(uint32_t));
+  memcpy(&message.data_u32[1], &s_target_velocity, sizeof(uint32_t));
 
   mcp2515_transmit(&message);
 }

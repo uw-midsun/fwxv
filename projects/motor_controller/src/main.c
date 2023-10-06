@@ -25,11 +25,11 @@ const CanSettings can_settings = {
 };
 static Mcp2515Storage s_mcp2515_storage = { 0 };
 Mcp2515Settings mcp2515_settings = {  // place holder values
-  .spi_port = SPI_PORT_1,
+  .spi_port = SPI_PORT_2,
   .spi_settings = {
     0
   },
-  .interrupt_pin = { GPIO_PORT_A, 0 },
+  .interrupt_pin = { GPIO_PORT_B, 10 },
   .can_settings = {
     .bitrate = CAN_HW_BITRATE_500KBPS,
     .loopback = true,
@@ -37,8 +37,8 @@ Mcp2515Settings mcp2515_settings = {  // place holder values
 };
 PrechargeControlSettings precharge_settings = {
   // place holder values
-  .precharge_control = { GPIO_PORT_A, 10 },
-  .precharge_monitor = { GPIO_PORT_A, 9 },
+  .precharge_control = { GPIO_PORT_A, 9 },
+  .precharge_monitor = { GPIO_PORT_A, 10 },
   .precharge_monitor2 = { GPIO_PORT_A, 8 },
 };
 

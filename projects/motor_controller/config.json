@@ -6,7 +6,7 @@
     ],
     "can": true,
     "mocks": {
-        "precharge": ["mcp2515_hw_transmit"],
-        "integration": ["mcp2515_hw_transmit"]
+        "motor_can_tx": ["mcp2515_hw_transmit", "mcp2515_hw_init"],
+        "motor_can_rx": ["mcp2515_hw_transmit", "mcp2515_hw_init"]
     }
 }
