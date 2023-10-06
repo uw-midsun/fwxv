@@ -113,10 +113,12 @@ static void motor_controller_rx_all() {
   while (mcp2515_receive(&msg) == STATUS_CODE_OK) {
     switch (msg.id.raw) {
       case MOTOR_CONTROLLER_BASE_L + STATUS:
-        set_motor_status_motor_status_l(msg.data_u32[1]);
+        set_motor_status_error_bitset_l(msg.data_u16[2] >> 1);
+        set_motor_status_limit_bitset_l(msg.data_u16[3]);
         break;
       case MOTOR_CONTROLLER_BASE_R + STATUS:
-        set_motor_status_motor_status_r(msg.data_u32[1]);
+        set_motor_status_error_bitset_r(msg.data_u16[2] >> 1);
+        set_motor_status_limit_bitset_r(msg.data_u16[3]);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + BUS_MEASUREMENT:
@@ -142,6 +144,13 @@ static void motor_controller_rx_all() {
       case MOTOR_CONTROLLER_BASE_R + HEAT_SINK_MOTOR_TEMP:
         set_motor_sink_temps_heatsink_temp_r(prv_get_float(msg.data_u32[0]) * TEMP_SCALE);
         set_motor_sink_temps_motor_temp_r(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
+        break;
+
+      case MOTOR_CONTROLLER_BASE_L + DSP_BOARD_TEMP:
+        set_dsp_board_temps_dsp_temp_l(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
+        break;
+      case MOTOR_CONTROLLER_BASE_R + DSP_BOARD_TEMP:
+        set_dsp_board_temps_dsp_temp_r(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
         break;
     }
   }

@@ -76,74 +76,92 @@ void push_mc_message(uint32_t id, float data_1, float data_2) {
 
 TEST_IN_TASK
 void test_status(void) {
-  TEST_ASSERT_EACH_EQUAL_UINT8(0, &g_tx_struct, sizeof(g_tx_struct));
-  LOG_DEBUG("passesd\n");
-  // info
-  // Identification Information
-  CanMessage id_info_msg = {
-    .id.raw = MOTOR_CONTROLLER_BASE_L + 0x00,
-    .data_u32[0] = 0,  // Serial Number
-    .data_u32[1] = 0,  // Tritium ID
-    .dlc = 8,
-  };
-  can_queue_push(&s_mcp2515_storage.rx_queue, &id_info_msg);
-  // Status Information
-  CanMessage status_msg = {
+  CanMessage status_l = {
     .id.raw = MOTOR_CONTROLLER_BASE_L + 0x01,
-    .data_u8[0] = 0,   // Receive error count
-    .data_u8[1] = 0,   // Transmit error count
-    .data_u16[1] = 0,  // Active motor
-    .data_u16[2] = 0,  // Error Flags
-    .data_u16[3] = 0,  // Limit Flags
+    .data_u8[0] = 1,             // Receive error count
+    .data_u8[1] = 2,             // Transmit error count
+    .data_u16[1] = 3,            // Active motor
+    .data_u16[2] = 0b011001101,  // Error Flags
+    .data_u16[3] = 0b110011010,  // Limit Flags
     .dlc = 8,
   };
-  can_queue_push(&s_mcp2515_storage.rx_queue, &status_msg);
-  // data
-  // Bus Measurement (Bus Current: A, Bus Voltage: V)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x02, 0.1f, 0.2f);
-  // Velocity Measurement (Vehicle Velocity: m/s, Motor Velocity: rpm)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x03, 0.1f, 0.2f);
-  // Phase Current Measurement (Phase C Current: A_rms, Phase B Current: A_rms)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x04, 0.1f, 0.2f);
-  // Motor Voltage Vector Measurement (Vd: V, Vq: V)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x05, 0.1f, 0.2f);
-  // Motor Current Vector Measurement (Id: A, Iq: A)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x06, 0.1f, 0.2f);
-  // Motor BackEMF Measurement (BEMFd: V, BEMFq: V)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x07, 0.1f, 0.2f);
-  // 15V Voltage Rail Measurement (15V supply: V, Reserved)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x08, 0.1f, 0.2f);
-  // 3.3V & 1.9V Voltage Rail Measurement (3.3V supply: V, 1.9V supply: V)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x09, 0.1f, 0.2f);
-  // Heat-sink & Motor Temperature Measurement (Heat-sink Temp: C, Motor Temp: C)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x0B, 0.1f, 0.2f);
-  // DSP Board Temperature Measurement (Reserved, DSP Board Temp: C)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x0C, 0.1f, 0.2f);
-  // Odometer & Bus AmpHours Measurement (DC Bus AmpHours: Ah, Odometer: m)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x0E, 0.1f, 0.2f);
-  // Slip Speed Measuremen (Slip Speed: Hz, Reserved)
-  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x17, 0.1f, 0.2f);
+  can_queue_push(&s_mcp2515_storage.rx_queue, &status_l);
+  CanMessage status_r = {
+    .id.raw = MOTOR_CONTROLLER_BASE_R + 0x01,
+    .data_u8[0] = 1,             // Receive error count
+    .data_u8[1] = 2,             // Transmit error count
+    .data_u16[1] = 3,            // Active motor
+    .data_u16[2] = 0b100110010,  // Error Flags
+    .data_u16[3] = 0b001100101,  // Limit Flags
+    .dlc = 8,
+  };
+  can_queue_push(&s_mcp2515_storage.rx_queue, &status_r);
 
   run_motor_controller_cycle();
 
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_controller_vc_mc_voltage_l);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_controller_vc_mc_current_l);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_controller_vc_mc_voltage_r);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_controller_vc_mc_current_r);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_velocity_velocity_l);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_velocity_velocity_r);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_status_motor_status_l);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_status_motor_status_r);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_sink_temps_motor_temp_l);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_sink_temps_heatsink_temp_l);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_sink_temps_motor_temp_r);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.motor_sink_temps_heatsink_temp_r);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.dsp_board_temps_dsp_temp_l);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.dsp_board_temps_dsp_temp_r);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.mc_status_limit_bitset_l);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.mc_status_error_bitset_l);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.mc_status_limit_bitset_r);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.mc_status_error_bitset_r);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.mc_status_board_fault_bitset);
-  TEST_ASSERT_EQUAL(1, g_tx_struct.mc_status_overtemp_bitset);
+  TEST_ASSERT_EQUAL(0b01100110, g_tx_struct.motor_status_error_bitset_l);
+  TEST_ASSERT_EQUAL(0b10011010, g_tx_struct.motor_status_limit_bitset_l);
+  TEST_ASSERT_EQUAL(0b10011001, g_tx_struct.motor_status_error_bitset_r);
+  TEST_ASSERT_EQUAL(0b01100101, g_tx_struct.motor_status_limit_bitset_r);
+}
+
+// Bus Measurement (Bus Current: A, Bus Voltage: V)
+TEST_IN_TASK
+void test_current_voltage(void) {
+  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x02, 0.1f, 0.2f);
+  push_mc_message(MOTOR_CONTROLLER_BASE_R + 0x02, 0.3f, 0.4f);
+
+  run_motor_controller_cycle();
+
+  TEST_ASSERT_EQUAL(10, g_tx_struct.motor_controller_vc_mc_current_l);
+  TEST_ASSERT_EQUAL(20, g_tx_struct.motor_controller_vc_mc_voltage_l);
+  TEST_ASSERT_EQUAL(30, g_tx_struct.motor_controller_vc_mc_current_r);
+  TEST_ASSERT_EQUAL(40, g_tx_struct.motor_controller_vc_mc_voltage_r);
+}
+
+// Velocity Measurement (Vehicle Velocity: m/s, Motor Velocity: rpm)
+TEST_IN_TASK
+void test_velocity(void) {
+  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x03, 0.1f, 0.2f);
+  push_mc_message(MOTOR_CONTROLLER_BASE_R + 0x03, 0.3f, 0.4f);
+
+  run_motor_controller_cycle();
+
+  TEST_ASSERT_EQUAL(10, g_tx_struct.motor_velocity_velocity_l);
+  TEST_ASSERT_EQUAL(30, g_tx_struct.motor_velocity_velocity_r);
+
+  // negative
+  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x03, -0.1f, 0.2f);
+  push_mc_message(MOTOR_CONTROLLER_BASE_R + 0x03, -0.3f, 0.4f);
+
+  run_motor_controller_cycle();
+
+  TEST_ASSERT_EQUAL((uint16_t)-10, g_tx_struct.motor_velocity_velocity_l);
+  TEST_ASSERT_EQUAL((uint16_t)-30, g_tx_struct.motor_velocity_velocity_r);
+}
+
+// Heat-sink & Motor Temperature Measurement (Heat-sink Temp: C, Motor Temp: C)
+TEST_IN_TASK
+void test_heatsink_motor_temp(void) {
+  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x0B, 0.1f, 0.2f);
+  push_mc_message(MOTOR_CONTROLLER_BASE_R + 0x0B, 0.3f, 0.4f);
+
+  run_motor_controller_cycle();
+
+  TEST_ASSERT_EQUAL(10, g_tx_struct.motor_sink_temps_heatsink_temp_l);
+  TEST_ASSERT_EQUAL(20, g_tx_struct.motor_sink_temps_motor_temp_l);
+  TEST_ASSERT_EQUAL(30, g_tx_struct.motor_sink_temps_heatsink_temp_r);
+  TEST_ASSERT_EQUAL(40, g_tx_struct.motor_sink_temps_motor_temp_r);
+}
+
+// DSP Board Temperature Measurement (Reserved, DSP Board Temp: C)
+TEST_IN_TASK
+void test_dsp_temp(void) {
+  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x0C, 0.1f, 0.2f);
+  push_mc_message(MOTOR_CONTROLLER_BASE_R + 0x0C, 0.3f, 0.4f);
+
+  run_motor_controller_cycle();
+
+  TEST_ASSERT_EQUAL(20, g_tx_struct.dsp_board_temps_dsp_temp_l);
+  TEST_ASSERT_EQUAL(40, g_tx_struct.dsp_board_temps_dsp_temp_r);
 }

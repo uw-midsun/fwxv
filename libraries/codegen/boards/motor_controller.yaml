@@ -36,17 +36,6 @@
         velocity_r:
           length: 16
 
-    motor_status:
-      id: 37
-      target:
-        centre_console:
-          watchdog: 0
-      signals:
-        motor_status_l:
-          length: 32
-        motor_status_r:
-          length: 32
-
     motor_sink_temps:
       id: 38
       target:
@@ -73,7 +62,7 @@
         dsp_temp_r:
           length: 32
 
-    mc_status:
+    motor_status:
       id: 40
       target:
         centre_console:

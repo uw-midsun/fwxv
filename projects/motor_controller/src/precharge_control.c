@@ -24,17 +24,17 @@ TASK(PRECHARGE_INTERRUPT, TASK_MIN_STACK_SIZE) {
     if (notify_check_event(&notification, 0)) {
       if (get_drive_output_precharge() == MCI_PRECHARGE_DISCHARGED) {
         // inconsistent until second precharge result
-        set_mc_status_precharge_status(MCI_PRECHARGE_INCONSISTENT);
+        set_motor_status_precharge_status(MCI_PRECHARGE_INCONSISTENT);
       } else {
-        set_mc_status_precharge_status(MCI_PRECHARGE_CHARGED);
+        set_motor_status_precharge_status(MCI_PRECHARGE_CHARGED);
       }
     }
     if (notify_check_event(&notification, 1)) {
       if (get_drive_output_precharge() == MCI_PRECHARGE_DISCHARGED) {
         // inconsistent until second precharge result
-        set_mc_status_precharge_status(MCI_PRECHARGE_INCONSISTENT);
+        set_motor_status_precharge_status(MCI_PRECHARGE_INCONSISTENT);
       } else {
-        set_mc_status_precharge_status(MCI_PRECHARGE_CHARGED);
+        set_motor_status_precharge_status(MCI_PRECHARGE_CHARGED);
       }
     }
   }
