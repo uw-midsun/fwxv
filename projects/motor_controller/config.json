@@ -6,6 +6,7 @@
     ],
     "can": true,
     "mocks": {
+        "mcp2515_hw": ["spi_init", "spi_exchange"],
         "motor_can_tx": ["mcp2515_hw_transmit", "mcp2515_hw_init"],
         "motor_can_rx": ["mcp2515_hw_transmit", "mcp2515_hw_init"]
     }

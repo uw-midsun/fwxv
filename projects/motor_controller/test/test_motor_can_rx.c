@@ -99,10 +99,10 @@ void test_status(void) {
 
   run_motor_controller_cycle();
 
-  TEST_ASSERT_EQUAL(0b01100110, g_tx_struct.motor_status_error_bitset_l);
-  TEST_ASSERT_EQUAL(0b10011010, g_tx_struct.motor_status_limit_bitset_l);
-  TEST_ASSERT_EQUAL(0b10011001, g_tx_struct.motor_status_error_bitset_r);
-  TEST_ASSERT_EQUAL(0b01100101, g_tx_struct.motor_status_limit_bitset_r);
+  TEST_ASSERT_EQUAL(0b01100110, g_tx_struct.mc_status_error_bitset_l);
+  TEST_ASSERT_EQUAL(0b10011010, g_tx_struct.mc_status_limit_bitset_l);
+  TEST_ASSERT_EQUAL(0b10011001, g_tx_struct.mc_status_error_bitset_r);
+  TEST_ASSERT_EQUAL(0b01100101, g_tx_struct.mc_status_limit_bitset_r);
 }
 
 // Bus Measurement (Bus Current: A, Bus Voltage: V)

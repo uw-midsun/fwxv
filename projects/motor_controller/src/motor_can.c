@@ -113,12 +113,12 @@ static void motor_controller_rx_all() {
   while (mcp2515_receive(&msg) == STATUS_CODE_OK) {
     switch (msg.id.raw) {
       case MOTOR_CONTROLLER_BASE_L + STATUS:
-        set_motor_status_error_bitset_l(msg.data_u16[2] >> 1);
-        set_motor_status_limit_bitset_l(msg.data_u16[3]);
+        set_mc_status_error_bitset_l(msg.data_u16[2] >> 1);
+        set_mc_status_limit_bitset_l(msg.data_u16[3]);
         break;
       case MOTOR_CONTROLLER_BASE_R + STATUS:
-        set_motor_status_error_bitset_r(msg.data_u16[2] >> 1);
-        set_motor_status_limit_bitset_r(msg.data_u16[3]);
+        set_mc_status_error_bitset_r(msg.data_u16[2] >> 1);
+        set_mc_status_limit_bitset_r(msg.data_u16[3]);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + BUS_MEASUREMENT:
