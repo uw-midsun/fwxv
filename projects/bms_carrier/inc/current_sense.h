@@ -23,10 +23,10 @@ typedef struct CurrentStorage {
   int16_t readings_ring[NUM_STORED_CURRENT_READINGS];
   uint16_t ring_idx;
   int16_t average;
-  uint32_t conv_period_ms;
+  uint32_t conv_period_ms;  // Time in ms between conversions (soft timer kicks)
 } CurrentStorage;
 
 bool current_sense_is_charging();
 
-// StatusCode current_sense_init(CurrentStorage *readings, SpiSettings *settings,
-//                               uint32_t conv_period_ms);
+StatusCode current_sense_init(CurrentStorage *readings, SpiSettings *settings,
+                              uint32_t conv_period_ms);
