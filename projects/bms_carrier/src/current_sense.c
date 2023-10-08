@@ -10,7 +10,8 @@
 #include "soft_timer.h"
 
 static Ads1259Storage s_ads1259_storage;
-static CurrentStorage *s_current_storage : static SoftTimer s_timer;
+static CurrentStorage *s_current_storage;
+static SoftTimer s_timer;
 static bool s_is_charging;
 
 static void prv_ads_error_cb(Ads1259StatusCode code, void *context) {

@@ -1,5 +1,5 @@
-#include "ads1259_adc.h"
-#include "ads1259_adc_defs.h"
+#include "ads1259.h"
+#include "ads1259_def.h"
 #include "delay.h"
 #include "interrupt.h"
 #include "log.h"
@@ -34,7 +34,7 @@ static StatusCode prv_configure_registers(Ads1259Storage *storage) {
   // reset all register values to default
   prv_send_command(storage, ADS1259_STOP_READ_DATA_CONTINUOUS);
   prv_send_command(storage, ADS1259_RESET);
-  delay_us(100);  // Needs 8 fclk cycles before next command
+  delay_ms(1);  // Needs at least 8 fclk cycles before next command
   prv_send_command(storage, ADS1259_STOP_READ_DATA_CONTINUOUS);
   uint8_t payload[NUM_REGISTER_WRITE_COMM] = { (ADS1259_WRITE_REGISTER | ADS1259_ADDRESS_CONFIG0),
                                                NUM_CONFIG_REGISTERS - 1, register_lookup[0],

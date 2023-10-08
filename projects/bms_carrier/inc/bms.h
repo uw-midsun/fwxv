@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "current_sense.h"
+#include "cell_sense.h"
 #include "i2c.h"
 #include "status.h"
 

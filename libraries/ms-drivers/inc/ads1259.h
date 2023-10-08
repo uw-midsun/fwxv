@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "ads1259_adc_defs.h"
+#include "ads1259_def.h"
 #include "gpio.h"
 #include "spi.h"
 
