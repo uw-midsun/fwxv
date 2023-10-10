@@ -91,7 +91,10 @@ static const uint8_t s_brp_lookup[NUM_CAN_HW_BITRATES] = {
 // SPI commands - See Table 12-1
 static void prv_reset() {
   uint8_t payload[] = { MCP2515_CMD_RESET };
-  spi_exchange(s_storage->spi_port, payload, sizeof(payload), NULL, 0);
+
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW);
+  spi_tx(s_storage->spi_port, payload, sizeof(payload));
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH);
 }
 
 static void prv_read(uint8_t addr, uint8_t *read_data, size_t read_len) {
@@ -104,13 +107,19 @@ static void prv_write(uint8_t addr, uint8_t *write_data, size_t write_len) {
   payload[0] = MCP2515_CMD_WRITE;
   payload[1] = addr;
   memcpy(&payload[2], write_data, write_len);
-  spi_exchange(s_storage->spi_port, payload, sizeof(payload), write_data, write_len);
+
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW);
+  spi_tx(s_storage->spi_port, payload, sizeof(payload));
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH);
 }
 
 // See 12.10: *addr = (data & mask) | (*addr & ~mask)
 static void prv_bit_modify(uint8_t addr, uint8_t mask, uint8_t data) {
   uint8_t payload[] = { MCP2515_CMD_BIT_MODIFY, addr, mask, data };
-  spi_exchange(s_storage->spi_port, payload, sizeof(payload), NULL, 0);
+
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW);
+  spi_tx(s_storage->spi_port, payload, sizeof(payload));
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH);
 }
 
 static uint8_t prv_read_status() {
@@ -195,7 +204,7 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
                  MCP2515_CANCTRL_OPMODE_MASK | MCP2515_CANCTRL_CLKOUT_MASK,
                  MCP2515_CANCTRL_OPMODE_CONFIG | MCP2515_CANCTRL_CLKOUT_CLKPRE_4);
 
-  // set RXB0 ctrl BUKT bit on to enable rollover to rx1
+  // set RXB0CTRL.BUKT bit on to enable rollover to rx1
   prv_bit_modify(MCP2515_CTRL_REG_RXB0CTRL, 1 << 3, 1 << 3);
   // 5.7 Timing configurations:
   // In order:
@@ -209,10 +218,12 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
     0x05,
     MCP2515_CNF2_BTLMODE_CNF3 | MCP2515_CNF2_SAMPLE_3X | (0x07 << 3),
     s_brp_lookup[mcp2515_bitrate],
-    MCP2515_CANINT_EFLAG | MCP2515_CANINT_RX1IE | MCP2515_CANINT_RX0IE,
+    MCP2515_CANINT_EFLAG,  // | MCP2515_CANINT_RX1IE | MCP2515_CANINT_RX0IE,
     0x00,
     0x00,
   };
+  // set RXnBF to be message buffer full interrupt
+  prv_bit_modify(MCP2515_CTRL_REG_BFPCTRL, 0x0f, 0x0f);
 
   prv_write(MCP2515_CTRL_REG_CNF3, s_registers, SIZEOF_ARRAY(s_registers));
 
@@ -238,6 +249,16 @@ TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
   uint32_t notification;
   while (true) {
     notify_wait(&notification, BLOCK_INDEFINITELY);
+
+    if (notify_check_event(notification, 0)) {  // Error int
+    }
+    if (notify_check_event(notification, 1)) {  // RX0BF
+      // prv_handle_rx(0);
+    }
+    if (notify_check_event(notification, 2)) {  // RX1BF
+      // prv_handle_rx(1);
+    }
+
     // Read CANINTF and EFLG
     struct {
       uint8_t canintf;
@@ -268,13 +289,21 @@ StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *sett
   // active low
   status_ok_or_return(
       gpio_init_pin(&settings->interrupt_pin, GPIO_INPUT_FLOATING, GPIO_STATE_HIGH));
+  status_ok_or_return(gpio_init_pin(&settings->RX0BF, GPIO_INPUT_FLOATING, GPIO_STATE_LOW));
+  status_ok_or_return(gpio_init_pin(&settings->RX1BF, GPIO_INPUT_FLOATING, GPIO_STATE_LOW));
+
   const InterruptSettings it_settings = {
     .type = INTERRUPT_TYPE_INTERRUPT,
     .priority = INTERRUPT_PRIORITY_NORMAL,
     .edge = INTERRUPT_EDGE_FALLING,
   };
+
   status_ok_or_return(
       gpio_it_register_interrupt(&settings->interrupt_pin, &it_settings, 0, MCP2515_INTERRUPT));
+  status_ok_or_return(
+      gpio_it_register_interrupt(&settings->RX0BF, &it_settings, 1, MCP2515_INTERRUPT));
+  status_ok_or_return(
+      gpio_it_register_interrupt(&settings->RX0BF, &it_settings, 2, MCP2515_INTERRUPT));
 
   // ! Ensure the task priority is higher than the rx/tx tasks in mcp2515.c
   status_ok_or_return(tasks_init_task(MCP2515_INTERRUPT, TASK_PRIORITY(3), NULL));

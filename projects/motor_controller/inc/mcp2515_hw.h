@@ -15,6 +15,8 @@ typedef struct Mcp2515Settings {
   SpiSettings spi_settings;
 
   GpioAddress interrupt_pin;
+  GpioAddress RX0BF;
+  GpioAddress RX1BF;
 
   // same can settings except MCP2515 does not support 1000kbps bitrate
   CanSettings can_settings;
