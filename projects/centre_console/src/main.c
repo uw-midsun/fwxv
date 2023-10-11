@@ -2,6 +2,7 @@
 
 #include "can.h"
 #include "can_board_ids.h"
+#include "cc_monitor.h"
 #include "delay.h"
 #include "drive_fsm.h"
 #include "fsm.h"
@@ -32,6 +33,7 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   fsm_run_cycle(drive);
   fsm_run_cycle(power);
+  monitor_cruise_control();
   wait_tasks(2);
   run_can_tx_cycle();
 }
