@@ -1,6 +1,9 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
+
+#include "status.h"
 
 typedef struct LocalState {
   uint8_t drive_state;
