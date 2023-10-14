@@ -1,5 +1,6 @@
 from scons.common import parse_config
 import subprocess
+import serial
 
 Import('VARS')
 
@@ -163,7 +164,7 @@ def test_runner(target, source, env):
     if PLATFORM == "arm":
         output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
         device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
-        minicom = subprocess.Popen(["minicom", "-D", device_path], stdout=subprocess.PIPE)
+        serialData = serial.Serial(device_path,115200)
     
     fails = 0
     for test in test_list:
@@ -186,20 +187,17 @@ def test_runner(target, source, env):
                 '-c shutdown'
             ]
             cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
-            subprocess.run(cmd, shell=True)
-            
-            # wait for test result from minicom
-            while True:
-                line = minicom.stdout.readline()
-                print(line)
-                if line == b"OK\n":
-                    break
-                elif line == b"FAIL\n":
-                    fails += 1
-                    break
+            print(f"Flashing {test}")
+            subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    if PLATFORM == "arm":
-        minicom.kill()
+            # wait until test ok or fail
+            while True:
+                line: str = serialData.readline().decode("utf-8")
+                print(line, end='')
+                if line.startswith('OK'):
+                    break
+                if line.startswith('FAILED'):
+                    break
 
     print(f"{len(test_list)} Files tested {fails} Failures")
 

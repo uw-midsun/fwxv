@@ -19,6 +19,7 @@ Unit tests are per-project/library and are built and run from scons. Functions m
     - e.g. `scons test --platform=x86`
     - e.g. `scons test --platform=x86 --library=core`
     - e.g. `scons test --platform=x86 --library=core --test=status`
+    - e.g. `scons test --platform=x86 --project=leds`
 
 ### Convenience commands:
 
