@@ -27,4 +27,4 @@
     - new_can
     - can_communication
     - can_debug
-  
+    - telemetry

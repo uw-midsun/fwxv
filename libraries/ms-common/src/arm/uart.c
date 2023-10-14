@@ -81,7 +81,7 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
   // when there is data to be received
   USART_ITConfig(s_port[uart].base, USART_IT_RXNE, ENABLE);
 
-  stm32f10x_interrupt_nvic_enable(s_port[uart].irq, INTERRUPT_PRIORITY_NORMAL);
+  stm32f10x_interrupt_nvic_enable(s_port[uart].irq, INTERRUPT_PRIORITY_LOW);
 
   USART_Cmd(s_port[uart].base, ENABLE);
   s_port[uart].initialized = true;
