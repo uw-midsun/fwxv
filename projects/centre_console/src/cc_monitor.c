@@ -39,7 +39,7 @@ void update_state() {
       unsigned int convert_velocity = CONVERT_VELOCITY;
       float converted_val =
           (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) * CONVERT_VELOCITY;
-      state.target_velocity = (unsigned long int)converted_val;
+      state.target_velocity = (unsigned int)converted_val;
 
       pca9555_gpio_set_state(&cc_light, PCA9555_GPIO_STATE_HIGH);
     } else if (!state.cc_toggle) {
