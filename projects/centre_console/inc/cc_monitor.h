@@ -12,13 +12,15 @@ typedef struct LocalState {
   uint32_t target_velocity;
 } LocalState;
 
-typedef enum DriveState {
-  DRIVE = 0,
-  NEUTRAL,
-  REVERSE,
-} DriveState;
+typedef enum {
+  STEERING_REGEN_BRAKE_EVENT = 0,
+  STEERING_CC_TOGGLE_EVENT,
+  STEERING_CC_INCREASE_SPEED_EVENT,
+  STEERING_CC_DECREASE_SPEED_EVENT,
+  NUM_STEERING_EVENTS,
+} SteeringDigitalEvent;
 
-StatusCode monitor_cruise_control();
+void monitor_cruise_control();
 void send_message_to_mci();
 void set_local_state();
-StatusCode update_state();
+void update_state();
