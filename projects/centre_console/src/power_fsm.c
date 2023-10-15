@@ -187,7 +187,7 @@ StatusCode init_power_fsm(PowerFsmStateId inital_state) {
     .num_transitions = NUM_POWER_TRANSITIONS,
     .initial_state = inital_state,
   };
-  fsm_shared_mem_init();
+  // fsm_shared_mem_init();
   power_context.latest_state = 0;
   power_context.target_state = 0;
   fsm_init(power, settings, NULL);
