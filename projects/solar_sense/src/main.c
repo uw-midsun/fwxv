@@ -12,8 +12,6 @@ void run_medium_cycle() {}
 
 void run_slow_cycle() {}
 
-#define DEVICE_ID 0x04
-
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
   .device_id = 0x1,
@@ -28,6 +26,7 @@ int main() {
   log_init();
   gpio_init();
   LOG_DEBUG("Welcome to TEST!");
+  adc_init();
   can_init(&s_can_storage, &can_settings);
   temp_sense_adc_init();
 

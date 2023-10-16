@@ -11,16 +11,16 @@
 #include "solar_sense_setters.h"
 #include "tasks.h"
 
-#define MAX_TEMP 80
+#define MAX_TEMP 8000
 #define MIN_TEMP 0
 
 // Voltages for A0 and A1
-#define MAX_VOLTS1 3.334
-#define MIN_VOLTS1 2.570
+#define MAX_VOLTS1 3334
+#define MIN_VOLTS1 2570
 
 // Voltages for A2 - A5
-#define MAX_VOLTS2 0.758
-#define MIN_VOLTS2 2.760
+#define MAX_VOLTS2 758
+#define MIN_VOLTS2 2760
 
 // GPIO pin index
 typedef enum {
@@ -56,8 +56,9 @@ typedef enum {
 #define TEMP_SENSE_FANFAIL_GPIO \
   { .port = GPIO_PORT_B, .pin = 7 }
 
-uint16_t calculateTempDigital1(
-    uint16_t temp_analog);  // Calculates the temperature based on the analog input for A0 and A1
-uint16_t calculateTempDigital2(
-    uint16_t temp_analog);  // Calculates the temperature based on the analog input for A2 - A5
-StatusCode temp_sense_adc_init();  // Initializes the temp sense gpio pins and adc channels
+// Calculates the temperature based on the analog input for A0 and A1
+uint16_t calculateTempDigital1(uint16_t temp_analog);
+// Calculates the temperature based on the analog input for A2 - A5
+uint16_t calculateTempDigital2(uint16_t temp_analog);
+// Initializes the temp sense gpio pins and adc channels
+StatusCode temp_sense_adc_init();

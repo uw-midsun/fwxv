@@ -14,31 +14,31 @@ static GpioAddress temp_sense_pins[NUM_TEMP_SENSE_PINS] = {
   [TEMP_SENSE_FANFAIL] = TEMP_SENSE_FANFAIL_GPIO,
 };
 
-uint16_t calculateTempDigital1(uint16_t temp_analog) {
-  if (temp_analog > MAX_VOLTS1) {
-    temp_analog = MAX_VOLTS1;
-  } else if (temp_analog < MIN_VOLTS1) {
-    temp_analog = MIN_VOLTS1;
+uint16_t calculateTempDigital1(uint16_t voltage_reading) {
+  if (voltage_reading > MAX_VOLTS1) {
+    voltage_reading = MAX_VOLTS1;
+  } else if (voltage_reading < MIN_VOLTS1) {
+    voltage_reading = MIN_VOLTS1;
   }
 
-  return (temp_analog - MIN_VOLTS1) / ((MAX_VOLTS1 - MIN_VOLTS1) / (MAX_TEMP - MIN_TEMP));
+  return (MAX_TEMP - MIN_TEMP) * ((voltage_reading - MIN_VOLTS1) / (MAX_VOLTS1 - MIN_VOLTS1));
 }
 
-uint16_t calculateTempDigital2(uint16_t temp_analog) {
-  if (temp_analog > MIN_VOLTS2) {
-    temp_analog = MIN_VOLTS2;
-  } else if (temp_analog < MAX_VOLTS2) {
-    temp_analog = MAX_VOLTS2;
+uint16_t calculateTempDigital2(uint16_t voltage_reading) {
+  if (voltage_reading > MIN_VOLTS2) {
+    voltage_reading = MIN_VOLTS2;
+  } else if (voltage_reading < MAX_VOLTS2) {
+    voltage_reading = MAX_VOLTS2;
   }
 
-  return (temp_analog - MIN_VOLTS2) / ((MAX_VOLTS2 - MIN_VOLTS2) / (MAX_TEMP - MIN_TEMP));
+  return (MAX_TEMP - MIN_TEMP) * ((voltage_reading - MIN_VOLTS2) / (MAX_VOLTS2 - MIN_VOLTS2));
 }
 
 TASK(temp_sense_task, TASK_STACK_512) {
   LOG_DEBUG("Test");
   int i;
   uint16_t temp_digital;
-  uint16_t temp_analog;
+  uint16_t voltage_reading;
 
   while (true) {
     // Overtemp, Full speed, and Fan fail
@@ -50,33 +50,33 @@ TASK(temp_sense_task, TASK_STACK_512) {
     set_thermal_status_fan_fail(curr_state);
 
     // A0
-    adc_read_converted(temp_sense_pins[0], &temp_analog);
-    temp_digital = calculateTempDigital1(temp_analog);
+    adc_read_converted(temp_sense_pins[0], &voltage_reading);
+    temp_digital = calculateTempDigital1(voltage_reading);
     set_thermal_status_temp_1(temp_digital);
 
     // A1
-    adc_read_converted(temp_sense_pins[1], &temp_analog);
-    temp_digital = calculateTempDigital1(temp_analog);
+    adc_read_converted(temp_sense_pins[1], &voltage_reading);
+    temp_digital = calculateTempDigital1(voltage_reading);
     set_thermal_status_temp_2(temp_digital);
 
     // A2
-    adc_read_converted(temp_sense_pins[2], &temp_analog);
-    temp_digital = calculateTempDigital2(temp_analog);
+    adc_read_converted(temp_sense_pins[2], &voltage_reading);
+    temp_digital = calculateTempDigital2(voltage_reading);
     set_thermal_temps_temp_3(temp_digital);
 
     // A3
-    adc_read_converted(temp_sense_pins[3], &temp_analog);
-    temp_digital = calculateTempDigital2(temp_analog);
+    adc_read_converted(temp_sense_pins[3], &voltage_reading);
+    temp_digital = calculateTempDigital2(voltage_reading);
     set_thermal_temps_temp_4(temp_digital);
 
     // A4
-    adc_read_converted(temp_sense_pins[4], &temp_analog);
-    temp_digital = calculateTempDigital2(temp_analog);
+    adc_read_converted(temp_sense_pins[4], &voltage_reading);
+    temp_digital = calculateTempDigital2(voltage_reading);
     set_thermal_temps_temp_5(temp_digital);
 
     // A5
-    adc_read_converted(temp_sense_pins[5], &temp_analog);
-    temp_digital = calculateTempDigital2(temp_analog);
+    adc_read_converted(temp_sense_pins[5], &voltage_reading);
+    temp_digital = calculateTempDigital2(voltage_reading);
     set_thermal_temps_temp_6(temp_digital);
   }
 }
