@@ -220,8 +220,7 @@ static OutputGroupDef s_output_group_hazards = {
 };
 
 static OutputGroupDef s_output_group_test = {
-  .num_outputs = 2,
-  .outputs = { FRONT_OUTPUT_STEERING, FRONT_OUTPUT_PEDAL }
+  .num_outputs = 2, .outputs = { FRONT_OUTPUT_STEERING, FRONT_OUTPUT_PEDAL }
 };
 
 const OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS] = {
