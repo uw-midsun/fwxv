@@ -7,70 +7,66 @@
 #include "adc.h"
 #include "power_distribution.h"
 #include "outputs.h"
+#include "output_current_sense.h"
+#include "interrupt.h"
 
-static uint8_t out_state = OUTPUT_STATE_ON;
-static uint8_t out_grp = 1;
+static const OutputGroup output_groups_to_test[] = {
+  OUTPUT_GROUP_TEST
+};
 
-static StatusCode prv_check_pd_output_group(OutputGroup group, OutputState state) {
-  if (group >= NUM_OUTPUT_GROUPS || state >= NUM_OUTPUT_STATES) {
-    return STATUS_CODE_INVALID_ARGS;
-  }
-  uint8_t pin_state;
+static const GpioAddress test_gpio =   { .port = GPIO_PORT_B, .pin = 5 };
+
+void pd_print_adc_readings(OutputGroup group) {
   if (group == OUTPUT_GROUP_ALL) {
     for (uint8_t out = 0; out < NUM_OUTPUTS; out++) {
-      status_ok_or_return(bts_output_get_output_enabled(&g_output_config[out], &pin_state));
-      if (pin_state != state) {
-        return STATUS_CODE_INTERNAL_ERROR;
-      }
+      LOG_DEBUG("sense group: %d, value: %d\n", out, g_output_config[out].reading_out);
     }
   } else {
-    // Get specific group, iterate through set of outputs
+    // Get specific group, iterate through set of pins
     OutputGroupDef *grp = g_output_group_map[group];
-    if (grp == NULL) {
-      return STATUS_CODE_UNINITIALIZED;
-    }
-
     for (uint8_t out = 0; out < grp->num_outputs; out++) {
       Output output = grp->outputs[out];
-      status_ok_or_return(bts_output_get_output_enabled(&g_output_config[out], &pin_state));
-      if(pin_state != state) {
-        return STATUS_CODE_INTERNAL_ERROR;
-      }
+      LOG_DEBUG("sense group: %d, value: %d\n", output, g_output_config[output].reading_out);
     }
   }
-  return STATUS_CODE_OK;
 }
 
-void run_fast_cycle() {}
+TASK(smoke_pd, TASK_STACK_512){
+  gpio_init_pin(&test_gpio, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  
+  pd_output_init();
+  pd_sense_init();
+  adc_init();
+  uint16_t num_test_grps = SIZEOF_ARRAY(output_groups_to_test);
 
-void run_medium_cycle() {}
+  while(true) {
+    for(uint8_t i = 0; i < num_test_grps; i++) {
+      uint16_t sense = 0;
+      
+      gpio_toggle_state(&test_gpio);
+      pd_set_output_group(output_groups_to_test[i], OUTPUT_STATE_ON);
+      delay_ms(2000);
 
-void run_slow_cycle() {
-  CHECK_EQUAL(STATUS_CODE_OK, pd_set_output_group(out_grp, out_state));
-  CHECK_EQUAL(STATUS_CODE_OK, prv_check_pd_output_group(out_grp, out_state));
-  if(out_state == OUTPUT_STATE_OFF) {
-    out_state = OUTPUT_STATE_ON;
-    out_grp++;
-    if(out_grp == NUM_OUTPUT_GROUPS) {
-      out_grp = 1;
+      pd_sense_output_group(output_groups_to_test[i]);
+      pd_print_adc_readings(output_groups_to_test[i]);
+
+      pd_set_output_group(output_groups_to_test[i], OUTPUT_STATE_OFF);
+      gpio_toggle_state(&test_gpio);
+      delay_ms(2000);
     }
-  } else {
-    out_state = OUTPUT_STATE_OFF;
   }
 }
 
 int main() {
   tasks_init();
   log_init();
+  interrupt_init();
   gpio_init();
-  adc_init();
   i2c_init(0, &i2c_settings);
-  pca9555_gpio_init(0, 0); // second param (i2c_address) isn't needed/used by pca init
-  pd_output_init();
-  // TODO(devAdhiraj): add pd sense init and print out pd sense values in main task
+  pca9555_gpio_init(I2C_PORT_1, 0); // second param (i2c_address) isn't needed/used by pca init
 
+  tasks_init_task(smoke_pd, TASK_PRIORITY(2), NULL);
   LOG_DEBUG("PD Smoke!\n");
-  init_master_task();
 
   tasks_start();
 

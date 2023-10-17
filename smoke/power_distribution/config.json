@@ -10,6 +10,7 @@
     ],
     "sources": [
         "#/projects/power_distribution_front/src/outputs.c",
-        "#/projects/power_distribution_front/src/output_config.c"
+        "#/projects/power_distribution_front/src/output_config.c",
+        "#/projects/power_distribution_front/src/output_current_sense.c"
     ]
 }

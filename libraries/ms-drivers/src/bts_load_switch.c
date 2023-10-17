@@ -88,5 +88,6 @@ StatusCode bts_output_get_output_enabled(BtsLoadSwitchOutput *load_switch, uint8
 
 StatusCode bts_output_get_current(BtsLoadSwitchOutput *load_switch, uint16_t *current) {
   status_ok_or_return(prv_bts_switch_select_state(load_switch));
+  status_ok_or_return(adc_run());
   return adc_read_converted(*(load_switch->sense_pin), current);
 }

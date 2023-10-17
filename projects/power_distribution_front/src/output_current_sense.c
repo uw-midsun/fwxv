@@ -29,7 +29,7 @@ static StatusCode prv_set_sense_mux(uint8_t mux_val) {
     return STATUS_CODE_INVALID_ARGS;
   }
   for (uint8_t i = 0; i < NUM_MUX_SEL_PINS; ++i) {
-    status_ok_or_return(gpio_set_state(&mux_select_pins[i], mux_val & (1 << i)));
+    status_ok_or_return(gpio_set_state(&mux_select_pins[i], ((mux_val & (1 << i)) != 0)));
   }
   return STATUS_CODE_OK;
 }
@@ -54,9 +54,8 @@ StatusCode pd_sense_output_group(OutputGroup group) {
 
     for (uint8_t out = 0; out < grp->num_outputs; out++) {
       Output output = grp->outputs[out];
-      status_ok_or_return(prv_set_sense_mux(g_output_config[out].mux_val));
-      status_ok_or_return(
-          bts_output_get_current(&g_output_config[out], &(g_output_config[out].reading_out)));
+      status_ok_or_return(prv_set_sense_mux(g_output_config[output].mux_val));
+      status_ok_or_return(bts_output_get_current(&g_output_config[output], &(g_output_config[output].reading_out)));
     }
   }
   return STATUS_CODE_OK;
