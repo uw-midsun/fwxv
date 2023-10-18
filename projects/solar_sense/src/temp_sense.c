@@ -22,7 +22,8 @@ uint16_t prv_calculateTempDigital1(uint16_t voltage_reading) {
     voltage_reading = MIN_VOLTS1;
   }
 
-  return MIN_TEMP + ((MAX_TEMP - MIN_TEMP) * ((voltage_reading - MIN_VOLTS1) / (MAX_VOLTS1 - MIN_VOLTS1)));
+  return MIN_TEMP +
+         ((MAX_TEMP - MIN_TEMP) * ((voltage_reading - MIN_VOLTS1) / (MAX_VOLTS1 - MIN_VOLTS1)));
 }
 
 // Calculates the temperature based on the analog input for A2 - A5
@@ -33,7 +34,8 @@ uint16_t prv_calculateTempDigital2(uint16_t voltage_reading) {
     voltage_reading = MAX_VOLTS2;
   }
 
-  return MIN_TEMP + ((MAX_TEMP - MIN_TEMP) * ((voltage_reading - MIN_VOLTS2) / (MAX_VOLTS2 - MIN_VOLTS2)));
+  return MIN_TEMP +
+         ((MAX_TEMP - MIN_TEMP) * ((voltage_reading - MIN_VOLTS2) / (MAX_VOLTS2 - MIN_VOLTS2)));
 }
 
 TASK(temp_sense_task, TASK_STACK_512) {
