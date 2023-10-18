@@ -209,6 +209,7 @@ StatusCode adc_init(void) {
   // Enable interrupts for the end of each full conversion
   stm32f10x_interrupt_nvic_enable(DMA1_Channel1_IRQn, INTERRUPT_PRIORITY_LOW);
 
+  // goes into ISR after enabling interrupts so sem_wait here to reset semaphore
   status_ok_or_return(sem_wait(&s_adc_status.converting, ADC_TIMEOUT_MS));
 
   s_adc_status.initialized = true;
