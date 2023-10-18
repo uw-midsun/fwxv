@@ -56,9 +56,5 @@ typedef enum {
 #define TEMP_SENSE_FANFAIL_GPIO \
   { .port = GPIO_PORT_B, .pin = 7 }
 
-// Calculates the temperature based on the analog input for A0 and A1
-uint16_t calculateTempDigital1(uint16_t temp_analog);
-// Calculates the temperature based on the analog input for A2 - A5
-uint16_t calculateTempDigital2(uint16_t temp_analog);
 // Initializes the temp sense gpio pins and adc channels
 StatusCode temp_sense_adc_init();

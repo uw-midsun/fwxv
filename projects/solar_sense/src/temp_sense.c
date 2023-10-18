@@ -14,24 +14,26 @@ static GpioAddress temp_sense_pins[NUM_TEMP_SENSE_PINS] = {
   [TEMP_SENSE_FANFAIL] = TEMP_SENSE_FANFAIL_GPIO,
 };
 
-uint16_t calculateTempDigital1(uint16_t voltage_reading) {
+// Calculates the temperature based on the analog input for A0 and A1
+uint16_t prv_calculateTempDigital1(uint16_t voltage_reading) {
   if (voltage_reading > MAX_VOLTS1) {
     voltage_reading = MAX_VOLTS1;
   } else if (voltage_reading < MIN_VOLTS1) {
     voltage_reading = MIN_VOLTS1;
   }
 
-  return (MAX_TEMP - MIN_TEMP) * ((voltage_reading - MIN_VOLTS1) / (MAX_VOLTS1 - MIN_VOLTS1));
+  return MIN_TEMP + ((MAX_TEMP - MIN_TEMP) * ((voltage_reading - MIN_VOLTS1) / (MAX_VOLTS1 - MIN_VOLTS1)));
 }
 
-uint16_t calculateTempDigital2(uint16_t voltage_reading) {
+// Calculates the temperature based on the analog input for A2 - A5
+uint16_t prv_calculateTempDigital2(uint16_t voltage_reading) {
   if (voltage_reading > MIN_VOLTS2) {
     voltage_reading = MIN_VOLTS2;
   } else if (voltage_reading < MAX_VOLTS2) {
     voltage_reading = MAX_VOLTS2;
   }
 
-  return (MAX_TEMP - MIN_TEMP) * ((voltage_reading - MIN_VOLTS2) / (MAX_VOLTS2 - MIN_VOLTS2));
+  return MIN_TEMP + ((MAX_TEMP - MIN_TEMP) * ((voltage_reading - MIN_VOLTS2) / (MAX_VOLTS2 - MIN_VOLTS2)));
 }
 
 TASK(temp_sense_task, TASK_STACK_512) {
