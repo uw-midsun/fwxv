@@ -54,8 +54,6 @@ TASK(smoke_pd, TASK_STACK_512){
       gpio_toggle_state(&test_gpio);
       delay_ms(2000);
     }
-  } else {
-    out_state = OUTPUT_STATE_OFF;
   }
 }
 
