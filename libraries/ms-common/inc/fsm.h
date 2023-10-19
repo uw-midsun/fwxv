@@ -58,7 +58,6 @@
 // the name supplied upon creation:
 //    notify(fsm_name, notify_event);
 
-#include "fsm_impl.h"
 #include "notify.h"
 #include "semphr.h"
 #include "status.h"
