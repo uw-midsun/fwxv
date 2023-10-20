@@ -5,7 +5,7 @@
 #include "fsm_shared_mem.h"
 #include "power_fsm.h"
 
-FSM(drive, NUM_DRIVE_TRANSITIONS);
+FSM(drive, NUM_DRIVE_STATES);
 
 #define NUM_DRIVE_FSM_BUTTONS 3
 
@@ -191,7 +191,7 @@ static FsmState s_drive_state_list[NUM_DRIVE_STATES] = {
 };
 
 // Declares transition for state machine, must match those in input functions
-static FsmTransition s_drive_transitions[NUM_DRIVE_TRANSITIONS] = {
+static bool s_drive_transitions[NUM_DRIVE_STATES][NUM_DRIVE_STATES] = {
   // NEUTRAL -> SEQ
   TRANSITION(NEUTRAL, DO_PRECHARGE),
 
@@ -220,7 +220,7 @@ static FsmTransition s_drive_transitions[NUM_DRIVE_TRANSITIONS] = {
 StatusCode init_drive_fsm(void) {
   FsmSettings settings = {
     .state_list = s_drive_state_list,
-    .transitions = s_drive_transitions,
+    .transitions = (bool *)s_drive_transitions,
     .num_transitions = NUM_DRIVE_TRANSITIONS,
     .initial_state = NEUTRAL,
   };

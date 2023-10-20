@@ -26,7 +26,7 @@ void test_off_to_main(void) {
   // Stay in off with no inputs
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_STATE_OFF);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_STATE_OFF);
 
   // Transition to CONFIRM_AUX_STATUS
   g_rx_struct.pedal_output_brake_output = PEDAL_PRESSED;
@@ -34,7 +34,7 @@ void test_off_to_main(void) {
   notify(power, START_BUTTON_EVENT);
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_CONFIRM_AUX_STATUS);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_CONFIRM_AUX_STATUS);
 
   // Transition to POWER_FSM_SEND_PD_BMS
   g_rx_struct.power_select_status_status = AUX_STATUS_BITS;
@@ -42,7 +42,7 @@ void test_off_to_main(void) {
   g_rx_struct.received_power_select_status = true;
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_SEND_PD_BMS);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_SEND_PD_BMS);
 
   // Transition to POWER_FSM_CONFIRM_BATTERY_STATUS
   g_rx_struct.rear_pd_fault_fault_data = PD_REAR_FAULT;
@@ -51,14 +51,14 @@ void test_off_to_main(void) {
   g_rx_struct.received_front_pd_fault = true;
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_CONFIRM_BATTERY_STATUS);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_CONFIRM_BATTERY_STATUS);
 
   // Transition to POWER_FSM_CLOSE_BATTERY_RELAYS
   g_rx_struct.bps_heartbeat_status = BPS_HEARTBEAT;
   g_rx_struct.received_bps_heartbeat = true;
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_CLOSE_BATTERY_RELAYS);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_CLOSE_BATTERY_RELAYS);
   TEST_ASSERT_EQUAL(g_tx_struct.set_relay_states_relay_mask, SET_CLOSE_RELAY_STATE_MASK);
   TEST_ASSERT_EQUAL(g_tx_struct.set_relay_states_relay_state, SET_CLOSE_RELAY_STATE_STATE);
 
@@ -68,7 +68,7 @@ void test_off_to_main(void) {
   g_rx_struct.received_battery_relay_state = true;
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_CONFIRM_DC_DC);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_CONFIRM_DC_DC);
 
   // Transition to POWER_FSM_TURN_ON_EVERYTHING
   g_rx_struct.power_select_status_status = DCDC_STATUS_BITS;
@@ -76,20 +76,20 @@ void test_off_to_main(void) {
   g_rx_struct.received_power_select_status = true;
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_TURN_ON_EVERYTHING);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_TURN_ON_EVERYTHING);
   TEST_ASSERT_EQUAL(g_tx_struct.set_power_state_turn_on_everything_notification,
                     SET_TURN_ON_EVERYTHING_NOTIFICATION);
 
   // Transition to POWER_FSM_POWER_MAIN_COMPLETE
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_POWER_MAIN_COMPLETE);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_POWER_MAIN_COMPLETE);
   TEST_ASSERT_EQUAL(g_tx_struct.ready_to_drive_ready_state, SET_READY_TO_DRIVE);
 
   // Transition to POWER_FSM_STATE_MAIN
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_STATE_MAIN);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_STATE_MAIN);
 }
 
 TEST_IN_TASK
@@ -103,14 +103,14 @@ void test_off_to_aux(void) {
   g_rx_struct.received_pedal_output = true;
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_CONFIRM_AUX_STATUS);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_CONFIRM_AUX_STATUS);
 
   // Transition to POWER_FSM_TURN_ON_EVERYTHING
   g_rx_struct.power_select_status_status = AUX_STATUS_BITS;
   g_rx_struct.power_select_status_fault = 0x00;  // No fault
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_TURN_ON_EVERYTHING);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_TURN_ON_EVERYTHING);
   TEST_ASSERT_EQUAL(g_tx_struct.set_power_state_turn_on_everything_notification,
                     SET_TURN_ON_EVERYTHING_NOTIFICATION);
 }
@@ -125,7 +125,7 @@ void test_aux_to_main(void) {
   g_rx_struct.received_pedal_output = true;
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_SEND_PD_BMS);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_SEND_PD_BMS);
 
   // If we've gotten this far, the rest of the transitions are already tested in test_off_to_main
 }
@@ -138,7 +138,7 @@ void test_power_to_off(void) {
   notify(power, START_BUTTON_EVENT);
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_DISCHARGE_PRECHARGE);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_DISCHARGE_PRECHARGE);
   TEST_ASSERT_EQUAL(g_tx_struct.discharge_precharge_signal1, SET_DISCHARGE_PRECHARGE);
 
   // Transition to POWER_FSM_TURN_OFF_EVERYTHING
@@ -146,12 +146,12 @@ void test_power_to_off(void) {
   g_rx_struct.received_precharge_completed = true;
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_TURN_OFF_EVERYTHING);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_TURN_OFF_EVERYTHING);
 
   // Transition to POWER_FSM_OPEN_RELAYS
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_OPEN_RELAYS);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_OPEN_RELAYS);
   TEST_ASSERT_EQUAL(g_tx_struct.set_relay_states_relay_mask, SET_OPEN_RELAY_STATE_MASK);
   TEST_ASSERT_EQUAL(g_tx_struct.set_relay_states_relay_state, SET_OPEN_RELAY_STATE_STATE);
 
@@ -161,5 +161,5 @@ void test_power_to_off(void) {
   g_rx_struct.received_battery_relay_state = true;
   fsm_run_cycle(power);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(power_fsm->curr_state->id, POWER_FSM_STATE_OFF);
+  TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_STATE_OFF);
 }

@@ -77,29 +77,24 @@ typedef void (*StateInputFunc)(struct Fsm *fsm, void *context);
 typedef void (*StateOutputFunc)(void *context);
 
 typedef struct FsmState {
-  StateId id;               // Unique State ID - Should be based on enumerated type
   StateInputFunc inputs;    // Function used to parse inputs and transition if needed
   StateOutputFunc outputs;  // Output function associated with state
 } FsmState;
 
 typedef struct Fsm {
-  FsmState *curr_state;
+  StateId curr_state;
+  FsmState *states;
   const uint8_t num_states;
-  FsmState **transition_table;
+  bool *transition_table;
   SemaphoreHandle_t fsm_sem;
   StaticSemaphore_t sem_buf;
   bool transitioned;
   void *context;
 } Fsm;
 
-typedef struct FsmTransition {
-  StateId from;
-  StateId to;
-} FsmTransition;
-
 typedef struct FsmSettings {
   FsmState *state_list;
-  FsmTransition *transitions;
+  bool *transitions;
   uint8_t num_transitions;
   StateId initial_state;
 } FsmSettings;
@@ -118,25 +113,22 @@ typedef struct FsmSettings {
 // Creates the FSM structure with the supplied number of states
 // and initializes its associated FSM task
 // num_states must be a defined constant
-#define FSM(name, num_fsm_states)                                 \
-  static FsmState *name##_table[num_fsm_states * num_fsm_states]; \
-  Fsm *name##_fsm = &((Fsm){                                      \
-      .transition_table = name##_table,                           \
-      .num_states = num_fsm_states,                               \
-  });                                                             \
-  TASK(name, TASK_STACK_512) {                                    \
-    _fsm_task(context);                                           \
+#define FSM(name, num_fsm_states)   \
+  Fsm *name##_fsm = &((Fsm){        \
+      .num_states = num_fsm_states, \
+  });                               \
+  TASK(name, TASK_STACK_512) {      \
+    _fsm_task(context);             \
   }
 
 // Creates state with associated id in a state list
 // State id must be unique (preferred to use enum type)
 #define STATE(state_id, input_func, output_func) \
-  [state_id] = { .id = state_id, .inputs = input_func, .outputs = output_func }
+  [state_id] = { .inputs = input_func, .outputs = output_func }
 
 // Defines a transition from StateId "from" -> StateId "to"
 // Must be declared in a transition list
-#define TRANSITION(from_state, to_state) \
-  { .from = from_state, .to = to_state }
+#define TRANSITION(from_state, to_state) [from_state][to_state] = true
 
 #define fsm_init(fsm, settings, context)                        \
   tasks_init_task(fsm, TASK_PRIORITY(FSM_PRIORITY), fsm##_fsm); \
