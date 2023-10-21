@@ -9,7 +9,7 @@
 #include "task.h"
 
 #define NUM_POWER_STATES 14
-#define NUM_POWER_TRANSITIONS 40
+#define NUM_POWER_TRANSITIONS 36
 
 #define START_BUTTON_EVENT 0
 
