@@ -66,7 +66,7 @@ static FsmState s_test1_state_list[NUM_FSM2_STATES] = {
 };
 
 // Declares transition for state machine, must match those in input functions
-static FsmTransition s_test1_transitions[NUM_FSM2_TRANSITIONS] = {
+static bool s_test1_transitions[NUM_FSM2_STATES][NUM_FSM2_STATES] = {
   // Transitions for state 0
   TRANSITION(FSM2_STATE_0, FSM2_STATE_1),
   // Transitions for state 1
@@ -79,8 +79,7 @@ static FsmTransition s_test1_transitions[NUM_FSM2_TRANSITIONS] = {
 StatusCode init_fsm2(void) {
   FsmSettings settings = {
     .state_list = s_test1_state_list,
-    .transitions = s_test1_transitions,
-    .num_transitions = NUM_FSM2_TRANSITIONS,
+    .transitions = *s_test1_transitions,
     .initial_state = FSM2_STATE_0,
   };
   fsm_init(fsm2, settings, NULL);

@@ -65,7 +65,7 @@ StatusCode _init_fsm(Fsm *fsm, FsmSettings *settings, void *context) {
   } else {
     fsm->curr_state = settings->initial_state;
   }
-  fsm->transition_table = settings->transitions;
+  fsm->transition_table = (bool *)settings->transitions;
   fsm->states = settings->state_list;
   fsm->fsm_sem = xSemaphoreCreateCountingStatic(CYCLE_RX_MAX, 0, &fsm->sem_buf);
   return STATUS_CODE_OK;

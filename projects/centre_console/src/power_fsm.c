@@ -177,8 +177,7 @@ StatusCode init_power_fsm(PowerFsmStateId inital_state) {
   // Assuming GPIOs have already been initialized in main
   FsmSettings settings = {
     .state_list = s_power_fsm_states,
-    .transitions = (bool *)s_power_transitions,
-    .num_transitions = NUM_POWER_TRANSITIONS,
+    .transitions = *s_power_transitions,
     .initial_state = inital_state,
   };
   // fsm_shared_mem_init();

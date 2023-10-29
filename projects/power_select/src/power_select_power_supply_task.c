@@ -62,7 +62,7 @@ static FsmState s_power_supply_state_list[NUM_POWER_SELECT_STATES] = {
   STATE(POWER_SELECT_ACTIVE, prv_power_supply_active_input, prv_power_supply_active_output),
 };
 
-static FsmTransition s_power_supply_transition_list[NUM_POWER_SELECT_STATES] = {
+static bool s_power_supply_transitions[NUM_POWER_SELECT_STATES][NUM_POWER_SELECT_STATES] = {
   TRANSITION(POWER_SELECT_INACTIVE, POWER_SELECT_ACTIVE),
   TRANSITION(POWER_SELECT_ACTIVE, POWER_SELECT_INACTIVE),
 };
@@ -77,8 +77,7 @@ StatusCode init_power_supply(void) {
   // init FSM task
   const FsmSettings settings = {
     .state_list = s_power_supply_state_list,
-    .transitions = s_power_supply_transition_list,
-    .num_transitions = NUM_POWER_SELECT_TRANSITIONS,
+    .transitions = *s_power_supply_transitions,
     .initial_state = POWER_SELECT_INACTIVE,
   };
   fsm_init(power_supply, settings, NULL);

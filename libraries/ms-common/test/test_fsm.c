@@ -79,8 +79,7 @@ void prv_init_fsm(uint8_t init_state) {
   transition_count = 0;
   FsmSettings settings = {
     .state_list = s_test1_state_list,
-    .transitions = (bool *)s_test1_transitions,
-    .num_transitions = NUM_TEST1_TRANSITIONS,
+    .transitions = *s_test1_transitions,
     .initial_state = init_state,
   };
   // Verify FSM initialization

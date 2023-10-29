@@ -41,7 +41,7 @@ static FsmState s_power_seq_state_list[NUM_POWER_SEQ_STATES] = {
   STATE(POWER_SEQ_AUX_POWER, prv_aux_power_input, prv_aux_power_output),
 };
 
-static FsmTransition s_power_seq_transition_list[NUM_POWER_SEQ_TRANSITIONS] = {
+static bool s_power_seq_transitions[NUM_POWER_SEQ_STATES][NUM_POWER_SEQ_STATES] = {
   TRANSITION(POWER_SEQ_INIT_STATE, POWER_SEQ_EVERYTHING_ON),
   TRANSITION(POWER_SEQ_INIT_STATE, POWER_SEQ_DRIVER_CONTROLS),
   TRANSITION(POWER_SEQ_EVERYTHING_ON, POWER_SEQ_MAIN_OPERATION),
@@ -56,8 +56,7 @@ static FsmTransition s_power_seq_transition_list[NUM_POWER_SEQ_TRANSITIONS] = {
 StatusCode init_power_seq(void) {
   const FsmSettings power_seq_settings = {
     .state_list = s_power_seq_state_list,
-    .transitions = s_power_seq_transition_list,
-    .num_transitions = NUM_POWER_SEQ_TRANSITIONS,
+    .transitions = *s_power_seq_transitions,
     .initial_state = POWER_SEQ_INIT_STATE,
   };
 

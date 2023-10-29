@@ -220,8 +220,7 @@ static bool s_drive_transitions[NUM_DRIVE_STATES][NUM_DRIVE_STATES] = {
 StatusCode init_drive_fsm(void) {
   FsmSettings settings = {
     .state_list = s_drive_state_list,
-    .transitions = (bool *)s_drive_transitions,
-    .num_transitions = NUM_DRIVE_TRANSITIONS,
+    .transitions = *s_drive_transitions,
     .initial_state = NEUTRAL,
   };
   InterruptSettings it_settings = {

@@ -95,7 +95,6 @@ typedef struct Fsm {
 typedef struct FsmSettings {
   FsmState *state_list;
   bool *transitions;
-  uint8_t num_transitions;
   StateId initial_state;
 } FsmSettings;
 

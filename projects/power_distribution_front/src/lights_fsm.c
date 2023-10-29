@@ -120,7 +120,7 @@ static FsmState s_PD_lights_list[NUM_LIGHTS_STATES] = {
   STATE(HAZARD, prv_hazard_input, prv_hazard_output)
 };
 
-static FsmTransition s_PD_transition_list[NUM_LIGHTS_TRANSITIONS] = {
+static bool s_PD_transition_list[NUM_LIGHTS_STATES][NUM_LIGHTS_STATES] = {
   TRANSITION(INIT_STATE, LEFT_SIGNAL),   TRANSITION(INIT_STATE, RIGHT_SIGNAL),
   TRANSITION(INIT_STATE, HAZARD),        TRANSITION(LEFT_SIGNAL, INIT_STATE),
   TRANSITION(LEFT_SIGNAL, HAZARD),       TRANSITION(LEFT_SIGNAL, RIGHT_SIGNAL),
@@ -131,8 +131,7 @@ static FsmTransition s_PD_transition_list[NUM_LIGHTS_TRANSITIONS] = {
 StatusCode init_lights(void) {
   const FsmSettings lights_settings = {
     .state_list = s_PD_lights_list,
-    .transitions = s_PD_transition_list,
-    .num_transitions = NUM_LIGHTS_TRANSITIONS,
+    .transitions = *s_PD_transition_list,
     .initial_state = INIT_STATE,
   };
   gpio_init_pin(&LEFT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW);
