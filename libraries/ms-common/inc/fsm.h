@@ -82,14 +82,14 @@ typedef struct FsmState {
 } FsmState;
 
 typedef struct Fsm {
-  StateId curr_state;
   FsmState *states;
-  const uint8_t num_states;
   bool *transition_table;
+  void *context;
+  StateId curr_state;
+  const uint8_t num_states;
+  bool transitioned;
   SemaphoreHandle_t fsm_sem;
   StaticSemaphore_t sem_buf;
-  bool transitioned;
-  void *context;
 } Fsm;
 
 typedef struct FsmSettings {

@@ -91,6 +91,7 @@ void prv_init_fsm(uint8_t init_state) {
 
 // Test table logic
 void test_state_table_transitions_success(void) {
+  LOG_DEBUG("%ld\n", sizeof(Fsm));
   // Test transitions for state 0
   // No output functions will be executed, as
   prv_init_fsm(TEST_STATE_0);
