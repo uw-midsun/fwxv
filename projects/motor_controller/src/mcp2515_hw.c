@@ -130,45 +130,41 @@ static uint8_t prv_read_status() {
   return read_data[0];
 }
 
-static void prv_handle_rx(uint8_t int_flags) {
+static void prv_handle_rx(uint8_t buffer_id) {
   CanMessage rx_msg = { 0 };
-  for (size_t i = 0; i < SIZEOF_ARRAY(s_rx_buffers); i++) {
-    Mcp2515RxBuffer *rx_buf = &s_rx_buffers[i];
-    if (int_flags & rx_buf->int_flag) {
-      // Read ID
-      uint8_t id_payload[] = { MCP2515_CMD_READ_RX | rx_buf->id };
-      Mcp2515IdRegs read_id_regs = { 0 };
-      spi_exchange(s_storage->spi_port, id_payload, sizeof(id_payload), (uint8_t *)&read_id_regs,
-                   sizeof(read_id_regs));
+  Mcp2515RxBuffer *rx_buf = &s_rx_buffers[buffer_id];
+  // Read ID
+  uint8_t id_payload[] = { MCP2515_CMD_READ_RX | rx_buf->id };
+  Mcp2515IdRegs read_id_regs = { 0 };
+  spi_exchange(s_storage->spi_port, id_payload, sizeof(id_payload), (uint8_t *)&read_id_regs,
+               sizeof(read_id_regs));
 
-      Mcp2515Id id = {
-        .sid_0_2 = read_id_regs.sidl.sid_0_2,
-        .sidh = read_id_regs.sidh,
-        .eid0 = read_id_regs.eid0,
-        .eid8 = read_id_regs.eid8,
-        .eid_16_17 = read_id_regs.sidl.eid_16_17,
-      };
+  Mcp2515Id id = {
+    .sid_0_2 = read_id_regs.sidl.sid_0_2,
+    .sidh = read_id_regs.sidh,
+    .eid0 = read_id_regs.eid0,
+    .eid8 = read_id_regs.eid8,
+    .eid_16_17 = read_id_regs.sidl.eid_16_17,
+  };
 
-      rx_msg.extended = read_id_regs.sidl.ide;
-      rx_msg.dlc = read_id_regs.dlc.dlc;
+  rx_msg.extended = read_id_regs.sidl.ide;
+  rx_msg.dlc = read_id_regs.dlc.dlc;
 
-      if (!rx_msg.extended) {
-        // Standard IDs have garbage in the extended fields
-        id.raw >>= MCP2515_EXTENDED_ID_LEN;
-      }
-
-      rx_msg.id.raw = id.raw;
-
-      uint8_t data_payload[] = { MCP2515_CMD_READ_RX | rx_buf->data };
-      uint64_t read_data = 0;
-      spi_exchange(s_storage->spi_port, data_payload, sizeof(data_payload), (uint8_t *)&rx_msg.data,
-                   sizeof(rx_msg.data));
-      // Clear the interrupt flag so a new message can be loaded
-      prv_bit_modify(MCP2515_CTRL_REG_CANINTF, rx_buf->int_flag, 0x0);
-
-      can_queue_push(&s_storage->rx_queue, &rx_msg);
-    }
+  if (!rx_msg.extended) {
+    // Standard IDs have garbage in the extended fields
+    id.raw >>= MCP2515_EXTENDED_ID_LEN;
   }
+
+  rx_msg.id.raw = id.raw;
+
+  uint8_t data_payload[] = { MCP2515_CMD_READ_RX | rx_buf->data };
+  uint64_t read_data = 0;
+  spi_exchange(s_storage->spi_port, data_payload, sizeof(data_payload), (uint8_t *)&rx_msg.data,
+               sizeof(rx_msg.data));
+  // Clear the interrupt flag so a new message can be loaded
+  prv_bit_modify(MCP2515_CTRL_REG_CANINTF, rx_buf->int_flag, 0x0);
+
+  can_queue_push(&s_storage->rx_queue, &rx_msg);
 }
 
 static void prv_handle_error(uint8_t int_flags, uint8_t err_flags) {
@@ -223,7 +219,11 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
     0x00,
   };
   // set RXnBF to be message buffer full interrupt
-  prv_bit_modify(MCP2515_CTRL_REG_BFPCTRL, 0x0f, 0x0f);
+  prv_bit_modify(
+      MCP2515_CTRL_REG_BFPCTRL,
+      MCP2515_BFPCTRL_B1BFE | MCP2515_BFPCTRL_B2BFE | MCP2515_BFPCTRL_B1BFM | MCP2515_BFPCTRL_B2BFM,
+      MCP2515_BFPCTRL_B1BFE | MCP2515_BFPCTRL_B2BFE | MCP2515_BFPCTRL_B1BFM |
+          MCP2515_BFPCTRL_B2BFM);
 
   prv_write(MCP2515_CTRL_REG_CNF3, s_registers, SIZEOF_ARRAY(s_registers));
 
@@ -251,26 +251,19 @@ TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
     notify_wait(&notification, BLOCK_INDEFINITELY);
 
     if (notify_check_event(notification, 0)) {  // Error int
+      struct {
+        uint8_t canintf;
+        uint8_t eflg;
+      } regs;
+      prv_read(MCP2515_CTRL_REG_CANINTF, (uint8_t *)&regs, sizeof(regs));
+      prv_handle_error(regs.canintf, regs.eflg);
     }
     if (notify_check_event(notification, 1)) {  // RX0BF
-      // prv_handle_rx(0);
+      prv_handle_rx(0);
     }
     if (notify_check_event(notification, 2)) {  // RX1BF
-      // prv_handle_rx(1);
+      prv_handle_rx(1);
     }
-
-    // Read CANINTF and EFLG
-    struct {
-      uint8_t canintf;
-      uint8_t eflg;
-    } regs;
-    prv_read(MCP2515_CTRL_REG_CANINTF, (uint8_t *)&regs, sizeof(regs));
-    // Mask out flags we don't care about
-    regs.canintf &= MCP2515_CANINT_EFLAG | MCP2515_CANINT_RX0IE | MCP2515_CANINT_RX1IE;
-
-    // Either RX or error
-    prv_handle_rx(regs.canintf);
-    prv_handle_error(regs.canintf, regs.eflg);
   }
 }
 
@@ -289,8 +282,8 @@ StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *sett
   // active low
   status_ok_or_return(
       gpio_init_pin(&settings->interrupt_pin, GPIO_INPUT_FLOATING, GPIO_STATE_HIGH));
-  status_ok_or_return(gpio_init_pin(&settings->RX0BF, GPIO_INPUT_FLOATING, GPIO_STATE_LOW));
-  status_ok_or_return(gpio_init_pin(&settings->RX1BF, GPIO_INPUT_FLOATING, GPIO_STATE_LOW));
+  status_ok_or_return(gpio_init_pin(&settings->RX0BF, GPIO_INPUT_FLOATING, GPIO_STATE_HIGH));
+  status_ok_or_return(gpio_init_pin(&settings->RX1BF, GPIO_INPUT_FLOATING, GPIO_STATE_HIGH));
 
   const InterruptSettings it_settings = {
     .type = INTERRUPT_TYPE_INTERRUPT,
