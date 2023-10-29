@@ -158,8 +158,8 @@ void test_neutral_to_reverse() {
   LOG_DEBUG("T2.1: (Neutral->DoPrecharge->Reverse)\n");
   notify(drive, REVERSE_BUTTON_EVENT);
   fsm_shared_mem_set_power_state(POWER_FSM_STATE_MAIN);
-  g_rx_struct.motor_velocity_velocity_l = -1;
-  g_rx_struct.motor_velocity_velocity_r = -1;
+  g_rx_struct.motor_velocity_velocity_l = (uint16_t)-1;
+  g_rx_struct.motor_velocity_velocity_r = (uint16_t)-1;
   g_rx_struct.mc_status_precharge_status = 1;  // precharge status is not complete
   neutral_to_precharge();
   precharge_to_reverse();
@@ -177,6 +177,7 @@ void test_neutral_to_reverse() {
   LOG_DEBUG("T2.4: (Neutral->Reverse) (no precharge)\n");
   notify(drive, REVERSE_BUTTON_EVENT);
   fsm_shared_mem_set_power_state(POWER_FSM_STATE_MAIN);
+  g_rx_struct.motor_velocity_velocity_l = (uint16_t)-1;
   g_rx_struct.motor_velocity_velocity_l = (uint16_t)-1;
   g_rx_struct.motor_velocity_velocity_r = (uint16_t)-1;
   g_rx_struct.mc_status_precharge_status = 2;  // precharge status is not complete
