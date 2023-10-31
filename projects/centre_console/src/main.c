@@ -30,10 +30,12 @@ void run_fast_cycle() {}
 
 void run_medium_cycle() {
   run_can_rx_cycle();
+  wait_tasks(1);
   fsm_run_cycle(drive);
   fsm_run_cycle(power);
   wait_tasks(2);
   run_can_tx_cycle();
+  wait_tasks(1);
 }
 
 void run_slow_cycle() {}

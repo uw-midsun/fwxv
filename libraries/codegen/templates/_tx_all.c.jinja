@@ -25,9 +25,9 @@ void can_tx_all() {
         {{- message_data['signals'].values() | sum(attribute='length') // 8 }},
     {%- set offset = namespace(value=0) %}
     {%- for signal, signal_data in message_data['signals'].items() %}
-        (uint64_t) g_tx_struct.{{message}}_{{signal}} << {{offset.value}} |
+        (uint64_t) g_tx_struct.{{message}}_{{signal}} << {{offset.value}}{{ " |" if not loop.last }}
         {%- set offset.value = offset.value + signal_data.length %}
-    {%- endfor -%} 0
+    {%- endfor -%}
     );
 {%- endfor %}
 }
