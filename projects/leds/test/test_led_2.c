@@ -15,8 +15,6 @@ static const GpioAddress leds[] = {
   { .port = GPIO_PORT_A, .pin = 15 },  //
 };
 
-TASK(leds_task, TASK_STACK_512) {}
-
 bool initialized = false;
 
 void setup_test(void) {

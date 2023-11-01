@@ -1,6 +1,6 @@
 from scons.common import parse_config
 import subprocess
-import serial
+import serial # pip install pyserial
 
 Import('VARS')
 
