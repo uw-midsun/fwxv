@@ -1,17 +1,17 @@
 #include "max17261_fuel_gauge.h"
 
-#define PCT_LSB (1U / 256U)                            // LSBit is 1/256%
-#define CAP_LSB (5U / storage->settings.r_sense_ohms)  // LSBit is 5 micro Volt hrs / Rsense
-#define TIM_LSB (5625U)                                // LSBit is 5625ms
+#define PCT_LSB (1.0 / 256)                             // LSBit is 1/256%
+#define CAP_LSB (5.0 / storage->settings.r_sense_ohms)  // LSBit is 5 micro Volt hrs / Rsense
+#define TIM_LSB (5625U)                                 // LSBit is 5625ms
 
 StatusCode max17261_get_reg(Max17261Storage *storage, Max17261Registers reg, uint16_t *value) {
   // unsure of underlying type of enum, cast to uint8_t to be sure
   uint8_t reg8 = reg;
-  status_ok_or_return(i2c_write(storage->settings.i2c_port, storage->settings.i2c_address,
-                                (uint8_t *)&reg8, sizeof(uint8_t)));
+  status_ok_or_return(
+      i2c_write(storage->settings.i2c_port, storage->settings.i2c_address, &reg8, sizeof(uint8_t)));
   // TODO: max17261 sends LSByte then MSByte, need to check if bytes are correctly written to
-  status_ok_or_return(i2c_read(storage->settings.i2c_port, storage->settings.i2c_address,
-                               (uint8_t *)value, sizeof(uint16_t)));
+  status_ok_or_return(
+      i2c_read(storage->settings.i2c_port, storage->settings.i2c_address, value, sizeof(uint16_t)));
   return STATUS_CODE_OK;
 }
 

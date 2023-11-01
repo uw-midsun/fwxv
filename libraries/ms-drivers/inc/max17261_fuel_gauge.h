@@ -33,11 +33,44 @@ typedef struct {
   Max17261Settings settings;
 } Max17261Storage;
 
-StatusCode max17261_get_reg(Max17261Storage *storage, Max17261Registers reg, uint16_t *value);
-StatusCode max17261_set_reg(Max17261Storage *storage, Max17261Registers reg, uint16_t value);
+/* @brief Gets the current state of charge given by the max17261 in percentage
+ * @param storage - a pointer to an already initialized Max17261Storage struct
+ * @param soc_pct - state of charge in percentage will be returned in this var
+ * @return STATUS_CODE_OK on success
+ */
 StatusCode max17261_state_of_charge(Max17261Storage *storage, uint16_t *soc_pct);
+
+/* @brief Gets the current remaining capactity in micro amp hours
+ * @param storage - a pointer to an already initialized Max17261Storage struct
+ * @param soc_pct - remaining capactity in micro amp hours returned in this var
+ * @return STATUS_CODE_OK on success
+ */
 StatusCode max17261_remaining_capacity(Max17261Storage *storage, uint32_t *rem_cap_uAhr);
+
+/* @brief Gets the full charge capacity of the battery in micro amp hours
+ * @param storage - a pointer to an already initialized Max17261Storage struct
+ * @param soc_pct - full charge capacitry in micro amp hours returned in this var
+ * @return STATUS_CODE_OK on success
+ */
 StatusCode max17261_full_capacity(Max17261Storage *storage, uint16_t *full_cap_uAhr);
+
+/* @brief Gets the time to empty in milliseconds
+ * @param storage - a pointer to an already initialized Max17261Storage struct
+ * @param soc_pct - time to empty in milliseconds returned in this var
+ * @return STATUS_CODE_OK on success
+ */
 StatusCode max17261_time_to_empty(Max17261Storage *storage, uint16_t *tte_ms);
+
+/* @brief Gets the time to full in milliseconds
+ * @param storage - a pointer to an already initialized Max17261Storage struct
+ * @param soc_pct - time to full in milliseconds returned in this var
+ * @return STATUS_CODE_OK on success
+ */
 StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms);
+
+/* @brief Gets the time to full in milliseconds
+ * @param storage - a pointer to an uninitialized Max17261Storage struct
+ * @param settings - populated settings struct
+ * @return STATUS_CODE_OK on success
+ */
 StatusCode max17261_init(Max17261Storage *storage, Max17261Settings settings);
