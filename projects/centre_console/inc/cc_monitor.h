@@ -5,22 +5,15 @@
 
 #include "status.h"
 
+#define STEERING_CC_TOGGLE_MASK 0x1
+#define STEERING_CC_INCREASE_SPEED_MASK 0x2
+#define STEERING_CC_DECREASE_SPEED_MASK 0x4
+
 typedef struct LocalState {
   uint8_t drive_state;
-  bool cc_toggle;
+  bool cc_enabled;
   bool regen_braking;
   uint32_t target_velocity;
 } LocalState;
 
-typedef enum {
-  STEERING_REGEN_BRAKE_EVENT = 0,
-  STEERING_CC_TOGGLE_EVENT,
-  STEERING_CC_INCREASE_SPEED_EVENT,
-  STEERING_CC_DECREASE_SPEED_EVENT,
-  NUM_STEERING_EVENTS,
-} SteeringDigitalEvent;
-
 void monitor_cruise_control();
-void send_message_to_mci();
-void set_local_state();
-void update_state();
