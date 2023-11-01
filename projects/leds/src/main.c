@@ -4,6 +4,7 @@
 #include "gpio.h"
 #include "log.h"
 #include "misc.h"
+#include "notify.h"
 #include "tasks.h"
 
 static const GpioAddress leds[] = {
@@ -35,6 +36,7 @@ int main(void) {
   log_init();
 
   tasks_init_task(leds_task, TASK_PRIORITY(2), NULL);
+  tasks_init_task(temp_task, TASK_PRIORITY(1), NULL);
 
   tasks_start();
   LOG_DEBUG("Blinking LEDs...\n");
