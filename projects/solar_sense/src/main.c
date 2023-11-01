@@ -1,22 +1,111 @@
-#include <stdio.h>
-
+#include "can.h"
 #include "log.h"
-#include "master_task.h"
-#include "solar_sense_getters.h"
+#include "mppt.h"
+#include "solar_sense_setters.h"
 #include "tasks.h"
 
-void run_fast_cycle() {}
+// GPIO ports for MPPTs 1 through 6
+static const uint8_t s_mppt_gpio_ports[] = {
+  GPIO_PORT_A, GPIO_PORT_B, GPIO_PORT_C, GPIO_PORT_D, GPIO_PORT_E, GPIO_PORT_F,
+};
 
-void run_medium_cycle() {}
+// SPI ports for MPPTs 1 through 6
+static const SpiPort s_mppt_spi_ports[] = { SPI_PORT_1, SPI_PORT_2, SPI_PORT_3,
+                                            SPI_PORT_4, SPI_PORT_5, SPI_PORT_6 };
 
-void run_slow_cycle() {}
+static CanStorage s_can_storage = { 0 };
+static const CanSettings s_can_settings = {
+  .device_id = 0x1,
+  .bitrate = CAN_HW_BITRATE_500KBPS,
+  .tx = { GPIO_PORT_A, 12 },
+  .rx = { GPIO_PORT_A, 11 },
+  .loopback = true,
+  .mode = CAN_CONTINUOUS,
+};
+
+// Turns on all the MPPTs
+StatusCode init_mppts() {
+  for (uint8_t i = 0; i < sizeof(s_mppt_gpio_ports); i++) {
+    status_ok_or_return(mppt_init(s_mppt_gpio_ports[i], s_mppt_spi_ports[i]));
+  }
+
+  return STATUS_CODE_OK;
+}
+
+// Reads data from all MPPTs and sends it to telemetry
+StatusCode read_mppts() {
+  uint16_t current_data, voltage_data, pwm_data, status_data = 0;
+
+  // Reads data from all MPPTs
+  for (uint8_t i = 0; i < sizeof(s_mppt_gpio_ports); i++) {
+    status_ok_or_return(mppt_read_current(s_mppt_spi_ports[i], &current_data));
+    status_ok_or_return(mppt_read_voltage(s_mppt_spi_ports[i], &voltage_data));
+    status_ok_or_return(mppt_read_voltage(s_mppt_spi_ports[i], &pwm_data));
+    status_ok_or_return(mppt_read_voltage(s_mppt_spi_ports[i], &status_data));
+
+    // Sets the appropriate CAN messages
+    switch (i) {
+      case 1:
+        set_mppt_1_current(current_data);
+        set_mppt_1_voltage(voltage_data);
+        set_mppt_1_pwm(pwm_data);
+        set_mppt_1_status(status_data);
+        break;
+      case 2:
+        set_mppt_2_current(current_data);
+        set_mppt_2_voltage(voltage_data);
+        set_mppt_2_pwm(pwm_data);
+        set_mppt_2_status(status_data);
+        break;
+      case 3:
+        set_mppt_3_current(current_data);
+        set_mppt_3_voltage(voltage_data);
+        set_mppt_3_pwm(pwm_data);
+        set_mppt_3_status(status_data);
+        break;
+      case 4:
+        set_mppt_4_current(current_data);
+        set_mppt_4_voltage(voltage_data);
+        set_mppt_4_pwm(pwm_data);
+        set_mppt_4_status(status_data);
+        break;
+      case 5:
+        set_mppt_5_current(current_data);
+        set_mppt_5_voltage(voltage_data);
+        set_mppt_5_pwm(pwm_data);
+        set_mppt_5_status(status_data);
+        break;
+      case 6:
+        set_mppt_6_current(current_data);
+        set_mppt_6_voltage(voltage_data);
+        set_mppt_6_pwm(pwm_data);
+        set_mppt_6_status(status_data);
+        break;
+    }
+  }
+
+  // Sends CAN messages
+  status_ok_or_return(run_can_tx_cycle());
+  status_ok_or_return(wait_tasks(1));
+
+  return STATUS_CODE_OK;
+}
+
+TASK(mppt_task, TASK_STACK_512) {
+  while (true) {
+    read_mppts();
+  }
+}
 
 int main() {
   tasks_init();
   log_init();
-  LOG_DEBUG("Welcome to TEST!");
 
-  init_master_task();
+  LOG_DEBUG("Welcome to Solar Sense!");
+  can_init(&s_can_storage, &s_can_settings);
+  init_mppts();
+
+  tasks_init_task(mppt_task, TASK_PRIORITY(2), NULL);
 
   tasks_start();
 
