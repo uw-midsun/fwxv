@@ -15,10 +15,10 @@ Unit tests are per-project/library and are built and run from scons. Functions m
     - e.g. `scons`
 - `project / library`: Build the project or library
     - e.g. `scons leds`
-- `test`: (x86 specific) Builds and runs the tests for the specified project or library. If no project or library is specified, runs all tests. Also allows specifying a test file to run.
-    - e.g. `scons test --platform=x86`
-    - e.g. `scons test --platform=x86 --library=core`
-    - e.g. `scons test --platform=x86 --library=core --test=status`
+- `test`: Builds and runs the tests for the specified project or library. If no project or library is specified, runs all tests. Also allows specifying a test file to run.
+    - e.g. `scons test`
+    - e.g. `scons test --library=core`
+    - e.g. `scons test --project=leds --test=test_led_1`
 
 ### Convenience commands:
 
@@ -56,7 +56,4 @@ Unit tests are per-project/library and are built and run from scons. Functions m
 # Future Improvements
 Features that would be nice to have in the future but haven't been done yet:
 - gdb on arm
-- tests on arm
-- split some code (e.g. code for building tests) into separate file
 - move the config.json schema into its own file
-- ensure unit test failures are handled properly
