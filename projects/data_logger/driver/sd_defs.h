@@ -1,0 +1,8 @@
+// Commands
+#define GO_IDLE_STATE 0x400000000095       // CMD0
+#define ALL_SEND_CID 0x420000000000        // CMD2
+#define SEND_RELATIVE_ADDR 0x430000000000  // CMD3
+#define SET_DSR 0x440000000000             // CMD4
+#define SELECT_DESELECT_CARD 0x
+
+#define CRC_ON_OFF  // CMD59
