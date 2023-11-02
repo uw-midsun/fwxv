@@ -92,12 +92,6 @@ typedef struct Fsm {
   StaticSemaphore_t sem_buf;
 } Fsm;
 
-typedef struct FsmSettings {
-  FsmState *state_list;
-  bool *transitions;
-  StateId initial_state;
-} FsmSettings;
-
 // Forward declares an extern pointer to a task of name "fsm_name"
 // Creates a task which we can reference the fsm by
 // and forward declares the fsm object
@@ -129,9 +123,13 @@ typedef struct FsmSettings {
 // Must be declared in a transition list
 #define TRANSITION(from_state, to_state) [from_state][to_state] = true
 
-#define fsm_init(fsm, settings, context)                        \
-  tasks_init_task(fsm, TASK_PRIORITY(FSM_PRIORITY), fsm##_fsm); \
-  _init_fsm(fsm##_fsm, &settings, context)
+// Initialize an FSM
+// fsm_init(fsm, FsmState[] states, bool[][] transitions, StateId initial_state, void *context)
+#define fsm_init(fsm, states, transitions, initial_state, context)                    \
+  configASSERT(sizeof(transitions) == fsm##_fsm->num_states * fsm##_fsm->num_states); \
+  configASSERT(SIZEOF_ARRAY(states) == fsm##_fsm->num_states);                        \
+  tasks_init_task(fsm, TASK_PRIORITY(FSM_PRIORITY), fsm##_fsm);                       \
+  _init_fsm(fsm##_fsm, states, *transitions, initial_state, context)
 
 // Initiates a transition from the current state
 // Transition must exist in transition table
@@ -143,7 +141,8 @@ void fsm_run_cycle(Task *fsm);
 
 // Internal implementation to initialize FSM
 // Do not call directly. Use the fsm_init() macro above
-StatusCode _init_fsm(Fsm *fsm, FsmSettings *settings, void *context);
+StatusCode _init_fsm(Fsm *fsm, FsmState *states, bool *transitions, StateId initial_state,
+                     void *context);
 
 // Fsm task function implementation - Do not call directly
 void _fsm_task(void *context);

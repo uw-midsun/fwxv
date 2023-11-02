@@ -175,15 +175,10 @@ static bool s_power_transitions[NUM_POWER_STATES][NUM_POWER_STATES] = {
 
 StatusCode init_power_fsm(PowerFsmStateId inital_state) {
   // Assuming GPIOs have already been initialized in main
-  FsmSettings settings = {
-    .state_list = s_power_fsm_states,
-    .transitions = *s_power_transitions,
-    .initial_state = inital_state,
-  };
   // fsm_shared_mem_init();
   power_context.latest_state = 0;
   power_context.target_state = 0;
-  fsm_init(power, settings, NULL);
+  fsm_init(power, s_power_fsm_states, s_power_transitions, inital_state, NULL);
 
   // Start button interrupt
   InterruptSettings it_settings = {

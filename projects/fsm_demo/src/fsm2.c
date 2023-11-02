@@ -77,11 +77,6 @@ static bool s_test1_transitions[NUM_FSM2_STATES][NUM_FSM2_STATES] = {
 };
 
 StatusCode init_fsm2(void) {
-  FsmSettings settings = {
-    .state_list = s_test1_state_list,
-    .transitions = *s_test1_transitions,
-    .initial_state = FSM2_STATE_0,
-  };
-  fsm_init(fsm2, settings, NULL);
+  fsm_init(fsm2, s_test1_state_list, s_test1_transitions, FSM2_STATE_0, NULL);
   return STATUS_CODE_OK;
 }

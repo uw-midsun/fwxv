@@ -75,11 +75,7 @@ StatusCode init_power_supply(void) {
   status_ok_or_return(gpio_init_pin(&g_power_supply_current_pin, GPIO_ANALOG, GPIO_STATE_LOW));
   status_ok_or_return(adc_add_channel(g_power_supply_current_pin));
   // init FSM task
-  const FsmSettings settings = {
-    .state_list = s_power_supply_state_list,
-    .transitions = *s_power_supply_transitions,
-    .initial_state = POWER_SELECT_INACTIVE,
-  };
-  fsm_init(power_supply, settings, NULL);
+  fsm_init(power_supply, s_power_supply_state_list, s_power_supply_transitions,
+           POWER_SELECT_INACTIVE, NULL);
   return STATUS_CODE_OK;
 }

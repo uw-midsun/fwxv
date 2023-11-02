@@ -54,12 +54,6 @@ static bool s_power_seq_transitions[NUM_POWER_SEQ_STATES][NUM_POWER_SEQ_STATES] 
 };
 
 StatusCode init_power_seq(void) {
-  const FsmSettings power_seq_settings = {
-    .state_list = s_power_seq_state_list,
-    .transitions = *s_power_seq_transitions,
-    .initial_state = POWER_SEQ_INIT_STATE,
-  };
-
-  fsm_init(power_seq, power_seq_settings, NULL);
+  fsm_init(power_seq, s_power_seq_state_list, s_power_seq_transitions, POWER_SEQ_INIT_STATE, NULL);
   return STATUS_CODE_OK;
 }

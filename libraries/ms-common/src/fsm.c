@@ -55,18 +55,19 @@ void _fsm_task(void *context) {
   }
 }
 
-StatusCode _init_fsm(Fsm *fsm, FsmSettings *settings, void *context) {
-  if (fsm == NULL || settings == NULL) {
+StatusCode _init_fsm(Fsm *fsm, FsmState *states, bool *transitions, StateId initial_state,
+                     void *context) {
+  if (fsm == NULL || states == NULL || transitions == NULL) {
     return STATUS_CODE_INVALID_ARGS;
   }
   fsm->context = context;
-  if (settings->initial_state > fsm->num_states) {
+  if (initial_state > fsm->num_states) {
     return STATUS_CODE_INVALID_ARGS;
   } else {
-    fsm->curr_state = settings->initial_state;
+    fsm->curr_state = initial_state;
   }
-  fsm->transition_table = (bool *)settings->transitions;
-  fsm->states = settings->state_list;
+  fsm->transition_table = transitions;
+  fsm->states = states;
   fsm->fsm_sem = xSemaphoreCreateCountingStatic(CYCLE_RX_MAX, 0, &fsm->sem_buf);
   return STATUS_CODE_OK;
 }

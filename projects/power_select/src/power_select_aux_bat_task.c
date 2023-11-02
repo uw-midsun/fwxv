@@ -92,12 +92,7 @@ StatusCode init_aux_bat(void) {
   status_ok_or_return(adc_add_channel(g_aux_bat_temp_pin));
 
   // Initialize FSM task
-  const FsmSettings settings = {
-    .state_list = s_aux_bat_state_list,
-    .transitions = *s_aux_bat_transitions,
-    .initial_state = POWER_SELECT_INACTIVE,
-  };
-  fsm_init(aux_bat, settings, NULL);
+  fsm_init(aux_bat, s_aux_bat_state_list, s_aux_bat_transitions, POWER_SELECT_INACTIVE, NULL);
 
   return STATUS_CODE_OK;
 }

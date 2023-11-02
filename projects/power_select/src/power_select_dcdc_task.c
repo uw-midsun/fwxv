@@ -92,12 +92,8 @@ StatusCode init_dcdc(void) {
   status_ok_or_return(adc_add_channel(g_dcdc_temp_pin));
 
   // Initialize FSM task
-  const FsmSettings settings = {
-    .state_list = s_power_supply_state_list,
-    .transitions = *s_power_supply_transitions,
-    .initial_state = POWER_SELECT_INACTIVE,
-  };
-  fsm_init(dcdc, settings, NULL);
+  fsm_init(dcdc, s_power_supply_state_list, s_power_supply_transitions, POWER_SELECT_INACTIVE,
+           NULL);
 
   return STATUS_CODE_OK;
 }

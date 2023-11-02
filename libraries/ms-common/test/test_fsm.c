@@ -77,13 +77,9 @@ static uint8_t transition_count;
 void prv_init_fsm(uint8_t init_state) {
   // Create FSM
   transition_count = 0;
-  FsmSettings settings = {
-    .state_list = s_test1_state_list,
-    .transitions = *s_test1_transitions,
-    .initial_state = init_state,
-  };
   // Verify FSM initialization
-  TEST_ASSERT_OK(_init_fsm(test1_fsm, &settings, &transition_count));
+  TEST_ASSERT_OK(_init_fsm(test1_fsm, s_test1_state_list, *s_test1_transitions, init_state,
+                           &transition_count));
   TEST_ASSERT_EQUAL_PTR(&transition_count, test1_fsm->context);
   TEST_ASSERT_EQUAL(init_state, test1_fsm->curr_state);
   TEST_ASSERT_EQUAL(NUM_TEST1_STATES, test1_fsm->num_states);

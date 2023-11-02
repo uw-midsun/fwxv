@@ -129,14 +129,9 @@ static bool s_PD_transition_list[NUM_LIGHTS_STATES][NUM_LIGHTS_STATES] = {
 };
 
 StatusCode init_lights(void) {
-  const FsmSettings lights_settings = {
-    .state_list = s_PD_lights_list,
-    .transitions = *s_PD_transition_list,
-    .initial_state = INIT_STATE,
-  };
   gpio_init_pin(&LEFT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW);
   gpio_init_pin(&RIGHT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW);
 
-  fsm_init(lights, lights_settings, NULL);
+  fsm_init(lights, s_PD_lights_list, s_PD_transition_list, INIT_STATE, NULL);
   return STATUS_CODE_OK;
 }
