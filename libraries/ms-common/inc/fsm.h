@@ -58,7 +58,6 @@
 // the name supplied upon creation:
 //    notify(fsm_name, notify_event);
 
-#include "fsm_impl.h"
 #include "notify.h"
 #include "semphr.h"
 #include "status.h"
@@ -78,50 +77,59 @@ typedef void (*StateInputFunc)(struct Fsm *fsm, void *context);
 typedef void (*StateOutputFunc)(void *context);
 
 typedef struct FsmState {
-  StateId id;               // Unique State ID - Should be based on enumerated type
   StateInputFunc inputs;    // Function used to parse inputs and transition if needed
   StateOutputFunc outputs;  // Output function associated with state
 } FsmState;
 
 typedef struct Fsm {
-  FsmState *curr_state;
+  FsmState *states;
+  bool *transition_table;
+  void *context;
+  StateId curr_state;
   const uint8_t num_states;
-  FsmState **transition_table;
+  bool transitioned;
   SemaphoreHandle_t fsm_sem;
   StaticSemaphore_t sem_buf;
-  bool transitioned;
-  void *context;
 } Fsm;
 
-typedef struct FsmTransition {
-  StateId from;
-  StateId to;
-} FsmTransition;
-
-typedef struct FsmSettings {
-  FsmState *state_list;
-  FsmTransition *transitions;
-  uint8_t num_transitions;
-  StateId initial_state;
-} FsmSettings;
-
 // Forward declares an extern pointer to a task of name "fsm_name"
-#define DECLARE_FSM(name) _DECLARE_FSM(name)
+// Creates a task which we can reference the fsm by
+// and forward declares the fsm object
+#define DECLARE_FSM(name) \
+  DECLARE_TASK(name);     \
+  extern Fsm *name##_fsm
+
+// Internal fsm declaration
+// Creates square transition table and task with name given to FSM
+// The _fsm_task function receives the FSM as its context
 
 // Creates the FSM structure with the supplied number of states
 // and initializes its associated FSM task
 // num_states must be a defined constant
-#define FSM(name, num_fsm_states) _FSM(name, num_fsm_states)
+#define FSM(name, num_fsm_states)   \
+  Fsm *name##_fsm = &((Fsm){        \
+      .num_states = num_fsm_states, \
+  });                               \
+  TASK(name, TASK_STACK_512) {      \
+    _fsm_task(context);             \
+  }
 
 // Creates state with associated id in a state list
 // State id must be unique (preferred to use enum type)
-#define STATE(state_id, input_func, output_func) _STATE(state_id, input_func, output_func)
+#define STATE(state_id, input_func, output_func) \
+  [state_id] = { .inputs = input_func, .outputs = output_func }
 
 // Defines a transition from StateId "from" -> StateId "to"
 // Must be declared in a transition list
-#define TRANSITION(from_state, to_state) _TRANSITION(from_state, to_state)
+#define TRANSITION(from_state, to_state) [from_state][to_state] = true
 
-#define fsm_init(fsm, settings, context) _fsm_init(fsm, settings, context)
+// Initialize an FSM
+// fsm_init(fsm, FsmState[] states, bool[][] transitions, StateId initial_state, void *context)
+#define fsm_init(fsm, states, transitions, initial_state, context)                    \
+  configASSERT(sizeof(transitions) == fsm##_fsm->num_states * fsm##_fsm->num_states); \
+  configASSERT(SIZEOF_ARRAY(states) == fsm##_fsm->num_states);                        \
+  tasks_init_task(fsm, TASK_PRIORITY(FSM_PRIORITY), fsm##_fsm);                       \
+  _init_fsm(fsm##_fsm, states, *transitions, initial_state, context)
 
 // Initiates a transition from the current state
 // Transition must exist in transition table
@@ -133,7 +141,8 @@ void fsm_run_cycle(Task *fsm);
 
 // Internal implementation to initialize FSM
 // Do not call directly. Use the fsm_init() macro above
-StatusCode _init_fsm(Fsm *fsm, FsmSettings *settings, void *context);
+StatusCode _init_fsm(Fsm *fsm, FsmState *states, bool *transitions, StateId initial_state,
+                     void *context);
 
 // Fsm task function implementation - Do not call directly
 void _fsm_task(void *context);
