@@ -6,16 +6,16 @@
 #include "status.h"
 
 // Turns on MPPT
-StatusCode mppt_init(SpiPort spi_port, uint8_t gpio_port);
+StatusCode mppt_init(uint8_t mppt_num);
 
 // Reads current from MPPT
-StatusCode mppt_read_current(SpiPort spi_port, uint16_t *current_data);
+StatusCode mppt_read_current(uint8_t mppt_num);
 
 // Reads vin from MPPT
-StatusCode mppt_read_voltage(SpiPort spi_port, uint16_t *voltage_data);
+StatusCode mppt_read_voltage(uint8_t mppt_num);
 
 // Reads pwm from MPPT
-StatusCode mppt_read_pwm(SpiPort spi_port, uint16_t *pwm_data);
+StatusCode mppt_read_pwm(uint8_t mppt_num);
 
 // Reads status from MPPT
-StatusCode mppt_read_status(SpiPort spi_port, uint16_t *status_data);
+StatusCode mppt_read_status(uint8_t mppt_num);
