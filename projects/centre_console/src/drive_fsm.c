@@ -5,7 +5,7 @@
 #include "fsm_shared_mem.h"
 #include "power_fsm.h"
 
-FSM(drive, NUM_DRIVE_TRANSITIONS);
+FSM(drive, NUM_DRIVE_STATES);
 
 #define NUM_DRIVE_FSM_BUTTONS 3
 
