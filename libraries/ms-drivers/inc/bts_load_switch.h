@@ -51,7 +51,7 @@ StatusCode bts_output_enable_output(BtsLoadSwitchOutput *loadSwitch);
 // Disable output by pulling the IN pin low.
 StatusCode bts_output_disable_output(BtsLoadSwitchOutput *loadSwitch);
 
-// Returns whether the output is enabled or disabled.
+// Stores the output state of the load in the pin_state variable. 0 for disabled, 1 for enabled
 StatusCode bts_output_get_output_enabled(BtsLoadSwitchOutput *loadSwitch, uint8_t *pin_state);
 
 // Read the latest current input current measurement, in mA.

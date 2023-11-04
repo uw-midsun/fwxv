@@ -13,9 +13,7 @@ Messages:
   steering_info:
     id: 21 # or some number
     target:
-      power_distribution_front:
-        watchdog: 0
-      power_distribution_back:
+      power_distribution:
         watchdog: 0
       motor_controller:
         watchdog: 0

@@ -13,9 +13,7 @@
     set_bms_power:
       id: 4
       target:
-        power_distribution_front:
-          watchdog: 0
-        power_distribution_rear:
+        power_distribution:
           watchdog: 0
       critical: true
       signals:
@@ -25,9 +23,7 @@
     set_power_state:
       id: 5
       target:
-        power_distribution_front:
-          watchdog: 0
-        power_distribution_rear:
+        power_distribution:
           watchdog: 0
       critical: true
       signals:
@@ -59,9 +55,7 @@
           watchdog: 0
         pedal:
           watchdog: 0
-        power_distribution_front:
-          watchdog: 0
-        power_distribution_rear :
+        power_distribution:
           watchdog: 0
       critical: true
       signals:
@@ -75,9 +69,7 @@
           watchdog: 0
         pedal:
           watchdog: 0
-        power_distribution_front:
-          watchdog: 0
-        power_distribution_rear:
+        power_distribution:
           watchdog: 0
       critical: true
       signals:
@@ -91,9 +83,7 @@
           watchdog: 0
         pedal:
           watchdog: 0
-        power_distribution_front:
-          watchdog: 0
-        power_distribution_rear:
+        power_distribution:
           watchdog: 0
       critical: true
       signals:
@@ -187,7 +177,7 @@
     power_info:
       id: 47
       target:
-        power_distribution_front:
+        power_distribution:
           watchdog: 0
       signals:
         hazard_state:

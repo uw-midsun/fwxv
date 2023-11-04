@@ -1,5 +1,5 @@
 #include "lights_fsm.h"
-#include "power_distribution_front_getters.h"
+#include "power_distribution_getters.h"
 #include "task_test_helpers.h"
 #include "unity.h"
 

@@ -67,7 +67,6 @@ static StatusCode prv_bts_switch_select_state(BtsLoadSwitchOutput *load_switch) 
 }
 
 StatusCode bts_output_init(BtsLoadSwitchOutput *load_switch) {
-  status_ok_or_return(gpio_init_pin(load_switch->sense_pin, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW));
   if (load_switch->select_pin != NULL) {
     status_ok_or_return(prv_bts_switch_init_pin(load_switch->select_pin));
   }

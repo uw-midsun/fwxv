@@ -6,8 +6,7 @@
 #define AUX_FAULT_BITS 0xE0
 
 // PD messages (Todo)
-#define PD_FRONT_FAULT 0x00
-#define PD_REAR_FAULT 0x00
+#define PD__FAULT 0x00
 
 // BMS send power notification (Todo)
 #define SET_BMS_POWER_NOTIFY 0x01
