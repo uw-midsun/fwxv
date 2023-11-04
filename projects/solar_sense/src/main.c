@@ -4,14 +4,7 @@
 #include "solar_sense_setters.h"
 #include "tasks.h"
 
-// GPIO ports for MPPTs 1 through 6
-static const uint8_t s_mppt_gpio_ports[] = {
-  GPIO_PORT_A, GPIO_PORT_B, GPIO_PORT_C, GPIO_PORT_D, GPIO_PORT_E, GPIO_PORT_F,
-};
-
-// SPI ports for MPPTs 1 through 6
-static const SpiPort s_mppt_spi_ports[] = { SPI_PORT_1, SPI_PORT_2, SPI_PORT_3,
-                                            SPI_PORT_4, SPI_PORT_5, SPI_PORT_6 };
+#define NUM_MPPTS 6
 
 static CanStorage s_can_storage = { 0 };
 static const CanSettings s_can_settings = {
@@ -25,8 +18,8 @@ static const CanSettings s_can_settings = {
 
 // Turns on all the MPPTs
 StatusCode init_mppts() {
-  for (uint8_t i = 0; i < sizeof(s_mppt_gpio_ports); i++) {
-    status_ok_or_return(mppt_init(s_mppt_gpio_ports[i], s_mppt_spi_ports[i]));
+  for (uint8_t i = 0; i < NUM_MPPTS; i++) {
+    status_ok_or_return(mppt_init(i));
   }
 
   return STATUS_CODE_OK;
@@ -37,11 +30,11 @@ StatusCode read_mppts() {
   uint16_t current_data, voltage_data, pwm_data, status_data = 0;
 
   // Reads data from all MPPTs
-  for (uint8_t i = 0; i < sizeof(s_mppt_gpio_ports); i++) {
-    status_ok_or_return(mppt_read_current(s_mppt_spi_ports[i], &current_data));
-    status_ok_or_return(mppt_read_voltage(s_mppt_spi_ports[i], &voltage_data));
-    status_ok_or_return(mppt_read_voltage(s_mppt_spi_ports[i], &pwm_data));
-    status_ok_or_return(mppt_read_voltage(s_mppt_spi_ports[i], &status_data));
+  for (uint8_t i = 0; i < NUM_MPPTS; i++) {
+    status_ok_or_return(mppt_read_current(i, &current_data));
+    status_ok_or_return(mppt_read_voltage(i, &voltage_data));
+    status_ok_or_return(mppt_read_voltage(i, &pwm_data));
+    status_ok_or_return(mppt_read_status(i, &status_data));
 
     // Sets the appropriate CAN messages
     switch (i) {
@@ -98,12 +91,13 @@ TASK(mppt_task, TASK_STACK_512) {
 }
 
 int main() {
-  tasks_init();
   log_init();
 
   LOG_DEBUG("Welcome to Solar Sense!");
+
   can_init(&s_can_storage, &s_can_settings);
   init_mppts();
+  tasks_init();
 
   tasks_init_task(mppt_task, TASK_PRIORITY(2), NULL);
 
