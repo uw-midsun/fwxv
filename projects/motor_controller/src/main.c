@@ -24,22 +24,27 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 static Mcp2515Storage s_mcp2515_storage = { 0 };
-Mcp2515Settings s_mcp2515_settings = {  // place holder values
+static Mcp2515Settings s_mcp2515_settings = {
   .spi_port = SPI_PORT_2,
   .spi_settings = {
-    0
+    .baudrate = 10000000,  // 10 Mhz
+    .mode = SPI_MODE_0,
+    .mosi = { GPIO_PORT_B, 15 },
+    .miso = { GPIO_PORT_B, 14 },
+    .sclk = { GPIO_PORT_B, 13 },
+    .cs = { GPIO_PORT_B, 12 },
   },
   .interrupt_pin = { GPIO_PORT_A, 8 },
+  .RX0BF = { GPIO_PORT_B, 10 },
+  .RX1BF = { GPIO_PORT_B, 11 },
   .can_settings = {
     .bitrate = CAN_HW_BITRATE_500KBPS,
     .loopback = true,
   },
 };
-PrechargeControlSettings precharge_settings = {
-  // place holder values
+static PrechargeControlSettings s_precharge_settings = {
   .precharge_control = { GPIO_PORT_A, 9 },
   .precharge_monitor = { GPIO_PORT_A, 10 },
-  // .precharge_monitor2 = { GPIO_PORT_A, 8 },
 };
 
 void run_fast_cycle() {
@@ -63,7 +68,7 @@ int main() {
   gpio_it_init();
   can_init(&s_can_storage, &can_settings);
   mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
-  precharge_control_init(&precharge_settings);
+  precharge_control_init(&s_precharge_settings);
   init_motor_controller_can();
   LOG_DEBUG("Motor Controller Task\n");
 

@@ -98,7 +98,7 @@ StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings
     mcp2515_tx_all = no_op;
   }
 
-  mcp2515_hw_init(&storage->rx_queue, settings);
+  mcp2515_hw_init(storage, settings);
 
   // Create Semaphores
   s_mcp2515_rx_sem_handle = xSemaphoreCreateBinaryStatic(&s_mcp2515_rx_sem);

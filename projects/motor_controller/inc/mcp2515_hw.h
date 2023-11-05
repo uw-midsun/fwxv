@@ -30,7 +30,7 @@ typedef struct Mcp2515Storage {
 } Mcp2515Storage;
 
 // Initializes CAN using the specified settings.
-StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *settings);
+StatusCode mcp2515_hw_init(Mcp2515Storage *rx_queue, const Mcp2515Settings *settings);
 
 // StatusCode mcp2515_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extended);
 

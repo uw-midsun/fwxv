@@ -91,7 +91,6 @@ static const uint8_t s_brp_lookup[NUM_CAN_HW_BITRATES] = {
 // SPI commands - See Table 12-1
 static void prv_reset() {
   uint8_t payload[] = { MCP2515_CMD_RESET };
-
   spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW);
   spi_tx(s_storage->spi_port, payload, sizeof(payload));
   spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH);
@@ -109,7 +108,7 @@ static void prv_write(uint8_t addr, uint8_t *write_data, size_t write_len) {
   memcpy(&payload[2], write_data, write_len);
 
   spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW);
-  spi_tx(s_storage->spi_port, payload, sizeof(payload));
+  spi_tx(s_storage->spi_port, payload, write_len + 2);
   spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH);
 }
 
@@ -202,6 +201,12 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
 
   // set RXB0CTRL.BUKT bit on to enable rollover to rx1
   prv_bit_modify(MCP2515_CTRL_REG_RXB0CTRL, 1 << 3, 1 << 3);
+  // set RXnBF to be message buffer full interrupt
+  prv_bit_modify(
+      MCP2515_CTRL_REG_BFPCTRL,
+      MCP2515_BFPCTRL_B1BFE | MCP2515_BFPCTRL_B2BFE | MCP2515_BFPCTRL_B1BFM | MCP2515_BFPCTRL_B2BFM,
+      MCP2515_BFPCTRL_B1BFE | MCP2515_BFPCTRL_B2BFE | MCP2515_BFPCTRL_B1BFM |
+          MCP2515_BFPCTRL_B2BFM);
   // 5.7 Timing configurations:
   // In order:
   // CNF3: PS2 Length = 6
@@ -214,17 +219,10 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
     0x05,
     MCP2515_CNF2_BTLMODE_CNF3 | MCP2515_CNF2_SAMPLE_3X | (0x07 << 3),
     s_brp_lookup[mcp2515_bitrate],
-    MCP2515_CANINT_EFLAG,  // | MCP2515_CANINT_RX1IE | MCP2515_CANINT_RX0IE,
+    MCP2515_CANINT_EFLAG,
     0x00,
     0x00,
   };
-  // set RXnBF to be message buffer full interrupt
-  prv_bit_modify(
-      MCP2515_CTRL_REG_BFPCTRL,
-      MCP2515_BFPCTRL_B1BFE | MCP2515_BFPCTRL_B2BFE | MCP2515_BFPCTRL_B1BFM | MCP2515_BFPCTRL_B2BFM,
-      MCP2515_BFPCTRL_B1BFE | MCP2515_BFPCTRL_B2BFE | MCP2515_BFPCTRL_B1BFM |
-          MCP2515_BFPCTRL_B2BFM);
-
   prv_write(MCP2515_CTRL_REG_CNF3, s_registers, SIZEOF_ARRAY(s_registers));
 
   // Sanity check: read register after first write
@@ -246,11 +244,13 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
 TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
   mcp2515_hw_init_after_schedular_start();
 
+  LOG_DEBUG("MCP2515_INTERRUPT hw initilaized\n");
+
   uint32_t notification;
   while (true) {
     notify_wait(&notification, BLOCK_INDEFINITELY);
 
-    if (notify_check_event(notification, 0)) {  // Error int
+    if (notify_check_event(&notification, 0)) {  // Error int
       struct {
         uint8_t canintf;
         uint8_t eflg;
@@ -258,17 +258,18 @@ TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
       prv_read(MCP2515_CTRL_REG_CANINTF, (uint8_t *)&regs, sizeof(regs));
       prv_handle_error(regs.canintf, regs.eflg);
     }
-    if (notify_check_event(notification, 1)) {  // RX0BF
+    if (notify_check_event(&notification, 1)) {  // RX0BF
       prv_handle_rx(0);
     }
-    if (notify_check_event(notification, 2)) {  // RX1BF
+    if (notify_check_event(&notification, 2)) {  // RX1BF
       prv_handle_rx(1);
     }
   }
 }
 
 // Initializes CAN using the specified settings.
-StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *settings) {
+StatusCode mcp2515_hw_init(Mcp2515Storage *storage, const Mcp2515Settings *settings) {
+  s_storage = storage;
   // settings->spi_settings.mode = SPI_MODE_0;
   status_ok_or_return(spi_init(settings->spi_port, &settings->spi_settings));
 
@@ -278,6 +279,9 @@ StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *sett
 
   mcp2515_bitrate = settings->can_settings.bitrate;
   mcp2515_loopback = settings->can_settings.loopback;
+
+  s_storage->spi_port = settings->spi_port;
+  s_storage->loopback = settings->can_settings.loopback;
 
   // active low
   status_ok_or_return(
@@ -296,7 +300,7 @@ StatusCode mcp2515_hw_init(const CanQueue *rx_queue, const Mcp2515Settings *sett
   status_ok_or_return(
       gpio_it_register_interrupt(&settings->RX0BF, &it_settings, 1, MCP2515_INTERRUPT));
   status_ok_or_return(
-      gpio_it_register_interrupt(&settings->RX0BF, &it_settings, 2, MCP2515_INTERRUPT));
+      gpio_it_register_interrupt(&settings->RX1BF, &it_settings, 2, MCP2515_INTERRUPT));
 
   // ! Ensure the task priority is higher than the rx/tx tasks in mcp2515.c
   status_ok_or_return(tasks_init_task(MCP2515_INTERRUPT, TASK_PRIORITY(3), NULL));

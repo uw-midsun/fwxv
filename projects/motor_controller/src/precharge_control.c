@@ -11,7 +11,7 @@
 
 static GpioAddress s_precharge_control;
 
-StatusCode prv_set_precharge_control(GpioAddress *address, const GpioState state) {
+StatusCode prv_set_precharge_control(const GpioState state) {
   gpio_set_state(&s_precharge_control, state);
   return STATUS_CODE_OK;
 }
@@ -42,9 +42,9 @@ TASK(PRECHARGE_INTERRUPT, TASK_MIN_STACK_SIZE) {
 
 StatusCode run_precharge_rx_cycle() {
   if (get_drive_output_precharge() == MCI_PRECHARGE_CHARGED) {
-    return prv_set_precharge_control(&s_precharge_control, GPIO_STATE_HIGH);
+    return prv_set_precharge_control(GPIO_STATE_HIGH);
   } else {
-    return prv_set_precharge_control(&s_precharge_control, GPIO_STATE_LOW);
+    return prv_set_precharge_control(GPIO_STATE_LOW);
   }
 }
 
@@ -53,7 +53,7 @@ StatusCode precharge_control_init(const PrechargeControlSettings *settings) {
 
   gpio_init_pin(&settings->precharge_control, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&settings->precharge_monitor, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
-  gpio_init_pin(&settings->precharge_monitor2, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
+  // gpio_init_pin(&settings->precharge_monitor2, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
 
   InterruptSettings monitor_it_settings = {
     .type = INTERRUPT_TYPE_INTERRUPT,
