@@ -6,11 +6,6 @@
 #include "log.h"
 #include "mcp2515_defs.h"
 
-typedef struct Mcp2515LoadTxPayload {
-  uint8_t cmd;
-  uint64_t data;
-} __attribute__((packed)) Mcp2515LoadTxPayload;
-
 // TX/RX buffer ID registers - See Registers 3-3 to 3-7, 4-4 to 4-8
 typedef struct Mcp2515IdRegs {
   uint8_t sidh;
@@ -314,6 +309,7 @@ StatusCode mcp2515_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extende
 
 StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, const uint64_t data, size_t len) {
   // Ensure the CANCTRL register is set to the correct value
+  // ??? one shot mode?
   prv_bit_modify(MCP2515_CTRL_REG_CANCTRL, 0x1f, 0x0f);
   // Get free transmit buffer
   uint8_t tx_status = __builtin_ffs(
@@ -352,20 +348,23 @@ StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, const uint64_t data, 
     tx_id_regs.eid0,
     tx_id_regs.dlc.raw,
   };
-  status_ok_or_return(spi_exchange(s_storage->spi_port, id_payload, sizeof(id_payload), NULL, 0));
+  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW));
+  status_ok_or_return(spi_tx(s_storage->spi_port, id_payload, sizeof(id_payload)));
+  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH));
 
   // Load data
-  Mcp2515LoadTxPayload data_payload = {
-    .cmd = MCP2515_CMD_LOAD_TX | tx_buf->data,
-    .data = data,
-  };
-  status_ok_or_return(
-      spi_exchange(s_storage->spi_port, (uint8_t *)&data_payload, sizeof(data_payload), NULL, 0));
+  uint8_t data_payload[9] = { MCP2515_CMD_LOAD_TX | tx_buf->data };
+  memcpy(&data_payload[1], &data, sizeof(data));
+
+  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW));
+  status_ok_or_return(spi_tx(s_storage->spi_port, (uint8_t *)&data_payload, sizeof(data_payload)));
+  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH));
 
   // Send message
   uint8_t send_payload[] = { MCP2515_CMD_RTS | tx_buf->rts };
-  status_ok_or_return(
-      spi_exchange(s_storage->spi_port, send_payload, sizeof(send_payload), NULL, 0));
+  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW));
+  status_ok_or_return(spi_tx(s_storage->spi_port, send_payload, sizeof(send_payload)));
+  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH));
 
   return STATUS_CODE_OK;
 }

@@ -58,7 +58,6 @@ Queue spi_tx_data = {
   .storage_buf = spi_tx_data_buf,
 };
 StatusCode TEST_MOCK(spi_tx)(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
-  printf("TX CALLED\n");
   for (size_t i = 0; i < tx_len; ++i) {
     queue_send(&spi_tx_data, tx_data + i, 0);
   }
@@ -72,7 +71,6 @@ Queue spi_rx_data = {
   .storage_buf = spi_rx_data_buf,
 };
 StatusCode TEST_MOCK(spi_rx)(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placeholder) {
-  printf("RX XALLED\n");
   for (size_t i = 0; i < rx_len; ++i) {
     TEST_ASSERT_OK(queue_receive(&spi_rx_data, rx_data + i, 1));
     printf("received %d\n", *rx_data);
@@ -116,9 +114,11 @@ void teardown_test() {}
 TEST_IN_TASK
 void test_mcp2515_init_after_schedular_start(void) {
   uint8_t data;
+
   // reset
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_EQUAL(MCP2515_CMD_RESET, data);
+
   // Set to Config mode, CLKOUT /4
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_EQUAL(MCP2515_CMD_BIT_MODIFY, data);
@@ -126,6 +126,7 @@ void test_mcp2515_init_after_schedular_start(void) {
   TEST_ASSERT_EQUAL(MCP2515_CTRL_REG_CANCTRL, data);
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+
   // set RXB0CTRL.BUKT bit on to enable rollover to rx1
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_EQUAL(MCP2515_CMD_BIT_MODIFY, data);
@@ -133,6 +134,7 @@ void test_mcp2515_init_after_schedular_start(void) {
   TEST_ASSERT_EQUAL(MCP2515_CTRL_REG_RXB0CTRL, data);
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+
   // set RXnBF to be message buffer full interrupt
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_EQUAL(MCP2515_CMD_BIT_MODIFY, data);
@@ -141,6 +143,7 @@ void test_mcp2515_init_after_schedular_start(void) {
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
 
+  // timing config
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_EQUAL(MCP2515_CMD_WRITE, data);
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
@@ -152,15 +155,16 @@ void test_mcp2515_init_after_schedular_start(void) {
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
 
-  data = 0x05;
-  queue_send(&spi_rx_data, &data, 0);
+  // sanity check
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_EQUAL(MCP2515_CMD_READ, data);
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_EQUAL(MCP2515_CTRL_REG_CNF3, data);
+  data = 0x05;
+  queue_send(&spi_rx_data, &data, 0);
 
   // Leave config mode
-  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 10));
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_EQUAL(MCP2515_CMD_BIT_MODIFY, data);
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_EQUAL(MCP2515_CTRL_REG_CANCTRL, data);
@@ -169,10 +173,23 @@ void test_mcp2515_init_after_schedular_start(void) {
 }
 
 TEST_IN_TASK
-void test_mcp2515(void) {}
+void test_tx(void) {
+  uint8_t data;
+  // Ensure the CANCTRL register is set to the correct value
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_EQUAL(MCP2515_CMD_BIT_MODIFY, data);
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_EQUAL(MCP2515_CTRL_REG_CANCTRL, data);
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
 
-TEST_IN_TASK
-void test_tx(void) {}
+  //
+
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_EQUAL(MCP2515_CMD_READ_STATUS, data);
+  data = 0x00;  // all buffer free
+  queue_send(&spi_rx_data, &data, 0);
+}
 
 TEST_IN_TASK
 void test_rx(void) {
