@@ -7,42 +7,16 @@
 #include "mcp2515_defs.h"
 
 // TX/RX buffer ID registers - See Registers 3-3 to 3-7, 4-4 to 4-8
-typedef struct Mcp2515IdRegs {
-  uint8_t sidh;
-  union {
-    struct {
-      uint8_t eid_16_17 : 2;
-      uint8_t unimplemented : 1;
-      uint8_t ide : 1;
-      uint8_t srr : 1;
-      uint8_t sid_0_2 : 3;
-    };
-    uint8_t raw;
-  } sidl;
-  uint8_t eid8;
-  uint8_t eid0;
-  union {
-    struct {
-      uint8_t dlc : 4;
-      uint8_t reserved : 2;
-      uint8_t rtr : 1;
-      uint8_t unimplemented : 1;
-    };
-    uint8_t raw;
-  } dlc;
-} Mcp2515IdRegs;
-
-typedef union Mcp2515Id {
+typedef union {
   struct {
-    uint32_t eid0 : 8;
-    uint32_t eid8 : 8;
-    uint32_t eid_16_17 : 2;
-    uint32_t sid_0_2 : 3;
-    uint32_t sidh : 8;
-    uint32_t padding : 3;
+    uint32_t eid : 18;
+    uint8_t _ : 1;
+    uint8_t extended : 1;
+    uint8_t srr : 1;
+    uint32_t sid : 11;
   };
-  uint32_t raw;
-} Mcp2515Id;
+  uint8_t registers[4];
+} Mcp2515IdRegs;
 
 typedef enum {
   MCP2515_FILTER_ID_RXF0 = 0,
@@ -129,32 +103,24 @@ static void prv_handle_rx(uint8_t buffer_id) {
   Mcp2515RxBuffer *rx_buf = &s_rx_buffers[buffer_id];
   // Read ID
   uint8_t id_payload[] = { MCP2515_CMD_READ_RX | rx_buf->id };
-  Mcp2515IdRegs read_id_regs = { 0 };
-  spi_exchange(s_storage->spi_port, id_payload, sizeof(id_payload), (uint8_t *)&read_id_regs,
-               sizeof(read_id_regs));
+  uint8_t read_data[5];
+  spi_exchange(s_storage->spi_port, id_payload, sizeof(id_payload), read_data, sizeof(read_data));
 
-  Mcp2515Id id = {
-    .sid_0_2 = read_id_regs.sidl.sid_0_2,
-    .sidh = read_id_regs.sidh,
-    .eid0 = read_id_regs.eid0,
-    .eid8 = read_id_regs.eid8,
-    .eid_16_17 = read_id_regs.sidl.eid_16_17,
+  Mcp2515IdRegs read_id_regs = {
+    .registers = { read_data[3], read_data[2], read_data[1], read_data[0] },
   };
 
-  rx_msg.extended = read_id_regs.sidl.ide;
-  rx_msg.dlc = read_id_regs.dlc.dlc;
+  rx_msg.extended = read_id_regs.extended;
+  rx_msg.dlc = read_data[4] & 0b111;
 
   if (!rx_msg.extended) {
-    // Standard IDs have garbage in the extended fields
-    id.raw >>= MCP2515_EXTENDED_ID_LEN;
+    rx_msg.id.raw = read_id_regs.sid;
+  } else {
+    rx_msg.id.raw = (uint32_t)(read_id_regs.sid << MCP2515_EXTENDED_ID_LEN) | read_id_regs.eid;
   }
 
-  rx_msg.id.raw = id.raw;
-
   uint8_t data_payload[] = { MCP2515_CMD_READ_RX | rx_buf->data };
-  uint64_t read_data = 0;
-  spi_exchange(s_storage->spi_port, data_payload, sizeof(data_payload), (uint8_t *)&rx_msg.data,
-               sizeof(rx_msg.data));
+  spi_exchange(s_storage->spi_port, data_payload, sizeof(data_payload), rx_msg.data_u8, rx_msg.dlc);
   // Clear the interrupt flag so a new message can be loaded
   prv_bit_modify(MCP2515_CTRL_REG_CANINTF, rx_buf->int_flag, 0x0);
 
@@ -245,7 +211,7 @@ TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
   while (true) {
     notify_wait(&notification, BLOCK_INDEFINITELY);
 
-    if (notify_check_event(&notification, 0)) {  // Error int
+    if (notify_check_event(&notification, 0)) {  // Error interrupt
       struct {
         uint8_t canintf;
         uint8_t eflg;
@@ -307,9 +273,9 @@ StatusCode mcp2515_hw_add_filter_in(uint32_t mask, uint32_t filter, bool extende
 
 // CanHwBusStatus mcp2515_hw_bus_status(void);
 
-StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, const uint64_t data, size_t len) {
+StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, uint8_t *data, size_t len) {
   // Ensure the CANCTRL register is set to the correct value
-  // ??? one shot mode?
+  //
   prv_bit_modify(MCP2515_CTRL_REG_CANCTRL, 0x1f, 0x0f);
   // Get free transmit buffer
   uint8_t tx_status = __builtin_ffs(
@@ -322,49 +288,43 @@ StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, const uint64_t data, 
   // ffs returns 1-indexed: (x-3)/2 -> 0b00000111 = all TXxREQ bits set
   Mcp2515TxBuffer *tx_buf = &s_tx_buffers[(tx_status - 3) / 2];
 
-  Mcp2515Id tx_id = { .raw = id };
-  // If it's a standard id, make sure it lines up in the right bits
-  if (tx_id.raw >> MCP2515_STANDARD_ID_LEN == 0) {
-    tx_id.raw <<= MCP2515_EXTENDED_ID_LEN;
+  Mcp2515IdRegs tx_id_regs = { 0 };
+  if (extended) {
+    // extended
+    tx_id_regs.sid = id >> MCP2515_STANDARD_ID_LEN;
+    tx_id_regs.eid = id;
+    tx_id_regs.extended = true;
+  } else {
+    // standard
+    tx_id_regs.sid = id;
+    tx_id_regs.extended = false;
   }
 
-  Mcp2515IdRegs tx_id_regs = {
-    .sidh = tx_id.sidh,
-    .sidl = { .eid_16_17 = tx_id.eid_16_17,
-              .ide = extended,
-              .srr = false,
-              .sid_0_2 = tx_id.sid_0_2 },
-    .eid0 = tx_id.eid0,
-    .eid8 = tx_id.eid8,
-    .dlc = { .dlc = len, .rtr = false },
-  };
-
+  // This payload buffer can be reused if needed for stack mem.
   // Load ID: SIDH, SIDL, EID8, EID0, RTSnDLC
   uint8_t id_payload[] = {
-    MCP2515_CMD_LOAD_TX | tx_buf->id,
-    tx_id_regs.sidh,
-    tx_id_regs.sidl.raw,
-    tx_id_regs.eid8,
-    tx_id_regs.eid0,
-    tx_id_regs.dlc.raw,
+    MCP2515_CMD_LOAD_TX | tx_buf->id,  // tx_id_regs 3-3 to 3-6
+    tx_id_regs.registers[3],          tx_id_regs.registers[2],
+    tx_id_regs.registers[1],          tx_id_regs.registers[0],
+    (len & 0b111) | (false << 6),  // Reg 3-7 RTR and DLC
   };
-  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW));
-  status_ok_or_return(spi_tx(s_storage->spi_port, id_payload, sizeof(id_payload)));
-  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH));
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW);
+  spi_tx(s_storage->spi_port, id_payload, sizeof(id_payload));
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH);
 
   // Load data
   uint8_t data_payload[9] = { MCP2515_CMD_LOAD_TX | tx_buf->data };
-  memcpy(&data_payload[1], &data, sizeof(data));
+  memcpy(&data_payload[1], data, len);
 
-  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW));
-  status_ok_or_return(spi_tx(s_storage->spi_port, (uint8_t *)&data_payload, sizeof(data_payload)));
-  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH));
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW);
+  spi_tx(s_storage->spi_port, (uint8_t *)&data_payload, len);
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH);
 
   // Send message
   uint8_t send_payload[] = { MCP2515_CMD_RTS | tx_buf->rts };
-  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW));
-  status_ok_or_return(spi_tx(s_storage->spi_port, send_payload, sizeof(send_payload)));
-  status_ok_or_return(spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH));
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW);
+  spi_tx(s_storage->spi_port, send_payload, sizeof(send_payload));
+  spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH);
 
   return STATUS_CODE_OK;
 }
@@ -374,43 +334,42 @@ StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, const uint64_t data, 
 
 // Call with MCP2515 in Config mode to set filters
 static void prv_configure_filters(CanMessageId *filters) {
-  Mcp2515Id default_filter = { .raw = filters[MCP2515_FILTER_ID_RXF0] };
   for (size_t i = 0; i < NUM_MCP2515_FILTER_IDS; i++) {
-    Mcp2515Id filter = { .raw = filters[i] };
-    if (default_filter.raw == 0) {
-      continue;
-    }
-
     // Prevents us from filtering for id 0x0
     if (filters[i] == 0) {
-      filter = default_filter;
+      continue;
+    }
+    Mcp2515IdRegs id_regs = { 0 };
+
+    if (filters[i] >> MCP2515_STANDARD_ID_LEN) {
+      // extended
+      id_regs.extended = true;
+      id_regs.sid = filters[i] >> MCP2515_EXTENDED_ID_LEN;
+      id_regs.eid = filters[i];
+    } else {
+      // standard
+      id_regs.extended = false;
+      id_regs.sid = filters[i];
     }
 
-    uint8_t maskRegH = MCP2515_REG_RXM0SIDH;
-    if (i == MCP2515_FILTER_ID_RXF1) maskRegH = MCP2515_REG_RXM1SIDH;
-    // If it's a standard id, ensure it's placed in the right bits
-    if (filter.raw >> MCP2515_STANDARD_ID_LEN == 0) {
-      filter.raw <<= MCP2515_EXTENDED_ID_LEN;
-    }
-    bool standard = filter.raw << (32 - MCP2515_EXTENDED_ID_LEN) == 0;
-    size_t numMaskRegisters =
-        standard ? MCP2515_NUM_MASK_REGISTERS_STANDARD : MCP2515_NUM_MASK_REGISTERS_EXTENDED;
+    uint8_t maskRegH = (i == MCP2515_FILTER_ID_RXF0) ? MCP2515_REG_RXM0SIDH : MCP2515_REG_RXM1SIDH;
+    size_t numMaskRegisters = id_regs.extended ? MCP2515_NUM_MASK_REGISTERS_EXTENDED
+                                               : MCP2515_NUM_MASK_REGISTERS_STANDARD;
     // Set the filter masks to 0xff so we filter on the whole message
     for (size_t i = 0; i < numMaskRegisters; i++) {
       prv_bit_modify(maskRegH + i, 0xff, 0xff);
     }
-    // If it is just a standard id, then shift it up to match the struct
-    uint8_t filterRegH = MCP2515_REG_RXF0SIDH;
-    if (i == MCP2515_FILTER_ID_RXF1) filterRegH = MCP2515_REG_RXF1SIDH;
-    uint8_t filterRegL = filterRegH + 1;
+
+    uint8_t filterRegH =
+        (i == MCP2515_FILTER_ID_RXF0) ? MCP2515_REG_RXF0SIDH : MCP2515_REG_RXF1SIDH;
     // Set sidh
-    prv_bit_modify(filterRegH, 0xff, filter.sidh);
+    prv_bit_modify(filterRegH, 0xff, id_regs.registers[3]);
     // Set sidl and eid16-17
-    prv_bit_modify(filterRegL, 0xff, (filter.sid_0_2 << 5) | ((!standard) << 3) | filter.eid_16_17);
+    prv_bit_modify(filterRegH + 1, 0xff, id_regs.registers[2]);
     // Set eid8-15
-    prv_bit_modify(filterRegH + 2, 0xff, filter.eid8);
+    prv_bit_modify(filterRegH + 2, 0xff, id_regs.registers[1]);
     // Set eid0-7
-    prv_bit_modify(filterRegH + 3, 0xff, filter.eid0);
+    prv_bit_modify(filterRegH + 3, 0xff, id_regs.registers[0]);
   }
 }
 

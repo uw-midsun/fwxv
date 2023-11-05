@@ -38,4 +38,4 @@ StatusCode mcp2515_hw_set_filter(CanMessageId *filters, bool loopback);
 
 CanHwBusStatus mcp2515_hw_bus_status(void);
 
-StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, const uint64_t data, size_t len);
+StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, uint8_t *data, size_t len);

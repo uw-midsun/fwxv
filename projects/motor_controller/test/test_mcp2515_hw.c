@@ -1,3 +1,4 @@
+#include "callback_handler.h"
 #include "delay.h"
 #include "gpio_it.h"
 #include "log.h"
@@ -9,6 +10,7 @@
 #include "test_helpers.h"
 #include "unity.h"
 
+Mcp2515Storage s_storage;
 static Mcp2515Settings s_mcp2515_settings = {
   .spi_port = SPI_PORT_2,
   .spi_settings = {
@@ -90,13 +92,12 @@ StatusCode TEST_MOCK(spi_exchange)(SpiPort spi, uint8_t *tx_data, size_t tx_len,
   return STATUS_CODE_OK;
 }
 
-Mcp2515Storage s_storage;
-
 bool initialized = false;
 void setup_test() {
   if (initialized) return;
   initialized = true;
 
+  callback_init(1);
   gpio_init();
   gpio_it_init();
 
@@ -172,8 +173,30 @@ void test_mcp2515_init_after_schedular_start(void) {
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
 }
 
+bool transmit_message(void *data) {
+  CanMessage *message = (CanMessage *)data;
+  status_ok_or_return(
+      mcp2515_hw_transmit(message->id.raw, message->extended, message->data_u8, message->dlc));
+  return true;
+}
+
 TEST_IN_TASK
 void test_tx(void) {
+  queue_reset(&spi_tx_data);
+  queue_reset(&spi_rx_data);
+
+  CanMessage message = {
+    .extended = false,
+    .id.raw = 641,  // 1241,
+    .dlc = 8,
+    .data_u8 = { 0, 1, 2, 3, 4, 5, 6, 7 },
+  };
+  // run transmit_message(&message); async
+  Event event = register_callback(transmit_message, &message);
+  printf("EVENT: %d\n", event);
+  notify(callback_task, event);
+  delay_ms(1);
+
   uint8_t data;
   // Ensure the CANCTRL register is set to the correct value
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
@@ -183,17 +206,76 @@ void test_tx(void) {
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
 
-  //
-
+  // read status
   TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
   TEST_ASSERT_EQUAL(MCP2515_CMD_READ_STATUS, data);
   data = 0x00;  // all buffer free
   queue_send(&spi_rx_data, &data, 0);
+
+  // id
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_EQUAL(MCP2515_CMD_LOAD_TX | MCP2515_LOAD_TXB0SIDH, data);
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_EQUAL(message.id.raw >> 3, data);
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_EQUAL((message.id.raw & 7) << 5, data);
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+
+  // data
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_EQUAL(MCP2515_CMD_LOAD_TX | MCP2515_LOAD_TXB0D0, data);
+  for (size_t i = 0; i < message.dlc; ++i) {
+    TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+    TEST_ASSERT_EQUAL(message.data_u8[i], data);
+  }
+
+  // send message (rts)
+  TEST_ASSERT_OK(queue_receive(&spi_tx_data, &data, 1));
+  TEST_ASSERT_EQUAL(MCP2515_CMD_RTS | MCP2515_RTS_TXB0, data);
 }
+
+typedef union Mcp2515Id {
+  struct {
+    uint32_t eid0 : 8;
+    uint32_t eid8 : 8;
+    uint32_t eid_16_17 : 2;
+    uint32_t sid_0_2 : 3;
+    uint32_t sidh : 8;
+    uint32_t padding : 3;
+  };
+  uint32_t raw;
+} Mcp2515Id;
+
+typedef union {
+  struct {
+    uint32_t eid : 18;
+    uint8_t _0 : 1;
+    uint8_t extended : 1;
+    uint8_t _1 : 1;
+    uint32_t sid : 11;
+  };
+  uint8_t data[4];
+} Mcp2515IdRegs;
 
 TEST_IN_TASK
 void test_rx(void) {
   // trigger RX0BF gpio pin interrupt, expect an spi_exchange
+  CanId canid = { .raw = 641 };
+  Mcp2515Id tx_id = { .raw = canid.raw };
+  tx_id.raw <<= MCP2515_EXTENDED_ID_LEN;
+  printf("%d, %d\n", tx_id.sidh, tx_id.sid_0_2);
+
+  Mcp2515IdRegs id = {
+    .sid = canid.raw,
+    .extended = true,
+    .eid = 123,
+  };
+
+  printf("%d, %d, %d, %d\n", id.data[0], id.data[1], id.data[2], id.data[3]);
+  printf("%d, %d\n", canid.raw >> 3, id.data[3]);
+  printf("%d, %d\n", (canid.raw & 7) << 5, id.data[2]);
 
   // gpio_it_trigger_interrupt();
 }

@@ -82,7 +82,7 @@ StatusCode mcp2515_transmit(const CanMessage *msg) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
   }
 
-  return mcp2515_hw_transmit(msg->id.raw, msg->extended, msg->data, msg->dlc);
+  return mcp2515_hw_transmit(msg->id.raw, msg->extended, msg->data_u8, msg->dlc);
 }
 
 static void no_op() {}
