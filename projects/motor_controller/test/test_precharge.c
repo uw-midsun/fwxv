@@ -49,24 +49,6 @@ PrechargeControlSettings precharge_settings = {
 
 CanQueue s_mcp2515_tx_queue;
 
-// StatusCode TEST_MOCK(mcp2515_hw_transmit)(uint32_t id, bool extended, const uint64_t data,
-//                                           size_t len) {
-//   CanMessage message = {
-//     .id = id,
-//     .extended = extended,
-//     .data = data,
-//     .dlc = len,
-//   } can_queue_push(mcp2515_tx_queue, &message);
-// }
-
-// static uint32_t prv_get_uint32(float f) {
-//   union {
-//     float f;
-//     uint32_t u;
-//   } fu = { .f = f };
-//   return fu.u;
-// }
-
 bool initialized = false;
 
 void setup_test(void) {

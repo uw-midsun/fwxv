@@ -30,7 +30,6 @@ static void prv_gpio_it_handler(uint8_t interrupt_id) {
 
 void gpio_it_init(void) {
   x86_interrupt_register_handler(prv_gpio_it_handler, &s_gpio_it_handler_id);
-  // printf("interrupt: %d\n", s_gpio_it_handler_id);
   GpioInterrupt empty_interrupt = { 0 };
   for (uint16_t i = 0; i < GPIO_PINS_PER_PORT; i++) {
     s_gpio_it_interrupts[i] = empty_interrupt;
