@@ -111,7 +111,7 @@ static void prv_handle_rx(uint8_t buffer_id) {
   };
 
   rx_msg.extended = read_id_regs.extended;
-  rx_msg.dlc = read_data[4] & 0b111;
+  rx_msg.dlc = read_data[4] & 0xf;
 
   if (!rx_msg.extended) {
     rx_msg.id.raw = read_id_regs.sid;
@@ -253,7 +253,8 @@ StatusCode mcp2515_hw_init(Mcp2515Storage *storage, const Mcp2515Settings *setti
   const InterruptSettings it_settings = {
     .type = INTERRUPT_TYPE_INTERRUPT,
     .priority = INTERRUPT_PRIORITY_NORMAL,
-    .edge = INTERRUPT_EDGE_FALLING,
+    // .edge = INTERRUPT_EDGE_FALLING,
+    .edge = INTERRUPT_EDGE_RISING,
   };
 
   status_ok_or_return(
@@ -306,7 +307,7 @@ StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, uint8_t *data, size_t
     MCP2515_CMD_LOAD_TX | tx_buf->id,  // tx_id_regs 3-3 to 3-6
     tx_id_regs.registers[3],          tx_id_regs.registers[2],
     tx_id_regs.registers[1],          tx_id_regs.registers[0],
-    (len & 0b111) | (false << 6),  // Reg 3-7 RTR and DLC
+    (len & 0xf) | (false << 6),  // Reg 3-7 RTR and DLC
   };
   spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW);
   spi_tx(s_storage->spi_port, id_payload, sizeof(id_payload));
@@ -317,7 +318,7 @@ StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, uint8_t *data, size_t
   memcpy(&data_payload[1], data, len);
 
   spi_cs_set_state(s_storage->spi_port, GPIO_STATE_LOW);
-  spi_tx(s_storage->spi_port, (uint8_t *)&data_payload, len);
+  spi_tx(s_storage->spi_port, (uint8_t *)&data_payload, len + 1);
   spi_cs_set_state(s_storage->spi_port, GPIO_STATE_HIGH);
 
   // Send message

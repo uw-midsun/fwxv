@@ -64,6 +64,7 @@ void run_slow_cycle() {}
 int main() {
   tasks_init();
   log_init();
+  gpio_init();
   interrupt_init();
   gpio_it_init();
   can_init(&s_can_storage, &can_settings);
