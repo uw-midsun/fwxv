@@ -55,32 +55,32 @@ TASK(temp_sense_task, TASK_STACK_512) {
 
     // A0
     adc_read_converted(temp_sense_pins[0], &voltage_reading);
-    temp_digital = calculateTempDigital1(voltage_reading);
+    temp_digital = prv_calculateTempDigital1(voltage_reading);
     set_thermal_status_temp_1(temp_digital);
 
     // A1
     adc_read_converted(temp_sense_pins[1], &voltage_reading);
-    temp_digital = calculateTempDigital1(voltage_reading);
+    temp_digital = prv_calculateTempDigital1(voltage_reading);
     set_thermal_status_temp_2(temp_digital);
 
     // A2
     adc_read_converted(temp_sense_pins[2], &voltage_reading);
-    temp_digital = calculateTempDigital2(voltage_reading);
+    temp_digital = prv_calculateTempDigital2(voltage_reading);
     set_thermal_temps_temp_3(temp_digital);
 
     // A3
     adc_read_converted(temp_sense_pins[3], &voltage_reading);
-    temp_digital = calculateTempDigital2(voltage_reading);
+    temp_digital = prv_calculateTempDigital2(voltage_reading);
     set_thermal_temps_temp_4(temp_digital);
 
     // A4
     adc_read_converted(temp_sense_pins[4], &voltage_reading);
-    temp_digital = calculateTempDigital2(voltage_reading);
+    temp_digital = prv_calculateTempDigital2(voltage_reading);
     set_thermal_temps_temp_5(temp_digital);
 
     // A5
     adc_read_converted(temp_sense_pins[5], &voltage_reading);
-    temp_digital = calculateTempDigital2(voltage_reading);
+    temp_digital = prv_calculateTempDigital2(voltage_reading);
     set_thermal_temps_temp_6(temp_digital);
   }
 }
