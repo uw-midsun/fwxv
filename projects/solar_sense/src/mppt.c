@@ -1,6 +1,7 @@
 #define NUM_MPPTS 6
 
 #include "mppt.h"
+
 #include "solar_sense_setters.h"
 
 static SpiPort mppt_spi_port;
@@ -36,7 +37,7 @@ StatusCode mppt_init(const SpiSettings *settings, const SpiPort port) {
 
   // Initialize MPPT chip select GPIOS
   for (uint8_t i = 0; i < sizeof(MPPT_CS_GPIO_PINS) / sizeof(GpioAddress); i++) {
-      gpio_init_pin(&MPPT_CS_GPIO_PINS[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+    gpio_init_pin(&MPPT_CS_GPIO_PINS[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   }
 
   status_ok_or_return(spi_init(mppt_spi_port, settings));
@@ -59,28 +60,27 @@ StatusCode mppt_init(const SpiSettings *settings, const SpiPort port) {
 StatusCode mppt_read_current(uint16_t *current_data) {
   const uint8_t mppt_read_current_cmd = MPPT_READ_CURRENT_CMD;
   status_ok_or_return(
-    spi_exchange(mppt_spi_port, &mppt_read_current_cmd, 1, (uint8_t *)current_data, 2));
+      spi_exchange(mppt_spi_port, &mppt_read_current_cmd, 1, (uint8_t *)current_data, 2));
   return STATUS_CODE_OK;
 }
 
 StatusCode mppt_read_voltage(uint16_t *voltage_data) {
   const uint8_t mppt_read_vin_cmd = MPPT_READ_VIN_CMD;
   status_ok_or_return(
-    spi_exchange(mppt_spi_port, &mppt_read_vin_cmd, 1, (uint8_t *)voltage_data, 2));
+      spi_exchange(mppt_spi_port, &mppt_read_vin_cmd, 1, (uint8_t *)voltage_data, 2));
   return STATUS_CODE_OK;
 }
 
 StatusCode mppt_read_pwm(uint16_t *pwm_data) {
   const uint8_t mppt_read_pwm_cmd = MPPT_READ_PWM_CMD;
-  status_ok_or_return(
-    spi_exchange(mppt_spi_port, &mppt_read_pwm_cmd, 1, (uint8_t *)pwm_data, 2));
+  status_ok_or_return(spi_exchange(mppt_spi_port, &mppt_read_pwm_cmd, 1, (uint8_t *)pwm_data, 2));
   return STATUS_CODE_OK;
 }
 
 StatusCode mppt_read_status(uint16_t *status_data) {
   const int8_t mppt_read_status_cmd = MPPT_READ_STATUS_CMD;
   status_ok_or_return(
-    spi_exchange(mppt_spi_port, &mppt_read_status_cmd, 1, (uint8_t *)status_data, 2));
+      spi_exchange(mppt_spi_port, &mppt_read_status_cmd, 1, (uint8_t *)status_data, 2));
   return STATUS_CODE_OK;
 }
 

@@ -2,10 +2,9 @@
 
 #include "log.h"
 #include "master_task.h"
-#include "solar_sense_getters.h"
+#include "mppt.h"
 #include "tasks.h"
 #include "temp_sense.h"
-#include "mppt.h"
 
 void run_fast_cycle() {}
 
