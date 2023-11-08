@@ -4,6 +4,7 @@
 #include "gpio.h"
 #include "log.h"
 #include "misc.h"
+#include "notify.h"
 #include "tasks.h"
 
 static const GpioAddress leds[] = {

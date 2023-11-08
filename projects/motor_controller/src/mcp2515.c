@@ -10,36 +10,10 @@
 // Storage
 static Mcp2515Storage *s_storage;
 
-static SemaphoreHandle_t s_mcp2515_rx_sem_handle;
-static StaticSemaphore_t s_mcp2515_rx_sem;
-
-static SemaphoreHandle_t s_mcp2515_tx_sem_handle;
-static StaticSemaphore_t s_mcp2515_tx_sem;
-
-StatusCode run_mcp2515_rx_cycle() {
-  BaseType_t ret = xSemaphoreGive(s_mcp2515_rx_sem_handle);
-
-  if (ret == pdFALSE) {
-    return STATUS_CODE_INTERNAL_ERROR;
-  }
-
-  return STATUS_CODE_OK;
-}
-
-StatusCode run_mcp2515_tx_cycle() {
-  BaseType_t ret = xSemaphoreGive(s_mcp2515_tx_sem_handle);
-
-  if (ret == pdFALSE) {
-    return STATUS_CODE_INTERNAL_ERROR;
-  }
-
-  return STATUS_CODE_OK;
-}
-
 TASK(MCP2515_RX, TASK_MIN_STACK_SIZE) {
   int counter = 0;
   while (true) {
-    xSemaphoreTake(s_mcp2515_rx_sem_handle, portMAX_DELAY);
+    notify_wait(NULL, BLOCK_INDEFINITELY);
     LOG_DEBUG("mcp2515_rx called: %d!\n", counter);
     counter++;
 
@@ -65,7 +39,7 @@ StatusCode mcp2515_receive(const CanMessage *msg) {
 TASK(MCP2515_TX, TASK_MIN_STACK_SIZE) {
   int counter = 0;
   while (true) {
-    xSemaphoreTake(s_mcp2515_tx_sem_handle, portMAX_DELAY);
+    notify_wait(NULL, BLOCK_INDEFINITELY);
     LOG_DEBUG("mcp2515_tx called: %d!\n", counter);
     counter++;
 
@@ -73,6 +47,24 @@ TASK(MCP2515_TX, TASK_MIN_STACK_SIZE) {
 
     send_task_end();
   }
+}
+
+StatusCode run_mcp2515_rx_cycle() {
+  StatusCode ret = notify(MCP2515_RX, 1);
+  if (ret == pdFALSE) {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
+  return STATUS_CODE_OK;
+}
+
+StatusCode run_mcp2515_tx_cycle() {
+  StatusCode ret = notify(MCP2515_TX, 1);
+  if (ret == pdFALSE) {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
+  return STATUS_CODE_OK;
 }
 
 StatusCode mcp2515_transmit(const CanMessage *msg) {
@@ -99,12 +91,6 @@ StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings
   }
 
   mcp2515_hw_init(&storage->rx_queue, settings);
-
-  // Create Semaphores
-  s_mcp2515_rx_sem_handle = xSemaphoreCreateBinaryStatic(&s_mcp2515_rx_sem);
-  configASSERT(s_mcp2515_rx_sem_handle);
-  s_mcp2515_tx_sem_handle = xSemaphoreCreateBinaryStatic(&s_mcp2515_tx_sem);
-  configASSERT(s_mcp2515_tx_sem_handle);
 
   status_ok_or_return(can_queue_init(&s_storage->rx_queue));
 

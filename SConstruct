@@ -244,7 +244,7 @@ if PLATFORM == 'x86' and TYPE == 'project':
 ###########################################################
 if PLATFORM == 'arm' and TYPE == 'project':
     # display memory info for the project
-    if MEM_REPORT == 'true':
+    if MEM_REPORT:
         get_mem_report = Action("python3 scons/mem_report.py " + "build/arm/bin/projects/{}".format(TARGET))
         env.AddPostAction(proj_bin(TARGET, False), get_mem_report)
         
