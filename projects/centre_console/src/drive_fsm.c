@@ -191,7 +191,7 @@ static FsmState s_drive_state_list[NUM_DRIVE_STATES] = {
 };
 
 // Declares transition for state machine, must match those in input functions
-static FsmTransition s_drive_transitions[NUM_DRIVE_TRANSITIONS] = {
+static bool s_drive_transitions[NUM_DRIVE_STATES][NUM_DRIVE_STATES] = {
   // NEUTRAL -> SEQ
   TRANSITION(NEUTRAL, DO_PRECHARGE),
 
@@ -218,12 +218,6 @@ static FsmTransition s_drive_transitions[NUM_DRIVE_TRANSITIONS] = {
 };
 
 StatusCode init_drive_fsm(void) {
-  FsmSettings settings = {
-    .state_list = s_drive_state_list,
-    .transitions = s_drive_transitions,
-    .num_transitions = NUM_DRIVE_TRANSITIONS,
-    .initial_state = NEUTRAL,
-  };
   InterruptSettings it_settings = {
     .priority = INTERRUPT_PRIORITY_NORMAL,
     .type = INTERRUPT_TYPE_INTERRUPT,
@@ -239,6 +233,6 @@ StatusCode init_drive_fsm(void) {
                                s_drive_fsm_event_lookup_table[i], drive);
   }
 
-  fsm_init(drive, settings, NULL);
+  fsm_init(drive, s_drive_state_list, s_drive_transitions, NEUTRAL, NULL);
   return STATUS_CODE_OK;
 }

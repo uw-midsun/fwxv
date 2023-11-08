@@ -74,7 +74,7 @@ static FsmState s_power_supply_state_list[NUM_POWER_SELECT_STATES] = {
   STATE(POWER_SELECT_ACTIVE, prv_dcdc_active_input, prv_dcdc_active_output),
 };
 
-static FsmTransition s_power_supply_transition_list[NUM_POWER_SELECT_STATES] = {
+static bool s_power_supply_transitions[NUM_POWER_SELECT_STATES][NUM_POWER_SELECT_STATES] = {
   TRANSITION(POWER_SELECT_INACTIVE, POWER_SELECT_ACTIVE),
   TRANSITION(POWER_SELECT_ACTIVE, POWER_SELECT_INACTIVE),
 };
@@ -92,13 +92,8 @@ StatusCode init_dcdc(void) {
   status_ok_or_return(adc_add_channel(g_dcdc_temp_pin));
 
   // Initialize FSM task
-  const FsmSettings settings = {
-    .state_list = s_power_supply_state_list,
-    .transitions = s_power_supply_transition_list,
-    .num_transitions = NUM_POWER_SELECT_TRANSITIONS,
-    .initial_state = POWER_SELECT_INACTIVE,
-  };
-  fsm_init(dcdc, settings, NULL);
+  fsm_init(dcdc, s_power_supply_state_list, s_power_supply_transitions, POWER_SELECT_INACTIVE,
+           NULL);
 
   return STATUS_CODE_OK;
 }
