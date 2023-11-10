@@ -25,13 +25,6 @@ typedef enum driveState {
   DO_PRECHARGE,  // turn on precharge and get ack
 } driveState;
 
-typedef enum driveButtons {
-  NEUTRAL_BUTTON = 0,
-  DRIVE_BUTTON,
-  REVERSE_BUTTON,
-  NUM_DRIVE_FSM_BUTTONS,
-} driveButtons;
-
 typedef enum driveEvents {
   NEUTRAL_BUTTON_EVENT = 0,
   DRIVE_BUTTON_EVENT,

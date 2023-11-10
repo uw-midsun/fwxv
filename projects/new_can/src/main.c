@@ -20,6 +20,7 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
+void pre_loop_init() {}
 void run_fast_cycle() {}
 
 static uint8_t s_to_transmit;

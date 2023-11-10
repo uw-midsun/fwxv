@@ -14,6 +14,8 @@ static const GpioAddress leds[] = {
   { .port = GPIO_PORT_A, .pin = 15 },  //
 };
 
+void pre_loop_init() {}
+
 TASK(leds_task, TASK_STACK_512) {
   for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
     gpio_init_pin(&leds[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
