@@ -29,7 +29,8 @@ TASK(task1, TASK_STACK_512) {
   while (true) {
     LOG_DEBUG("task1: %d\n", counter1);
     counter1++;
-    prv_delay(1000);
+    // use blocking delay so that both tasks 1 and 2 print
+    delay_ms(1000);
   }
 }
 
@@ -48,7 +49,7 @@ int main(void) {
 
     // Create tasks here
     tasks_init_task(task1, TASK_PRIORITY(2), NULL);
-    tasks_init_task(task2, TASK_PRIORITY(2), NULL);
+    tasks_init_task(task2, TASK_PRIORITY(1), NULL);
 
     LOG_DEBUG("Program start...\n");
 
