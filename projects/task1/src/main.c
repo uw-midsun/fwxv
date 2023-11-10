@@ -1,5 +1,3 @@
-#include "tasks.h"
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -8,6 +6,7 @@
 #include "gpio.h"
 #include "log.h"
 #include "misc.h"
+#include "tasks.h"
 
 // Non blocking delay. Simply consumes cpu cycles until a given time has passed
 static void prv_delay(const TickType_t delay_ms) {
@@ -30,8 +29,7 @@ TASK(task2, TASK_STACK_512) {
   while (true) {
     LOG_DEBUG("task 2, %d\n", counter2);
     ++counter2;
-
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(1000);
   }
 }
 
