@@ -40,6 +40,8 @@ PrechargeControlSettings precharge_settings = {
   .precharge_monitor2 = { GPIO_PORT_A, 8 },
 };
 
+void pre_loop_init() {}
+
 void run_fast_cycle() {
   run_can_rx_cycle();
   run_mcp2515_rx_cycle();

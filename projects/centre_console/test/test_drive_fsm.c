@@ -2,6 +2,7 @@
 #include "centre_console_setters.h"
 #include "drive_fsm.h"
 #include "fsm_shared_mem.h"
+#include "i2c.h"
 #include "power_fsm.h"
 #include "task_test_helpers.h"
 #include "unity.h"
@@ -12,6 +13,10 @@
 
 void setup_test(void) {
   log_init();
+  I2CSettings i2c_setting = {
+    .speed = I2C_SPEED_FAST,
+  };
+  i2c_init(I2C_PORT_1, &i2c_setting);
 }
 
 void teardown_test(void) {}

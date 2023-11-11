@@ -9,6 +9,7 @@ void set_slow_cycle_count(uint32_t cycles);
 void run_fast_cycle();
 void run_medium_cycle();
 void run_slow_cycle();
+void pre_loop_init();
 
 StatusCode init_master_task();
 Task *get_master_task();
