@@ -250,6 +250,11 @@ if PLATFORM == 'arm' and TYPE == 'project':
         
     # flash the MCU using openocd
     def flash_run(target, source, env):
+        import serial
+        output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
+        device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
+        serialData = serial.Serial(device_path,115200)
+
         OPENOCD = 'openocd'
         OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
         PROBE = 'cmsis-dap'
@@ -265,6 +270,15 @@ if PLATFORM == 'arm' and TYPE == 'project':
         ]
         cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
         subprocess.run(cmd, shell=True)
+        
+        while True:
+            line: str = serialData.readline().decode("utf-8")
+            print(line, end='')
+            if line.startswith('OK'):
+                break
+            if line.startswith('FAIL'):
+                fails += 1
+                break
 
     flash = Command('flash.txt', [], flash_run)
     Depends(flash, proj_bin(TARGET))
