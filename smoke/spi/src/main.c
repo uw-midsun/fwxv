@@ -1,6 +1,7 @@
 #include <stdio.h>
 
 #include "gpio.h"
+#include "delay.h"
 #include "log.h"
 #include "spi.h"
 #include "tasks.h"
@@ -44,10 +45,16 @@ TASK(smoke_spi_task, TASK_STACK_512) {
   while (true) {
     spi_cs_set_state(SPI_PORT_2, GPIO_STATE_LOW);
     uint8_t read_bytes[3] = { 0 };
-    StatusCode status = spi_tx(SPI_PORT_2, bytes_to_write, SIZEOF_ARRAY(spi_tx_data));
+    StatusCode status = spi_tx(SPI_PORT_2, spi_tx_data, SIZEOF_ARRAY(spi_tx_data));
+    spi_cs_set_state(SPI_PORT_2, GPIO_STATE_HIGH);
+
+    spi_cs_set_state(SPI_PORT_2, GPIO_STATE_LOW);
+    uint8_t read_cmd = 0x3;
+    status = spi_tx(SPI_PORT_2, &read_cmd, 1);
     StatusCode status2 = spi_rx(SPI_PORT_2, read_bytes, SIZEOF_ARRAY(read_bytes), 0x0);
     LOG_DEBUG("TX %d RX %d Data: %x, %x, %x", status, status2, read_bytes[0], read_bytes[1], read_bytes[2]);
     spi_cs_set_state(SPI_PORT_2, GPIO_STATE_HIGH);
+    delay_ms(1000);
   }
 }
 
