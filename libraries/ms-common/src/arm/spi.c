@@ -108,79 +108,7 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
 }
 
 StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
-  if (spi >= NUM_SPI_PORTS) {
-    return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
-  }
-  // Proceed if mutex is unlocked
-  status_ok_or_return(sem_wait(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
-
-  // Copy data into queue
-  for (size_t tx = 0; tx < tx_len; tx++) {
-    if (queue_send(&s_port[spi].spi_buf.tx_queue, &tx_data[tx], 0)) {
-      queue_reset(&s_port[spi].spi_buf.tx_queue);
-      sem_post(&s_port[spi].spi_buf.mutex);
-      return STATUS_CODE_RESOURCE_EXHAUSTED;
-    }
-  }
-
-  // Enable interrupts and start transaction
-  // Transaction started when we spi is enabled, and tx register is empty
-  SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE, ENABLE);
-  SPI_Cmd(s_port[spi].base, ENABLE);
-
-  // Wait on IT handler to return mutex when txn complete
-  if (sem_wait(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS)) {
-    SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE, DISABLE);
-    // if we time out dump queue
-    SPI_Cmd(s_port[spi].base, DISABLE);
-    queue_reset(&s_port[spi].spi_buf.tx_queue);
-    sem_post(&s_port[spi].spi_buf.mutex);
-    return STATUS_CODE_TIMEOUT;
-  }
-  sem_post(&s_port[spi].spi_buf.mutex);
-  return STATUS_CODE_OK;
-}
-
-StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placeholder) {
-  // Proceed if mutex is unlocked
-  if (spi >= NUM_SPI_PORTS) {
-    return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
-  }
-
-  status_ok_or_return(sem_wait(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
-  s_port[spi].num_rx_bytes = rx_len;
-
-  for (size_t tx = 0; tx < rx_len; tx++) {
-    queue_send(&s_port[spi].spi_buf.tx_queue, &placeholder, 0);
-    // if () {
-    // queue_reset(&s_port[spi].spi_buf.tx_queue);
-    // sem_post(&s_port[spi].spi_buf.mutex);
-    // return STATUS_CODE_RESOURCE_EXHAUSTED;
-    // }
-  }
-  // Enable interrupts and start transaction
-  // Transaction started when we sent first byte, then it handler takes over
-  // Seems to potentially be a bug in the SPL where it doesn't flip the bits it's supposed to
-  // Hardcode this for now
-  // Interrupt for error and then for RXNE
-  SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_RXNE, ENABLE);
-  s_port[spi].base->CR2 ^= FLIP_RXNE;
-  s_port[spi].base->CR2 |= FLIP_ERR;
-  SPI_Cmd(s_port[spi].base, ENABLE);
-
-  // Wait on IT handler to return mutex when txn complete
-  if (sem_wait(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS)) {
-    // if we time out dump queue - txn invalid
-    SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_RXNE, DISABLE);
-    s_port[spi].base->CR2 ^= FLIP_ERR;
-    SPI_Cmd(s_port[spi].base, DISABLE);
-    queue_reset(&s_port[spi].spi_buf.rx_queue);
-    sem_post(&s_port[spi].spi_buf.mutex);
-    return STATUS_CODE_TIMEOUT;
-  }
-  sem_post(&s_port[spi].spi_buf.mutex);
-  xQueueReceive(s_port[spi].spi_buf.rx_queue.handle, rx_data, portMAX_DELAY);
-  return STATUS_CODE_OK;
+  return spi_exchange(spi, tx_data, tx_len, NULL, 0);
 }
 
 StatusCode spi_cs_set_state(SpiPort spi, GpioState state) {
@@ -202,45 +130,44 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
   queue_reset(&s_port[spi].spi_buf.tx_queue);
   queue_reset(&s_port[spi].spi_buf.rx_queue);
 
-  // Copy data into queue
-  for (size_t tx = 0; tx < tx_len; tx++) {
-    if (queue_send(&s_port[spi].spi_buf.tx_queue, &tx_data[tx], 0)) {
-      queue_reset(&s_port[spi].spi_buf.tx_queue);
-      sem_post(&s_port[spi].spi_buf.mutex);
-      return STATUS_CODE_RESOURCE_EXHAUSTED;
-    }
-  }
-  uint8_t placeholder = 0;
-  for (size_t rx = 0; rx < rx_len; rx++) {
-    if (queue_send(&s_port[spi].spi_buf.tx_queue, &placeholder, 0)) {
-      queue_reset(&s_port[spi].spi_buf.tx_queue);
-      sem_post(&s_port[spi].spi_buf.mutex);
-      return STATUS_CODE_RESOURCE_EXHAUSTED;
-    }
-  }
+  spi_cs_set_state(spi, GPIO_STATE_LOW);
 
+  // Copy data into queue
+  uint8_t data = 0;
+  for (size_t i = 0; i < tx_len + rx_len; i++) {
+    data = (i < tx_len) ? tx_data[i] : 0;
+    if (queue_send(&s_port[spi].spi_buf.tx_queue, &data, 0)) {
+      queue_reset(&s_port[spi].spi_buf.tx_queue);
+      sem_post(&s_port[spi].spi_buf.mutex);
+      return STATUS_CODE_RESOURCE_EXHAUSTED;
+    }
+  }
   // Enable interrupts and start transaction
   // Transaction started when we spi is enabled, and tx register is empty
   SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE, ENABLE);
-  // s_port[spi].base->CR2 ^= FLIP_RXNE;
   s_port[spi].base->CR2 |= FLIP_ERR;
   SPI_Cmd(s_port[spi].base, ENABLE);
 
-  // Wait on IT handler to return mutex when txn complete
-  StatusCode complete = sem_wait(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS);
-  SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE, DISABLE);
-  s_port[spi].base->CR2 ^= FLIP_ERR;
-  SPI_Cmd(s_port[spi].base, DISABLE);
-
-  for (size_t tx = 0; tx < tx_len; tx++) {
-    queue_receive(&s_port[spi].spi_buf.rx_queue, &placeholder, 0);
+  for (size_t i = 0; i < tx_len + rx_len; i++) {
+    if (queue_receive(&s_port[spi].spi_buf.rx_queue, &data, SPI_TIMEOUT_MS)) {
+      // timeout
+      SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE,
+                       DISABLE);
+      SPI_Cmd(s_port[spi].base, DISABLE);
+      spi_cs_set_state(spi, GPIO_STATE_HIGH);
+      sem_post(&s_port[spi].spi_buf.mutex);
+      return STATUS_CODE_TIMEOUT;
+    }
+    if (i >= tx_len) {
+      // ignore first tx_len num of receieved data, store the rest into rx_data
+      rx_data[i - tx_len] = data;
+    }
   }
-  for (size_t rx = 0; rx < rx_len; rx++) {
-    queue_receive(&s_port[spi].spi_buf.rx_queue, &rx_data[rx], 0);
-  }
 
+  spi_cs_set_state(spi, GPIO_STATE_HIGH);
   sem_post(&s_port[spi].spi_buf.mutex);
-  return complete;
+
+  return STATUS_CODE_OK;
 }
 
 static void prv_spi_irq_handler(SpiPort spi) {
@@ -256,9 +183,9 @@ static void prv_spi_irq_handler(SpiPort spi) {
     } else {
       // We have sent all data, so close spi
       // TODO(mitchellostler): Add Busy check
-      SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE, DISABLE);
+      SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE,
+                       DISABLE);
       SPI_Cmd(s_port[spi].base, DISABLE);
-      xSemaphoreGiveFromISR(s_port[spi].spi_buf.mutex.handle, &xTaskWoken);
     }
   }
   if (SPI_I2S_GetITStatus(s_port[spi].base, SPI_I2S_IT_RXNE) == SET) {
