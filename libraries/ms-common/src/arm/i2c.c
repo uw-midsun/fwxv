@@ -299,19 +299,20 @@ static void prv_ev_irq_handler(I2CPort i2c) {
   }
   if (I2C_GetITStatus(s_port[i2c].base, I2C_IT_RXNE)) {
     uint8_t rx_data = I2C_ReceiveData(s_port[i2c].base);
-    xQueueSendFromISR(s_port[i2c].i2c_buf.queue.handle, &rx_data, &xTaskWoken);
-
-    s_port[i2c].num_rx_bytes--;
-    if (s_port[i2c].num_rx_bytes == 1) {
-      // If we only have one byte left, don't ack slave
-      // This finishes the transaction after last byte sent
-      I2C_AcknowledgeConfig(s_port[i2c].base, DISABLE);
-      I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
-    } else if (s_port[i2c].num_rx_bytes == 0) {
-      // Unlock mutex after receiving last byte
-      I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
-      I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
-      xSemaphoreGiveFromISR(s_port[i2c].i2c_buf.wait_txn.handle, &xTaskWoken);
+    if (s_port[i2c].num_rx_bytes > 0) {
+      xQueueSendFromISR(s_port[i2c].i2c_buf.queue.handle, &rx_data, &xTaskWoken);
+      s_port[i2c].num_rx_bytes--;
+      if (s_port[i2c].num_rx_bytes == 1) {
+        // If we only have one byte left, don't ack slave
+        // This finishes the transaction after last byte sent
+        I2C_AcknowledgeConfig(s_port[i2c].base, DISABLE);
+        I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
+      } else if (s_port[i2c].num_rx_bytes == 0) {
+        // Unlock mutex after receiving last byte
+        I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
+        I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
+        xSemaphoreGiveFromISR(s_port[i2c].i2c_buf.wait_txn.handle, &xTaskWoken);
+      }
     }
   }
   portYIELD_FROM_ISR(xTaskWoken);
