@@ -37,7 +37,7 @@ static SpiPortData s_port[NUM_SPI_PORTS] = {
   [SPI_PORT_2] = { .rcc_cmd = RCC_APB1PeriphClockCmd,
                    .periph = RCC_APB1Periph_SPI2,
                    .base = SPI2,
-                   .irqn = SPI1_IRQn },
+                   .irqn = SPI2_IRQn },
 };
 
 StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
@@ -46,7 +46,8 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   } else if (settings->mode >= NUM_SPI_MODES) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI mode.");
   }
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
+
+  s_port[spi].rcc_cmd(s_port[spi].periph, ENABLE);
   RCC_ClocksTypeDef clocks;
   RCC_GetClocksFreq(&clocks);
   uint32_t clk_freq;
@@ -65,7 +66,6 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   if (!IS_SPI_BAUDRATE_PRESCALER(prescaler)) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid baudrate");
   }
-  s_port[spi].rcc_cmd(s_port[spi].periph, ENABLE);
   s_port[spi].cs = settings->cs;
 
   // Confifgure spi pins to correct modes
