@@ -16,7 +16,7 @@ static CanStorage *s_can_storage;
 //takes 1 for filter_in, 2 for filter_out and default is unset
 static int s_can_filter_in_en = 0;
 
-TASK(CAN_RX, TASK_MIN_STACK_SIZE)
+TASK(CAN_RX, TASK_STACK_256)
 {
   int counter = 0;
   while (true)
@@ -31,7 +31,7 @@ TASK(CAN_RX, TASK_MIN_STACK_SIZE)
   }
 }
 
-TASK(CAN_TX, TASK_MIN_STACK_SIZE)
+TASK(CAN_TX, TASK_STACK_256)
 {
   int counter = 0;
   while (true)

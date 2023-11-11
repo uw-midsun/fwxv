@@ -23,7 +23,7 @@ const CanSettings can_settings = {
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
-  .loopback = true,
+  .loopback = false,
 };
 
 void run_fast_cycle() {}
