@@ -31,7 +31,7 @@ TASK(CAN_RX, TASK_MIN_STACK_SIZE)
   }
 }
 
-TASK(CAN_TX, TASK_MIN_STACK_SIZE)
+TASK(CAN_TX, TASK_STACK_256)
 {
   int counter = 0;
   while (true)
