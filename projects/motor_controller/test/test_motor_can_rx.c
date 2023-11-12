@@ -28,8 +28,7 @@ static Mcp2515Settings s_mcp2515_settings = {
   },
 };
 
-StatusCode TEST_MOCK(mcp2515_hw_transmit)(uint32_t id, bool extended, const uint64_t data,
-                                          size_t len) {
+StatusCode TEST_MOCK(mcp2515_hw_transmit)(uint32_t id, bool extended, uint8_t *data, size_t len) {
   return STATUS_CODE_OK;
 }
 
