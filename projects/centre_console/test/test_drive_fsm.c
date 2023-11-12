@@ -2,6 +2,7 @@
 #include "centre_console_setters.h"
 #include "drive_fsm.h"
 #include "fsm_shared_mem.h"
+#include "i2c.h"
 #include "power_fsm.h"
 #include "task_test_helpers.h"
 #include "unity.h"
@@ -12,6 +13,10 @@
 
 void setup_test(void) {
   log_init();
+  I2CSettings i2c_setting = {
+    .speed = I2C_SPEED_FAST,
+  };
+  i2c_init(I2C_PORT_1, &i2c_setting);
 }
 
 void teardown_test(void) {}
@@ -23,28 +28,28 @@ void prepare_test() {
   fsm_run_cycle(drive);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
-  TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state->id);
+  TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
 }
 
 // All neutral transitions
 void neutral_to_precharge() {
   fsm_run_cycle(drive);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(DO_PRECHARGE, drive_fsm->curr_state->id);
+  TEST_ASSERT_EQUAL(DO_PRECHARGE, drive_fsm->curr_state);
 }
 
 void neutral_to_drive() {
   fsm_run_cycle(drive);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(DRIVE, g_tx_struct.drive_output_drive_state);
-  TEST_ASSERT_EQUAL(DRIVE, drive_fsm->curr_state->id);
+  TEST_ASSERT_EQUAL(DRIVE, drive_fsm->curr_state);
 }
 
 void neutral_to_reverse() {
   fsm_run_cycle(drive);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(REVERSE, g_tx_struct.drive_output_drive_state);
-  TEST_ASSERT_EQUAL(REVERSE, drive_fsm->curr_state->id);
+  TEST_ASSERT_EQUAL(REVERSE, drive_fsm->curr_state);
 }
 
 // All precharge transitions
@@ -53,7 +58,7 @@ void precharge_to_drive() {
   fsm_run_cycle(drive);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(DRIVE, g_tx_struct.drive_output_drive_state);
-  TEST_ASSERT_EQUAL(DRIVE, drive_fsm->curr_state->id);
+  TEST_ASSERT_EQUAL(DRIVE, drive_fsm->curr_state);
 }
 
 void precharge_to_reverse() {
@@ -61,7 +66,7 @@ void precharge_to_reverse() {
   fsm_run_cycle(drive);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(REVERSE, g_tx_struct.drive_output_drive_state);
-  TEST_ASSERT_EQUAL(REVERSE, drive_fsm->curr_state->id);
+  TEST_ASSERT_EQUAL(REVERSE, drive_fsm->curr_state);
 }
 
 // All drive transitions
@@ -69,7 +74,7 @@ void drive_to_neutral() {
   fsm_run_cycle(drive);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
-  TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state->id);
+  TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
 }
 
 // All reverse transitions
@@ -77,7 +82,7 @@ void reverse_to_neutral() {
   fsm_run_cycle(drive);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
-  TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state->id);
+  TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
 }
 
 // idle tests
@@ -86,7 +91,7 @@ void idle_neutral() {
     fsm_run_cycle(drive);
     wait_tasks(1);
     TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
-    TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state->id);
+    TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
   }
 }
 void idle_drive() {
@@ -94,7 +99,7 @@ void idle_drive() {
     fsm_run_cycle(drive);
     wait_tasks(1);
     TEST_ASSERT_EQUAL(DRIVE, g_tx_struct.drive_output_drive_state);
-    TEST_ASSERT_EQUAL(DRIVE, drive_fsm->curr_state->id);
+    TEST_ASSERT_EQUAL(DRIVE, drive_fsm->curr_state);
   }
 }
 void idle_reverse() {
@@ -102,7 +107,7 @@ void idle_reverse() {
     fsm_run_cycle(drive);
     wait_tasks(1);
     TEST_ASSERT_EQUAL(REVERSE, g_tx_struct.drive_output_drive_state);
-    TEST_ASSERT_EQUAL(REVERSE, drive_fsm->curr_state->id);
+    TEST_ASSERT_EQUAL(REVERSE, drive_fsm->curr_state);
   }
 }
 
@@ -217,7 +222,7 @@ void test_precharge() {
     wait_tasks(1);
   }
   TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
-  TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state->id);
+  TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
   TEST_ASSERT_EQUAL(STATUS_CODE_TIMEOUT, fsm_shared_mem_get_drive_error_code());
 
   // Starting sub test 4 checking if error code is reset when going to drive
@@ -246,5 +251,5 @@ void test_precharge() {
   fsm_run_cycle(drive);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
-  TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state->id);
+  TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
 }

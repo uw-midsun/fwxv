@@ -4,6 +4,7 @@
 #include "gpio.h"
 #include "log.h"
 #include "misc.h"
+#include "notify.h"
 #include "tasks.h"
 
 static const GpioAddress leds[] = {
@@ -12,6 +13,8 @@ static const GpioAddress leds[] = {
   { .port = GPIO_PORT_B, .pin = 3 },   //
   { .port = GPIO_PORT_A, .pin = 15 },  //
 };
+
+void pre_loop_init() {}
 
 TASK(leds_task, TASK_STACK_512) {
   for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {

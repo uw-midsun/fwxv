@@ -21,6 +21,8 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
+void pre_loop_init() {}
+
 void run_fast_cycle() {}
 
 void run_medium_cycle() {}

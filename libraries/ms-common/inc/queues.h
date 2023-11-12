@@ -38,3 +38,6 @@ void queue_reset(Queue *queue);
 
 // Return number of items the queue can hold.
 uint32_t queue_get_num_items(Queue *queue);
+
+// Return Number of free spaces in queue
+uint32_t queue_get_spaces_available(Queue *queue);

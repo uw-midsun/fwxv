@@ -74,7 +74,7 @@ static FsmState s_aux_bat_state_list[NUM_POWER_SELECT_STATES] = {
   STATE(POWER_SELECT_ACTIVE, prv_aux_bat_active_input, prv_aux_bat_active_output),
 };
 
-static FsmTransition s_aux_bat_transition_list[NUM_POWER_SELECT_STATES] = {
+static bool s_aux_bat_transitions[NUM_POWER_SELECT_STATES][NUM_POWER_SELECT_STATES] = {
   TRANSITION(POWER_SELECT_INACTIVE, POWER_SELECT_ACTIVE),
   TRANSITION(POWER_SELECT_ACTIVE, POWER_SELECT_INACTIVE),
 };
@@ -92,13 +92,7 @@ StatusCode init_aux_bat(void) {
   status_ok_or_return(adc_add_channel(g_aux_bat_temp_pin));
 
   // Initialize FSM task
-  const FsmSettings settings = {
-    .state_list = s_aux_bat_state_list,
-    .transitions = s_aux_bat_transition_list,
-    .num_transitions = NUM_POWER_SELECT_TRANSITIONS,
-    .initial_state = POWER_SELECT_INACTIVE,
-  };
-  fsm_init(aux_bat, settings, NULL);
+  fsm_init(aux_bat, s_aux_bat_state_list, s_aux_bat_transitions, POWER_SELECT_INACTIVE, NULL);
 
   return STATUS_CODE_OK;
 }
