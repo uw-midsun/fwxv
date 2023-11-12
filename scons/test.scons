@@ -147,11 +147,14 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         # Add to tests dict
         tests[entry.name] += [node for node in target]
 
+
 def get_test_list():
     # Based on the project/library and test in options,
     # create a list of tests to run
     # Assume only one of project or library is set
     entry = TARGET
+
+
     if entry and tests.get(entry):
         if GetOption('testfile'):
             return [test for test in tests[entry] if (test.name + '.').startswith(f"test_{GetOption('testfile')}.")]
@@ -193,7 +196,7 @@ def test_runner(target, source, env):
             ]
             cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
             print(f"Flashing {test}")
-            subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(cmd, shell=True) # , stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             print(f"Starting {test}")
 
             # wait until test ok or fail

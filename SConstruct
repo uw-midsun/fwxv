@@ -270,6 +270,8 @@ if PLATFORM == 'arm' and TYPE == 'project':
         ]
         cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
         subprocess.run(cmd, shell=True)
+
+        print("Flashing complete")
         
         while True:
             line: str = serialData.readline().decode("utf-8")

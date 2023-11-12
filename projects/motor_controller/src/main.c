@@ -21,7 +21,7 @@ const CanSettings can_settings = {
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
-  .loopback = true,
+  .loopback = false,
 };
 static Mcp2515Storage s_mcp2515_storage = { 0 };
 static Mcp2515Settings s_mcp2515_settings = {
@@ -50,18 +50,36 @@ static PrechargeControlSettings s_precharge_settings = {
 void pre_loop_init() {}
 
 void run_fast_cycle() {
-  run_can_rx_cycle();
-  run_mcp2515_rx_cycle();
-  wait_tasks(2);
+  // run_can_rx_cycle();
+  // run_mcp2515_rx_cycle();
+  // wait_tasks(2);
 
-  run_can_tx_cycle();
-  run_mcp2515_tx_cycle();
-  wait_tasks(2);
+  // run_can_tx_cycle();
+  // wait_tasks(1);
 }
 
 void run_medium_cycle() {}
 
-void run_slow_cycle() {}
+void push_mc_message(uint32_t id, float data_1, float data_2) {
+  CanMessage message = {
+    .id.raw = id,
+    .dlc = 8,
+  };
+  memcpy(&message.data_u32[0], &data_1, sizeof(float));
+  memcpy(&message.data_u32[1], &data_2, sizeof(float));
+
+  mcp2515_hw_transmit(message.id.raw, message.extended, message.data_u8, message.dlc);
+}
+
+void run_slow_cycle() {
+  push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x03, -0.1f, 0.2f);
+  push_mc_message(MOTOR_CONTROLLER_BASE_R + 0x03, -0.3f, 0.4f);
+
+  run_mcp2515_rx_cycle();
+  wait_tasks(1);
+
+  // LOG_DEBUG("\n");
+}
 
 int main() {
   tasks_init();
@@ -71,7 +89,7 @@ int main() {
   gpio_it_init();
   can_init(&s_can_storage, &can_settings);
   mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
-  precharge_control_init(&s_precharge_settings);
+  // precharge_control_init(&s_precharge_settings);
   init_motor_controller_can();
   LOG_DEBUG("Motor Controller Task\n");
 

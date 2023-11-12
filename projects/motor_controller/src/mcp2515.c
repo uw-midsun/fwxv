@@ -10,7 +10,7 @@
 // Storage
 static Mcp2515Storage *s_storage;
 
-TASK(MCP2515_RX, TASK_MIN_STACK_SIZE) {
+TASK(MCP2515_RX, TASK_STACK_256) {
   int counter = 0;
   while (true) {
     notify_wait(NULL, BLOCK_INDEFINITELY);
@@ -36,7 +36,7 @@ StatusCode mcp2515_receive(const CanMessage *msg) {
   return ret;
 }
 
-TASK(MCP2515_TX, TASK_MIN_STACK_SIZE) {
+TASK(MCP2515_TX, TASK_STACK_256) {
   int counter = 0;
   while (true) {
     notify_wait(NULL, BLOCK_INDEFINITELY);

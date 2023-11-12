@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "log.h"
 #include "mcp2515.h"
 #include "motor_controller_getters.h"
 #include "motor_controller_setters.h"
@@ -111,6 +112,9 @@ static void motor_controller_tx_all() {
 static void motor_controller_rx_all() {
   CanMessage msg = { 0 };
   while (mcp2515_receive(&msg) == STATUS_CODE_OK) {
+    LOG_DEBUG("receive id: %lx, data: %d, %d\n", msg.id.raw,
+              (int16_t)(prv_get_float(msg.data_u32[0]) * 100),
+              (int16_t)(prv_get_float(msg.data_u32[1]) * 100));
     switch (msg.id.raw) {
       case MOTOR_CONTROLLER_BASE_L + STATUS:
         set_mc_status_error_bitset_l(msg.data_u16[2] >> 1);
@@ -131,10 +135,12 @@ static void motor_controller_rx_all() {
         break;
 
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
-        set_motor_velocity_velocity_l(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE);
+        set_motor_velocity_velocity_l(
+            (uint16_t)(int16_t)(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE));
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
-        set_motor_velocity_velocity_r(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE);
+        set_motor_velocity_velocity_r(
+            (uint16_t)(int16_t)(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE));
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:
