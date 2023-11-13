@@ -1,6 +1,6 @@
 #include "lights_fsm.h"
 
-#include "power_distribution_front_getters.h"
+#include "power_distribution_getters.h"
 
 // Placeholder GPIO Address, will be updated
 GpioAddress RIGHT_LIGHT_ADDR = { .port = GPIO_PORT_A, .pin = 11 };

@@ -45,10 +45,8 @@ void test_off_to_main(void) {
   TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_SEND_PD_BMS);
 
   // Transition to POWER_FSM_CONFIRM_BATTERY_STATUS
-  g_rx_struct.rear_pd_fault_fault_data = PD_REAR_FAULT;
-  g_rx_struct.front_pd_fault_fault_data = PD_FRONT_FAULT;
-  g_rx_struct.received_rear_pd_fault = true;
-  g_rx_struct.received_front_pd_fault = true;
+  g_rx_struct.pd_fault_fault_data = PD_FAULT;
+  g_rx_struct.received_pd_fault = true;
   fsm_run_cycle(power);
   wait_tasks(1);
   TEST_ASSERT_EQUAL(power_fsm->curr_state, POWER_FSM_CONFIRM_BATTERY_STATUS);

@@ -51,6 +51,8 @@ typedef enum {
   REAR_OUTPUT_SOLAR_SENSE,
   REAR_OUTPUT_BPS_STROBE_LIGHT,
   REAR_OUTPUT_FAN_1,
+  LEFT_REAR_CAMERA,
+  RIGHT_CAMERA,
   // REAR_OUTPUT_FAN_2,
   // REAR_OUTPUT_LEFT_REAR_TURN_LIGHT,
   // REAR_OUTPUT_RIGHT_REAR_TURN_LIGHT,
@@ -87,6 +89,7 @@ typedef enum {
   OUTPUT_GROUP_LEFT_TURN,
   OUTPUT_GROUP_RIGHT_TURN,
   OUTPUT_GROUP_HAZARD,
+  OUTPUT_GROUP_TEST,
   NUM_OUTPUT_GROUPS,
 } OutputGroup;
 
@@ -99,7 +102,7 @@ typedef struct OutputGroupDef {
   Output outputs[];
 } OutputGroupDef;
 
-extern const BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS];
+extern BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS];
 extern const OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS];
 
 // Initializes all outputs

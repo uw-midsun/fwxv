@@ -76,9 +76,21 @@ static Bts7xxxPin s_rear_pin_fan_1_2_dsel = {
   .pin_pca9555 = &(Pca9555GpioAddress)REAR_PIN_FAN_1_2_DSEL,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
+static Bts7xxxPin s_left_rear_cam_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)LEFT_REAR_CAMERA_EN,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
+static Bts7xxxPin s_right_cam_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)RIGHT_CAMERA_EN,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
+static Bts7xxxPin s_left_rear_right_cam_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)REAR_RIGHT_CAMERA_DSEL,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
 
 // TODO: Update select states
-const BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
+BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
   [FRONT_OUTPUT_CENTRE_CONSOLE] = {
     .enable_pin = &s_front_pin_centre_console_en,
     .select_pin = &s_front_pin_centre_console_rear_display_dsel,
@@ -90,7 +102,7 @@ const BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
   [FRONT_OUTPUT_PEDAL] = {
     .enable_pin = &s_front_pin_pedal_en,
     .select_pin = &s_front_pin_pedal_steering_dsel,
-    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_LOW  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
     .resistor = 0,
     .mux_val = MUX_SEL_PEDAL_STEERING,
@@ -173,6 +185,22 @@ const BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
     .resistor = 0,
     .mux_val = MUX_SEL_FAN_1_2,
   },
+  [LEFT_REAR_CAMERA] = {
+    .enable_pin = &s_left_rear_cam_en,
+    .select_pin = &s_left_rear_right_cam_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_LOW  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+    .mux_val = MUX_SEL_LEFT_RIGHT_REAR_CAMERA,
+  },
+  [RIGHT_CAMERA] = {
+    .enable_pin = &s_right_cam_en,
+    .select_pin = &s_left_rear_right_cam_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+    .mux_val = MUX_SEL_LEFT_RIGHT_REAR_CAMERA,
+  },
 };
 
 // Output Group Definitions
@@ -191,9 +219,14 @@ static OutputGroupDef s_output_group_hazards = {
   .outputs = { FRONT_OUTPUT_LEFT_FRONT_TURN_LIGHT, FRONT_OUTPUT_RIGHT_FRONT_TURN_LIGHT },
 };
 
+static OutputGroupDef s_output_group_test = {
+  .num_outputs = 2, .outputs = { FRONT_OUTPUT_STEERING, FRONT_OUTPUT_PEDAL }
+};
+
 const OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS] = {
   [OUTPUT_GROUP_ALL] = NULL,  // Special case
   [OUTPUT_GROUP_LEFT_TURN] = &s_output_group_left_signal,
   [OUTPUT_GROUP_RIGHT_TURN] = &s_output_group_right_signal,
   [OUTPUT_GROUP_HAZARD] = &s_output_group_hazards,
+  [OUTPUT_GROUP_TEST] = &s_output_group_test,
 };
