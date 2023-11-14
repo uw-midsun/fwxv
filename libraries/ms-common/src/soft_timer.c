@@ -13,6 +13,26 @@ StatusCode soft_timer_start(uint32_t duration_ms, SoftTimerCallback callback, So
   return STATUS_CODE_OK;
 }
 
+StatusCode soft_timer_init(uint32_t duration_ms, SoftTimerCallback callback, SoftTimer *timer) {
+  if (timer->id != NULL) {
+    // timer already exist/inuse, delete the old timer
+    xTimerDelete(timer->id, 0);
+  }
+  timer->id = xTimerCreateStatic(NULL, pdMS_TO_TICKS(duration_ms), pdFALSE,  //
+                                 NULL, callback, &timer->buffer);
+  return STATUS_CODE_OK;
+}
+
+StatusCode soft_timer_start_timer(SoftTimer *timer) {
+  if (timer->id == NULL) {
+    return STATUS_CODE_UNINITIALIZED;
+  }
+  if (xTimerStart(timer->id, 0) != pdPASS) {
+    return status_msg(STATUS_CODE_INTERNAL_ERROR, "timer command queue is full");
+  }
+  return STATUS_CODE_OK;
+}
+
 StatusCode soft_timer_cancel(SoftTimer *timer) {
   if (xTimerDelete(timer->id, 0) != pdPASS) {
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "timer command queue is full");

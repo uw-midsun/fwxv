@@ -20,7 +20,7 @@ static uint8_t prv_pin_bit(const Pca9555PinAddress pin) {
   return prv_is_port_0(pin) ? pin : pin - PCA9555_PIN_IO1_0;
 }
 
-StatusCode pca9555_gpio_init(const I2CPort i2c_port, const I2CAddress i2c_address) {
+StatusCode pca9555_gpio_init(const I2CPort i2c_port) {
   if (s_i2c_port == NUM_I2C_PORTS) {
     s_i2c_port = i2c_port;
   }

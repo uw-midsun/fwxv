@@ -1,44 +1,85 @@
 #include "lights_fsm.h"
-
+#include "log.h"
 #include "power_distribution_getters.h"
+#include "outputs.h"
+
+// uncomment this define to use gpio leds for testing 
+#define LIGHTS_FSM_DEBUG
 
 // Placeholder GPIO Address, will be updated
-GpioAddress RIGHT_LIGHT_ADDR = { .port = GPIO_PORT_A, .pin = 11 };
-GpioAddress LEFT_LIGHT_ADDR = { .port = GPIO_PORT_A, .pin = 12 };
+GpioAddress RIGHT_LIGHT_ADDR = { .port = GPIO_PORT_B, .pin = 5 };
+GpioAddress LEFT_LIGHT_ADDR =   { .port = GPIO_PORT_A, .pin = 15 };
 
 // Softtimer module setup for light blinkers
 static SoftTimer s_timer_single;
 static EELightType light_id_callback;
 
 FSM(lights, NUM_LIGHTS_STATES);
+static OutputState left_signal_state = OUTPUT_STATE_OFF;
+static OutputState right_signal_state = OUTPUT_STATE_OFF;
+static LightsStateId fsm_prev_state = INIT_STATE;
 
 static void prv_lights_signal_blinker(SoftTimerId id) {
-  if (light_id_callback == EE_LIGHT_TYPE_SIGNAL_LEFT) {
-    gpio_toggle_state(&LEFT_LIGHT_ADDR);
-    soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
-
-  } else if (light_id_callback == EE_LIGHT_TYPE_SIGNAL_RIGHT) {
-    gpio_toggle_state(&RIGHT_LIGHT_ADDR);
-    soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
-
-  } else if (light_id_callback == EE_LIGHT_TYPE_SIGNAL_HAZARD) {
-    GpioState sync_state = gpio_get_state(&LEFT_LIGHT_ADDR, &sync_state);
-    gpio_set_state(&RIGHT_LIGHT_ADDR, sync_state);
-    gpio_toggle_state(&LEFT_LIGHT_ADDR);
-    gpio_toggle_state(&RIGHT_LIGHT_ADDR);
-    soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
-  } else {
-    // in the initial state light_id_callback == NUM_EE_LIGHT_TYPES
-    gpio_set_state(&RIGHT_LIGHT_ADDR, GPIO_STATE_LOW);
-    gpio_set_state(&LEFT_LIGHT_ADDR, GPIO_STATE_LOW);
-    return;
+  switch(light_id_callback) {
+    case EE_LIGHT_TYPE_SIGNAL_LEFT:
+      left_signal_state ^= 1;
+      #ifdef LIGHTS_FSM_DEBUG
+        gpio_set_state(&LEFT_LIGHT_ADDR, left_signal_state);
+      #endif
+      pd_set_output_group(OUTPUT_GROUP_LEFT_TURN, left_signal_state);
+      if (right_signal_state == OUTPUT_STATE_ON) {
+        right_signal_state = OUTPUT_STATE_OFF;
+        #ifdef LIGHTS_FSM_DEBUG
+          gpio_set_state(&RIGHT_LIGHT_ADDR, right_signal_state);
+        #endif
+        pd_set_output_group(OUTPUT_GROUP_RIGHT_TURN, right_signal_state);
+      }
+      soft_timer_start_timer(&s_timer_single);
+      break;
+    case EE_LIGHT_TYPE_SIGNAL_RIGHT:
+      right_signal_state ^= 1;
+      #ifdef LIGHTS_FSM_DEBUG
+        gpio_set_state(&RIGHT_LIGHT_ADDR, right_signal_state);
+      #endif
+      pd_set_output_group(OUTPUT_GROUP_RIGHT_TURN, right_signal_state);
+      if (left_signal_state == OUTPUT_STATE_ON) {
+        left_signal_state = OUTPUT_STATE_OFF;
+        #ifdef LIGHTS_FSM_DEBUG
+          gpio_set_state(&LEFT_LIGHT_ADDR, left_signal_state);
+        #endif
+        pd_set_output_group(OUTPUT_GROUP_LEFT_TURN, left_signal_state);
+      }
+      soft_timer_start_timer(&s_timer_single);
+      break;
+    case EE_LIGHT_TYPE_SIGNAL_HAZARD:
+      if(left_signal_state != right_signal_state) {
+        left_signal_state = OUTPUT_STATE_OFF;
+        right_signal_state = OUTPUT_STATE_OFF;
+      }
+      left_signal_state ^= 1;
+      right_signal_state ^= 1;
+      #ifdef LIGHTS_FSM_DEBUG
+        gpio_set_state(&LEFT_LIGHT_ADDR, left_signal_state);
+        gpio_set_state(&RIGHT_LIGHT_ADDR, left_signal_state);
+      #endif
+      pd_set_output_group(OUTPUT_GROUP_HAZARD, left_signal_state);
+      soft_timer_start_timer(&s_timer_single);
+      break;
+    default:
+      left_signal_state = OUTPUT_STATE_OFF;
+      right_signal_state = OUTPUT_STATE_OFF;
+      pd_set_output_group(OUTPUT_GROUP_HAZARD, left_signal_state);
+      #ifdef LIGHTS_FSM_DEBUG
+        gpio_set_state(&LEFT_LIGHT_ADDR, left_signal_state);
+        gpio_set_state(&RIGHT_LIGHT_ADDR, left_signal_state);
+      #endif
   }
 }
 
 static void prv_init_state_input(Fsm *fsm, void *context) {
   // can transition to LEFT, RIGHT, HAZARD
-  EELightType light_event = get_steering_info_input_lights();
-  HazardStatus hazard_status = get_power_info_hazard_state();
+  EELightType light_event = get_steering_info_input_lights(); // can msg id = 682 = 0x2AA
+  HazardStatus hazard_status = get_power_info_hazard_state(); // can msg id = 1026 = 0x5E2
 
   if (hazard_status == HAZARD_ON) {
     fsm_transition(fsm, HAZARD);
@@ -52,6 +93,7 @@ static void prv_init_state_input(Fsm *fsm, void *context) {
 static void prv_init_state_output(void *context) {
   LOG_DEBUG("Transitioned to INIT_STATE\n");
   light_id_callback = NUM_EE_LIGHT_TYPES;
+  fsm_prev_state = INIT_STATE;
 }
 
 static void prv_left_signal_input(Fsm *fsm, void *context) {
@@ -72,7 +114,10 @@ static void prv_left_signal_output(void *context) {
   LOG_DEBUG("Transitioned to LEFT_SIGNAL\n");
   // Toggle Left Signal blinkers at 100 BPM -> 0.6s
   light_id_callback = EE_LIGHT_TYPE_SIGNAL_LEFT;
-  soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
+  if(fsm_prev_state == INIT_STATE) {
+    soft_timer_start_timer(&s_timer_single);
+  }
+  fsm_prev_state = LEFT_SIGNAL;
 }
 
 static void prv_right_signal_input(Fsm *fsm, void *context) {
@@ -93,14 +138,25 @@ static void prv_right_signal_output(void *context) {
   LOG_DEBUG("Transitioned to RIGHT_SIGNAL\n");
   // Toggle Right Signal blinkers at 100 BPM -> 0.6 s
   light_id_callback = EE_LIGHT_TYPE_SIGNAL_RIGHT;
-  soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
+  if(fsm_prev_state == INIT_STATE) {
+    soft_timer_start_timer(&s_timer_single);
+  }
+  fsm_prev_state = RIGHT_SIGNAL;
 }
 
 static void prv_hazard_input(Fsm *fsm, void *context) {
   // can transition to INIT, BPS_FAULT
   EELightType light_event = get_steering_info_input_lights();
+  HazardStatus hazard_status = get_power_info_hazard_state();
 
-  if (light_event == EE_LIGHT_TYPE_OFF) {
+  if(hazard_status == HAZARD_ON) {
+    return;
+  }
+  if(light_event == EE_LIGHT_TYPE_SIGNAL_LEFT) {
+    fsm_transition(fsm, LEFT_SIGNAL);
+  } else if (light_event == EE_LIGHT_TYPE_SIGNAL_RIGHT) {
+    fsm_transition(fsm, RIGHT_SIGNAL);
+  } else {
     fsm_transition(fsm, INIT_STATE);
   }
 }
@@ -109,7 +165,10 @@ static void prv_hazard_output(void *context) {
   LOG_DEBUG("Transitioned to HAZARD\n");
   // Toggle Left and Right Signal blinkers at 100 BPM -> 0.6s
   light_id_callback = EE_LIGHT_TYPE_SIGNAL_HAZARD;
-  soft_timer_start(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
+  if(fsm_prev_state == INIT_STATE) {
+    soft_timer_start_timer(&s_timer_single);
+  }
+  fsm_prev_state = HAZARD;
 }
 
 // Lights FSM declaration for states and transitions
@@ -125,13 +184,16 @@ static bool s_PD_transition_list[NUM_LIGHTS_STATES][NUM_LIGHTS_STATES] = {
   TRANSITION(INIT_STATE, HAZARD),        TRANSITION(LEFT_SIGNAL, INIT_STATE),
   TRANSITION(LEFT_SIGNAL, HAZARD),       TRANSITION(LEFT_SIGNAL, RIGHT_SIGNAL),
   TRANSITION(RIGHT_SIGNAL, INIT_STATE),  TRANSITION(RIGHT_SIGNAL, HAZARD),
-  TRANSITION(RIGHT_SIGNAL, LEFT_SIGNAL), TRANSITION(HAZARD, INIT_STATE)
+  TRANSITION(RIGHT_SIGNAL, LEFT_SIGNAL), TRANSITION(HAZARD, INIT_STATE),
+  TRANSITION(HAZARD, LEFT_SIGNAL), TRANSITION(HAZARD, RIGHT_SIGNAL)
 };
 
 StatusCode init_lights(void) {
-  gpio_init_pin(&LEFT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW);
-  gpio_init_pin(&RIGHT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW);
-
+  soft_timer_init(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
+  #ifdef LIGHTS_FSM_DEBUG
+   gpio_init_pin(&LEFT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW);
+    gpio_init_pin(&RIGHT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW);
+  #endif
   fsm_init(lights, s_PD_lights_list, s_PD_transition_list, INIT_STATE, NULL);
   return STATUS_CODE_OK;
 }
