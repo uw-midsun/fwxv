@@ -1,17 +1,17 @@
 #include <stdio.h>
 
+#include "bts_load_switch.h"
 #include "can.h"
 #include "gpio.h"
+#include "i2c.h"
+#include "interrupt.h"
 #include "lights_fsm.h"
 #include "log.h"
 #include "master_task.h"
+#include "output_current_sense.h"
+#include "pin_defs.h"
 #include "power_seq_fsm.h"
 #include "tasks.h"
-#include "i2c.h"
-#include "pin_defs.h"
-#include "interrupt.h"
-#include "bts_load_switch.h"
-#include "output_current_sense.h"
 
 #define DEVICE_ID 0x06
 
@@ -25,7 +25,7 @@ const CanSettings can_settings = {
 };
 
 I2CSettings i2c_settings = {
-  .speed = I2C_SPEED_STANDARD, 
+  .speed = I2C_SPEED_STANDARD,
   .sda = PD_I2C_SDA,
   .scl = PD_I2C_SCL,
 };
