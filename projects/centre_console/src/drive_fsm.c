@@ -236,7 +236,7 @@ StatusCode init_drive_fsm(void) {
   // Add gpio register interrupts
   Pca9555GpioSettings pca_settings = { .direction = PCA9555_GPIO_DIR_OUT,
                                        .state = PCA9555_GPIO_STATE_LOW };
-  pca9555_gpio_init(I2C_PORT_1, 0x20);
+  pca9555_gpio_init(I2C_PORT_1);
   for (int i = 0; i < NUM_DRIVE_FSM_BUTTONS; i++) {
     status_ok_or_return(pca9555_gpio_init_pin(&s_drive_btn_leds[i], &pca_settings));
   }
