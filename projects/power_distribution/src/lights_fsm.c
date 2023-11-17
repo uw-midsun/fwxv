@@ -37,7 +37,7 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
 
 static void prv_init_state_input(Fsm *fsm, void *context) {
   // can transition to LEFT, RIGHT, HAZARD
-  EELightType light_event = get_steering_info_analog_input();
+  EELightType light_event = get_steering_info_input_lights();
   HazardStatus hazard_status = get_power_info_hazard_state();
 
   if (hazard_status == HAZARD_ON) {
@@ -56,7 +56,7 @@ static void prv_init_state_output(void *context) {
 
 static void prv_left_signal_input(Fsm *fsm, void *context) {
   // can transition to INIT, RIGHT, HAZARD
-  EELightType light_event = get_steering_info_analog_input();
+  EELightType light_event = get_steering_info_input_lights();
   HazardStatus hazard_status = get_power_info_hazard_state();
 
   if (hazard_status == HAZARD_ON) {
@@ -77,7 +77,7 @@ static void prv_left_signal_output(void *context) {
 
 static void prv_right_signal_input(Fsm *fsm, void *context) {
   // can transition to INIT, LEFT, HAZARD
-  EELightType light_event = get_steering_info_analog_input();
+  EELightType light_event = get_steering_info_input_lights();
   HazardStatus hazard_status = get_power_info_hazard_state();
 
   if (hazard_status == HAZARD_ON) {
@@ -98,7 +98,7 @@ static void prv_right_signal_output(void *context) {
 
 static void prv_hazard_input(Fsm *fsm, void *context) {
   // can transition to INIT, BPS_FAULT
-  EELightType light_event = get_steering_info_analog_input();
+  EELightType light_event = get_steering_info_input_lights();
 
   if (light_event == EE_LIGHT_TYPE_OFF) {
     fsm_transition(fsm, INIT_STATE);
