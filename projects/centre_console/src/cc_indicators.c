@@ -1,19 +1,19 @@
+#include "can.h"
 #include "cc_hw_defs.h"
-#include "pca9555_gpio_expander.h"
 #include "centre_console_getters.h"
 #include "centre_console_setters.h"
 #include "centre_console_tx_structs.h"
-#include "steering_setters.h"
 #include "gpio.h"
 #include "log.h"
-#include "seg_display.h"
-#include "can.h"
+#include "pca9555_gpio_expander.h"
 #include "power_fsm.h"
+#include "seg_display.h"
+#include "steering_setters.h"
 
 #define NUM_DRIVE_LED 5
 
 typedef enum DriveLeds {
-  HAZARD_LED = 0, 
+  HAZARD_LED = 0,
   LEFT_LED,
   RIGHT_LED,
   CRUISE_LED,
@@ -28,45 +28,43 @@ static Pca9555GpioAddress s_drive_btn_leds[NUM_DRIVE_LED] = {
   [REGEN_LED] = { .i2c_address = 0x20, .pin = PCA9555_PIN_IO0_5 }
 };
 
+StatusCode update_indicators(bool cruise_control_toggle, bool hazard_info,
+                             bool regen_braking_toggle, bool left_signal_toggle,
+                             bool right_signal_toggle) {
+  // BOOL PARAMETERS
+  // Cruise control: cruise_control_toggle
+  // regen braking: regen_braking toggle
+  // Left signal: left_signal_toggle
+  // Right Signal: tight_signal_toggle
+  // Hazard: hazard_info
 
-StatusCode update_indicators(bool cruise_control_toggle, bool hazard_info, bool regen_braking_toggle, bool left_signal_toggle, bool right_signal_toggle) {
+  if (cruise_control_toggle) {
+    pca9555_gpio_set_state(&s_drive_btn_leds[CRUISE_LED], PCA9555_GPIO_STATE_HIGH);
+  } else {
+    pca9555_gpio_set_state(&s_drive_btn_leds[CRUISE_LED], PCA9555_GPIO_STATE_LOW);
+  }
 
-    // BOOL PARAMETERS
-    // Cruise control: cruise_control_toggle
-    // regen braking: regen_braking toggle
-    // Left signal: left_signal_toggle
-    // Right Signal: tight_signal_toggle
-    // Hazard: hazard_info
-    
+  if (hazard_info) {
+    pca9555_gpio_set_state(&s_drive_btn_leds[HAZARD_LED], PCA9555_GPIO_STATE_HIGH);
+  } else {
+    pca9555_gpio_set_state(&s_drive_btn_leds[HAZARD_LED], PCA9555_GPIO_STATE_LOW);
+  }
 
-    if (cruise_control_toggle) {
-        pca9555_gpio_set_state(&s_drive_btn_leds[CRUISE_LED], PCA9555_GPIO_STATE_HIGH);
-    } else {
-        pca9555_gpio_set_state(&s_drive_btn_leds[CRUISE_LED], PCA9555_GPIO_STATE_LOW);
-    }
+  if (regen_braking_toggle) {
+    pca9555_gpio_set_state(&s_drive_btn_leds[REGEN_LED], PCA9555_GPIO_STATE_HIGH);
+  } else {
+    pca9555_gpio_set_state(&s_drive_btn_leds[REGEN_LED], PCA9555_GPIO_STATE_LOW);
+  }
 
-    if (hazard_info) {
-        pca9555_gpio_set_state(&s_drive_btn_leds[HAZARD_LED], PCA9555_GPIO_STATE_HIGH);
-    } else {
-        pca9555_gpio_set_state(&s_drive_btn_leds[HAZARD_LED], PCA9555_GPIO_STATE_LOW);
-    }
+  if (left_signal_toggle) {
+    pca9555_gpio_set_state(&s_drive_btn_leds[LEFT_LED], PCA9555_GPIO_STATE_HIGH);
+  } else {
+    pca9555_gpio_set_state(&s_drive_btn_leds[LEFT_LED], PCA9555_GPIO_STATE_LOW);
+  }
 
-    if (regen_braking_toggle) {
-        pca9555_gpio_set_state(&s_drive_btn_leds[REGEN_LED], PCA9555_GPIO_STATE_HIGH);
-    } else {
-        pca9555_gpio_set_state(&s_drive_btn_leds[REGEN_LED], PCA9555_GPIO_STATE_LOW);
-    }
-
-    if (left_signal_toggle) {
-        pca9555_gpio_set_state(&s_drive_btn_leds [LEFT_LED], PCA9555_GPIO_STATE_HIGH);
-    } else {
-        pca9555_gpio_set_state(&s_drive_btn_leds[LEFT_LED], PCA9555_GPIO_STATE_LOW);
-    }
-
-    if (right_signal_toggle) {
-        pca9555_gpio_set_state(&s_drive_btn_leds[RIGHT_LED], PCA9555_GPIO_STATE_HIGH);
-    } else {
-        pca9555_gpio_set_state(&s_drive_btn_leds[RIGHT_LED], PCA9555_GPIO_STATE_LOW);
-    }
-    
+  if (right_signal_toggle) {
+    pca9555_gpio_set_state(&s_drive_btn_leds[RIGHT_LED], PCA9555_GPIO_STATE_HIGH);
+  } else {
+    pca9555_gpio_set_state(&s_drive_btn_leds[RIGHT_LED], PCA9555_GPIO_STATE_LOW);
+  }
 }
