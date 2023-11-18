@@ -17,6 +17,8 @@ Messages:
         watchdog: 0
       motor_controller:
         watchdog: 0
+      centre_console:
+        watchdog: 0
     signals:
       input_cc:
         length: 8 # (cc_toggle | cc_increade | cc_decrease)
