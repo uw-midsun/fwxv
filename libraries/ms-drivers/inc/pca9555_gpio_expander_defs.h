@@ -3,6 +3,8 @@
 // Internal PCA9555 register definitions
 // Datasheet: https://www.ti.com/lit/ds/symlink/pca9555.pdf
 
+#define PCA9555_I2C_ADDR 0x20
+
 #define INPUT0 0x00   // inputs from GPIO pins 0_0 (LSB) to 0_7 (MSB)
 #define INPUT1 0x01   // inputs from GPIO pins 1_0 (LSB) to 1_7 (MSB)
 #define OUTPUT0 0x02  // outputs to GPIO pins 0_0 (LSB) to 0_7 (MSB)

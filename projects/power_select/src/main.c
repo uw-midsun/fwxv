@@ -5,6 +5,8 @@
 #include "power_select.h"
 #include "tasks.h"
 
+void pre_loop_init() {}
+
 void run_fast_cycle() {}
 
 void run_medium_cycle() {}

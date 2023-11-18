@@ -1,0 +1,11 @@
+---
+  Messages:
+    test_msg:
+      id: 0
+      target:
+        telemetry:
+          watchdog: 0
+      critical: true
+      signals:
+        test:
+          length: 8

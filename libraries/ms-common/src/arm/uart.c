@@ -68,6 +68,7 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
 
   USART_InitTypeDef usart_init;
   USART_StructInit(&usart_init);
+  usart_init.USART_Mode = USART_Mode_Tx;
   usart_init.USART_BaudRate = settings->baudrate;
   USART_Init(s_port[uart].base, &usart_init);
 
@@ -77,11 +78,7 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
   // Init with disabled TX interrupts otherwise we will get TX
   // buffer empty continuously when there is no data to send
   USART_ITConfig(s_port[uart].base, USART_IT_TXE, DISABLE);
-  // Init with enabled RX interrupts becuase they are called only
-  // when there is data to be received
-  USART_ITConfig(s_port[uart].base, USART_IT_RXNE, ENABLE);
-
-  stm32f10x_interrupt_nvic_enable(s_port[uart].irq, INTERRUPT_PRIORITY_NORMAL);
+  stm32f10x_interrupt_nvic_enable(s_port[uart].irq, INTERRUPT_PRIORITY_LOW);
 
   USART_Cmd(s_port[uart].base, ENABLE);
   s_port[uart].initialized = true;
@@ -93,6 +90,9 @@ StatusCode uart_tx(UartPort uart, uint8_t *data, size_t *len) {
   if (data == NULL || len == NULL) return STATUS_CODE_INVALID_ARGS;
   StatusCode status = STATUS_CODE_OK;
   // Send all data to queue;
+  if (*len > (size_t)queue_get_spaces_available(&s_port_queues[uart].tx_queue)) {
+    return STATUS_CODE_RESOURCE_EXHAUSTED;
+  }
   for (uint8_t i = 0; i < *len; i++) {
     if (queue_send(&s_port_queues[uart].tx_queue, &data[i], 0) != STATUS_CODE_OK) {
       *len = i;
@@ -142,6 +142,7 @@ static void prv_handle_irq(UartPort uart) {
       USART_SendData(s_port[uart].base, tx_data);
     }
     USART_ClearITPendingBit(s_port[uart].base, USART_IT_TXE);
+    return;
   }
 
   // Check that the receive data register is not empty

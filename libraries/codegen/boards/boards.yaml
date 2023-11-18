@@ -15,8 +15,7 @@
     - charger
     - motor_controller
     - pedal
-    - power_distribution_front
-    - power_distribution_rear
+    - power_distribution
     - power_select
     - solar_5_mppts
     - solar_6_mppts
@@ -27,4 +26,4 @@
     - new_can
     - can_communication
     - can_debug
-  
+    - telemetry

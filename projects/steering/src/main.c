@@ -8,8 +8,7 @@
 #include "gpio_mcu.h"
 #include "log.h"
 #include "master_task.h"
-#include "steering_analog_task.h"
-#include "steering_digital_task.h"
+#include "steering_task.h"
 #include "tasks.h"
 
 #define DEVICE_ID 0x02
@@ -23,6 +22,8 @@ const CanSettings can_settings = {
   .loopback = true,
 };
 
+void pre_loop_init() {}
+
 void run_fast_cycle() {}
 
 void run_medium_cycle() {
@@ -30,8 +31,7 @@ void run_medium_cycle() {
   wait_tasks(1);
 
   adc_run();
-  steering_analog_input();
-  steering_digital_input();
+  steering_input();
 
   run_can_tx_cycle();
   wait_tasks(1);
@@ -46,9 +46,8 @@ int main() {
   gpio_it_init();
 
   // Setup analog inputs and initialize adc
-  steering_analog_adc_init();
+  steering_init();
   adc_init();
-  steering_digital_input_init(get_master_task());
 
   can_init(&s_can_storage, &can_settings);
   init_master_task();

@@ -9,7 +9,7 @@
 
 // Fill in these variables with the port and address to write to.
 #define WRITE_I2C_PORT I2C_PORT_1 // I2C_Port_2 is also available
-#define WRITE_I2C_ADDRESS 0x08
+#define WRITE_I2C_ADDRESS 0x24
 
 // Fill in this array with the bytes to write.
 static const uint8_t bytes_to_write[] = { 0x10, 0x2F };
@@ -49,15 +49,20 @@ static const GpioAddress test_pin = {
 TASK(smoke_i2c_task, TASK_STACK_512){
   uint16_t tx_len = SIZEOF_ARRAY(bytes_to_write);
   uint8_t rx_buf[SIZEOF_ARRAY(bytes_to_write)] = {0};
-  i2c_init(I2C_PORT_1, &i2c_settings);
   gpio_init_pin(&test_pin ,GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
   while (true) {
     // I2C write
-    i2c_write(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, bytes_to_write, tx_len);
+    uint8_t dat[2] = {0x2, 0x10};
+    uint8_t rx_data[2] = { 0 };
+
+
+    StatusCode ret = i2c_write_reg(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, 0x02, dat, 2);
+    // StatusCode ret = i2c_write(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, dat, 2);
+    StatusCode ret1 = i2c_read_reg(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, 0x02, rx_data, 2);
+    LOG_DEBUG("ret: %d %d, DATA : %d %d\n\r", ret, ret1, rx_data[0], rx_data[1]);
     // I2C read (uncomment to test)
     // i2c_read(READ_I2C_PORT, READ_I2C_ADDRESS, rx_buf, 6);
-    gpio_toggle_state(&test_pin);
-    delay_ms(100);
+    delay_ms(5000);
   }
 }
 
@@ -65,6 +70,7 @@ int main(void) {
   gpio_init();
   tasks_init();
   log_init();
+  i2c_init(I2C_PORT_1, &i2c_settings);
 
   tasks_init_task(smoke_i2c_task, TASK_PRIORITY(1), NULL);
 

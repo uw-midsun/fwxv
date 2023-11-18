@@ -13,16 +13,14 @@ Messages:
   steering_info:
     id: 21 # or some number
     target:
-      power_distribution_front:
-        watchdog: 0
-      power_distribution_back:
+      power_distribution:
         watchdog: 0
       motor_controller:
         watchdog: 0
       centre_console:
         watchdog: 0
     signals:
-      digital_input:
-        length: 8
-      analog_input:
-        length: 8
+      input_cc:
+        length: 8 # (cc_toggle | cc_increade | cc_decrease)
+      input_lights:
+        length: 8 

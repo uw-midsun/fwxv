@@ -125,8 +125,7 @@ static FsmState s_power_fsm_states[NUM_POWER_STATES] = {
   STATE(POWER_FSM_OPEN_RELAYS, power_fsm_open_relays_input, power_fsm_open_relays_output),
 };
 
-// Declares transition for state machine
-static FsmTransition s_power_fsm_transitions[NUM_POWER_TRANSITIONS] = {
+static bool s_power_transitions[NUM_POWER_STATES][NUM_POWER_STATES] = {
   // Transitions for OFF state
   TRANSITION(POWER_FSM_STATE_OFF, POWER_FSM_STATE_FAULT),
   // Transitions for MAIN state
@@ -157,6 +156,7 @@ static FsmTransition s_power_fsm_transitions[NUM_POWER_TRANSITIONS] = {
   TRANSITION(POWER_FSM_TURN_ON_EVERYTHING, POWER_FSM_STATE_AUX),
 
   // Failures when attempting OFF -> MAIN state
+  // Failures when attempting OFF -> AUX
   TRANSITION(POWER_FSM_CONFIRM_AUX_STATUS, POWER_FSM_STATE_OFF),
   TRANSITION(POWER_FSM_SEND_PD_BMS, POWER_FSM_STATE_OFF),
   TRANSITION(POWER_FSM_CONFIRM_BATTERY_STATUS, POWER_FSM_STATE_OFF),
@@ -168,29 +168,17 @@ static FsmTransition s_power_fsm_transitions[NUM_POWER_TRANSITIONS] = {
   // Failures when attempting AUX -> MAIN state
   TRANSITION(POWER_FSM_CONFIRM_BATTERY_STATUS, POWER_FSM_STATE_AUX),
   TRANSITION(POWER_FSM_SEND_PD_BMS, POWER_FSM_STATE_AUX),
-  TRANSITION(POWER_FSM_CONFIRM_BATTERY_STATUS, POWER_FSM_STATE_AUX),
   TRANSITION(POWER_FSM_CLOSE_BATTERY_RELAYS, POWER_FSM_STATE_AUX),
   TRANSITION(POWER_FSM_CONFIRM_DC_DC, POWER_FSM_STATE_AUX),
-  TRANSITION(POWER_FSM_TURN_ON_EVERYTHING, POWER_FSM_STATE_AUX),
   TRANSITION(POWER_FSM_POWER_MAIN_COMPLETE, POWER_FSM_STATE_AUX),
-
-  // Failures when attempting OFF -> AUX
-  TRANSITION(POWER_FSM_CONFIRM_AUX_STATUS, POWER_FSM_STATE_OFF),
-  TRANSITION(POWER_FSM_TURN_ON_EVERYTHING, POWER_FSM_STATE_OFF),
 };
 
 StatusCode init_power_fsm(PowerFsmStateId inital_state) {
   // Assuming GPIOs have already been initialized in main
-  FsmSettings settings = {
-    .state_list = s_power_fsm_states,
-    .transitions = s_power_fsm_transitions,
-    .num_transitions = NUM_POWER_TRANSITIONS,
-    .initial_state = inital_state,
-  };
-  fsm_shared_mem_init();
+  // fsm_shared_mem_init();
   power_context.latest_state = 0;
   power_context.target_state = 0;
-  fsm_init(power, settings, NULL);
+  fsm_init(power, s_power_fsm_states, s_power_transitions, inital_state, NULL);
 
   // Start button interrupt
   InterruptSettings it_settings = {
