@@ -56,3 +56,14 @@
       signals:
         signal1:
           length: 8
+    power_state:
+      id: 61
+      target:
+        centre_console:
+          watchdog: 0
+      critical: true
+      signals:
+        state:
+          length: 8
+        error_state:
+          length: 8

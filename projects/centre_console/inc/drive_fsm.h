@@ -9,12 +9,8 @@
 #include "notify.h"
 #include "task.h"
 
-#define NUM_DRIVE_STATES 4
-#define NUM_DRIVE_TRANSITIONS 8
-
-#define BEGIN_PRECHARGE_SIGNAL 2
-#define PRECHARGE_STATE_COMPLETE 2
-#define NUMBER_OF_CYCLES_TO_WAIT 10
+#define NUM_DRIVE_STATES 3
+#define NUM_DRIVE_TRANSITIONS 4
 
 DECLARE_FSM(drive);
 
@@ -22,7 +18,6 @@ typedef enum driveState {
   NEUTRAL = 0,
   DRIVE,
   REVERSE,
-  DO_PRECHARGE,  // turn on precharge and get ack
 } driveState;
 
 typedef enum driveEvents {
