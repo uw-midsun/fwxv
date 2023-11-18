@@ -36,12 +36,17 @@ void power_fsm_confirm_aux_status_output(void *context) {
 }
 
 void power_fsm_confirm_aux_status_input(Fsm *fsm, void *context) {
+  // power select is pd check (which doesnt exist yet)
+  // LOG_DEBUG("CONFIRM AUX STATUS: %d\n", g_rx_struct.received_power_select_status);
   FSM_CHECK_DATA_RECV(fsm, power_context, get_received_power_select_status());
+  // LOG_DEBUG("FAIL?\n");
 
   uint8_t status = get_power_select_status_status();
   uint8_t fault = get_power_select_status_fault();
 
   // Status bit 2 is AUX, fault bits 5,6,7 are AUX
+  // LOG_DEBUG("Status: %d, Fault: %d\n", status, fault);
+  // LOG_DEBUG("Desired status: %d, Desired fault: %d\n", AUX_STATUS_BITS, AUX_FAULT_BITS);
   if ((status & AUX_STATUS_BITS) && !(fault & AUX_FAULT_BITS)) {
     // Transition to next state
     if (power_context.target_state == POWER_FSM_STATE_MAIN) {
@@ -64,7 +69,7 @@ void power_fsm_send_pd_bms_output(void *context) {
 void power_fsm_send_pd_bms_input(Fsm *fsm, void *context) {
   //  = (PowerFsmContext *)context;
   FSM_CHECK_DATA_RECV(fsm, power_context, get_received_rear_pd_fault());
-  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_front_pd_fault());
+  // FSM_CHECK_DATA_RECV(fsm, power_context, get_received_front_pd_fault());
 
   uint8_t rear_fault = get_rear_pd_fault_fault_data();
   uint8_t front_fault = get_front_pd_fault_fault_data();

@@ -12,6 +12,9 @@
 #include "power_fsm.h"
 #include "tasks.h"
 
+#include "centre_console_getters.h"
+#include "centre_console_setters.h"
+
 #ifdef MS_PLATFORM_X86
 #define MASTER_MS_CYCLE_TIME 100
 #else
@@ -46,6 +49,10 @@ void run_medium_cycle() {
   wait_tasks(1);
   fsm_run_cycle(drive);
   fsm_run_cycle(power);
+  LOG_DEBUG("+----------------+\n");
+
+  LOG_DEBUG("POWER STATE: %d\n", power_fsm->curr_state);
+  LOG_DEBUG("DRIVE STATE: %d\n", drive_fsm->curr_state);
   wait_tasks(2);
   run_can_tx_cycle();
   wait_tasks(1);
