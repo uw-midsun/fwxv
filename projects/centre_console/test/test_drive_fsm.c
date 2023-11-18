@@ -1,7 +1,6 @@
 #include "centre_console_getters.h"
 #include "centre_console_setters.h"
 #include "drive_fsm.h"
-#include "fsm_shared_mem.h"
 #include "i2c.h"
 #include "power_fsm.h"
 #include "task_test_helpers.h"

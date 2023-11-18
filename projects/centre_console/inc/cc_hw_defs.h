@@ -2,6 +2,18 @@
 // Definitions for all HW components on Centre Console
 // TODO(mitchellostler): Update with actual addresses once schematic complete
 
+// Centre Console LEDs 
+  #define HAZARD_LED_ADDR \
+    { .i2c_address = 0x20, .pin = PCA9555_PIN_IO0_4 }
+  #define LEFT_LED_ADDR \ 
+    { .i2c_address = 0x20, .pin = PCA9555_PIN_IO1_7 }
+  #define RIGHT_LED_ADDR \ 
+    { .i2c_address = 0x20, .pin = PCA9555_PIN_IO1_6 }
+  #define CRUISE_LED_ADDR \ 
+    { .i2c_address = 0x20, .pin = PCA9555_PIN_IO0_4 }
+  #define REGEN_LED_ADDR \ 
+    { .i2c_address = 0x20, .pin = PCA9555_PIN_IO0_5 }
+
 // I/O expander connected to backlights
 #define CC_IO_EXP_I2C_PORT NUM_I2C_PORTS
 #define CC_IO_EXP_SDA \

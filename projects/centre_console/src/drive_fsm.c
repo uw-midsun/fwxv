@@ -3,7 +3,6 @@
 #include "cc_buttons.h"
 #include "centre_console_getters.h"
 #include "centre_console_setters.h"
-#include "power_fsm.h"
 
 FSM(drive, NUM_DRIVE_STATES);
 
@@ -13,6 +12,8 @@ static uint32_t notification = 0;
 static Event drive_fsm_event;
 
 static uint8_t power_received_counter = 0;
+
+static uint8_t power_state_main_flag = 0; // Flag for the first turn on of the power state
 
 typedef enum DriveLeds {
   DRIVE_LED = 0,
@@ -44,6 +45,14 @@ static void prv_neutral_input(Fsm *fsm, void *context) {
   StatusCode power_error_state = get_power_state_error_state(); 
 
   StateId power_state = get_power_state_state(); 
+
+  if(power_state == POWER_FSM_STATE_MAIN && power_state_main_flag == 0) {
+    power_state_main_flag = 1;
+    pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_HIGH);
+  } else if (power_state == POWER_FSM_STATE_OFF) { // POWER_FSM_STATE_ON is a placeholder 
+    power_state_main_flag = 0;
+    pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
+  }
 
   if (notify_get(&notification) == STATUS_CODE_OK && power_error_state == STATUS_CODE_OK) { 
     while (event_from_notification(&notification, &drive_fsm_event) == STATUS_CODE_INCOMPLETE) {
@@ -176,6 +185,10 @@ static bool s_drive_transitions[NUM_DRIVE_STATES][NUM_DRIVE_STATES] = {
   // REVERSE -> NEUTRAL
   TRANSITION(REVERSE, NEUTRAL),
 };
+
+StateId get_drive_state(void) {
+  return drive_fsm->curr_state;
+}
 
 StatusCode init_drive_fsm(void) {
   // Add gpio init pins
