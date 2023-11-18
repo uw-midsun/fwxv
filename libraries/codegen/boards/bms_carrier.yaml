@@ -10,14 +10,18 @@
 
 ---
   Messages:
-    bps_heartbeat:
+    battery_status:
       id: 0
       target:
         centre_console:
           watchdog: 0
       critical: true
       signals:
+        batt_perc:
+          length: 16
         status:
+          length: 8
+        fault:
           length: 8
     
     battery_vt:
@@ -34,9 +38,6 @@
         voltage:
           length: 16
         temperature:
-          length: 16
-        # This field will change
-        batt_perc:
           length: 16
     
     battery_aggregate_vc:

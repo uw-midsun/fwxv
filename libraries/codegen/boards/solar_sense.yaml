@@ -139,4 +139,13 @@
           length: 16
         temp_6:
           length: 16
+
+    solar_info:
+      id: 29
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        solar_fault:
+          length: 8
         

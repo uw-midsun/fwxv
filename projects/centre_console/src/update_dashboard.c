@@ -1,4 +1,4 @@
-#include "cc_monitor.h"
+#include "update_dashboard.h"
 
 #include "cc_hw_defs.h"
 #include "centre_console_getters.h"
@@ -16,15 +16,63 @@
 Pca9555GpioAddress cc_light = { .i2c_address = TEMP_I2C_ADDRESS, .pin = PCA9555_PIN_IO0_0 };
 Pca9555GpioAddress cc_regen_brake_light = { .i2c_address = TEMP_I2C_ADDRESS,
                                             .pin = PCA9555_PIN_IO0_1 };
+
 Event TEMP_REGEN_BRAKE_EVENT_PRESSED = 0;
 
-static LocalState state;
+// Centre Console State Variables
+static uint8_t s_drive_state;
+static bool s_cc_enabled;
+static bool s_regen_braking;
+static uint32_t s_target_velocity;
 
-void set_local_state() {
-  state.cc_enabled = g_tx_struct.drive_output_cruise_control;
-  state.drive_state = g_tx_struct.drive_output_drive_state;
-  state.target_velocity = g_tx_struct.drive_output_target_velocity;
-  state.regen_braking = g_tx_struct.drive_output_regen_braking;
+typedef enum DriveLeds {
+  HAZARD_LED = 0,
+  LEFT_LED,
+  RIGHT_LED,
+  CRUISE_LED,
+  REGEN_LED,
+  POWER_LED,
+  NUM_DRIVE_LED,
+} DriveLeds;
+
+static Pca9555GpioAddress s_drive_btn_leds[NUM_DRIVE_LED] = {
+  [HAZARD_LED] = HAZARD_LED_ADDR,
+  [LEFT_LED] = LEFT_LED_ADDR,
+  [RIGHT_LED] = RIGHT_LED_ADDR,
+  [CRUISE_LED] = CRUISE_LED_ADDR,
+  [REGEN_LED] = REGEN_LED_ADDR
+};
+
+
+void update_indicators(uint32_t notif) {
+  uint32_t notif = 0;
+  notify_get(&notif);
+
+  // Update power btn light
+  Pca9555GpioState state = PCA9555_GPIO_STATE_LOW;
+  if (get_power_info_power_state() == EE_POWER_ON_STATE || get_power_info_power_state() == EE_POWER_DRIVE_STATE) {
+    pca9555_gpio_set_state(&(), PCA9555_GPIO_STATE_LOW); 
+  }
+
+
+
+}
+
+void update_msg_outputs(uint32_t notif) {
+  // Check power press, default to no press
+  // If we are not in neutral, ignore
+  if (get_drive_state() == NEUTRAL) {
+    set_cc_power_control_power_event(EE_CC_PWR_CTL_EVENT_NONE);
+    if (notify_check_event(&notif, POWER_BUTTON_EVENT)) {
+      if (get_pedal_output_brake_output() > 0) {
+        set_cc_power_control_power_event(EE_CC_PWR_CTL_EVENT_BTN_AND_BRAKE);
+      } else {
+        set_cc_power_control_power_event(EE_CC_PWR_CTL_EVENT_BTN);
+      }
+    }
+  }
+
+  if ()
 }
 
 void update_state() {

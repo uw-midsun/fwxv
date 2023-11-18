@@ -2,7 +2,6 @@
 
 #include "delay.h"
 #include "fsm.h"
-#include "fsm_shared_mem.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
@@ -11,6 +10,10 @@
 
 #define NUM_DRIVE_STATES 3
 #define NUM_DRIVE_TRANSITIONS 4
+
+#define POWER_FSM_STATE_OFF 0 // will be changed later
+#define POWER_FSM_STATE_ON // will be changed later
+#define POWER_FSM_STATE_MAIN 8 // will be changed later
 
 DECLARE_FSM(drive);
 
@@ -35,5 +38,7 @@ typedef enum driveEvents {
 
 #define REVERSE_GPIO_ADDR \
   { .port = GPIO_PORT_A, .pin = 7 }
+
+StateId get_drive_state(void);
 
 StatusCode init_drive_fsm(void);
