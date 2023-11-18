@@ -2,8 +2,8 @@
 
 #include "can.h"
 #include "can_board_ids.h"
-#include "cc_monitor.h"
 #include "cc_buttons.h"
+#include "cc_monitor.h"
 #include "delay.h"
 #include "drive_fsm.h"
 #include "fsm.h"

@@ -44,7 +44,7 @@ void update_state() {
   }
 
   // Check steering message for cc event (toggle/increase/decrease)
-  uint8_t cc_info = get_steering_info_digital_input();
+  uint8_t cc_info = get_steering_info_input_cc();
 
   if (cc_info & STEERING_CC_TOGGLE_MASK) {
     if (!state.cc_enabled) {
