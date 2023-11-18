@@ -60,10 +60,12 @@ static void prv_neutral_input(Fsm *fsm, void *context) {
           prv_speed_is_zero()) {
         pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
         fsm_transition(fsm, DRIVE);
+        break;
       } else if (drive_fsm_event == REVERSE_BUTTON_EVENT && power_state == POWER_FSM_STATE_MAIN && // needs to be changed
                  prv_speed_is_zero()) {
         pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
         fsm_transition(fsm, REVERSE);
+        break;
       }
     }
   }
