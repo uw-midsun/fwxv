@@ -4,9 +4,6 @@
 #include "outputs.h"
 #include "power_distribution_getters.h"
 
-// uncomment this define to use gpio leds for testing
-#define LIGHTS_FSM_DEBUG
-
 // Placeholder GPIO Address, will be updated
 GpioAddress RIGHT_LIGHT_ADDR = { .port = GPIO_PORT_B, .pin = 5 };
 GpioAddress LEFT_LIGHT_ADDR = { .port = GPIO_PORT_A, .pin = 15 };
@@ -24,30 +21,18 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
   switch (light_id_callback) {
     case EE_LIGHT_TYPE_SIGNAL_LEFT:
       left_signal_state ^= 1;
-#ifdef LIGHTS_FSM_DEBUG
-      gpio_set_state(&LEFT_LIGHT_ADDR, left_signal_state);
-#endif
       pd_set_output_group(OUTPUT_GROUP_LEFT_TURN, left_signal_state);
       if (right_signal_state == OUTPUT_STATE_ON) {
         right_signal_state = OUTPUT_STATE_OFF;
-#ifdef LIGHTS_FSM_DEBUG
-        gpio_set_state(&RIGHT_LIGHT_ADDR, right_signal_state);
-#endif
         pd_set_output_group(OUTPUT_GROUP_RIGHT_TURN, right_signal_state);
       }
       soft_timer_start(&s_timer_single);
       break;
     case EE_LIGHT_TYPE_SIGNAL_RIGHT:
       right_signal_state ^= 1;
-#ifdef LIGHTS_FSM_DEBUG
-      gpio_set_state(&RIGHT_LIGHT_ADDR, right_signal_state);
-#endif
       pd_set_output_group(OUTPUT_GROUP_RIGHT_TURN, right_signal_state);
       if (left_signal_state == OUTPUT_STATE_ON) {
         left_signal_state = OUTPUT_STATE_OFF;
-#ifdef LIGHTS_FSM_DEBUG
-        gpio_set_state(&LEFT_LIGHT_ADDR, left_signal_state);
-#endif
         pd_set_output_group(OUTPUT_GROUP_LEFT_TURN, left_signal_state);
       }
       soft_timer_start(&s_timer_single);
@@ -59,10 +44,6 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
       }
       left_signal_state ^= 1;
       right_signal_state ^= 1;
-#ifdef LIGHTS_FSM_DEBUG
-      gpio_set_state(&LEFT_LIGHT_ADDR, left_signal_state);
-      gpio_set_state(&RIGHT_LIGHT_ADDR, left_signal_state);
-#endif
       pd_set_output_group(OUTPUT_GROUP_HAZARD, left_signal_state);
       soft_timer_start(&s_timer_single);
       break;
@@ -70,10 +51,6 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
       left_signal_state = OUTPUT_STATE_OFF;
       right_signal_state = OUTPUT_STATE_OFF;
       pd_set_output_group(OUTPUT_GROUP_HAZARD, left_signal_state);
-#ifdef LIGHTS_FSM_DEBUG
-      gpio_set_state(&LEFT_LIGHT_ADDR, left_signal_state);
-      gpio_set_state(&RIGHT_LIGHT_ADDR, left_signal_state);
-#endif
   }
 }
 
@@ -191,10 +168,6 @@ static bool s_PD_transition_list[NUM_LIGHTS_STATES][NUM_LIGHTS_STATES] = {
 
 StatusCode init_lights(void) {
   soft_timer_init(SIGNAL_BLINK_PERIOD_MS, prv_lights_signal_blinker, &s_timer_single);
-#ifdef LIGHTS_FSM_DEBUG
-  gpio_init_pin(&LEFT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW);
-  gpio_init_pin(&RIGHT_LIGHT_ADDR, GPIO_OUTPUT_OPEN_DRAIN, GPIO_STATE_LOW);
-#endif
   fsm_init(lights, s_PD_lights_list, s_PD_transition_list, INIT_STATE, NULL);
   return STATUS_CODE_OK;
 }
