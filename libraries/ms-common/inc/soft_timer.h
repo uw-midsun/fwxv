@@ -25,14 +25,15 @@ typedef void (*SoftTimerCallback)(SoftTimerId id);
 // Adds a software timer. The provided duration is the number of
 // miliseconds before running and the callback is the process to run once
 // the time has expired.
-StatusCode soft_timer_start(uint32_t duration_ms, SoftTimerCallback callback, SoftTimer *timer);
+StatusCode soft_timer_init_and_start(uint32_t duration_ms, SoftTimerCallback callback,
+                                     SoftTimer *timer);
 
-// Creates a new software timer with given params (same as soft_timer_start) but doesn't start the
-// timer
+// Creates a new software timer with given params (same as soft_timer_init_and_start) but doesn't
+// start the timer
 StatusCode soft_timer_init(uint32_t duration_ms, SoftTimerCallback callback, SoftTimer *timer);
 
-// Starts the software timer
-StatusCode soft_timer_start_timer(SoftTimer *timer);
+// Starts the software timer. The timer must already be initialized
+StatusCode soft_timer_start(SoftTimer *timer);
 
 // Cancels the soft timer specified by name. Returns true if successful.
 // the timer is not cancelled immediately,

@@ -46,7 +46,7 @@ static void prv_periodic_commit(SoftTimerId timer_id) {
   }
 
   s_context = persist;
-  soft_timer_start(PERSIST_COMMIT_TIMEOUT_MS, prv_periodic_commit, &persist->timer);
+  soft_timer_init_and_start(PERSIST_COMMIT_TIMEOUT_MS, prv_periodic_commit, &persist->timer);
 }
 
 StatusCode persist_init(PersistStorage *persist, FlashPage page, void *blob, size_t blob_size,
@@ -120,14 +120,15 @@ StatusCode persist_init(PersistStorage *persist, FlashPage page, void *blob, siz
     persist->flash_addr += sizeof(header) + header.size_bytes;
   }
   s_context = persist;
-  return soft_timer_start(PERSIST_COMMIT_TIMEOUT_MS, prv_periodic_commit, &persist->timer);
+  return soft_timer_init_and_start(PERSIST_COMMIT_TIMEOUT_MS, prv_periodic_commit, &persist->timer);
 }
 
 StatusCode persist_ctrl_periodic(PersistStorage *persist, bool enabled) {
   if (id == soft_timer_invalid_timer && enabled) {
     // Enable periodic commit - previously disabled
     s_context = persist;
-    return soft_timer_start(PERSIST_COMMIT_TIMEOUT_MS, prv_periodic_commit, &persist->timer);
+    return soft_timer_init_and_start(PERSIST_COMMIT_TIMEOUT_MS, prv_periodic_commit,
+                                     &persist->timer);
   } else if (id != soft_timer_invalid_timer && !enabled) {
     // Disable periodic commit - previously enabled
     soft_timer_cancel(&persist->timer);

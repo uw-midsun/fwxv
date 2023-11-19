@@ -35,7 +35,7 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
 #endif
         pd_set_output_group(OUTPUT_GROUP_RIGHT_TURN, right_signal_state);
       }
-      soft_timer_start_timer(&s_timer_single);
+      soft_timer_start(&s_timer_single);
       break;
     case EE_LIGHT_TYPE_SIGNAL_RIGHT:
       right_signal_state ^= 1;
@@ -50,7 +50,7 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
 #endif
         pd_set_output_group(OUTPUT_GROUP_LEFT_TURN, left_signal_state);
       }
-      soft_timer_start_timer(&s_timer_single);
+      soft_timer_start(&s_timer_single);
       break;
     case EE_LIGHT_TYPE_SIGNAL_HAZARD:
       if (left_signal_state != right_signal_state) {
@@ -64,7 +64,7 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
       gpio_set_state(&RIGHT_LIGHT_ADDR, left_signal_state);
 #endif
       pd_set_output_group(OUTPUT_GROUP_HAZARD, left_signal_state);
-      soft_timer_start_timer(&s_timer_single);
+      soft_timer_start(&s_timer_single);
       break;
     default:
       left_signal_state = OUTPUT_STATE_OFF;
@@ -79,8 +79,8 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
 
 static void prv_init_state_input(Fsm *fsm, void *context) {
   // can transition to LEFT, RIGHT, HAZARD
-  EELightType light_event = get_steering_info_input_lights(); // can msg id = 682 = 0x2AA
-  HazardStatus hazard_status = get_power_info_hazard_state(); // can msg id = 1026 = 0x5E2
+  EELightType light_event = get_steering_info_input_lights();  // can msg id = 682 = 0x2AA
+  HazardStatus hazard_status = get_power_info_hazard_state();  // can msg id = 1026 = 0x5E2
 
   if (hazard_status == HAZARD_ON) {
     fsm_transition(fsm, HAZARD);
@@ -116,7 +116,7 @@ static void prv_left_signal_output(void *context) {
   // Toggle Left Signal blinkers at 100 BPM -> 0.6s
   light_id_callback = EE_LIGHT_TYPE_SIGNAL_LEFT;
   if (fsm_prev_state == INIT_STATE) {
-    soft_timer_start_timer(&s_timer_single);
+    soft_timer_start(&s_timer_single);
   }
   fsm_prev_state = LEFT_SIGNAL;
 }
@@ -140,7 +140,7 @@ static void prv_right_signal_output(void *context) {
   // Toggle Right Signal blinkers at 100 BPM -> 0.6 s
   light_id_callback = EE_LIGHT_TYPE_SIGNAL_RIGHT;
   if (fsm_prev_state == INIT_STATE) {
-    soft_timer_start_timer(&s_timer_single);
+    soft_timer_start(&s_timer_single);
   }
   fsm_prev_state = RIGHT_SIGNAL;
 }
@@ -167,7 +167,7 @@ static void prv_hazard_output(void *context) {
   // Toggle Left and Right Signal blinkers at 100 BPM -> 0.6s
   light_id_callback = EE_LIGHT_TYPE_SIGNAL_HAZARD;
   if (fsm_prev_state == INIT_STATE) {
-    soft_timer_start_timer(&s_timer_single);
+    soft_timer_start(&s_timer_single);
   }
   fsm_prev_state = HAZARD;
 }

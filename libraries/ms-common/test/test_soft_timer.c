@@ -31,7 +31,7 @@ void test_soft_timer() {
   for (int i = 0; i < 3; ++i) {
     triggered = false;
     // test soft timer start and cancel
-    soft_timer_start(50, prv_set, &s_timer);
+    soft_timer_init_and_start(50, prv_set, &s_timer);
 
     xTaskDelayUntil(&last_wake, 49);
 
@@ -47,7 +47,7 @@ void test_soft_timer() {
     TEST_ASSERT_FALSE(soft_timer_inuse(&s_timer));
 
     // test start to finish
-    soft_timer_start(200, prv_set, &s_timer);
+    soft_timer_init_and_start(200, prv_set, &s_timer);
 
     xTaskDelayUntil(&last_wake, 99);
 
@@ -70,8 +70,8 @@ void test_multiple_timer() {
   for (int i = 0; i < 3; ++i) {
     triggered = false;
     // test soft timer start and cancel
-    soft_timer_start(100, prv_set, &s_timer);
-    soft_timer_start(50, prv_set, &s_timer_2);
+    soft_timer_init_and_start(100, prv_set, &s_timer);
+    soft_timer_init_and_start(50, prv_set, &s_timer_2);
 
     delay_ms(51);
 
