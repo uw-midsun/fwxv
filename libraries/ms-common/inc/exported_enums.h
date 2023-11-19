@@ -21,26 +21,25 @@ typedef enum {
   NUM_EE_RELAY_STATES,
 } EERelayState;
 
-// STEERING SIGNALS 
+// STEERING SIGNALS
 // Signals for analog inputs received at the steering board
 typedef enum SteeringInfoAnalog {
-	EE_STEERING_LIGHTS_OFF_STATE = 0, // Turn lights off
-	EE_STEERING_LIGHTS_RIGHT_STATE, // Right Turn Signal
-	EE_STEERING_LIGHTS_LEFT_STATE, // Left Turn Signal
-	EE_STEERING_LIGHTS_HAZARD_STATE, // Both Signals
-	NUM_EE_STEERING_LIGHTS,
+  EE_STEERING_LIGHTS_OFF_STATE = 0,  // Turn lights off
+  EE_STEERING_LIGHTS_RIGHT_STATE,    // Right Turn Signal
+  EE_STEERING_LIGHTS_LEFT_STATE,     // Left Turn Signal
+  NUM_EE_STEERING_LIGHTS,
 } SteeringInfoAnalog;
 
 // Signals for digital inputs sent from the steering board
 typedef enum SteeringInfoDigitalMask {
-	EE_STEERING_CC_DECREASE_BIT = 0, // Signal to decrease cruise control speed
-	EE_STEERING_CC_INCREASE_BIT,     // Signal to increase cruise control speed
-	EE_STEERING_CC_TOGGLE_BIT, // Toggle cruise control on/off
+  EE_STEERING_CC_DECREASE_BIT = 0,  // Signal to decrease cruise control speed
+  EE_STEERING_CC_INCREASE_BIT,      // Signal to increase cruise control speed
+  EE_STEERING_CC_TOGGLE_BIT,        // Toggle cruise control on/off
 } SteeringInfoDigitalMask;
 
-#define EE_STEERING_CC_INCREASE_MASK (1<<EE_STEERING_CC_INCREASE_BIT)
-#define EE_STEERING_CC_DECREASE_MASK (1<<EE_STEERING_CC_DECREASE_BIT)
-#define EE_STEERING_CC_TOGGLE_MASK (1<<EE_STEERING_CC_TOGGLE_BIT)
+#define EE_STEERING_CC_INCREASE_MASK (1 << EE_STEERING_CC_INCREASE_BIT)
+#define EE_STEERING_CC_DECREASE_MASK (1 << EE_STEERING_CC_DECREASE_BIT)
+#define EE_STEERING_CC_TOGGLE_MASK (1 << EE_STEERING_CC_TOGGLE_BIT)
 
 // CENTRE CONSOLE SIGNALS
 // Drive Output
@@ -52,16 +51,16 @@ typedef enum {
 } CentreConsoleCCPwrEvent;
 
 typedef enum {
-  EE_DRIVE_OUTPUT_CC_OFF_STATE= 0, // Cruise control enabled,
-  EE_DRIVE_OUTPUT_CC_ON_STATE, // Cruise control disabled
+  EE_DRIVE_OUTPUT_CC_OFF_STATE = 0,  // Cruise control enabled,
+  EE_DRIVE_OUTPUT_CC_ON_STATE,       // Cruise control disabled
   NUM_EE_DRIVE_OUTPUT_CC_STATES,
-} CentreConsoleCCState; 
+} CentreConsoleCCState;
 
 typedef enum {
-  EE_DRIVE_OUTPUT_REGEN_OFF_STATE = 0, // Regen Braking enabled,
-  EE_DRIVE_OUTPUT_REGEN_ON_STATE, // Regen Braking disabled
+  EE_DRIVE_OUTPUT_REGEN_OFF_STATE = 0,  // Regen Braking enabled,
+  EE_DRIVE_OUTPUT_REGEN_ON_STATE,       // Regen Braking disabled
   NUM_EE_DRIVE_OUTPUT_REGEN_STATES,
-} CentreConsoleRegenState; 
+} CentreConsoleRegenState;
 
 typedef enum {
   EE_DRIVE_OUTPUT_NEUTRAL_STATE = 0,
@@ -71,27 +70,27 @@ typedef enum {
 } CentreConsoleDriveState;
 
 typedef enum {
-  EE_DRIVE_FSM_BEGIN_PRECHARGE_OFF = 0, // Begin precharge signal off
-  EE_DRIVE_FSM_BEGIN_PRECHARGE_ON, // Begin precharge signal on
+  EE_DRIVE_FSM_BEGIN_PRECHARGE_OFF = 0,  // Begin precharge signal off
+  EE_DRIVE_FSM_BEGIN_PRECHARGE_ON,       // Begin precharge signal on
   NUM_DRIVE_FSM_BEGIN_PRECHARGE_STATES,
-} CentreConsoleBeginPrechargeState; 
+} CentreConsoleBeginPrechargeState;
 
 // POWER DISTRIBUTION (TODO)
 typedef enum {
   EE_POWER_OFF_STATE = 0,
   EE_POWER_ON_STATE,
   EE_POWER_DRIVE_STATE,
-} PowerDistributionPowerState; 
+} PowerDistributionPowerState;
 
 typedef enum {
-  EE_PWR_SEL_STATUS_PWR_SUPPLY_MASK = 0, // Mask for bit indicating power supply status
-  EE_PWR_SEL_STATUS_DCDC_MASK, // Mask for bit indicating dcdc status
-  EE_PWR_SEL_STATUS_AUX_MASK, // Mask for bit indicating aux status
-  NUM_EE_PWR_SEL_STATUS_MASKS, 
+  EE_PWR_SEL_STATUS_PWR_SUPPLY_MASK = 0,  // Mask for bit indicating power supply status
+  EE_PWR_SEL_STATUS_DCDC_MASK,            // Mask for bit indicating dcdc status
+  EE_PWR_SEL_STATUS_AUX_MASK,             // Mask for bit indicating aux status
+  NUM_EE_PWR_SEL_STATUS_MASKS,
 } PowerSelectStatusMasks;
 
 typedef enum {
-  EE_PWR_SEL_FAULT_PWR_SUPPLY_OVERCURRENT_BIT = 0, 
+  EE_PWR_SEL_FAULT_PWR_SUPPLY_OVERCURRENT_BIT = 0,
   EE_PWR_SEL_FAULT_PWR_SUPPY_OVERVOLTAGE_BIT,
   EE_PWR_SEL_FAULT_DCDC_OVERTEMP_BIT,
   EE_PWR_SEL_FAULT_DCDC_OVERCURRENT_BIT,
@@ -101,31 +100,25 @@ typedef enum {
   EE_PWR_SEL_FAULT_AUX_OVERVOLTAGE_BIT,
 } PowerSelectFaultMasks;
 
-#define  EE_PWR_SEL_FAULT_PWR_SUPPLY_OVERCURRENT_MASK \
-  (1<<EE_PWR_SEL_FAULT_PWR_SUPPLY_OVERCURRENT_BIT)
+#define EE_PWR_SEL_FAULT_PWR_SUPPLY_OVERCURRENT_MASK \
+  (1 << EE_PWR_SEL_FAULT_PWR_SUPPLY_OVERCURRENT_BIT)
 
-#define  EE_PWR_SEL_FAULT_PWR_SUPPY_OVERVOLTAGE_MASK \
-  (1<<EE_PWR_SEL_FAULT_PWR_SUPPY_OVERVOLTAGE_BIT)
+#define EE_PWR_SEL_FAULT_PWR_SUPPY_OVERVOLTAGE_MASK \
+  (1 << EE_PWR_SEL_FAULT_PWR_SUPPY_OVERVOLTAGE_BIT)
 
-#define  EE_PWR_SEL_FAULT_DCDC_OVERTEMP_MASK \
-  (1<<EE_PWR_SEL_FAULT_DCDC_OVERTEMP_BIT)
+#define EE_PWR_SEL_FAULT_DCDC_OVERTEMP_MASK (1 << EE_PWR_SEL_FAULT_DCDC_OVERTEMP_BIT)
 
-#define  EE_PWR_SEL_FAULT_DCDC_OVERCURRENT_MASK \
-  (1<<EE_PWR_SEL_FAULT_DCDC_OVERCURRENT_BIT)
+#define EE_PWR_SEL_FAULT_DCDC_OVERCURRENT_MASK (1 << EE_PWR_SEL_FAULT_DCDC_OVERCURRENT_BIT)
 
-#define  EE_PWR_SEL_FAULT_DCDC_OVERVOLTAGE_MASK \
-  (1<<EE_PWR_SEL_FAULT_DCDC_OVERVOLTAGE_MASK)
+#define EE_PWR_SEL_FAULT_DCDC_OVERVOLTAGE_MASK (1 << EE_PWR_SEL_FAULT_DCDC_OVERVOLTAGE_MASK)
 
-#define  EE_PWR_SEL_FAULT_AUX_OVERTEMP_MASK \
-  (1<<EE_PWR_SEL_FAULT_AUX_OVERTEMP_BIT)
+#define EE_PWR_SEL_FAULT_AUX_OVERTEMP_MASK (1 << EE_PWR_SEL_FAULT_AUX_OVERTEMP_BIT)
 
-#define  EE_PWR_SEL_FAULT_AUX_OVERCURRENT_MASK \
-  (1<<EE_PWR_SEL_FAULT_AUX_OVERCURRENT_BIT)
+#define EE_PWR_SEL_FAULT_AUX_OVERCURRENT_MASK (1 << EE_PWR_SEL_FAULT_AUX_OVERCURRENT_BIT)
 
-#define  EE_PWR_SEL_FAULT_AUX_OVERVOLTAGE_MASK \
-  (1<<EE_PWR_SEL_FAULT_AUX_OVERVOLTAGE_BIT)
+#define EE_PWR_SEL_FAULT_AUX_OVERVOLTAGE_MASK (1 << EE_PWR_SEL_FAULT_AUX_OVERVOLTAGE_BIT)
 
-// BMS SIGNALS 
+// BMS SIGNALS
 typedef enum EEBatteryHeartbeatFaultSource {
   EE_BPS_FAULT_SOURCE_KILLSWITCH = 0,
   EE_BPS_FAULT_SOURCE_AFE_CELL,

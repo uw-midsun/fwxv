@@ -11,9 +11,9 @@
 #define NUM_DRIVE_STATES 3
 #define NUM_DRIVE_TRANSITIONS 4
 
-#define POWER_FSM_STATE_OFF 0 // will be changed later
-#define POWER_FSM_STATE_ON // will be changed later
-#define POWER_FSM_STATE_MAIN 8 // will be changed later
+#define POWER_FSM_STATE_OFF 0   // will be changed later
+#define POWER_FSM_STATE_ON      // will be changed later
+#define POWER_FSM_STATE_MAIN 8  // will be changed later
 
 DECLARE_FSM(drive);
 

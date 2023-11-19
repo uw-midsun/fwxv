@@ -33,6 +33,7 @@ const CanSettings can_settings = {
 
 void pre_loop_init() {
   init_drive_fsm();
+  dashboard_init();
 }
 
 void run_fast_cycle() {
@@ -41,12 +42,17 @@ void run_fast_cycle() {
 
 void run_medium_cycle() {
   run_can_rx_cycle();
-  wait_tasks(1);
-  fsm_run_cycle(drive);
+
+  uint32_t notif = 0;
+  notify_get(&notif);
+  update_indicators(notif);
   monitor_cruise_control();
+  update_displays();
+  fsm_run_cycle(drive);
   wait_tasks(1);
+
+  update_drive_output(notif);
   run_can_tx_cycle();
-  wait_tasks(1);
 }
 
 void run_slow_cycle() {}

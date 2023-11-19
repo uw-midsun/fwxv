@@ -91,7 +91,7 @@
           length: 8
         overtemp_bitset:
           length: 8
-        pedal_fault:
+        precharge_status:
           length: 8
 
     precharge_completed:
