@@ -201,7 +201,7 @@ static FsmState s_ltc_afe_state_list[NUM_LTC_AFE_FSM_STATES] = {
 };
 
 // Declare transitions
-static FsmTransition s_ltc_afe_transitions[NUM_LTC_AFE_FSM_TRANSITIONS] = {
+static bool s_ltc_afe_transitions[NUM_LTC_AFE_FSM_TRANSITIONS][NUM_LTC_AFE_FSM_TRANSITIONS] = {
   TRANSITION(LTC_AFE_IDLE, LTC_AFE_TRIGGER_CELL_CONV),
   TRANSITION(LTC_AFE_TRIGGER_CELL_CONV, LTC_AFE_READ_CELLS),
   TRANSITION(LTC_AFE_TRIGGER_CELL_CONV, LTC_AFE_IDLE),
@@ -218,13 +218,7 @@ static FsmTransition s_ltc_afe_transitions[NUM_LTC_AFE_FSM_TRANSITIONS] = {
 };
 
 StatusCode prv_init_ltc_afe_fsm(LtcAfeStorage *afe) {
-  FsmSettings settings = {
-    .state_list = s_ltc_afe_state_list,
-    .transitions = s_ltc_afe_transitions,
-    .num_transitions = NUM_LTC_AFE_FSM_TRANSITIONS,
-    .initial_state = LTC_AFE_IDLE,
-  };
-  fsm_init(ltc_afe_fsm, settings, afe);
+  fsm_init(ltc_afe_fsm, s_ltc_afe_state_list, s_ltc_afe_transitions, LTC_AFE_IDLE, afe);
   return STATUS_CODE_OK;
 }
 
