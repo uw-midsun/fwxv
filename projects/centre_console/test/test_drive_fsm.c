@@ -29,8 +29,8 @@ void prepare_test() {
   TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
   TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
 
-  g_rx_struct.power_state_error_state = STATUS_CODE_OK; 
-  g_rx_struct.power_state_state = POWER_FSM_STATE_MAIN; // needs to be changed
+  g_rx_struct.power_state_error_state = STATUS_CODE_OK;
+  g_rx_struct.power_state_state = POWER_FSM_STATE_MAIN;  // needs to be changed
   g_rx_struct.received_power_state = true;
 }
 
@@ -118,25 +118,26 @@ void test_neutral_to_drive(void) {
   LOG_DEBUG("T1.5: (Drive->Neutral) (fault when power error state is not STATUS_CODE_OK)\n");
   notify(drive, DRIVE_BUTTON_EVENT);
   neutral_to_drive();
-  g_rx_struct.power_state_error_state = STATUS_CODE_UNKNOWN; // set test value
+  g_rx_struct.power_state_error_state = STATUS_CODE_UNKNOWN;  // set test value
   drive_to_neutral();
-  g_rx_struct.power_state_error_state = STATUS_CODE_OK; // reset test value for next test
+  g_rx_struct.power_state_error_state = STATUS_CODE_OK;  // reset test value for next test
 
   // Starting sub test 6 drive to neutral: (Drive->Neutral) (fault when power state is
   // not main)
   LOG_DEBUG("T1.6: (Drive->Neutral) (fault when power state is not main)\n");
   notify(drive, DRIVE_BUTTON_EVENT);
   neutral_to_drive();
-  g_rx_struct.power_state_state = POWER_FSM_STATE_OFF; // set test value (needs to be changed)
+  g_rx_struct.power_state_state = POWER_FSM_STATE_OFF;  // set test value (needs to be changed)
   drive_to_neutral();
-  g_rx_struct.power_state_state = POWER_FSM_STATE_MAIN; // reset test value for next test (needs to be changed)
+  g_rx_struct.power_state_state =
+      POWER_FSM_STATE_MAIN;  // reset test value for next test (needs to be changed)
 
-  // Starting sub test 7 drive to neutral: (Drive->Neutral) (fault when we don't 
+  // Starting sub test 7 drive to neutral: (Drive->Neutral) (fault when we don't
   // receive power state message)
   LOG_DEBUG("T1.7: (Drive->Neutral) (fault when we don't receive power state message)\n");
   notify(drive, DRIVE_BUTTON_EVENT);
   neutral_to_drive();
-  g_rx_struct.received_power_state = false; // set test value
+  g_rx_struct.received_power_state = false;  // set test value
   fsm_run_cycle(drive);
   wait_tasks(1);
   fsm_run_cycle(drive);
@@ -144,7 +145,7 @@ void test_neutral_to_drive(void) {
   fsm_run_cycle(drive);
   wait_tasks(1);
   drive_to_neutral();
-  g_rx_struct.received_power_state = true; // reset test value for next test
+  g_rx_struct.received_power_state = true;  // reset test value for next test
 }
 
 TEST_IN_TASK
@@ -171,25 +172,26 @@ void test_neutral_to_reverse() {
   LOG_DEBUG("T2.4: (Reverse->Neutral) (fault when power error state is not STATUS_CODE_OK)\n");
   notify(drive, REVERSE_BUTTON_EVENT);
   neutral_to_reverse();
-  g_rx_struct.power_state_error_state = STATUS_CODE_UNKNOWN; // set test value
+  g_rx_struct.power_state_error_state = STATUS_CODE_UNKNOWN;  // set test value
   reverse_to_neutral();
-  g_rx_struct.power_state_error_state = STATUS_CODE_OK; // reset test value for next test
+  g_rx_struct.power_state_error_state = STATUS_CODE_OK;  // reset test value for next test
 
   // Starting sub test 5 reverse to neutral: (Reverse->Neutral) (fault when power state is
   // not main)
   LOG_DEBUG("T2.5: (Reverse->Neutral) (fault when power state is not main)\n");
   notify(drive, REVERSE_BUTTON_EVENT);
   neutral_to_reverse();
-  g_rx_struct.power_state_state = POWER_FSM_STATE_OFF; // set test value (needs to be changed)
+  g_rx_struct.power_state_state = POWER_FSM_STATE_OFF;  // set test value (needs to be changed)
   reverse_to_neutral();
-  g_rx_struct.power_state_state = POWER_FSM_STATE_MAIN; // reset test value for next test (needs to be changed)
+  g_rx_struct.power_state_state =
+      POWER_FSM_STATE_MAIN;  // reset test value for next test (needs to be changed)
 
-  // Starting sub test 6 reverse to neutral: (Reverse->Neutral) (fault when we don't 
+  // Starting sub test 6 reverse to neutral: (Reverse->Neutral) (fault when we don't
   // receive power state message)
   LOG_DEBUG("T2.6: (Reverse->Neutral) (fault when we don't receive power state message)\n");
   notify(drive, REVERSE_BUTTON_EVENT);
   neutral_to_reverse();
-  g_rx_struct.received_power_state = false; // set test value
+  g_rx_struct.received_power_state = false;  // set test value
   fsm_run_cycle(drive);
   wait_tasks(1);
   fsm_run_cycle(drive);
@@ -197,5 +199,5 @@ void test_neutral_to_reverse() {
   fsm_run_cycle(drive);
   wait_tasks(1);
   reverse_to_neutral();
-  g_rx_struct.received_power_state = true; // reset test value for next test
+  g_rx_struct.received_power_state = true;  // reset test value for next test
 }
