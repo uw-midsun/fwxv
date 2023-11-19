@@ -1,14 +1,9 @@
 #include "can.h"
-#include "cc_hw_defs.h"
-#include "centre_console_getters.h"
-#include "centre_console_setters.h"
-#include "centre_console_tx_structs.h"
 #include "gpio.h"
 #include "log.h"
 #include "pca9555_gpio_expander.h"
 #include "power_fsm.h"
 #include "seg_display.h"
-#include "steering_setters.h"
 
 #define NUM_DRIVE_LED 5
 
