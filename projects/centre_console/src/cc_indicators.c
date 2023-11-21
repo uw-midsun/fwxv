@@ -62,4 +62,6 @@ StatusCode update_indicators(bool cruise_control_toggle, bool hazard_info,
   } else {
     pca9555_gpio_set_state(&s_drive_btn_leds[RIGHT_LED], PCA9555_GPIO_STATE_LOW);
   }
+
+  return STATUS_CODE_OK;
 }
