@@ -37,20 +37,18 @@ void pre_loop_init() {
 }
 
 void run_fast_cycle() {
-  get_button_press();
+  update_displays();
 }
 
 void run_medium_cycle() {
   run_can_rx_cycle();
-
+  get_button_press();
   uint32_t notif = 0;
   notify_get(&notif);
   update_indicators(notif);
-  monitor_cruise_control();
-  update_displays();
+  // monitor_cruise_control();
   fsm_run_cycle(drive);
   wait_tasks(1);
-
   update_drive_output(notif);
   run_can_tx_cycle();
 }

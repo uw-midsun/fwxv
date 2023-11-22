@@ -3,6 +3,7 @@
 #include "cc_buttons.h"
 #include "centre_console_getters.h"
 #include "centre_console_setters.h"
+#include "cc_hw_defs.h"
 
 FSM(drive, NUM_DRIVE_STATES);
 
@@ -22,9 +23,9 @@ typedef enum DriveLeds {
 } DriveLeds;
 
 static Pca9555GpioAddress s_drive_btn_leds[NUM_DRIVE_FSM_BUTTONS] = {
-  [DRIVE_LED] = { .i2c_address = 0x20, .pin = PCA9555_PIN_IO0_3 },
-  [NEUTRAL_LED] = { .i2c_address = 0x20, .pin = PCA9555_PIN_IO0_1 },
-  [REVERSE_LED] = { .i2c_address = 0x20, .pin = PCA9555_PIN_IO0_0 },
+  [DRIVE_LED] = CC_LED_DRIVE,
+  [NEUTRAL_LED] = CC_LED_NEUTRAL,
+  [REVERSE_LED] = CC_LED_REVERSE,
 };
 
 static bool prv_speed_is_zero(void) {
@@ -46,10 +47,10 @@ static void prv_neutral_input(Fsm *fsm, void *context) {
 
   StateId power_state = get_power_info_power_state();
 
-  if (power_state == POWER_FSM_STATE_MAIN && power_state_main_flag == 0) {
+  if (power_state == EE_POWER_DRIVE_STATE && power_state_main_flag == 0) {
     power_state_main_flag = 1;
     pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_HIGH);
-  } else if (power_state == POWER_FSM_STATE_OFF) {  // POWER_FSM_STATE_ON is a placeholder
+  } else if (power_state == EE_POWER_OFF_STATE) { 
     power_state_main_flag = 0;
     pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
   }
@@ -57,13 +58,13 @@ static void prv_neutral_input(Fsm *fsm, void *context) {
   if (notify_get(&notification) == STATUS_CODE_OK && power_error_state == STATUS_CODE_OK) {
     while (event_from_notification(&notification, &drive_fsm_event) == STATUS_CODE_INCOMPLETE) {
       if (drive_fsm_event == DRIVE_BUTTON_EVENT &&
-          power_state == POWER_FSM_STATE_MAIN &&  // needs to be changed
+          power_state == EE_POWER_DRIVE_STATE &&  // needs to be changed
           prv_speed_is_zero()) {
         pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
         fsm_transition(fsm, DRIVE);
         break;
       } else if (drive_fsm_event == REVERSE_BUTTON_EVENT &&
-                 power_state == POWER_FSM_STATE_MAIN &&  // needs to be changed
+                 power_state == EE_POWER_DRIVE_STATE &&  // needs to be changed
                  prv_speed_is_zero()) {
         pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
         fsm_transition(fsm, REVERSE);
@@ -103,7 +104,7 @@ static void prv_drive_input(Fsm *fsm, void *context) {
   }
 
   StateId power_state = get_power_info_power_state();
-  if (power_state != POWER_FSM_STATE_MAIN) {  // needs to be changed
+  if (power_state != EE_POWER_DRIVE_STATE) {  // needs to be changed
     pca9555_gpio_set_state(&s_drive_btn_leds[DRIVE_LED], PCA9555_GPIO_STATE_LOW);
     fsm_transition(fsm, NEUTRAL);
   }
@@ -149,7 +150,7 @@ static void prv_reverse_input(Fsm *fsm, void *context) {
   }
 
   StateId power_state = get_power_info_power_state();
-  if (power_state != POWER_FSM_STATE_MAIN) {  // needs to be changed
+  if (power_state != EE_POWER_DRIVE_STATE) {  // needs to be changed
     pca9555_gpio_set_state(&s_drive_btn_leds[REVERSE_LED], PCA9555_GPIO_STATE_LOW);
     fsm_transition(fsm, NEUTRAL);
   }

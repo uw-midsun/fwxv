@@ -23,10 +23,11 @@ SegDisplay batt_perc_display = BATT_DISPLAY;
 // Centre Console State Variables
 static uint8_t s_drive_state;
 static bool s_cc_enabled;
-static bool s_regen_braking;
+static bool s_regen_braking = true;
 static uint32_t s_target_velocity;
 static uint32_t s_last_power_state = EE_POWER_OFF_STATE;
 static uint8_t s_last_lights_state = EE_STEERING_LIGHTS_OFF_STATE;
+static bool s_hazard_state;
 
 typedef enum DriveLeds {
   HAZARD_LED = 0,
@@ -39,18 +40,18 @@ typedef enum DriveLeds {
 } DriveLeds;
 
 static Pca9555GpioAddress s_output_leds[NUM_DRIVE_LED] = {
-  [POWER_LED] = CC_LED_POWER,   [HAZARD_LED] = HAZARD_LED_ADDR, [LEFT_LED] = LEFT_LED_ADDR,
-  [RIGHT_LED] = RIGHT_LED_ADDR, [CRUISE_LED] = CRUISE_LED_ADDR, [REGEN_LED] = REGEN_LED_ADDR
+  [POWER_LED] = CC_LED_POWER,   [HAZARD_LED] = CC_LED_HAZARD, [LEFT_LED] = CC_LED_LEFT,
+  [RIGHT_LED] = CC_LED_RIGHT, [CRUISE_LED] = CC_LED_CRUISE, [REGEN_LED] = CC_LED_REGEN_BRAKE
 };
 
 void update_indicators(uint32_t notif) {
   // Update hazard light
   if (notify_check_event(&notif, HAZARD_BUTTON_EVENT)) {
-    if (s_regen_braking) {
-      s_regen_braking = false;
+    if (s_hazard_state) {
+      s_hazard_state = false;
       pca9555_gpio_set_state(&s_output_leds[HAZARD_LED], PCA9555_GPIO_STATE_LOW);
     } else {
-      s_regen_braking = false;
+      s_hazard_state = true;
       pca9555_gpio_set_state(&s_output_leds[HAZARD_LED], PCA9555_GPIO_STATE_HIGH);
     }
   }
@@ -72,7 +73,7 @@ void update_indicators(uint32_t notif) {
         get_power_info_power_state() == EE_POWER_DRIVE_STATE) {
       pca9555_gpio_set_state(&s_output_leds[POWER_LED], PCA9555_GPIO_STATE_HIGH);
     } else {
-      pca9555_gpio_set_state(&s_output_leds[POWER_LED], PCA9555_GPIO_STATE_HIGH);
+      pca9555_gpio_set_state(&s_output_leds[POWER_LED], PCA9555_GPIO_STATE_LOW);
     }
     s_last_power_state = get_power_info_power_state();
   }
@@ -138,10 +139,6 @@ void monitor_cruise_control() {
 }
 
 void update_displays(void) {
-  seg_display_init(&cc_display);
-  seg_display_init(&speed_display);
-  seg_display_init(&batt_perc_display);
-
   // Read data from CAN structs and update displays with those values
   float speed_kph =
       (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) * CONVERT_VELOCITY;
@@ -168,6 +165,7 @@ void update_drive_output(uint32_t notif) {
   set_drive_output_drive_state(s_drive_state);
   set_drive_output_cruise_control(s_cc_enabled);
   set_drive_output_target_velocity(s_target_velocity);
+  set_cc_power_control_hazard_enabled(s_hazard_state);
   set_drive_output_regen_braking(s_regen_braking);
 }
 
@@ -179,5 +177,9 @@ StatusCode dashboard_init(void) {
   for (int i = 0; i < NUM_DRIVE_LED; i++) {
     status_ok_or_return(pca9555_gpio_init_pin(&s_output_leds[i], &settings));
   }
+  
+  seg_display_init(&cc_display);
+  seg_display_init(&speed_display);
+  seg_display_init(&batt_perc_display);
   return STATUS_CODE_OK;
 }
