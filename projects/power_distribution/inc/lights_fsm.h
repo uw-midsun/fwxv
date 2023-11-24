@@ -10,7 +10,6 @@
 #include "task.h"
 
 #define NUM_LIGHTS_STATES 4
-#define NUM_LIGHTS_TRANSITIONS 10
 #define SIGNAL_BLINK_PERIOD_MS 600  // Signal blink frequency of 1.66Hz
 DECLARE_FSM(lights);
 
@@ -33,7 +32,7 @@ typedef enum EELightType {
 } EELightType;
 
 typedef enum HazardStatus {
-  HAZARD_OFF = NUM_EE_LIGHT_TYPES + 1,
+  HAZARD_OFF = 0,
   HAZARD_ON,
 } HazardStatus;
 

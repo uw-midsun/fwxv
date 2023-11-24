@@ -206,17 +206,17 @@ BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
 // Output Group Definitions
 static OutputGroupDef s_output_group_left_signal = {
   .num_outputs = 1,
-  .outputs = { FRONT_OUTPUT_LEFT_FRONT_TURN_LIGHT },
+  .outputs = { FRONT_OUTPUT_PEDAL },
 };
 
 static OutputGroupDef s_output_group_right_signal = {
   .num_outputs = 1,
-  .outputs = { FRONT_OUTPUT_RIGHT_FRONT_TURN_LIGHT },
+  .outputs = { FRONT_OUTPUT_STEERING },
 };
 
 static OutputGroupDef s_output_group_hazards = {
   .num_outputs = 2,
-  .outputs = { FRONT_OUTPUT_LEFT_FRONT_TURN_LIGHT, FRONT_OUTPUT_RIGHT_FRONT_TURN_LIGHT },
+  .outputs = { FRONT_OUTPUT_STEERING, FRONT_OUTPUT_PEDAL },
 };
 
 static OutputGroupDef s_output_group_test = {

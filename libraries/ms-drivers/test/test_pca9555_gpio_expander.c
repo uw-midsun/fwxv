@@ -30,7 +30,7 @@ void setup_test(void) {
   gpio_it_init();
 
   i2c_init(i2c_port, &i2c_settings);
-  pca9555_gpio_init(i2c_port, MOCK_I2C_ADDRESS);
+  pca9555_gpio_init(i2c_port);
 }
 
 void teardown_test(void) {}

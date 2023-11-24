@@ -54,7 +54,7 @@ typedef struct {
 } Pca9555GpioSettings;
 
 // Initialize PCA9555 GPIO at this I2C port and address.
-StatusCode pca9555_gpio_init(const I2CPort i2c_port, const I2CAddress i2c_address);
+StatusCode pca9555_gpio_init(const I2CPort i2c_port);
 
 // Initialize an PCA9555 GPIO pin by address.
 StatusCode pca9555_gpio_init_pin(const Pca9555GpioAddress *address,

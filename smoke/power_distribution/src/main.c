@@ -63,7 +63,7 @@ int main() {
   interrupt_init();
   gpio_init();
   i2c_init(0, &i2c_settings);
-  pca9555_gpio_init(I2C_PORT_1, 0); // second param (i2c_address) isn't needed/used by pca init
+  pca9555_gpio_init(I2C_PORT_1);
 
   tasks_init_task(smoke_pd, TASK_PRIORITY(2), NULL);
   LOG_DEBUG("PD Smoke!\n");
