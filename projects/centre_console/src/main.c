@@ -42,6 +42,7 @@ void run_fast_cycle() {
 
 void run_medium_cycle() {
   run_can_rx_cycle();
+  wait_tasks(1);
 
   uint32_t notif = 0;
   notify_get(&notif);
@@ -53,6 +54,7 @@ void run_medium_cycle() {
 
   update_drive_output(notif);
   run_can_tx_cycle();
+  wait_tasks(1);
 }
 
 void run_slow_cycle() {}
