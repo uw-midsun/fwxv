@@ -34,7 +34,7 @@ TASK(smoke_adc_task, TASK_STACK_512) {
       adc_run();
       for (uint8_t i = 0; i < SIZEOF_ARRAY(adc_addy); i++) {
         adc_read_converted(adc_addy[i], &data);
-        printf("%d%d: %d\n\r", adc_addy[i].port, adc_addy[i].pin, data);
+        LOG_DEBUG("%d%d: %d\n\r", adc_addy[i].port, adc_addy[i].pin, data);
       }
       delay_ms(1000);
    }

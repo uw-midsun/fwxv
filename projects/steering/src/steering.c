@@ -28,9 +28,11 @@ StatusCode steering_init(Task *task) {
 
 void steering_input(uint32_t notification) {
   uint16_t control_stalk_data;
+  set_steering_info_input_lights(0);
   set_steering_info_input_cc(0);
   // Read ADC of pin set by turn signal lights
   adc_read_converted(turn_signal_address, &control_stalk_data);
+
   // Determine if it's a left, right or off signal
   if (control_stalk_data > TURN_LEFT_SIGNAL_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
       control_stalk_data < TURN_LEFT_SIGNAL_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
@@ -44,6 +46,7 @@ void steering_input(uint32_t notification) {
   // Read ADC of pin set by cruise control
   // Determine if it read an increase or decrease signal
   adc_read_converted(cc_address, &control_stalk_data);
+  
   if (control_stalk_data > CRUISE_CONTROl_STALK_SPEED_INCREASE_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
       control_stalk_data < CRUISE_CONTROl_STALK_SPEED_INCREASE_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
     // toggle second bit to 1
@@ -55,11 +58,18 @@ void steering_input(uint32_t notification) {
     // toggle first bit to 1
     set_steering_info_input_cc(CC_DECREASE_MASK | CC_INPUT);
   }
+  
+  
   if (notify_get(&notification) == STATUS_CODE_OK) {
+    LOG_DEBUG("Notification status ok\n");
     while (event_from_notification(&notification, &STEERING_EVENT) == STATUS_CODE_INCOMPLETE) {
+      LOG_DEBUG("Event Fetched\n");
       if (STEERING_EVENT == CC_TOGGLE_EVENT) {
+        LOG_DEBUG("CC Toggle Event Returned\n");
         set_steering_info_input_cc(CC_TOGGLE_MASK | CC_INPUT);
       }
     }
+  }else{
+    LOG_DEBUG("CC Toggle Event FAILED\n");
   }
 }

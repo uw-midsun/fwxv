@@ -2,6 +2,7 @@
 
 #include <inttypes.h>
 
+#include "crc32.h"
 #include "log.h"
 #include "soft_timer.h"
 
@@ -113,7 +114,7 @@ StatusCode persist_init(PersistStorage *persist, FlashPage page, void *blob, siz
     status_ok_or_return(ret);
 
     // Calculate valid section's hash
-    // persist->prev_hash = crc32_arr((const uint8_t *)persist->blob, persist->blob_size);
+    persist->prev_hash = crc32_arr((const uint8_t *)persist->blob, persist->blob_size);
 
     // Increment flash_addr to the next new section
     persist->prev_flash_addr = persist->flash_addr;
