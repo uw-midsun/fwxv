@@ -125,7 +125,7 @@ static void prv_right_signal_output(void *context) {
 static void prv_hazard_input(Fsm *fsm, void *context) {
   // can transition to INIT, BPS_FAULT
   EELightType light_event = get_steering_info_input_lights();
-  HazardStatus hazard_status = get_power_info_hazard_state();
+  HazardStatus hazard_status = get_cc_power_control_hazard_enabled();
 
   if (hazard_status == HAZARD_ON) {
     return;
