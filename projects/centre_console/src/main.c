@@ -7,10 +7,8 @@
 #include "delay.h"
 #include "drive_fsm.h"
 #include "fsm.h"
-#include "fsm_shared_mem.h"
 #include "log.h"
 #include "master_task.h"
-#include "power_fsm.h"
 #include "tasks.h"
 
 #ifdef MS_PLATFORM_X86
@@ -34,8 +32,10 @@ const CanSettings can_settings = {
 };
 
 void pre_loop_init() {
+  Task *cc_buttons_master_task = get_master_task();
+  init_cc_buttons(cc_buttons_master_task);
   init_drive_fsm();
-  init_power_fsm(POWER_FSM_STATE_OFF);
+  dashboard_init();
 }
 
 void run_fast_cycle() {
@@ -45,10 +45,16 @@ void run_fast_cycle() {
 void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
-  fsm_run_cycle(drive);
-  fsm_run_cycle(power);
+
+  uint32_t notif = 0;
+  notify_get(&notif);
+  update_indicators(notif);
   monitor_cruise_control();
-  wait_tasks(2);
+  update_displays();
+  fsm_run_cycle(drive);
+  wait_tasks(1);
+
+  update_drive_output(notif);
   run_can_tx_cycle();
   wait_tasks(1);
 }
@@ -67,7 +73,6 @@ int main() {
   can_init(&s_can_storage, &can_settings);
 
   LOG_DEBUG("Welcome to TEST! \n");
-  fsm_shared_mem_init();
 
   init_master_task();
 
