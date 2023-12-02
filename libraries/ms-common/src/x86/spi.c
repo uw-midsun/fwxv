@@ -104,7 +104,7 @@ StatusCode spi_get_tx(SpiPort spi, uint8_t *data, uint8_t len) {
 }
 
 StatusCode spi_set_rx(SpiPort spi, uint8_t *data, uint8_t len) {
-  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_TIMEOUT_MS));
+  status_ok_or_return(mutex_lock(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
 
   for (size_t rx = 0; rx < len; rx++) {
     if (queue_send(&s_port[spi].spi_buf.rx_queue, &data[rx], SPI_QUEUE_DELAY_MS)) {
