@@ -2,7 +2,6 @@
 
 #include "drive_fsm.h"
 #include "i2c.h"
-#include "master_task.h"
 #include "pca9555_gpio_expander.h"
 #include "pca9555_gpio_expander_defs.h"
 #include "update_dashboard.h"
@@ -20,3 +19,4 @@ typedef enum ConsoleButtonMask {
 } ConsoleButtonMask;
 
 StatusCode get_button_press(void);
+StatusCode init_cc_buttons(Task * cc_master_task);

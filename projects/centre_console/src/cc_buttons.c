@@ -1,5 +1,7 @@
 #include "cc_buttons.h"
 
+static Task * cc_notify_task = NULL;
+
 // Notifies drive/power task of button press event
 StatusCode get_button_press(void) {
   // TODO: Migrate this read to PCA9555
@@ -11,15 +13,15 @@ StatusCode get_button_press(void) {
   }
   if ((~(pca9555_reg_val)&REGEN_BTN_MASK) != 0) {
     LOG_DEBUG("REGEN PRESSED\n");
-    notify(master_task, REGEN_BUTTON_EVENT);
+    notify(cc_notify_task, REGEN_BUTTON_EVENT);
   }
   if ((~(pca9555_reg_val)&HAZARD_BTN_MASK) != 0) {
     LOG_DEBUG("HAZARD PRESSED\n");
-    notify(master_task, HAZARD_BUTTON_EVENT);
+    notify(cc_notify_task, HAZARD_BUTTON_EVENT);
   }
   if ((~(pca9555_reg_val)&POWER_BTN_MASK) != 0) {
     LOG_DEBUG("POWER PRESSED\n");
-    notify(master_task, POWER_BUTTON_EVENT);
+    notify(cc_notify_task, POWER_BUTTON_EVENT);
   }
 
   if ((~(pca9555_reg_val)&DRIVE_BTN_MASK) != 0) {
@@ -35,5 +37,10 @@ StatusCode get_button_press(void) {
     notify(drive, REVERSE_BUTTON_EVENT);
   }
 
+  return STATUS_CODE_OK;
+}
+
+StatusCode init_cc_buttons(Task * task) {
+  cc_notify_task = task;
   return STATUS_CODE_OK;
 }

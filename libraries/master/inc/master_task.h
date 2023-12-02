@@ -2,8 +2,6 @@
 #include "log.h"
 #include "tasks.h"
 
-DECLARE_TASK(master_task);
-
 void set_master_cycle_time(uint32_t time_ms);
 void set_medium_cycle_count(uint32_t cycles);
 void set_slow_cycle_count(uint32_t cycles);

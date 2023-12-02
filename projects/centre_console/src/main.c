@@ -32,6 +32,8 @@ const CanSettings can_settings = {
 };
 
 void pre_loop_init() {
+  Task * cc_buttons_master_task = get_master_task();
+  init_cc_buttons(cc_buttons_master_task);
   init_drive_fsm();
   dashboard_init();
 }
