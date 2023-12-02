@@ -47,9 +47,6 @@ StatusCode notify_get(uint32_t *notification) {
 
 StatusCode notify_wait(uint32_t *notification, uint32_t ms_to_wait) {
   TickType_t ticks_to_wait = 0;
-  if (notification == NULL) {
-    return STATUS_CODE_INVALID_ARGS;
-  }
   if (ms_to_wait == BLOCK_INDEFINITELY) {
     ticks_to_wait = portMAX_DELAY;
   } else {

@@ -66,7 +66,7 @@ static void prv_timer_callback(SoftTimerId id) {
   current_channel = (Ads1015Channel)(__builtin_ffs(storage->pending_channel_bitset) - 1);
   // Update so that the ADS1015 reads from the next channel.
   prv_set_channel(storage, current_channel);
-  soft_timer_start(ADS1015_CHANNEL_UPDATE_PERIOD_US, prv_timer_callback, &s_timer);
+  soft_timer_init_and_start(ADS1015_CHANNEL_UPDATE_PERIOD_US, prv_timer_callback, &s_timer);
 }
 
 // Inits the storage for ADS1015 and starts the soft timer.
@@ -80,7 +80,7 @@ StatusCode ads1015_init(Ads1015Storage *storage, I2CPort i2c_port, Ads1015Addres
     storage->channel_readings[channel] = ADS1015_DISABLED_CHANNEL_READING;
   }
   s_context = storage;
-  return soft_timer_start(ADS1015_CHANNEL_UPDATE_PERIOD_US, prv_timer_callback, &s_timer);
+  return soft_timer_init_and_start(ADS1015_CHANNEL_UPDATE_PERIOD_US, prv_timer_callback, &s_timer);
 }
 
 // Enable/disables a channel, and sets a callback for the channel.

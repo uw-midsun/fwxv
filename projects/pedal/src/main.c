@@ -48,6 +48,8 @@ void pedal_init() {
   max11600_init(&s_max11600_storage, I2C_PORT_2);
 }
 
+void pre_loop_init() {}
+
 void run_fast_cycle() {
   run_can_tx_cycle();
   wait_tasks(1);

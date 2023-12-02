@@ -11,6 +11,8 @@ typedef struct
     {%- for signal, signal_data in message_data['signals'].items() %}
     uint{{signal_data['length']}}_t {{message}}_{{signal}};
     {%- endfor %}
+{%- endfor %}
+{%- for message, message_data in messages.items() %}
     bool received_{{message}};
 {%- endfor %}
 } {{board}}_rx_struct;

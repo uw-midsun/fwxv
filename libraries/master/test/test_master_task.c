@@ -18,6 +18,8 @@ static StaticSemaphore_t s_sem2;
 
 static bool s_task_started;
 
+void pre_loop_init() {}
+
 void run_fast_cycle() {
   LOG_DEBUG("run_fast_cycle started\n");
 }

@@ -5,6 +5,7 @@
 #include "master_task.h"
 #include "pca_config.h"
 #include "tasks.h"
+#include "i2c.h"
 
 Pca9555GpioAddress addy[] = {
   { .i2c_address = I2C_ADDRESS_1, .pin = PCA9555_PIN_IO1_0 },
@@ -47,7 +48,7 @@ int main() {
   gpio_it_init();
 
   i2c_init(I2C_PORT_1, &settings);
-  pca9555_gpio_init(0, I2C_ADDRESS_1);
+  pca9555_gpio_init(I2C_PORT_1);
 
   LOG_DEBUG("Welcome to TEST!");
 

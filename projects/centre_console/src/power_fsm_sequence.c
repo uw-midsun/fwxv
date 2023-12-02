@@ -63,13 +63,11 @@ void power_fsm_send_pd_bms_output(void *context) {
 
 void power_fsm_send_pd_bms_input(Fsm *fsm, void *context) {
   //  = (PowerFsmContext *)context;
-  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_rear_pd_fault());
-  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_front_pd_fault());
+  FSM_CHECK_DATA_RECV(fsm, power_context, get_received_pd_fault());
 
-  uint8_t rear_fault = get_rear_pd_fault_fault_data();
-  uint8_t front_fault = get_front_pd_fault_fault_data();
+  uint8_t pd_fault = get_pd_fault_fault_data();
 
-  if (rear_fault == PD_REAR_FAULT && front_fault == PD_FRONT_FAULT) {
+  if (pd_fault == PD_FAULT) {
     // Reset cycle counter
     s_cycle_timeout = CYCLES_TIMEOUT;
     // Transition to next state

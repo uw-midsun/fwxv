@@ -18,8 +18,7 @@
       signals:
         signal1:
           length: 8
-
-    front_current_measurement:
+    current_measurement:
       id: 54
       target:
         centre_console:
@@ -29,8 +28,7 @@
           length: 16
         current:
           length: 16
-
-    front_pd_fault:
+    pd_fault:
       id: 62
       target:
         centre_console:
@@ -50,4 +48,11 @@
           length: 8
         lights_state:
           length: 8
-    
+    lights_sync:
+      id: 23
+      target:
+        lights_front:
+          watchdog: 0
+      signals:
+        signal1:
+          length: 8

@@ -13,43 +13,15 @@ tx_struct g_tx_struct;
 
 static CanStorage *s_can_storage;
 
-static SemaphoreHandle_t s_can_rx_sem_handle;
-static StaticSemaphore_t s_can_rx_sem;
-
-static SemaphoreHandle_t s_can_tx_sem_handle;
-static StaticSemaphore_t s_can_tx_sem;
-
 //takes 1 for filter_in, 2 for filter_out and default is unset
 static int s_can_filter_in_en = 0;
 
-StatusCode run_can_rx_cycle()
-{
-  BaseType_t ret = xSemaphoreGive(s_can_rx_sem_handle);
-
-  if (ret == pdFALSE) {
-    return STATUS_CODE_INTERNAL_ERROR;
-  }
-
-  return STATUS_CODE_OK;
-}
-
-StatusCode run_can_tx_cycle()
-{
-  BaseType_t ret = xSemaphoreGive(s_can_tx_sem_handle);
-
-  if (ret == pdFALSE) {
-    return STATUS_CODE_INTERNAL_ERROR;
-  }
-
-  return STATUS_CODE_OK;
-}
-
-TASK(CAN_RX, TASK_MIN_STACK_SIZE)
+TASK(CAN_RX, TASK_STACK_256)
 {
   int counter = 0;
   while (true)
   {
-    xSemaphoreTake(s_can_rx_sem_handle, portMAX_DELAY);
+    notify_wait(NULL, BLOCK_INDEFINITELY);
     LOG_DEBUG("can_rx called: %d!\n", counter);
     counter++;
 
@@ -59,12 +31,12 @@ TASK(CAN_RX, TASK_MIN_STACK_SIZE)
   }
 }
 
-TASK(CAN_TX, TASK_MIN_STACK_SIZE)
+TASK(CAN_TX, TASK_STACK_256)
 {
   int counter = 0;
   while (true)
   {
-    xSemaphoreTake(s_can_tx_sem_handle, portMAX_DELAY);
+    notify_wait(NULL, BLOCK_INDEFINITELY);
     LOG_DEBUG("can_tx called: %d!\n", counter);
     counter++;
 
@@ -76,6 +48,27 @@ TASK(CAN_TX, TASK_MIN_STACK_SIZE)
 
     send_task_end();
   }
+}
+
+StatusCode run_can_rx_cycle()
+{
+  StatusCode ret = notify(CAN_RX, 1);
+  if (ret == pdFALSE) {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
+  return STATUS_CODE_OK;
+}
+
+StatusCode run_can_tx_cycle()
+{
+  StatusCode ret = notify(CAN_TX, 1);
+
+  if (ret == pdFALSE) {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
+  return STATUS_CODE_OK;
 }
 
 StatusCode can_init(CanStorage *storage, const CanSettings *settings)
@@ -94,12 +87,6 @@ StatusCode can_init(CanStorage *storage, const CanSettings *settings)
   // Initializing global structs
   memset(&g_rx_struct, 0, sizeof(g_rx_struct));
   memset(&g_tx_struct, 0, sizeof(g_tx_struct));
-
-  // Create Semaphores
-  s_can_rx_sem_handle = xSemaphoreCreateBinaryStatic(&s_can_rx_sem);
-  configASSERT(s_can_rx_sem_handle);
-  s_can_tx_sem_handle = xSemaphoreCreateBinaryStatic(&s_can_tx_sem);
-  configASSERT(s_can_tx_sem_handle);
 
   status_ok_or_return(can_queue_init(&s_can_storage->rx_queue));
  

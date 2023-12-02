@@ -29,7 +29,7 @@ StatusCode pd_set_output_group(OutputGroup group, OutputState state) {
   } else {
     // Get specific group, iterate through set of outputs
     OutputGroupDef *grp = g_output_group_map[group];
-    if (!grp) {
+    if (grp == NULL) {
       return STATUS_CODE_UNINITIALIZED;
     }
 

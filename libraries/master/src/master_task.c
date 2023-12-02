@@ -29,6 +29,7 @@ uint8_t get_cycles_over() {
 void run_fast_cycle();
 void run_medium_cycle();
 void run_slow_cycle();
+void pre_loop_init();
 
 void check_late_cycle(BaseType_t delay) {
   if (delay != pdTRUE) {
@@ -46,8 +47,9 @@ void check_late_cycle(BaseType_t delay) {
 }
 
 TASK(master_task, TASK_STACK_512) {
-  TickType_t xLastWakeTime = xTaskGetTickCount();
   uint32_t counter = 1;
+  pre_loop_init();
+  TickType_t xLastWakeTime = xTaskGetTickCount();
   while (true) {
     // LOG_DEBUG("counter: %u\n", counter);
 
