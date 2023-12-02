@@ -1,7 +1,6 @@
 #include "centre_console_getters.h"
 #include "centre_console_setters.h"
 #include "drive_fsm.h"
-#include "exported_enums.h"
 #include "i2c.h"
 #include "task_test_helpers.h"
 #include "unity.h"
