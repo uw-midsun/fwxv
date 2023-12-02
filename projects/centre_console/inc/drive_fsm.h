@@ -1,13 +1,13 @@
 #pragma once
 
 #include "delay.h"
+#include "exported_enums.h"
 #include "fsm.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
 #include "notify.h"
 #include "task.h"
-#include "exported_enums.h"
 
 #define NUM_DRIVE_STATES 3
 #define NUM_DRIVE_TRANSITIONS 4

@@ -126,10 +126,9 @@ void test_neutral_to_drive(void) {
   LOG_DEBUG("T1.6: (Drive->Neutral) (fault when power state is not main)\n");
   notify(drive, DRIVE_BUTTON_EVENT);
   neutral_to_drive();
-  g_rx_struct.power_info_power_state = EE_POWER_OFF_STATE;  // set test value 
+  g_rx_struct.power_info_power_state = EE_POWER_OFF_STATE;  // set test value
   drive_to_neutral();
-  g_rx_struct.power_info_power_state =
-      EE_POWER_DRIVE_STATE;  // reset test value for next test 
+  g_rx_struct.power_info_power_state = EE_POWER_DRIVE_STATE;  // reset test value for next test
 
   // Starting sub test 7 drive to neutral: (Drive->Neutral) (fault when we don't
   // receive power state message)
@@ -180,10 +179,9 @@ void test_neutral_to_reverse() {
   LOG_DEBUG("T2.5: (Reverse->Neutral) (fault when power state is not main)\n");
   notify(drive, REVERSE_BUTTON_EVENT);
   neutral_to_reverse();
-  g_rx_struct.power_info_power_state = EE_POWER_OFF_STATE;  // set test value 
+  g_rx_struct.power_info_power_state = EE_POWER_OFF_STATE;  // set test value
   reverse_to_neutral();
-  g_rx_struct.power_info_power_state =
-      EE_POWER_DRIVE_STATE;  // reset test value for next test 
+  g_rx_struct.power_info_power_state = EE_POWER_DRIVE_STATE;  // reset test value for next test
 
   // Starting sub test 6 reverse to neutral: (Reverse->Neutral) (fault when we don't
   // receive power state message)

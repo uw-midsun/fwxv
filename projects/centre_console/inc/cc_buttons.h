@@ -19,4 +19,4 @@ typedef enum ConsoleButtonMask {
 } ConsoleButtonMask;
 
 StatusCode get_button_press(void);
-StatusCode init_cc_buttons(Task * cc_master_task);
+StatusCode init_cc_buttons(Task *cc_master_task);

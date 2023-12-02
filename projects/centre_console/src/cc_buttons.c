@@ -1,6 +1,6 @@
 #include "cc_buttons.h"
 
-static Task * cc_notify_task = NULL;
+static Task *cc_notify_task = NULL;
 
 // Notifies drive/power task of button press event
 StatusCode get_button_press(void) {
@@ -40,7 +40,7 @@ StatusCode get_button_press(void) {
   return STATUS_CODE_OK;
 }
 
-StatusCode init_cc_buttons(Task * task) {
+StatusCode init_cc_buttons(Task *task) {
   cc_notify_task = task;
   return STATUS_CODE_OK;
 }
