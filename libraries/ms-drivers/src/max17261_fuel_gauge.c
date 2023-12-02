@@ -1,8 +1,9 @@
 #include "max17261_fuel_gauge.h"
 
-#define PCT_LSB (1.0 / 256)                             // LSBit is 1/256%
-#define CAP_LSB (5.0 / storage->settings.r_sense_ohms)  // LSBit is 5 micro Volt hrs / Rsense
-#define TIM_LSB (5625U)                                 // LSBit is 5625ms
+#define PCT_LSB (1.0 / 256)                                 // LSBit is 1/256%
+#define CAP_LSB (5.0 / storage->settings.r_sense_uohms)      // LSBit is 5 micro Volt hrs / Rsense
+#define TIM_LSB (5625U)                                     // LSBit is 5625ms
+#define CUR_LSB (1.5625f / storage->settings.r_sense_uohms)  // LSBit is 1.5625uA / Rsense
 
 StatusCode max17261_get_reg(Max17261Storage *storage, Max17261Registers reg, uint16_t *value) {
   // unsure of underlying type of enum, cast to uint8_t to be sure
@@ -61,12 +62,36 @@ StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms) {
   return STATUS_CODE_OK;
 }
 
+StatusCode max17261_current(Max17261Storage *storage, uint16_t *current_a) {
+  uint16_t current_reg_val = 0;
+  status_ok_or_return(max17261_get_reg(storage, MAX17261_TIME_TO_FULL, &current_reg_val));
+  *current_a = current_reg_val * CUR_LSB;
+  return STATUS_CODE_OK;
+}
+
 StatusCode max17261_init(Max17261Storage *storage, Max17261Settings settings) {
   if (settings.i2c_port >= NUM_I2C_PORTS) {
     return STATUS_CODE_INVALID_ARGS;
   }
 
   storage->settings = settings;
+
+  // Configuration for alerts
+  // Enable current, voltage, and temperature alerts (pg.17 of datasheet, Config (1Dh) Format)
+  uint16_t config = 0;
+  status_ok_or_return(max17261_get_reg(storage, MAX17261_CONFIG, &config));
+  config |= (1 << 2);
+  status_ok_or_return(max17261_set_reg(storage, MAX17261_CONFIG, config));
+  // Upper byte is VMAX and lower byte is VMIN
+  uint16_t voltage_th = (settings.v_thresh_max << 8) & (settings.v_thresh_min & 0x00FF);
+  status_ok_or_return(max17261_set_reg(storage, MAX17261_VOLT_ALRT_THRSH, voltage_th));
+  // Upper byte is IMAX and lower byte is IMIN
+  uint16_t current_th = (settings.i_thresh_max << 8) & (settings.i_thresh_min & 0x00FF);
+  status_ok_or_return(max17261_set_reg(storage, MAX17261_I_ALRT_TH, current_th));
+  // Upper byte is TMAX and lower byte is TMIN
+  status_ok_or_return(max17261_set_reg(storage, MAX17261_TEMP_ALRT_THRSH, (settings.temp_thresh_max << 8)));
+  // Make sure SOC alerts are disabled (see datasheet pg.26 for disabled SAlrtTh value)
+  status_ok_or_return(max17261_set_reg(storage, MAX17261_SOC_ALRT_THRSH, (0xFF00)));
 
   status_ok_or_return(max17261_set_reg(storage, MAX17261_DESIGN_CAP, settings.design_capacity));
   status_ok_or_return(max17261_set_reg(storage, MAX17261_I_CHG_TERM, settings.charge_term_current));

@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <arm_math.h>
 
 #include "i2c.h"
 #include "max17261_fuel_gauge_defs.h"
@@ -26,7 +27,13 @@ typedef struct {
   uint16_t empty_voltage;        // Only a 9-bit field, LSB = 78.125 (micro Volts)
   uint16_t charge_term_current;  // LSB = 1.5625 (micro Volts / R Sense)
 
-  uint16_t r_sense_ohms;
+  uint16_t v_thresh_max;
+  uint16_t v_thresh_min;
+  uint16_t i_thresh_max;
+  uint16_t i_thresh_min;
+  uint16_t temp_thresh_max;
+
+  float32_t r_sense_uohms;  // Rsense in micro ohms
 } Max17261Settings;
 
 typedef struct {
@@ -67,6 +74,13 @@ StatusCode max17261_time_to_empty(Max17261Storage *storage, uint16_t *tte_ms);
  * @return STATUS_CODE_OK on success
  */
 StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms);
+
+/* @brief Gets a current reading in amps
+ * @param storage - a pointer to an already initialized Max17261Storage struct
+ * @param soc_pct - current in amps returned in this var
+ * @return STATUS_CODE_OK on success
+ */
+StatusCode max17261_current(Max17261Storage *storage, uint16_t *current_a);
 
 /* @brief Gets the time to full in milliseconds
  * @param storage - a pointer to an uninitialized Max17261Storage struct
