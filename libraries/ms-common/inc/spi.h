@@ -33,20 +33,13 @@ typedef struct {
 // baudrate is within bounds.
 StatusCode spi_init(SpiPort spi, const SpiSettings *settings);
 
-// This method will send |tx_len| bytes from |tx_data| to the spi port |spi|.
-// This method is a wrapper for spi_exchange.
-StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len);
+// This method will send |tx_len| bytes from |tx_data| to the spi port |spi|. It
+// will not change the CS line state. The response bytes will be discarded.
+#define spi_tx(spi, tx_data, tx_len) spi_exchange(spi, tx_data, tx_len, NULL, 0)
 
-// This method will set the state of the CS line for a given spi port
-StatusCode spi_cs_set_state(SpiPort spi, GpioState state);
-
-// Gets the CS state of a given spi port and assigns it to the state that is
-// passed in.
-StatusCode spi_cs_get_state(SpiPort spi, GpioState *input_state);
-
-// This method will transmit and receive data from the sou port |spi|.
-// Before tx and rx, CS will be pulled low. Then tx_data will be transmitted,
-// followed by receiving |rx_len| number of bytes. After, CS will be pulled high.
+// This method will initiate a spi transaction on the |spi| port.
+// First, it will pull CS low, then transmit |tx_len| number of bytes from |tx_data|,
+// then receive |rx_len| number of bytes into |tx_data|, Finally pull CS high.
 StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
                         size_t rx_len);
 

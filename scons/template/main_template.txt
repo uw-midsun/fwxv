@@ -4,6 +4,11 @@
 #include "tasks.h"
 #include "master_task.h"
 
+void pre_loop_init() 
+{
+
+}
+
 void run_fast_cycle()
 {
 

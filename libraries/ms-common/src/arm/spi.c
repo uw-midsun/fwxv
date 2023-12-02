@@ -15,18 +15,16 @@ typedef struct {
   Queue tx_queue;
   uint8_t rx_buf[SPI_MAX_NUM_DATA];
   Queue rx_queue;
-  Semaphore mutex;
+  Mutex mutex;
 } SPIBuffer;
 
 typedef struct {
   void (*rcc_cmd)(uint32_t periph, FunctionalState state);
   uint32_t periph;
   uint8_t irqn;
-  SpiMode mode;
   SPI_TypeDef *base;
   GpioAddress cs;
   SPIBuffer spi_buf;
-  volatile uint8_t num_rx_bytes;  // Number of bytes left to receive in rx mode
 } SpiPortData;
 
 static SpiPortData s_port[NUM_SPI_PORTS] = {
@@ -98,7 +96,7 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   s_port[spi].spi_buf.tx_queue.num_items = SPI_MAX_NUM_DATA;
   s_port[spi].spi_buf.tx_queue.item_size = sizeof(uint8_t);
   s_port[spi].spi_buf.tx_queue.storage_buf = s_port[spi].spi_buf.tx_buf;
-  status_ok_or_return(sem_init(&s_port[spi].spi_buf.mutex, 1, 1));
+  status_ok_or_return(mutex_init(&s_port[spi].spi_buf.mutex));
   status_ok_or_return(queue_init(&s_port[spi].spi_buf.rx_queue));
   status_ok_or_return(queue_init(&s_port[spi].spi_buf.tx_queue));
 
@@ -107,41 +105,30 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   return STATUS_CODE_OK;
 }
 
-StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
-  return spi_exchange(spi, tx_data, tx_len, NULL, 0);
-}
-
-StatusCode spi_cs_set_state(SpiPort spi, GpioState state) {
-  return gpio_set_state(&s_port[spi].cs, state);
-}
-
-StatusCode spi_cs_get_state(SpiPort spi, GpioState *input_state) {
-  return gpio_get_state(&s_port[spi].cs, input_state);
-}
-
 StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
                         size_t rx_len) {
   if (spi >= NUM_SPI_PORTS) {
     return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
   }
   // Proceed if mutex is unlocked
-  status_ok_or_return(sem_wait(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
+  status_ok_or_return(mutex_lock(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
 
   queue_reset(&s_port[spi].spi_buf.tx_queue);
   queue_reset(&s_port[spi].spi_buf.rx_queue);
-
-  spi_cs_set_state(spi, GPIO_STATE_LOW);
 
   // Copy data into queue
   uint8_t data = 0;
   for (size_t i = 0; i < tx_len + rx_len; i++) {
     data = (i < tx_len) ? tx_data[i] : 0;
     if (queue_send(&s_port[spi].spi_buf.tx_queue, &data, 0)) {
-      queue_reset(&s_port[spi].spi_buf.tx_queue);
-      sem_post(&s_port[spi].spi_buf.mutex);
+      mutex_unlock(&s_port[spi].spi_buf.mutex);
       return STATUS_CODE_RESOURCE_EXHAUSTED;
     }
   }
+
+  // set spi CS state LOW
+  gpio_set_state(&s_port[spi].cs, GPIO_STATE_LOW);
+
   // Enable interrupts and start transaction
   // Transaction started when we spi is enabled, and tx register is empty
   SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE, ENABLE);
@@ -154,8 +141,9 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
       SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE,
                        DISABLE);
       SPI_Cmd(s_port[spi].base, DISABLE);
-      spi_cs_set_state(spi, GPIO_STATE_HIGH);
-      sem_post(&s_port[spi].spi_buf.mutex);
+      // set spi CS state HIGH
+      gpio_set_state(&s_port[spi].cs, GPIO_STATE_HIGH);
+      mutex_unlock(&s_port[spi].spi_buf.mutex);
       return STATUS_CODE_TIMEOUT;
     }
     if (i >= tx_len) {
@@ -164,8 +152,9 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
     }
   }
 
-  spi_cs_set_state(spi, GPIO_STATE_HIGH);
-  sem_post(&s_port[spi].spi_buf.mutex);
+  // set spi CS state HIGH
+  gpio_set_state(&s_port[spi].cs, GPIO_STATE_HIGH);
+  mutex_unlock(&s_port[spi].spi_buf.mutex);
 
   return STATUS_CODE_OK;
 }
@@ -182,7 +171,6 @@ static void prv_spi_irq_handler(SpiPort spi) {
       SPI_I2S_SendData(s_port[spi].base, tx_data);
     } else {
       // We have sent all data, so close spi
-      // TODO(mitchellostler): Add Busy check
       SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE,
                        DISABLE);
       SPI_Cmd(s_port[spi].base, DISABLE);
