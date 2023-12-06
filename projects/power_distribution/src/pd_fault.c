@@ -13,7 +13,7 @@ static uint8_t fault_bitset = 0;
 #define AUX_OVERTEMP_THRESHOLD 60
 #define DCDC_OVERTEMP_THRESHOLD 60
 
-StatusCode prv_check_aux_fault() {
+static StatusCode prv_check_aux_fault() {
   const GpioAddress aux_fault_gpio_1 = AUX_FAULT_GPIO_1;
   const GpioAddress aux_fault_gpio_2 = AUX_FAULT_GPIO_2;
 
@@ -33,7 +33,7 @@ StatusCode prv_check_aux_fault() {
   return STATUS_CODE_OK;
 }
 
-StatusCode prv_check_dcdc_fault() {
+static StatusCode prv_check_dcdc_fault() {
   const GpioAddress dcdc_fault_gpio_1 = DCDC_FAULT_GPIO_1;
   const GpioAddress dcdc_fault_gpio_2 = DCDC_FAULT_GPIO_2;
   const GpioAddress dcdc_fault_gpio_3 = DCDC_FAULT_GPIO_3;
@@ -57,7 +57,7 @@ StatusCode prv_check_dcdc_fault() {
   return STATUS_CODE_OK;
 }
 
-StatusCode prv_check_aux_overcurrent() {
+static StatusCode prv_check_aux_overcurrent() {
   const GpioAddress aux_overcurrent = AUX_OVERCURRENT;
 
   uint16_t aux_current_reading;
@@ -72,7 +72,7 @@ StatusCode prv_check_aux_overcurrent() {
   return STATUS_CODE_OK;
 }
 
-StatusCode prv_check_dcdc_overcurrent() {
+static StatusCode prv_check_dcdc_overcurrent() {
   const GpioAddress dcdc_overcurrent = DCDC_OVERCURRENT;
 
   uint16_t dcdc_current_reading;
@@ -87,7 +87,7 @@ StatusCode prv_check_dcdc_overcurrent() {
   return STATUS_CODE_OK;
 }
 
-StatusCode prv_check_aux_overtemp() {
+static StatusCode prv_check_aux_overtemp() {
   const GpioAddress aux_overtemp = AUX_OVERTEMP;
 
   uint16_t aux_temp_reading;
@@ -103,7 +103,7 @@ StatusCode prv_check_aux_overtemp() {
   return STATUS_CODE_OK;
 }
 
-StatusCode prv_check_dcdc_overtemp() {
+static StatusCode prv_check_dcdc_overtemp() {
   const GpioAddress dcdc_overtemp = DCDC_OVERTEMP;
 
   uint16_t dcdc_temp_reading;
