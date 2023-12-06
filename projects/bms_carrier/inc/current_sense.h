@@ -9,6 +9,7 @@
 #include "spi.h"
 #include "i2c.h"
 #include "status.h"
+#include "tasks.h"
 
 #include "max17261_fuel_gauge.h"
 
@@ -23,9 +24,10 @@
 #define CHARGE_OVERCURRENT_CA (-8160)     // -81.6 Amp
 
 // Enum for GPIO IT alerts (just the one pin)
-enum {
-  ALRT_GPIO_IT = 0
-};
+typedef enum {
+  CURRENT_SENSE_RUN_CYCLE = 0,
+  ALRT_GPIO_IT
+} CurrentSenseNotification;
 
 typedef struct CurrentStorage {
   int16_t readings_ring[NUM_STORED_CURRENT_READINGS];
@@ -34,7 +36,9 @@ typedef struct CurrentStorage {
   uint32_t fuel_guage_cycle_ms;  // Time in ms between conversions (soft timer kicks)
 } CurrentStorage;
 
+StatusCode run_current_sense_cycle();
+
 bool current_sense_is_charging();
 
-StatusCode current_sense_init(CurrentStorage *readings, I2CSettings *settings,
+StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings,
                               uint32_t fuel_guage_cycle_ms);
