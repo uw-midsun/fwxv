@@ -1,7 +1,5 @@
 #pragma once
 
-#include "gpio.h"
-
 // Fault pin addresses
 
 // GPIO

@@ -1,6 +1,7 @@
 #include "pd_fault.h"
 
 #include "adc.h"
+#include "gpio.h"
 #include "pd_hw.h"
 #include "power_distribution_setters.h"
 
