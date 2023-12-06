@@ -67,3 +67,11 @@
           length: 8
         pd_fault:
           length: 8
+    pd_status:
+      id: 1
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        fault_bitset:
+          length: 8
