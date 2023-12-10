@@ -38,7 +38,7 @@ BU_:
 
 {% for message in messages -%}
 
-BO_ {{message.id << 5 + boards.index(message.board)}} {{message.name}} {{message.signals | sum("length")}} {{message.sender}}
+BO_ {{message.id * 0x20 + boards.index(message.sender)}} {{message.name}} {{message.signals | sum("length")}} {{message.sender}}
 
   {%- for signal in message.signals %}
   SG_ {{signal.name}} : {{signal.start_bit}}|{{signal.length}}@1+ ({{signal["scale"]}},{{signal["offset"]}}) [{{signal["min"]}}|{{signal["max"]}}] "{{signal["unit"]}}" {{signal.receiver | join(" ")}}
