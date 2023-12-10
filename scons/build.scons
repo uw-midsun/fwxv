@@ -16,6 +16,7 @@ BIN_DIR = BUILD_DIR.Dir('bin')
 OBJ_DIR = BUILD_DIR.Dir('obj')
 TEST_DIR = BUILD_DIR.Dir('test')
 
+PY_DIR = ROOT.Dir('py')
 PROJ_DIR = ROOT.Dir('projects')
 LIB_DIR = ROOT.Dir('libraries')
 SMOKE_DIR = ROOT.Dir('smoke')
@@ -68,42 +69,42 @@ def generate_can_files(env, target=[], source=[], project=TARGET, is_smoke=False
     header_dir = project_can_dir.Dir("inc")
     source += [BOARDS_DIR, TEMPLATES_DIR, GENERATOR]
     
-    templates = TEMPLATES_DIR.glob('*.jinja')
-    base_exec = "python3 {} -b {}".format(GENERATOR, project)
     header_files = []
     source_files = []
-    source_command = "{} -y {} -f {}".format(base_exec, source_yaml, source_dir)
-    header_command = "{} -y {} -f {}".format(base_exec, source_yaml, header_dir)
+    source_command = f"-f {source_dir} -t"
+    header_command = f"-f {header_dir} -t"
 
     # TODO: Fix up system_can.dbc output directory
-    for template in templates:
-        if "can_board_ids" in template.name:
+    for template in TEMPLATES_DIR.glob('*.jinja'):
+        # name of output file
+        file_name = os.path.splitext(template.name)[0]
+        if file_name.startswith("_"):
+            file_name = project + file_name
+        if file_name == "can.py":
             env.Command(
-                LIBRARIES_INC_DIR.File(template.name[:-6]),
+                PY_DIR.File(file_name),
                 [BOARDS_DIR, TEMPLATES_DIR, GENERATOR],
-                "{} -y {} -t {} -f {}".format(base_exec, BOARDS_DIR.File("boards.yaml"), template, LIBRARIES_INC_DIR)
+                f"python3 {GENERATOR} -f {PY_DIR} -t {template.name}"
             )
-            target.append(LIBRARIES_INC_DIR.File(template.name[:-6]))
+        elif file_name == "can_board_ids.h":
+            env.Command(
+                LIBRARIES_INC_DIR.File(file_name),
+                [BOARDS_DIR, TEMPLATES_DIR, GENERATOR],
+                f"python3 {GENERATOR} -f {LIBRARIES_INC_DIR} -t {template.name}"
+            )
+            target.append(LIBRARIES_INC_DIR.File(file_name))
+        elif ".c" in file_name:
+            source_command += " " + template.name
+            source_files.append(source_dir.File(file_name))
         else:
-            if template.name.startswith("_"):
-                if ".c" in template.name:
-                    source_command += " -t {}".format(template)
-                    source_files.append(source_dir.File(project + template.name[:-6]))
-                else:
-                    header_command += " -t {}".format(template)
-                    header_files.append(header_dir.File(project + template.name[:-6]))
-            else:
-                # For can_codegen.h
-                env.Command(
-                    header_dir.File(template.name[:-6]),
-                    source,
-                    "{} -t {} -f {}".format(base_exec, template, header_dir)
-                )
-                target.append(header_dir.File(template.name[:-6]))
+            header_command += " " + template.name
+            header_files.append(header_dir.File(file_name))
 
     source.append(source_yaml)
-    env.Command(header_files, source, header_command)
-    env.Command(source_files, source, source_command)
+    # env.Command(header_files, source, f"python3 {GENERATOR} -b {project} {header_command}")
+    # env.Command(source_files, source, f"python3 {GENERATOR} -b {project} {source_command}")
+    command = f"python3 {GENERATOR} -b {project} {source_command} {header_command}"
+    env.Command(header_files + source_files, source, command)
 
     # Add a VariantDir that point to can folder. Create the can target specific for the project
     VariantDir(project_can_dir, CAN_DIR, duplicate=0)
@@ -166,6 +167,7 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
 
     env.Append(CPPDEFINES=[GetOption('define')])
     if entry in PROJ_DIRS or entry in SMOKE_DIRS:
+        # print(entry, srcs)
         is_smoke = entry in SMOKE_DIRS
         lib_deps = get_lib_deps(entry)
         output = proj_elf(entry.name, is_smoke)
@@ -211,3 +213,4 @@ if (TYPE != 'python'):
 else:
     py = Command('py.txt', [], run_python)
     Default(py)
+    Depends(py, PY_DIR.File("can.py"))

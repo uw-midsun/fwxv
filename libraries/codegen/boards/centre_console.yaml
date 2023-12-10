@@ -1,5 +1,5 @@
 # Message Definitions in plaintext are on the wiki at:
-# https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
+# https://uwmidsun.atlassian.net/l/cp/Pxn8Xhm8
 #
 # If you are making changes to this file please update the corresponding entry
 # on the wiki. If you need to add a new message use a reasonable
@@ -11,7 +11,7 @@
 ---
   Messages:
     cc_power_control:
-      id: 8
+      id: 1
       target:
         power_distribution:
           watchdog: 0
@@ -23,7 +23,7 @@
           length: 8
 
     drive_output: 
-      id: 9
+      id: 2
       target:
         motor_controller:
           watchdog: 0

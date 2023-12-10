@@ -58,7 +58,7 @@ void uv_logic() {
     state = UV_CUTOFF_ACTIVE;
   }
 
-  set_uv_cutoff_notification_signal1(state);
+  set_uv_cutoff_notification1_signal1(state);
 
   if (state == UV_CUTOFF_DISCONNECTED) {
     return;

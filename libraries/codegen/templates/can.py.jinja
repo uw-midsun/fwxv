@@ -1,0 +1,44 @@
+{% set boards = data["Boards"] -%}
+{% set messages = data["Messages"] -%}
+
+import struct
+import subprocess
+
+# Board and Message ids
+{% for board in boards -%}
+SYSTEM_CAN_DEVICE_{{ board | upper }} = {{ loop.index0 }}
+{% endfor -%}
+NUM_SYSTEM_CAN_DEVICES = {{ boards | length }}
+
+{% for message in messages -%}
+SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} = ({{ message.id }} << 5) + SYSTEM_CAN_DEVICE_{{ message.sender | upper }}
+{% endfor -%}
+
+# Send single message
+def send_message(id, data):
+    # id: int, data: str
+    cmd = f"cansend {id:x}#{data}"
+    subprocess.run(cmd)
+
+def pack(num, size):
+    if isinstance(num, float) and (size == 32):
+        return struct.pack("f", num).hex()
+    elif (size == 32):
+        return struct.pack("i", num).hex()
+    elif (size == 16):
+        return struct.pack("h", num).hex()
+    elif (size == 8):
+        return struct.pack("b", num).hex()
+
+{%- for message in messages %}
+def send_{{ message.sender }}_{{ message.name }}(
+    {%- for signal in message.signals -%}
+        {{- signal.name -}}{{- ", " if not loop.last -}}
+    {%- endfor -%}
+):
+    send_message(SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }},
+    {%- for signal in message.signals -%}
+        pack({{ signal.name }}, {{ signal.length }}){{ ' + ' if not loop.last }}
+    {%- endfor -%}
+    )
+{% endfor %}

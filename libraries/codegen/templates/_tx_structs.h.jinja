@@ -1,15 +1,14 @@
-#pragma once
+{% set board = data["Board"] -%}
+{% set messages = data["Messages"] | selectattr("sender", "eq", board) | list -%}
 
-{%- set messages = data["Messages"] -%}
-{%- set board = data["Board"] %}
+#pragma once
 
 #include <stdint.h>
 
-typedef struct
-{
+typedef struct {
 {%- for message in messages -%}
-    {%- for signal, signal_data in messages[message]['signals'].items() %}
-    uint{{signal_data['length']}}_t {{message}}_{{signal}};
+    {%- for signal in message.signals %}
+    uint{{signal.length}}_t {{message.name}}_{{signal.name}};
     {%- endfor -%}
 {% endfor %}
 } {{board}}_tx_struct;
