@@ -1,7 +1,5 @@
 import os
-import sys
 import subprocess
-from scons.common import parse_config
 
 ###########################################################
 # Build arguments
@@ -106,11 +104,17 @@ elif PLATFORM == 'arm':
 TYPE = None
 if PROJECT:
     TYPE = 'project'
+    TARGET = f'projects/{PROJECT}'
 elif LIBRARY:
     TYPE = 'library'
+    TARGET = f'libraries/{LIBRARY}'
 elif PYTHON:
     TYPE = 'python'
-TARGET = PROJECT or LIBRARY or PYTHON
+    TARGET = f'py/{PYTHON}'
+else:
+    TARGET = None
+
+print(f"target: {TARGET}")
 
 VARS = {
     "PLATFORM": PLATFORM,
@@ -119,13 +123,10 @@ VARS = {
     "NAME": NAME,
     "env": env,
 }
+COMMAND = COMMAND_LINE_TARGETS[0] if COMMAND_LINE_TARGETS else None
 
 env["VARS"] = VARS
 
-# Add flags when compiling a test
-TEST_CFLAGS = ['-DMS_TEST=1']
-if 'test' in COMMAND_LINE_TARGETS: # are we running "scons test"?
-    env['CCFLAGS'] += TEST_CFLAGS
 # Parse asan / tsan and Adding Sanitizer Argument to Environment Flags
 # Note platform needs to be explicitly set to x86
 
@@ -139,19 +140,21 @@ AddOption(
 SANITIZER = GetOption('sanitizer')
 
 if SANITIZER == 'asan':
-    env['CCFLAGS']   += ["-fsanitize=address"]
-    env['CXXFLAGS']  += ["-fsanitize=address"]
+    env['CCFLAGS'] += ["-fsanitize=address"]
+    env['CXXFLAGS'] += ["-fsanitize=address"]
     env['LINKFLAGS'] += ["-fsanitize=address"]
 elif SANITIZER == 'tsan':
-    env['CCFLAGS']   += ["-fsanitize=thread"]
-    env['CXXFLAGS']  += ["-fsanitize=thread"]
+    env['CCFLAGS'] += ["-fsanitize=thread"]
+    env['CXXFLAGS'] += ["-fsanitize=thread"]
     env['LINKFLAGS'] += ["-fsanitize=thread"]
 
-env['CCCOMSTR']     = "Compiling  $TARGET"
-env['LINKCOMSTR']   = "Linking    $TARGET"
-env['ARCOMSTR']     = "Archiving  $TARGET"
-env['ASCOMSTR']     = "Assembling $TARGET"
+env['CCCOMSTR'] = "Compiling  $TARGET"
+env['LINKCOMSTR'] = "Linking    $TARGET"
+env['ARCOMSTR'] = "Archiving  $TARGET"
+env['ASCOMSTR'] = "Assembling $TARGET"
 env['RANLIBCOMSTR'] = "Indexing   $TARGET"
+
+env.Append(CPPDEFINES=[GetOption('define')])
 
 ###########################################################
 # Directory setup
@@ -168,47 +171,52 @@ PLATFORM_DIR = Dir('#/platform')
 
 VariantDir(OBJ_DIR, '.', duplicate=0)
 
-COMMAND = COMMAND_LINE_TARGETS[0] if COMMAND_LINE_TARGETS else None
-
-###########################################################
-# Build
-###########################################################
-if COMMAND == None or COMMAND == "test":
-    SConscript('scons/build.scons', exports='VARS')
-
 ###########################################################
 # Testing
 ###########################################################
 if COMMAND == "test":
+    # Add flags when compiling a test
+    TEST_CFLAGS = ['-DMS_TEST=1']
+    env['CCFLAGS'] += TEST_CFLAGS
     SConscript('scons/test.scons', exports='VARS')
 
 ###########################################################
 # Helper targets
 ###########################################################
-if COMMAND == "new_task":
+elif COMMAND == "new_task":
     SConscript('scons/new_target.scons', exports='VARS')
 
 ###########################################################
 # Clean
 ###########################################################
-# 'clean' is a dummy file that doesn't get created
-# This is required for phony targets for scons to be happy
-Command('#/clean', [], 'rm -rf build/*')
-# Alias('clean', clean)
+elif COMMAND == "clean":
+    # 'clean' is a dummy file that doesn't get created
+    # This is required for phony targets for scons to be happy
+    Command('#/clean', [], 'rm -rf build/*')
+    # Alias('clean', clean)
 
 ###########################################################
 # Linting and Formatting
 ###########################################################
-if COMMAND == "lint" or COMMAND == "format":
+elif COMMAND == "lint" or COMMAND == "format":
     SConscript('scons/lint_format.scons', exports='VARS')
+
+###########################################################
+# Build
+###########################################################
+else:  # command not recognised, default to build
+    SConscript('scons/build.scons', exports='VARS')
+
 
 # ELFs are used for gdb and x86
 def proj_elf(proj_name, is_smoke=False):
     return BIN_DIR.Dir(SMOKE_DIR.name if is_smoke else PROJ_DIR.name).File(proj_name)
 
+
 # .bin is used for flashing to MCU
 def proj_bin(proj_name, is_smoke=False):
     return proj_elf(proj_name, is_smoke).File(proj_name + '.bin')
+
 
 ###########################################################
 # Helper targets for x86
@@ -247,15 +255,16 @@ if PLATFORM == 'x86' and TYPE == 'project':
 if PLATFORM == 'arm' and TYPE == 'project':
     # display memory info for the project
     if MEM_REPORT:
-        get_mem_report = Action("python3 scons/mem_report.py " + "build/arm/bin/projects/{}".format(TARGET))
+        get_mem_report = Action(
+            "python3 scons/mem_report.py " + "build/arm/bin/projects/{}".format(TARGET))
         env.AddPostAction(proj_bin(TARGET, False), get_mem_report)
-        
+
     # flash the MCU using openocd
     def flash_run(target, source, env):
         import serial
         output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
         device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
-        serialData = serial.Serial(device_path,115200)
+        serialData = serial.Serial(device_path, 115200)
 
         OPENOCD = 'openocd'
         OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
@@ -272,7 +281,7 @@ if PLATFORM == 'arm' and TYPE == 'project':
         ]
         cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
         subprocess.run(cmd, shell=True)
-        
+
         while True:
             line: str = serialData.readline().decode("utf-8")
             print(line, end='')
