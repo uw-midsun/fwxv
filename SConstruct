@@ -171,14 +171,17 @@ PLATFORM_DIR = Dir('#/platform')
 
 VariantDir(OBJ_DIR, '.', duplicate=0)
 
+
+env["MY_EMITTER"] = None
 ###########################################################
 # Testing
 ###########################################################
-if COMMAND == "test":
+if COMMAND.startswith("test"):
     # Add flags when compiling a test
     TEST_CFLAGS = ['-DMS_TEST=1']
     env['CCFLAGS'] += TEST_CFLAGS
     SConscript('scons/test.scons', exports='VARS')
+    SConscript('scons/build.scons', exports='VARS')
 
 ###########################################################
 # Helper targets

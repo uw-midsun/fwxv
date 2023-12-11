@@ -6,7 +6,7 @@
     "stm32f10x"
   ],
   "mocks": {
-    "mock": [
+    "test_mock": [
       "status_impl_update"
     ]
   }
