@@ -23,10 +23,10 @@
 #define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_U_OHMS))
 
 // Thresholds for ALRT Pin
-#define CURRENT_SENSE_MAX_CURRENT 58.2f
-#define CURRENT_SENSE_MIN_CURRENT 27.0f  // Actually -27
-#define CURRENT_SENSE_MAX_TEMP 60U
-#define ALRT_PIN_V_RES_MICRO_V 400
+#define CURRENT_SENSE_MAX_CURRENT (58.2f)
+#define CURRENT_SENSE_MIN_CURRENT (27.0f)  // Actually -27
+#define CURRENT_SENSE_MAX_TEMP (60U)
+#define ALRT_PIN_V_RES_MICRO_V (400)
 
 static Max17261Storage s_fuel_guage_storage;
 static CurrentStorage *s_current_storage;
@@ -127,7 +127,7 @@ StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings
     .i_thresh_min =
         ((CURRENT_SENSE_MIN_CURRENT) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_U_OHMS)),
     // Interrupt threshold limits are stored in 2s-complement format with 1C resolution
-    .temp_thresh_max = (~(CURRENT_SENSE_MAX_TEMP) + 1),
+    .temp_thresh_max = CURRENT_SENSE_MAX_TEMP,
 
     .r_sense_uohms = CURRENT_SENSE_R_SENSE_U_OHMS
   };

@@ -108,9 +108,9 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings) {
   status_ok_or_return(
       max17261_set_reg(storage, MAX17261_TEMP_ALRT_THRSH, (settings->temp_thresh_max << 8)));
 
-  // Make sure voltage alerts are disabled (handled by AFEs)
-  uint16_t voltage_th = (settings->v_thresh_max << 8) & (settings->v_thresh_min & 0x00FF);
-  status_ok_or_return(max17261_set_reg(storage, MAX17261_VOLT_ALRT_THRSH, voltage_th));
+  // Make sure voltage alerts are disabled (handled by AFEs) (see datasheet pg.25 for disabled
+  // VAlrtTh value)
+  status_ok_or_return(max17261_set_reg(storage, MAX17261_VOLT_ALRT_THRSH, (0xFF00)));
   // Make sure SOC alerts are disabled (see datasheet pg.26 for disabled SAlrtTh value)
   status_ok_or_return(max17261_set_reg(storage, MAX17261_SOC_ALRT_THRSH, (0xFF00)));
 
