@@ -6,12 +6,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "spi.h"
 #include "i2c.h"
+#include "max17261_fuel_gauge.h"
+#include "spi.h"
 #include "status.h"
 #include "tasks.h"
-
-#include "max17261_fuel_gauge.h"
 
 #define NUM_STORED_CURRENT_READINGS 20
 #define CURRENT_SENSE_SPI_PORT SPI_PORT_2
@@ -24,10 +23,7 @@
 #define CHARGE_OVERCURRENT_CA (-8160)     // -81.6 Amp
 
 // Enum for GPIO IT alerts (just the one pin)
-typedef enum {
-  CURRENT_SENSE_RUN_CYCLE = 0,
-  ALRT_GPIO_IT
-} CurrentSenseNotification;
+typedef enum { CURRENT_SENSE_RUN_CYCLE = 0, ALRT_GPIO_IT } CurrentSenseNotification;
 
 typedef struct CurrentStorage {
   int16_t readings_ring[NUM_STORED_CURRENT_READINGS];

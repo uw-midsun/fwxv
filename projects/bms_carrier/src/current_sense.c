@@ -3,23 +3,30 @@
 #include <string.h>
 
 #include "bms.h"
+#include "bms_carrier_setters.h"
 #include "exported_enums.h"
 #include "fault_bps.h"
-#include "log.h"
-#include "soft_timer.h"
 #include "gpio_it.h"
 #include "interrupt.h"
+#include "log.h"
+#include "soft_timer.h"
 #include "tasks.h"
-#include "bms_carrier_setters.h"
 
 #define MAX17261_I2C_PORT (I2C_PORT_1)
 #define MAX17261_I2C_ADDR (0x6C)
 
 // TODO (Adel C): Change these values to their actual values
 #define CURRENT_SENSE_R_SENSE_U_OHMS (0.5)
-#define MAIN_PACK_DESIGN_CAPACITY    (1.0f / CURRENT_SENSE_R_SENSE_U_OHMS)  // LSB = 5.0 (micro Volt Hours / R Sense)
-#define MAIN_PACK_EMPTY_VOLTAGE      (512U)  // Only a 9-bit field, LSB = 78.125 (micro Volts)
-#define CHARGE_TERMINATION_CURRENT   (1U)
+#define MAIN_PACK_DESIGN_CAPACITY \
+  (1.0f / CURRENT_SENSE_R_SENSE_U_OHMS)          // LSB = 5.0 (micro Volt Hours / R Sense)
+#define MAIN_PACK_EMPTY_VOLTAGE (1.0f / 78.125)  // Only a 9-bit field, LSB = 78.125 (micro Volts)
+#define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_U_OHMS))
+
+// Thresholds for ALRT Pin
+#define CURRENT_SENSE_MAX_CURRENT 58.2f
+#define CURRENT_SENSE_MIN_CURRENT 27.0f  // Actually -27
+#define CURRENT_SENSE_MAX_TEMP 60U
+#define ALRT_PIN_V_RES_MICRO_V 400
 
 static Max17261Storage s_fuel_guage_storage;
 static CurrentStorage *s_current_storage;
@@ -62,9 +69,10 @@ TASK(current_sense, TASK_MIN_STACK_SIZE) {
   while (true) {
     uint32_t notification = 0;
     notify_wait(&notification, BLOCK_INDEFINITELY);
+    LOG_DEBUG("Running Current Sense Cycle!\n");
 
     // Handle alert from fuel gauge
-    if(notification &  (1 << ALRT_GPIO_IT)) {
+    if (notification & (1 << ALRT_GPIO_IT)) {
       // TODO (Adel): BMS Open Relays
     }
 
@@ -92,10 +100,7 @@ StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings
   gpio_it_init();
   i2c_init(I2C_PORT_1, i2c_settings);
 
-  GpioAddress alrt_pin = {
-    .port = GPIO_PORT_B,
-    .pin = 1
-  };
+  GpioAddress alrt_pin = { .port = GPIO_PORT_B, .pin = 1 };
 
   InterruptSettings it_settings = {
     .priority = INTERRUPT_PRIORITY_NORMAL,
@@ -108,11 +113,23 @@ StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings
   memset(storage, 0, sizeof(CurrentStorage));
   s_current_storage = storage;
   const Max17261Settings fuel_gauge_settings = {
+    .i2c_port = MAX17261_I2C_PORT,
+    .i2c_address = MAX17261_I2C_ADDR,
+
     .charge_term_current = CHARGE_TERMINATION_CURRENT,
     .design_capacity = MAIN_PACK_DESIGN_CAPACITY,
     .empty_voltage = MAIN_PACK_EMPTY_VOLTAGE,
-    .i2c_port = MAX17261_I2C_PORT, 
-    .i2c_address = MAX17261_I2C_ADDR
+
+    // Expected MAX current / (uV / uOhmsSense) resolution
+    .i_thresh_max =
+        ((CURRENT_SENSE_MAX_CURRENT) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_U_OHMS)),
+    // Expected MIN current / (uV / uOhmsSense) resolution
+    .i_thresh_min =
+        ((CURRENT_SENSE_MIN_CURRENT) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_U_OHMS)),
+    // Interrupt threshold limits are stored in 2s-complement format with 1C resolution
+    .temp_thresh_max = (~(CURRENT_SENSE_MAX_TEMP) + 1),
+
+    .r_sense_uohms = CURRENT_SENSE_R_SENSE_U_OHMS
   };
 
   // Soft timer period for soc & chargin check

@@ -26,8 +26,6 @@ typedef struct {
   uint16_t empty_voltage;        // Only a 9-bit field, LSB = 78.125 (micro Volts)
   uint16_t charge_term_current;  // LSB = 1.5625 (micro Volts / R Sense)
 
-  uint16_t v_thresh_max;
-  uint16_t v_thresh_min;
   uint16_t i_thresh_max;
   uint16_t i_thresh_min;
   uint16_t temp_thresh_max;

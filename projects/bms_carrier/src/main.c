@@ -1,13 +1,12 @@
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
+#include "current_sense.h"
+#include "gpio_it.h"
 #include "log.h"
 #include "master_task.h"
-#include "tasks.h"
-
-#include "gpio_it.h"
-#include "current_sense.h"
 #include "max17261_fuel_gauge.h"
+#include "tasks.h"
 
 #define I2C1_SDA \
   { .port = GPIO_PORT_B, .pin = 9 }
@@ -22,16 +21,14 @@ void pre_loop_init() {}
 
 void run_fast_cycle() {}
 
-void run_medium_cycle() {}
+void run_medium_cycle() {
+  run_current_sense_cycle();
+}
 
 void run_slow_cycle() {}
 
 int main() {
-  I2CSettings i2c_settings = {
-    .sda = I2C1_SDA,
-    .scl = I2C1_SCL,
-    .speed = I2C_SPEED_STANDARD
-  };
+  I2CSettings i2c_settings = { .sda = I2C1_SDA, .scl = I2C1_SCL, .speed = I2C_SPEED_STANDARD };
 
   tasks_init();
   log_init();
