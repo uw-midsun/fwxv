@@ -11,7 +11,7 @@ on:
 
 env:
   # Set defines for builds/tests
-  DEFINES: "LOG_LEVEL_VERBOSITY=LOG_LEVEL_WARN"
+  DEFINES: "LOG_LEVEL=LOG_LEVEL_WARN"
 
 jobs:
   build:

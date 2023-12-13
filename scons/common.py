@@ -1,5 +1,6 @@
 import json
 import subprocess
+import serial
 
 
 def parse_config(entry):
@@ -24,6 +25,11 @@ def parse_config(entry):
 
 
 def flash_run(entry):
+    '''flash and run file, return a pyserial object which monitors the device serial output'''
+    output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
+    device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
+    serialData = serial.Serial(device_path, 115200)
+
     OPENOCD = 'openocd'
     OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
     PROBE = 'cmsis-dap'
@@ -43,3 +49,5 @@ def flash_run(entry):
     subprocess.run(cmd, shell=True,
                    stdout=subprocess.DEVNULL,
                    stderr=subprocess.DEVNULL)
+
+    return serialData

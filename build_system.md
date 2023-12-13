@@ -10,48 +10,101 @@ Each project and library may also contain a `config.json` file with certain fiel
 Unit tests are per-project/library and are built and run from scons. Functions may be mocked by specifying which test file mocks which functions. An example of a mocking configuration is in the `core` library, in `config.json` and in `test/test_mock.c`.
 
 ## Usage
-### Build commands
-- `no command`: Build all projects.
-    - e.g. `scons`
-- `project / library`: Build the project or library
-    - e.g. `scons leds`
-- `test`: Builds and runs the tests for the specified project or library. If no project or library is specified, runs all tests. Also allows specifying a test file to run.
-    - e.g. `scons test`
-    - e.g. `scons test --library=core`
-    - e.g. `scons test --project=leds --test=test_led_1`
+```
+scons [options]... <command> <target>
 
-### Convenience commands:
+Options:
+options can occur anywhere in the command string
 
-- `new [name]`: Creates a new project, smoke project, or library with the given name.
-    - e.g. `scons new --project=my_new_project`
-    - e.g. `scons new --library=my_new_library`
-    - e.g. `scons new_smoke --project=my_smoke_test`
-- `new_task [name] [task name]`: Creates a new task within a project or library
-    - e.g. `scons new_task --project=my_project --name=task_name`
-    - e.g. `scons new_task --library=my_library --name=task_name`
-- `clean`: Delete the `build` directory.
-    - e.g. `scons clean`
-- `sim [project]`: (x86 specific) Run the project's binary.
-    - e.g. `scons sim --project=leds --platform=x86`
-    - e.g. `scons sim_smoke --project=smoke_leds --platform=x86`
-    - `sim_smoke` should be used for smoke tests.
-- `gdb [project]`: (x86 specific) Run the project's binary with gdb.
-    - e.g. `scons gdb --project=leds --platform=x86`
-    - e.g. `scons gdb_smoke --project=smoke_leds --platform=x86`
-- `flash [project]`: (arm specific) Flash the project's binary using openocd. A controller board must be connected an powered.
-    - e.g. `scons flash --project=leds`
-    - e.g. `scons flash_smoke --project=smoke_leds`
-- `lint`: Lints all files.
-    - Can specify `--project` or `--library` argument to only lint specific project/library
-- `format`: Formats all files.
-    - Can specify `--project` or `--library` argument to only format specific project/library
+    --platform={x86|arm}    
+        Specifies target platform. One of `arm` or `x86`. Defaults to `arm` if not provided.
 
-### Arguments
-- `--platform`: Specifies target platform. One of `arm` or `x86`. Defaults to `arm`.
-- `--project`: Specifies target project. Only required when running convenience commands or tests.
-- `--library`: Specifies target library. Only required when running convenience commands or tests.
-- `--test`: Specify test file to run.
-- `--sanitizer`: Specifies the sanitizer. One of `asan` for Address sanitizer or `tsan` for Thread sanitizer. Defaults to `none`. Note it only works on `x86` platform.
+    --define=...
+        Add CPP defines to a build.
+        - e.g.`--define="LOG_LEVEL=LOG_LEVEL_WARN"`
+
+    --sanitizer={asan|tsan}
+        Specifies the sanitizer. One of `asan` for Address sanitizer or `tsan` for Thread sanitizer. Defaults to `none`. Note it only works on `x86` platform.
+    
+    --test=<test_name>
+        additionally specify the name of test to run for `test` command.
+
+    --task=<task_name>
+        specify a task to create for `new` command.
+
+    --mem-report
+        Reports the memory space after a build
+
+Commands:
+    NONE
+        Build the specified target, or all target if not specified.
+        - e.g. `scons`
+        - e.g. `scons <target>`
+
+    test
+        Test the specified target, or all target if not specified.
+        - e.g. `scons test`
+        - e.g. `scons test <target>`
+    
+    new
+        Creates a new project, smoke project, or library with the given name.
+        - e.g. `scons new <target>`
+        if --task=<task> option is specified, instead create a new task within the target
+        - e.g. `scons new <target> --task=<task_name>`
+
+    sim
+        x86 specific, run the project's binary.
+        - e.g. `scons sim <target>`
+
+    gdb
+        x86 specific, run the project's binary with gdb.
+        - e.g. `scons gdb <target>`
+
+    flash
+        arm specific, Flash the project's binary using openocd. A controller board must be connected an powered.
+        - e.g. `scons flash <target>`
+
+    format
+        Format a target, or all targets if not specified. uses autopep8 for python and clang-format for c.
+        - e.g. `scons format`
+        - e.g. `scons format <target>`
+
+    lint
+        Lint a target, or all targets if not specified. uses pylint for python and cpplint for c.
+        - e.g. `scons lint`
+        - e.g. `scons lint <target>`
+
+    clean
+        Delete the `build` directory.
+
+Targets:
+targests can be specified with either an option, name, or path. Name or path targets are only supported by some commands and are for convenience only. Prefer using option to specify the target.
+
+    --project=<name>
+        specify the target as a project with `name`
+        - e.g. `--project=leds`
+
+    --library=<name>
+        specify the target as a library with `name`
+        - e.g. `--library=ms-common`
+
+    --python=<name>` or --py=<name>
+        specify the target as a project with `name` (same as `--py=...`)
+        - e.g. `--python=example`, `--py=example`
+
+    --smoke=<name>`
+        specify the target as a project with `name`, 
+        - e.g. `--smoke=adc`
+
+    <name>`
+        some commands also support specifying targets with just the name. 
+        - e.g. `scons leds`
+    
+    <path>`
+        some commands also support specifying targets with their path. 
+        - e.g. `scons projects/leds`
+
+```
 
 # Future Improvements
 Features that would be nice to have in the future but haven't been done yet:

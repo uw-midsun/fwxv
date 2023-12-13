@@ -25,12 +25,6 @@ GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
 
 
 def run_test(target, source, env):
-    if PLATFORM == "arm":
-        # startup usb serial communication with mcu
-        output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
-        device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
-        serialData = serial.Serial(device_path, 115200)
-
     fails = 0
     for test in source:
         if PLATFORM == "x86":
@@ -38,7 +32,7 @@ def run_test(target, source, env):
             fails += (test_process.returncode != 0)
 
         elif PLATFORM == "arm":
-            flash_run(test)
+            serialData = flash_run(test)
 
             # wait until test ok or fail
             while True:

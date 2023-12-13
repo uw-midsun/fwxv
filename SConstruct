@@ -1,5 +1,5 @@
 import os
-import subprocess
+from scons.common import flash_run
 
 ###########################################################
 # Build arguments
@@ -8,14 +8,21 @@ import subprocess
 AddOption(
     '--platform',
     dest='platform',
-    type='string',
-    action='store',
+    type='choice',
+    choices=("arm","x86"),
     default='arm'
 )
 
 AddOption(
     '--project',
     dest='project',
+    type='string',
+    action='store',
+)
+
+AddOption(
+    '--smoke',
+    dest='smoke',
     type='string',
     action='store',
 )
@@ -55,21 +62,11 @@ AddOption(
 )
 
 AddOption(
-    '--name',
-    dest='name',
+    '--task',
+    dest='task',
     type='string',
     action='store'
 )
-
-# Only for the power distribution project to specify front or rear PD
-
-# AddOption(
-#     '--location',
-#     dest='location',
-#     type='string',
-#     action='store',
-#     default='front',
-# )
 
 # Adding Memory Report Argument to Environment Flags
 # Note platform needs to be explicitly set to arm
@@ -77,16 +74,25 @@ AddOption(
 AddOption(
     '--mem-report',
     dest='mem-report',
-    type='string',
+    action='store_true',
+)
+
+
+AddOption(
+    '--sanitizer',
+    dest='sanitizer',
+    type='choice',
+    choices=("asan","tsan"),
     action='store',
+    default="none"
 )
 
 PLATFORM = GetOption('platform')
 PROJECT = GetOption('project')
+SMOKE = GetOption('smoke')
 LIBRARY = GetOption('library')
 PYTHON = GetOption('python')
 MEM_REPORT = GetOption('mem-report')
-NAME = GetOption('name')
 
 ###########################################################
 # Environment setup
@@ -98,18 +104,14 @@ if PLATFORM == 'x86':
 elif PLATFORM == 'arm':
     env = SConscript('platform/arm.py')
 
-
-# env.VariantDir('build', '.', duplicate=0)
-
 TYPE = None
 if PROJECT:
-    TYPE = 'project'
     TARGET = f'projects/{PROJECT}'
+elif SMOKE:
+    TARGET = f'smoke/{SMOKE}'
 elif LIBRARY:
-    TYPE = 'library'
     TARGET = f'libraries/{LIBRARY}'
 elif PYTHON:
-    TYPE = 'python'
     TARGET = f'py/{PYTHON}'
 else:
     TARGET = None
@@ -118,25 +120,16 @@ print(f"target: {TARGET}")
 
 VARS = {
     "PLATFORM": PLATFORM,
-    "TYPE": TYPE,
     "TARGET": TARGET,
-    "NAME": NAME,
     "env": env,
 }
-COMMAND = COMMAND_LINE_TARGETS[0] if COMMAND_LINE_TARGETS else None
+COMMAND = COMMAND_LINE_TARGETS[0] if COMMAND_LINE_TARGETS else ""
 
 env["VARS"] = VARS
 
 # Parse asan / tsan and Adding Sanitizer Argument to Environment Flags
 # Note platform needs to be explicitly set to x86
 
-AddOption(
-    '--sanitizer',
-    dest='sanitizer',
-    type='string',
-    action='store',
-    default="none"
-)
 SANITIZER = GetOption('sanitizer')
 
 if SANITIZER == 'asan':
@@ -164,15 +157,8 @@ BUILD_DIR = Dir('#/build').Dir(PLATFORM)
 BIN_DIR = BUILD_DIR.Dir('bin')
 OBJ_DIR = BUILD_DIR.Dir('obj')
 
-PROJ_DIR = Dir('#/projects')
-SMOKE_DIR = Dir('#/smoke')
-
-PLATFORM_DIR = Dir('#/platform')
-
 VariantDir(OBJ_DIR, '.', duplicate=0)
 
-
-env["MY_EMITTER"] = None
 ###########################################################
 # Testing
 ###########################################################
@@ -186,7 +172,7 @@ if COMMAND.startswith("test"):
 ###########################################################
 # Helper targets
 ###########################################################
-elif COMMAND == "new_task":
+elif COMMAND == "new":
     SConscript('scons/new_target.scons', exports='VARS')
 
 ###########################################################
@@ -210,94 +196,48 @@ elif COMMAND == "lint" or COMMAND == "format":
 else:  # command not recognised, default to build
     SConscript('scons/build.scons', exports='VARS')
 
-
-# ELFs are used for gdb and x86
-def proj_elf(proj_name, is_smoke=False):
-    return BIN_DIR.Dir(SMOKE_DIR.name if is_smoke else PROJ_DIR.name).File(proj_name)
-
-
-# .bin is used for flashing to MCU
-def proj_bin(proj_name, is_smoke=False):
-    return proj_elf(proj_name, is_smoke).File(proj_name + '.bin')
-
-
 ###########################################################
 # Helper targets for x86
 ###########################################################
-if PLATFORM == 'x86' and TYPE == 'project':
+if PLATFORM == 'x86' and TARGET:
+    project_elf = BIN_DIR.File(TARGET)
     # os.exec the x86 project ELF file to simulate it
+
     def sim_run(target, source, env):
-        path = proj_elf(TARGET, env.get("smoke")).path
+        path = project_elf
         print('Simulating', path)
         os.execv(path, [path])
 
     sim = Command('sim.txt', [], sim_run)
-    Depends(sim, proj_elf(TARGET))
+    Depends(sim, project_elf)
     Alias('sim', sim)
-
-    sim_smoke = Command('sim_smoke.txt', [], sim_run, smoke=True)
-    Depends(sim_smoke, proj_elf(TARGET, True))
-    Alias('sim_smoke', sim_smoke)
 
     # open gdb with the elf file
     def gdb_run(target, source, env):
-        path = proj_elf(TARGET, env.get("smoke")).path
-        os.execv('/usr/bin/gdb', ['/usr/bin/gdb', path])
+        os.execv('/usr/bin/gdb', ['/usr/bin/gdb', project_elf.path])
 
     gdb = Command('gdb.txt', [], gdb_run)
-    Depends(gdb, proj_elf(TARGET))
+    Depends(gdb, project_elf)
     Alias('gdb', gdb)
-
-    gdb_smoke = Command('gdb_smoke.txt', [], gdb_run, smoke=True)
-    Depends(gdb_smoke, proj_elf(TARGET, True))
-    Alias('gdb_smoke', gdb_smoke)
 
 ###########################################################
 # Helper targets for arm
 ###########################################################
-if PLATFORM == 'arm' and TYPE == 'project':
+if PLATFORM == 'arm' and TARGET:
+    project_bin = BIN_DIR.File(TARGET + '.bin')
     # display memory info for the project
     if MEM_REPORT:
         get_mem_report = Action(
-            "python3 scons/mem_report.py " + "build/arm/bin/projects/{}".format(TARGET))
-        env.AddPostAction(proj_bin(TARGET, False), get_mem_report)
+            f"python3 scons/mem_report.py build/arm/bin/{TARGET}")
+        env.AddPostAction(project_bin, get_mem_report)
 
     # flash the MCU using openocd
-    def flash_run(target, source, env):
-        import serial
-        output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
-        device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
-        serialData = serial.Serial(device_path, 115200)
-
-        OPENOCD = 'openocd'
-        OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
-        PROBE = 'cmsis-dap'
-        OPENOCD_CFG = [
-            OPENOCD,
-            '-s {}'.format(OPENOCD_SCRIPT_DIR),
-            '-f interface/{}.cfg'.format(PROBE),
-            '-f target/stm32f1x.cfg',
-            '-f {}/stm32f1-openocd.cfg'.format(PLATFORM_DIR),
-            '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
-            '-c "stm_flash {}"'.format(proj_bin(TARGET, env.get("smoke"))),
-            '-c shutdown'
-        ]
-        cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
-        subprocess.run(cmd, shell=True)
-
+    def flash_run_target(target, source, env):
+        serialData = flash_run(project_bin)
         while True:
             line: str = serialData.readline().decode("utf-8")
             print(line, end='')
-            if line.startswith('OK'):
-                break
-            if line.startswith('FAIL'):
-                fails += 1
-                break
 
-    flash = Command('flash.txt', [], flash_run)
-    Depends(flash, proj_bin(TARGET))
+    flash = Command('flash.txt', [], flash_run_target)
+    Depends(flash, project_bin)
     Alias('flash', flash)
-
-    flash_smoke = Command('flash_smoke.txt', [], flash_run, smoke=True)
-    Depends(flash_smoke, proj_bin(TARGET, True))
-    Alias('flash_smoke', flash_smoke)
