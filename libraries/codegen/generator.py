@@ -113,8 +113,5 @@ def main():
             with open(Path(output_dir, get_file_name(template, args.board)), "w") as f:
                 f.write(output)
 
-    print("Done autogenerating")
-
-
 if __name__ == "__main__":
     main()

@@ -53,19 +53,18 @@ def add_test_targets(target, source, env):
         runner_exec = TEST_DIR.File(f"{entry.path}/bin/{test_module_name}")
 
         runner_file = TEST_DIR.File(test_file.path)
+        autogen = env.Action(f'python3 {GEN_RUNNER} {GEN_RUNNER_CONFIG} {test_file.path} {runner_file.path}',
+                             f'Autogen    {test_file.path} test_runner')
         runner_file = env.Command(
             runner_file,
             [test_file, ROOT.Dir("libraries/unity/auto").glob("*")],
-            f'python3 {GEN_RUNNER} {GEN_RUNNER_CONFIG} {test_file.path} {runner_file.path}')
+            autogen)
         test_sources = [runner_file, OBJ_DIR.File(test_file.path)]
 
         test_target = env.Program(
             target=runner_exec,
             source=sources_no_main + test_sources,
-            CPPPATH=env['CPPPATH'],
             LIBS=env['LIBS'] + ['unity'],
-            LIBPATH=env['LIBPATH'],
-            CCFLAGS=env['CCFLAGS'],
             LINKFLAGS=env['LINKFLAGS'] + mock_link_flags,
             PROGEMITTER=None,  # don't trigger emitter recursively
         )
@@ -112,13 +111,10 @@ env.Append(LIBEMITTER=add_test_targets)
 # generate all test target names
 all_tests = []
 for entry in PROJ_DIR.glob('*') + LIB_DIR.glob('*') + SMOKE_DIR.glob('*'):
-    tests = []
     for test_file in entry.glob('test/*.c'):
         test_module_name = Path(test_file.path).stem
-        tests.append(f"test/{entry.path}/{test_module_name}")
-    env.Alias(f"test/{entry.path}", tests)
-    all_tests += tests
+        all_tests.append(f"test/{entry.path}/{test_module_name}")
 
-TARGET = str(Path("test", TARGET or '', GetOption("testfile") or ""))
-selected_tests = list(filter(lambda t: t.startswith(TARGET), all_tests))
+TARGET = str(Path("test", TARGET or '', GetOption("testfile") or ''))
+selected_tests = [t for t in all_tests if t.startswith(TARGET)]
 env.Command("#/test", selected_tests, env.Action(run_test, "Running tests:"))

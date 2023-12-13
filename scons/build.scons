@@ -61,12 +61,14 @@ autogen_sources = [BOARDS_DIR.glob("*"), TEMPLATES_DIR.glob("*"), GENERATOR]
 env.Command(
     PY_DIR.File("can.py"),
     autogen_sources,
-    f"python3 {GENERATOR} -f {PY_DIR} -t can.py.jinja"
+    env.Action(f"python3 {GENERATOR} -f {PY_DIR} -t can.py.jinja",
+               f"Autogen    {PY_DIR}/can.py")
 )
 env.Command(
     LIBRARIES_INC_DIR.File("can_board_ids.h"),
     autogen_sources,
-    f"python3 {GENERATOR} -f {LIBRARIES_INC_DIR} -t can_board_ids.h.jinja"
+    env.Action(f"python3 {GENERATOR} -f {LIBRARIES_INC_DIR} -t can_board_ids.h.jinja",
+               f"Autogen    {LIBRARIES_INC_DIR}/can_board_ids.h")
 )
 
 
@@ -94,7 +96,8 @@ def generate_can_files(env, project):
             header_command += " " + template.name
             header_files.append(header_dir.File(file_name))
 
-    command = f"python3 {GENERATOR} -b {Path(project).stem} {source_command} {header_command}"
+    command = env.Action(f"python3 {GENERATOR} -b {Path(project).stem} {source_command} {header_command}",
+                         f"Autogen    {project} can files")
     # print([f.path for f in header_files + source_files])
     env.Command(header_files + source_files, autogen_sources, command)
 
