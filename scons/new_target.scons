@@ -15,6 +15,7 @@ DEFAULT_CONFIG = {"libs": ["FreeRTOS", "ms-common"]}
 
 
 def new_task(target, task_name):
+    '''Create a new task within target'''
     DATA = {"task_name": task_name}
     target_path = Path(target)
     target_path.joinpath("inc").mkdir()
@@ -38,35 +39,20 @@ def new_target(target, source, env):
     Creates a subfolder in the appropriate folder with the specified name
     with the following structure:
 
-    projects/libraries
+    project/library/smoke
     - name
         - inc
         - README.md
         - config.json 
         - src
         - test
-
-    where config.json is required for the project or library to be valid.
-
-    Args:
-        target_type: Either 'project' or 'library' or 'python'.
-        name: The new project or library's name.
-
-    Returns:
-        None
+    py
+    - name
+        - __init__.py
+        - main.py
     """
     if not TARGET:
         print("Missing target. Expected --project=..., or --library=..., or --python=..., or --smoke=...")
-        return
-
-    target_dir = Path(TARGET)
-    target_dir.mkdir(parents=True, exist_ok=True)
-
-    if TARGET.startswith('py'):
-        target_dir.joinpath('__init__.py').touch()
-        target_dir.joinpath('main.py').touch()
-
-        print(f'Created new {TARGET}')
         return
 
     task_name = GetOption("task")
@@ -74,22 +60,30 @@ def new_target(target, source, env):
         new_task(TARGET, task_name)
         return
 
-    folders = ['src', 'inc', 'test']
+    target_dir = Path(TARGET)
+    target_dir.mkdir(parents=True)
 
-    for folder in folders:
+    if TARGET.startswith('py'):
+        target_dir.joinpath('__init__.py').touch()
+        target_dir.joinpath('main.py').touch()
+        print(f'Created new {TARGET}')
+        return
+
+    for folder in ['src', 'inc', 'test']:
         target_dir.joinpath(folder).mkdir(parents=True, exist_ok=True)
 
-    config = DEFAULT_CONFIG if TARGET.startswith("project") else []
+    config = []
+    if TARGET.startswith("project") or TARGET.startswith("smoke"):
+        config = DEFAULT_CONFIG
+
     target_dir.joinpath("config.json").write_text(json.dumps(config, indent=4))
 
-    readme_template = Path(__file__).joinpath("template/README.md")
+    readme_template = Path("scons/template/README.md")
     readme_file = target_dir.joinpath("README.md")
-    readme_file.write_text(readme_template.read_text())
-    with readme_file.open("w") as f:
-        f.write(target_dir.name)
+    readme_file.write_text(readme_template.read_text() + target_dir.name)
 
-    main_c_template = Path(__file__).joinpath("template/main.c")
-    main_c_file = target_dir.joinpath("main.c")
+    main_c_template = Path("scons/template/main.c")
+    main_c_file = target_dir.joinpath("src/main.c")
     main_c_file.write_text(main_c_template.read_text())
 
     print(f'Created new {TARGET}')
