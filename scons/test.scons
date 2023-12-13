@@ -1,6 +1,5 @@
 from scons.common import parse_config, flash_run
 import subprocess
-import serial  # pip install pyserial
 from pathlib import Path
 
 Import('VARS')
@@ -23,33 +22,16 @@ SMOKE_DIR = ROOT.Dir('smoke')
 GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.py'
 GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
 
-
-def run_test(target, source, env):
-    fails = 0
-    for test in source:
-        if PLATFORM == "x86":
-            test_process = subprocess.run(test.path)
-            fails += (test_process.returncode != 0)
-
-        elif PLATFORM == "arm":
-            serialData = flash_run(test)
-
-            # wait until test ok or fail
-            while True:
-                line: str = serialData.readline().decode("utf-8")
-                print(line, end='')
-                if line.startswith('OK'):
-                    break
-                if line.startswith('FAIL'):
-                    fails += 1
-                    break
-
-    print(f"{len(source)} Files tested {fails} Failures")
-
-
 ###########################################################
 # Create appropriate test targets, (when lib/proj target is defined)
 ###########################################################
+run_list = []
+
+
+def add_to_run_list(target, source, env):
+    run_list.extend(source)
+
+
 def add_test_targets(target, source, env):
     entry = ROOT.Dir(Path(target[0].path).relative_to(BIN_DIR.path))
     config = parse_config(entry)
@@ -92,10 +74,37 @@ def add_test_targets(target, source, env):
             test_target = env.Bin(target=ROOT.File(runner_exec.path+'.bin'),
                                   source=test_target)
         env.Command(f"test/{entry.path}/{test_module_name}",
-                    test_target, run_test)
+                    test_target, env.Action(add_to_run_list, None))
     # target and source are not modified
     # this emitter only adds the test targets based on the project/library's inc + src
     return target, source
+
+
+def run_test(target, source, env):
+    fails = []
+    for test_name, test_file in zip(source, run_list):
+        if PLATFORM == "x86":
+            test_process = subprocess.run(test_file.path)
+            if test_process.returncode != 0:
+                fails.append(test_name)
+
+        elif PLATFORM == "arm":
+            serialData = flash_run(test_file)
+
+            # wait until test ok or fail
+            while True:
+                line: str = serialData.readline().decode("utf-8")
+                print(line, end='')
+                if line.startswith('OK'):
+                    break
+                if line.startswith('FAIL'):
+                    fails += 1
+                    break
+
+    print(f"{len(run_list)} Files tested {len(fails)} Failures")
+    for fail in fails:
+        print(f"  {fail}")
+    return ""
 
 
 env.Append(PROGEMITTER=add_test_targets)
@@ -112,4 +121,4 @@ for entry in PROJ_DIR.glob('*') + LIB_DIR.glob('*') + SMOKE_DIR.glob('*'):
 
 TARGET = str(Path("test", TARGET or '', GetOption("testfile") or ""))
 selected_tests = list(filter(lambda t: t.startswith(TARGET), all_tests))
-Command("#/test", selected_tests, "")
+env.Command("#/test", selected_tests, env.Action(run_test, "Running tests:"))

@@ -24,22 +24,23 @@ options can occur anywhere in the command string
         - e.g.`--define="LOG_LEVEL=LOG_LEVEL_WARN"`
 
     --sanitizer={asan|tsan}
-        Specifies the sanitizer. One of `asan` for Address sanitizer or `tsan` for Thread sanitizer. Defaults to `none`. Note it only works on `x86` platform.
+        (x86) Specifies the sanitizer. One of `asan` for Address sanitizer or `tsan` for Thread sanitizer. Defaults to `none`.
     
     --test=<test_name>
-        additionally specify the name of test to run for `test` command.
+        Additionally specify the name of test to run for `test` command.
 
     --task=<task_name>
-        specify a task to create for `new` command.
+        Specify a task to create for `new` command.
 
     --mem-report
-        Reports the memory space after a build
+        (arm) Reports the memory space after a build
 
 Commands:
     NONE
         Build the specified target, or all target if not specified.
         - e.g. `scons`
         - e.g. `scons <target>`
+        if the target is a python project, run the project.
 
     test
         Test the specified target, or all target if not specified.
@@ -53,15 +54,15 @@ Commands:
         - e.g. `scons new <target> --task=<task_name>`
 
     sim
-        x86 specific, run the project's binary.
+        (x86) Run the project's binary.
         - e.g. `scons sim <target>`
 
     gdb
-        x86 specific, run the project's binary with gdb.
+        (x86) Run the project's binary with gdb.
         - e.g. `scons gdb <target>`
 
     flash
-        arm specific, Flash the project's binary using openocd. A controller board must be connected an powered.
+        (arm) Flash the project's binary using openocd. A controller board must be connected an powered.
         - e.g. `scons flash <target>`
 
     format
@@ -78,7 +79,7 @@ Commands:
         Delete the `build` directory.
 
 Targets:
-targests can be specified with either an option, name, or path. Name or path targets are only supported by some commands and are for convenience only. Prefer using option to specify the target.
+targests can be specified with an option.
 
     --project=<name>
         specify the target as a project with `name`
@@ -96,14 +97,16 @@ targests can be specified with either an option, name, or path. Name or path tar
         specify the target as a project with `name`, 
         - e.g. `--smoke=adc`
 
-    <name>`
-        some commands also support specifying targets with just the name. 
+Convenience Commands:
+    <name>
+        build the target with the name
         - e.g. `scons leds`
+        - e.g. `scons ms-common`
     
-    <path>`
-        some commands also support specifying targets with their path. 
+    <path>
+        build the target with the path. 
         - e.g. `scons projects/leds`
-
+        - e.g. `scons libraries/ms-common`
 ```
 
 # Future Improvements

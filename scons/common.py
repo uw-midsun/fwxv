@@ -1,6 +1,6 @@
 import json
 import subprocess
-import serial
+import serial  # pip install pyserial
 
 
 def parse_config(entry):

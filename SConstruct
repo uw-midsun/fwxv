@@ -1,64 +1,52 @@
-import os
 from scons.common import flash_run
+import subprocess
+
+
+def set_target(option, opt, value, parser):
+    if opt == '--project':
+        target = f'projects/{value}'
+    if opt == '--smoke':
+        target = f'smoke/{value}'
+    if opt == '--library':
+        target = f'libraries/{value}'
+    if opt == '--python' or opt == '--py':
+        target = f'py/{value}'
+    setattr(parser.values, option.dest, target)
+
 
 ###########################################################
 # Build arguments
 ###########################################################
-
 AddOption(
     '--platform',
     dest='platform',
     type='choice',
-    choices=("arm","x86"),
-    default='arm'
+    choices=("arm", "x86"),
+    default='arm',
+    help="Specifies target platform. One of 'arm' or 'x86'. Defaults to 'arm' if not provided."
 )
 
 AddOption(
-    '--project',
-    dest='project',
-    type='string',
-    action='store',
-)
-
-AddOption(
-    '--smoke',
-    dest='smoke',
-    type='string',
-    action='store',
-)
-
-AddOption(
-    '--library',
-    dest='library',
-    type='string',
-    action='store',
-)
-
-AddOption(
-    '--python',
-    dest='python',
-    type='string',
-    action='store'
-)
-AddOption(
-    '--py',
-    dest='python',
-    type='string',
-    action='store'
+    '--library', '--project', '--smoke', '--python', '--py',
+    type="string", dest="name",
+    action='callback', callback=set_target,
+    help="Specify the target.   e.g. --library=ms-common, --project=leds, --smoke=adc, --python=example",
 )
 
 AddOption(
     '--test',
     dest='testfile',
     type='string',
-    action='store'
+    action='store',
+    help="Additionally specify the name of test to run for 'test' command."
 )
 
 AddOption(
     '--define',
     dest='define',
     type='string',
-    action='store'
+    action='store',
+    help="Add CPP defines to a build.   e.g. --define='LOG_LEVEL=LOG_LEVEL_WARN'"
 )
 
 AddOption(
@@ -68,64 +56,39 @@ AddOption(
     action='store'
 )
 
-# Adding Memory Report Argument to Environment Flags
-# Note platform needs to be explicitly set to arm
-
 AddOption(
     '--mem-report',
     dest='mem-report',
     action='store_true',
+    help="(arm) Reports the memory space after a build."
 )
-
 
 AddOption(
     '--sanitizer',
     dest='sanitizer',
     type='choice',
-    choices=("asan","tsan"),
-    action='store',
-    default="none"
+    choices=("asan", "tsan"),
+    default="none",
+    help="(x86) Specifies the sanitizer. One of 'asan' for Address sanitizer or 'tsan' for Thread sanitizer. Defaults to none."
 )
 
 PLATFORM = GetOption('platform')
-PROJECT = GetOption('project')
-SMOKE = GetOption('smoke')
-LIBRARY = GetOption('library')
-PYTHON = GetOption('python')
-MEM_REPORT = GetOption('mem-report')
+TARGET = GetOption('name')
 
 ###########################################################
 # Environment setup
 ###########################################################
 
 # Retrieve the construction environment from the appropriate platform script
-if PLATFORM == 'x86':
-    env = SConscript('platform/x86.py')
-elif PLATFORM == 'arm':
-    env = SConscript('platform/arm.py')
-
-TYPE = None
-if PROJECT:
-    TARGET = f'projects/{PROJECT}'
-elif SMOKE:
-    TARGET = f'smoke/{SMOKE}'
-elif LIBRARY:
-    TARGET = f'libraries/{LIBRARY}'
-elif PYTHON:
-    TARGET = f'py/{PYTHON}'
-else:
-    TARGET = None
-
-print(f"target: {TARGET}")
+env = SConscript(f'platform/{PLATFORM}.py')
 
 VARS = {
     "PLATFORM": PLATFORM,
     "TARGET": TARGET,
     "env": env,
 }
-COMMAND = COMMAND_LINE_TARGETS[0] if COMMAND_LINE_TARGETS else ""
 
-env["VARS"] = VARS
+COMMAND = COMMAND_LINE_TARGETS[0] if COMMAND_LINE_TARGETS else ""
 
 # Parse asan / tsan and Adding Sanitizer Argument to Environment Flags
 # Note platform needs to be explicitly set to x86
@@ -142,9 +105,9 @@ elif SANITIZER == 'tsan':
     env['LINKFLAGS'] += ["-fsanitize=thread"]
 
 env['CCCOMSTR'] = "Compiling  $TARGET"
-env['LINKCOMSTR'] = "Linking    $TARGET"
 env['ARCOMSTR'] = "Archiving  $TARGET"
 env['ASCOMSTR'] = "Assembling $TARGET"
+env['LINKCOMSTR'] = "Linking    $TARGET"
 env['RANLIBCOMSTR'] = "Indexing   $TARGET"
 
 env.Append(CPPDEFINES=[GetOption('define')])
@@ -162,7 +125,7 @@ VariantDir(OBJ_DIR, '.', duplicate=0)
 ###########################################################
 # Testing
 ###########################################################
-if COMMAND.startswith("test"):
+if COMMAND == "test":
     # Add flags when compiling a test
     TEST_CFLAGS = ['-DMS_TEST=1']
     env['CCFLAGS'] += TEST_CFLAGS
@@ -179,10 +142,7 @@ elif COMMAND == "new":
 # Clean
 ###########################################################
 elif COMMAND == "clean":
-    # 'clean' is a dummy file that doesn't get created
-    # This is required for phony targets for scons to be happy
-    Command('#/clean', [], 'rm -rf build/*')
-    # Alias('clean', clean)
+    AlwaysBuild(Command('#/clean', [], 'rm -rf build/*'))
 
 ###########################################################
 # Linting and Formatting
@@ -204,21 +164,16 @@ if PLATFORM == 'x86' and TARGET:
     # os.exec the x86 project ELF file to simulate it
 
     def sim_run(target, source, env):
-        path = project_elf
-        print('Simulating', path)
-        os.execv(path, [path])
+        print('Simulating', project_elf)
+        subprocess.run([project_elf.path])
 
-    sim = Command('sim.txt', [], sim_run)
-    Depends(sim, project_elf)
-    Alias('sim', sim)
+    AlwaysBuild(Command('#/sim', [], sim_run))
 
     # open gdb with the elf file
     def gdb_run(target, source, env):
-        os.execv('/usr/bin/gdb', ['/usr/bin/gdb', project_elf.path])
+        subprocess.run(['/usr/bin/gdb', project_elf.path])
 
-    gdb = Command('gdb.txt', [], gdb_run)
-    Depends(gdb, project_elf)
-    Alias('gdb', gdb)
+    AlwaysBuild(Command('#/gdb', project_elf, gdb_run))
 
 ###########################################################
 # Helper targets for arm
@@ -226,10 +181,10 @@ if PLATFORM == 'x86' and TARGET:
 if PLATFORM == 'arm' and TARGET:
     project_bin = BIN_DIR.File(TARGET + '.bin')
     # display memory info for the project
-    if MEM_REPORT:
-        get_mem_report = Action(
-            f"python3 scons/mem_report.py build/arm/bin/{TARGET}")
-        env.AddPostAction(project_bin, get_mem_report)
+    if GetOption('mem-report'):
+        AlwaysBuild(Command("#/mem-report", project_bin,
+                            f"python3 scons/mem_report.py build/arm/bin/{TARGET}"))
+        Default("#/mem-report")
 
     # flash the MCU using openocd
     def flash_run_target(target, source, env):
@@ -238,6 +193,4 @@ if PLATFORM == 'arm' and TARGET:
             line: str = serialData.readline().decode("utf-8")
             print(line, end='')
 
-    flash = Command('flash.txt', [], flash_run_target)
-    Depends(flash, project_bin)
-    Alias('flash', flash)
+    AlwaysBuild(Command('#/flash', project_bin, flash_run_target))

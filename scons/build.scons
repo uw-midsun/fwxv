@@ -109,7 +109,7 @@ def generate_can_files(env, project):
 # Just include all library headers
 # This resolves dependency issues like ms-freertos including FreeRTOS headers
 # even though FreeRTOS depends on ms-freertos, not the other way around
-lib_incs = [inc_dir for lib_dir in LIB_DIR.glob('*') for inc_dir in inc(lib_dir)]
+lib_incs = [inc(lib_dir) for lib_dir in LIB_DIR.glob('*')]
 for entry in LIB_DIR.glob('*'):
     config = parse_config(entry)
     lib_deps = get_lib_deps(entry)
@@ -139,8 +139,8 @@ for entry in PROJ_DIR.glob('*') + SMOKE_DIR.glob('*'):
         srcs += can_sources
         incs += can_headers
 
-    incs += [ROOT.Dir(i) for i in config.get("include", [])]
-    srcs += [OBJ_DIR.File(s) for s in config.get("sources", [])]
+    incs += map(ROOT.Dir, config.get("include", []))
+    srcs += map(OBJ_DIR.File, config.get("sources", []))
 
     lib_deps = get_lib_deps(entry)
     # SCons automagically handles object creation and linking

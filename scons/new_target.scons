@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-"""New target script.
-
-This module sets up the folder structure and config.json for a new project or library.
-
-Usage: python3 new_target.py project|library name
-"""
 import json
 import jinja2
 from pathlib import Path
@@ -19,6 +12,7 @@ TARGET = VARS.get("TARGET")
 
 # default configuration for projects
 DEFAULT_CONFIG = {"libs": ["FreeRTOS", "ms-common"]}
+
 
 def new_task(target, task_name):
     DATA = {"task_name": task_name}
