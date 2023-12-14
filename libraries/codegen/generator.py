@@ -103,15 +103,14 @@ def main():
     data.update({"Board": args.board})
 
     template_loader = jinja2.FileSystemLoader(
-        searchpath=Path(__file__).parent.joinpath("templates"))
+        searchpath=Path(__file__).parent.joinpath("templates").as_posix())
     env = jinja2.Environment(loader=template_loader)
     env.tests["contains"] = (lambda list, var: (var in list))
 
     for output_dir, templates in zip(args.outputs, args.templates):
         for template in templates:
             output = env.get_template(template).render(data=data)
-            with open(Path(output_dir, get_file_name(template, args.board)), "w") as f:
-                f.write(output)
+            Path(output_dir, get_file_name(template, args.board)).write_text(output)
 
     print("Done autogenerating")
 

@@ -2,5 +2,6 @@
     "libs": [
         "FreeRTOS",
         "ms-common"
-    ]
+    ],
+    "no_lint": true
 }
