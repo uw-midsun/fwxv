@@ -165,9 +165,9 @@ if PLATFORM == 'x86' and TARGET:
 
     def sim_run(target, source, env):
         print('Simulating', project_elf)
-        subprocess.run([project_elf.path])
+        subprocess.Popen(project_elf.path, shell=True).wait()
 
-    AlwaysBuild(Command('#/sim', [], sim_run))
+    AlwaysBuild(Command('#/sim', [project_elf], sim_run))
 
     # open gdb with the elf file
     def gdb_run(target, source, env):
