@@ -206,7 +206,7 @@ def main():
         file_path = options.file_path + "/" + get_file_name(template_name, options.board)
 
         # TODO: Fix this
-        if "system_can.dbc" in template_name:
+        if "system_can.dbc" in template_name or "message.py.jinja" in template_name:
             data = get_dbc_data()
             if len(data["Boards"]):
                 write_template(env, template_name, file_path, data)

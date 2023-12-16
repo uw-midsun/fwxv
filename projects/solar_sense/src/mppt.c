@@ -49,9 +49,7 @@ StatusCode mppt_init(const SpiSettings *settings, const SpiPort port) {
     status_ok_or_return(prv_select_mppt(i));
 
     // Turning on MPPT
-    status_ok_or_return(spi_cs_set_state(mppt_spi_port, GPIO_STATE_LOW));
     status_ok_or_return(spi_tx(mppt_spi_port, &mppt_turn_on_cmd, 1));
-    status_ok_or_return(spi_cs_set_state(mppt_spi_port, GPIO_STATE_HIGH));
   }
 
   return STATUS_CODE_OK;

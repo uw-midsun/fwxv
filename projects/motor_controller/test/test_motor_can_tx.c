@@ -90,11 +90,11 @@ void test_reverse(void) {
   g_rx_struct.drive_output_regen_braking = false;
   g_rx_struct.drive_output_target_velocity = prv_get_uint32(10.0f);
   g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.0f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.0f);
+  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.3f);
 
   run_motor_controller_cycle();
 
-  assert_drive_command(0.0f, 0.0f);
+  assert_drive_command(0.3f, TORQUE_CONTROL_VEL);
 }
 
 TEST_IN_TASK

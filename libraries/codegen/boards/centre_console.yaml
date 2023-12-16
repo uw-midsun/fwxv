@@ -55,8 +55,6 @@
     power_on_main_sequence:
       id: 6
       target:
-        motor_controller:
-          watchdog: 0
         pedal:
           watchdog: 0
         power_distribution_front:
@@ -71,8 +69,6 @@
     power_off_main_sequence:
       id: 7
       target:
-        motor_controller:
-          watchdog: 0
         pedal:
           watchdog: 0
         power_distribution_front:

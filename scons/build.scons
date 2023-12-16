@@ -198,14 +198,10 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
 ###########################################################
 # Python
 ###########################################################
-def run_python(target, source, env):
-    py_env = os.environ.copy()
-    py_env["PYTHONPATH"] = os.path.abspath("py/")
-    subprocess.run(["python3", f"py/{TARGET}/main.py"], env=py_env).check_returncode()
 
 # Build all projects when you just run `scons`
 if (TYPE != 'python'):
     Default(TARGET or [proj.name for proj in PROJ_DIRS])
 else:
-    py = Command('py.txt', [], run_python)
+    py = Command('py.txt', [], f"PYTHONPATH=py python3 py/{TARGET}/main.py")
     Default(py)

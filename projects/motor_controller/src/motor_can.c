@@ -58,7 +58,7 @@ static void prv_update_target_current_velocity() {
   bool regen = get_drive_output_regen_braking();
   bool cruise = get_drive_output_cruise_control();
 
-  if (cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
+  if (drive_state == DRIVE && cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
     drive_state = CRUISE;
   }
   if (brake_percent > 0 || (throttle_percent == 0 && !cruise)) {
@@ -97,6 +97,10 @@ static void prv_update_target_current_velocity() {
 static void motor_controller_tx_all() {
   // TODO: add can watchdog to shut down motor controller if messages are not received from
   // center console
+  // LOG_DEBUG("%d, %d\n", get_received_drive_output(), get_drive_output_drive_state());
+  if (!get_received_drive_output()) return;
+  // if (!get_pedal_output_brake_output()) return;
+
   prv_update_target_current_velocity();
 
   CanMessage message = {
@@ -112,9 +116,6 @@ static void motor_controller_tx_all() {
 static void motor_controller_rx_all() {
   CanMessage msg = { 0 };
   while (mcp2515_receive(&msg) == STATUS_CODE_OK) {
-    LOG_DEBUG("receive id: %lx, data: %d, %d\n", msg.id.raw,
-              (int16_t)(prv_get_float(msg.data_u32[0]) * 100),
-              (int16_t)(prv_get_float(msg.data_u32[1]) * 100));
     switch (msg.id.raw) {
       case MOTOR_CONTROLLER_BASE_L + STATUS:
         set_mc_status_error_bitset_l(msg.data_u16[2] >> 1);
