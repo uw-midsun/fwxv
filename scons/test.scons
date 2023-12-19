@@ -19,13 +19,11 @@ PROJ_DIR = ROOT.Dir('projects')
 LIB_DIR = ROOT.Dir('libraries')
 SMOKE_DIR = ROOT.Dir('smoke')
 
-GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.py'
-GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
-
 ###########################################################
 # Create appropriate test targets, (when lib/proj target is defined)
 ###########################################################
 run_list = []
+autogen_sources = list(ROOT.glob("autogen/*"))
 
 
 def add_to_run_list(target, source, env):
@@ -50,17 +48,14 @@ def add_test_targets(target, source, env):
         mocks = config.get("mocks", {}).get(test_module_name, [])
         mock_link_flags = [f'-Wl,-wrap,{mock}' for mock in mocks]
 
-        runner_exec = TEST_DIR.File(f"{entry.path}/bin/{test_module_name}")
-
         runner_file = TEST_DIR.File(test_file.path)
-        autogen = env.Action(f'python3 {GEN_RUNNER} {GEN_RUNNER_CONFIG} {test_file.path} {runner_file.path}',
-                             f'Autogen    {test_file.path} test_runner')
         runner_file = env.Command(
             runner_file,
-            [test_file, ROOT.Dir("libraries/unity/auto").glob("*")],
-            autogen)
-        test_sources = [runner_file, OBJ_DIR.File(test_file.path)]
+            [test_file, autogen_sources],
+            f'python3 -m autogen test -o {runner_file.path}')
 
+        runner_exec = TEST_DIR.File(f"{entry.path}/bin/{test_module_name}")
+        test_sources = [runner_file, OBJ_DIR.File(test_file.path)]
         test_target = env.Program(
             target=runner_exec,
             source=sources_no_main + test_sources,

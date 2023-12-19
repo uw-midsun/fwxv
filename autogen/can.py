@@ -44,6 +44,11 @@ def check_yaml_file(data):
 
 
 def get_data(args):
+    '''
+    get data to generate the can files for a board
+    expect args.output to be .../<target-type>/<target-name>/can
+    where <target-type> is one of libraries/projects/smoke
+    '''
     boards = []
     messages = []
 
@@ -75,4 +80,6 @@ def get_data(args):
                 "receiver": message["target"],
             })
 
-    return {"boards": boards, "messages": messages, "board": Path(args.output).stem}
+    board = Path(args.output).parent.stem
+
+    return {"boards": boards, "messages": messages, "board": board}

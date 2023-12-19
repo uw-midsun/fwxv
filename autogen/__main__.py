@@ -19,7 +19,6 @@ def main():
     parser.add_argument("-o", dest="output", required=True, metavar="DIR")
 
     args = parser.parse_args()
-    print(args.template_name)
 
     if args.template_name in ["can", "can_board_ids", "python_can"]:
         from .can import get_data

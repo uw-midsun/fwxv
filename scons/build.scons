@@ -21,10 +21,7 @@ SMOKE_DIR = ROOT.Dir('smoke')
 
 LIB_BIN_DIR = BIN_DIR.Dir('libraries')
 
-CODEGEN_DIR = LIB_DIR.Dir("codegen")
-BOARDS_DIR = CODEGEN_DIR.Dir("boards")
-GENERATOR = CODEGEN_DIR.File("generator.py")
-TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
+CODEGEN_DIR = ROOT.Dir("autogen")
 
 LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
 
@@ -57,53 +54,41 @@ def get_lib_deps(entry):
 ###########################################################
 # Header file generation from jinja templates
 ###########################################################
-autogen_sources = [BOARDS_DIR.glob("*"), TEMPLATES_DIR.glob("*"), GENERATOR]
+autogen_sources = list(CODEGEN_DIR.glob("*"))
 env.Command(
     PY_DIR.File("can.py"),
     autogen_sources,
-    env.Action(f"python3 -m autugen python_can -o py/can",
-               f"Autogen    py/can/messages.py")
+    f"python3 -m autogen python_can -o py/can"
 )
 env.Command(
     LIBRARIES_INC_DIR.File("can_board_ids.h"),
     autogen_sources,
-    env.Action(f"python3 -m autugen can_board_ids -o libraries/ms-common/inc",
-               f"Autogen    libraries/ms-common/inc/can_board_ids.h")
+    f"python3 -m autogen can_board_ids -o libraries/ms-common/inc"
 )
 
 
 def generate_can_files(env, project):
     project_can_dir = OBJ_DIR.Dir(project).Dir("can")
-    source_dir = project_can_dir.Dir("src")
-    header_dir = project_can_dir.Dir("inc")
 
-    header_files = []
-    source_files = []
-    source_command = f"-f {source_dir} -t"
-    header_command = f"-f {header_dir} -t"
+    output_files = []
 
-    # TODO: Fix up system_can.dbc output directory
-    # project specific files
-    header_command += " can_codegen.h.jinja"
-    header_files.append(header_dir.File("can_codegen.h"))
-    for template in TEMPLATES_DIR.glob('_*.jinja'):
-        # name of output file
-        file_name = Path(project).stem + Path(template.name).stem
-        if ".c" in file_name:
-            source_command += " " + template.name
-            source_files.append(source_dir.File(file_name))
-        else:
-            header_command += " " + template.name
-            header_files.append(header_dir.File(file_name))
+    project_name = Path(project).stem
+    can_template_dir = Path(str(CODEGEN_DIR), "templates/can")
+    for template in can_template_dir.glob('*/*.jinja'):
+        template_path = template.relative_to(can_template_dir)
+        output_name = str(template_path) \
+            .replace(r"{{board}}", project_name) \
+            .replace(".jinja", "")
 
-    command = env.Action(f"python3 {GENERATOR} -b {Path(project).stem} {source_command} {header_command}",
-                         f"Autogen    {project} can files")
-    # print([f.path for f in header_files + source_files])
-    env.Command(header_files + source_files, autogen_sources, command)
+        output_files.append(project_can_dir.File(output_name))
+
+    # print([f.path for f in output_files])
+    env.Command(output_files, autogen_sources,
+                f"python3 -m autogen can -o {project_can_dir.path}")
 
     # Add a VariantDir that point to can folder. Create the can target specific for the project
     VariantDir(project_can_dir, ROOT.Dir('can'), duplicate=0)
-    return src(project_can_dir), [header_dir] + inc(ROOT.Dir("can"))
+    return src(project_can_dir), [project_can_dir.Dir("inc")] + inc(ROOT.Dir("can"))
 
 
 ###########################################################
