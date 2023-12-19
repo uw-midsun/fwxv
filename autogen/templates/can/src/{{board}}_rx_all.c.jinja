@@ -1,0 +1,60 @@
+{% set messages = messages | selectattr("receiver", "contains", board) | list -%}
+
+#include "can_board_ids.h"
+#include "can_codegen.h"
+#include "can_watchdog.h"
+
+{%- for message in messages %}
+    {%- if message.receiver[board].watchdog != 0 %}
+static CanWatchDog s_{{message.name}}_msg_watchdog = {0, {{message.receiver[board].watchdog | lower}}, 0};
+    {%- endif %}
+{%- endfor %}
+
+void can_rx_all() {
+    CanMessage msg = { 0 };
+    while (can_receive(&msg) == STATUS_CODE_OK) {
+        // TODO: Not sure if for loop is best way
+        // Might be O(n)
+        // If store all functions in callback array may be better?
+        // Or do some sort or binary search for O(lgn)
+        switch (msg.id.raw) {
+        {%- for message in messages %}
+            case SYSTEM_CAN_MESSAGE_{{message.sender | upper}}_{{message.name | upper}}:
+            {%- for signal in message.signals %}
+                g_rx_struct.{{message.name}}_{{signal.name}} = (msg.data >> {{signal.start_bit}});
+            {%- endfor %}
+                g_rx_struct.received_{{message.name}} = true;
+            {%- if message.receiver[board].watchdog %}
+                s_{{message.name}}_msg_watchdog.cycles_over = 0;
+            {%- endif %}
+                break;
+        {%- endfor %}
+            default:
+                break;
+        }
+    }
+}
+
+void clear_rx_received() {
+{%- for message in messages %}
+    g_rx_struct.received_{{message.name}} = false;
+{%- endfor %}
+}
+
+StatusCode check_can_watchdogs() {
+{%- for message in messages %}
+    {%- if message.receiver[board].watchdog != 0 %}
+    if (!g_rx_struct.received_{{message.name}}) {
+        ++s_{{message.name}}_msg_watchdog.cycles_over;
+        if (s_{{message.name}}_msg_watchdog.cycles_over >= s_{{message.name}}_msg_watchdog.max_cycles) {
+            LOG_CRITICAL("DID NOT RECEIVE CAN MESSAGE: %u IN MAX CYCLES : %u\n", SYSTEM_CAN_MESSAGE_{{message.sender | upper}}_{{message.name | upper}},
+                            s_{{message.name}}_msg_watchdog.max_cycles);
+            s_{{message.name}}_msg_watchdog.missed = 1;
+        } else {
+            s_{{message.name}}_msg_watchdog.missed = 0;
+        }
+    }
+    {%- endif %}
+{%- endfor %}
+    return STATUS_CODE_OK;
+}

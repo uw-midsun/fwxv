@@ -1,0 +1,8 @@
+{
+    "libs": [
+{%- for lib in libs %}
+        "{{ lib }}"{{ "," if not loop.last }}
+{%- endfor %}
+    ],
+    "can": false
+}

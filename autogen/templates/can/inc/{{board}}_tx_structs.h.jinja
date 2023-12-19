@@ -1,0 +1,13 @@
+{% set messages = messages | selectattr("sender", "eq", board) | list -%}
+
+#pragma once
+
+#include <stdint.h>
+
+typedef struct {
+{%- for message in messages -%}
+    {%- for signal in message.signals %}
+    uint{{signal.length}}_t {{message.name}}_{{signal.name}};
+    {%- endfor -%}
+{% endfor %}
+} {{board}}_tx_struct;

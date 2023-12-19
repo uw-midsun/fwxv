@@ -84,7 +84,7 @@ def generate_can_files(env, target=[], source=[], project=TARGET, is_smoke=False
             env.Command(
                 PY_DIR.File(file_name),
                 [BOARDS_DIR, TEMPLATES_DIR, GENERATOR],
-                f"python3 {GENERATOR} -f {PY_DIR} -t {template.name}"
+                f"python3 {GENERATOR} -f {PY_DIR}/can -t {template.name}"
             )
         elif file_name == "can_board_ids.h":
             env.Command(

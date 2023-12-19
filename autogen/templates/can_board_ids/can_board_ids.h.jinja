@@ -1,0 +1,15 @@
+#pragma once
+#include <stdbool.h>
+
+// For setting the CAN device
+typedef enum {
+    {% for board in boards -%}
+    SYSTEM_CAN_DEVICE_{{ board | upper }} = {{ loop.index0 }},
+    {% endfor -%}
+    NUM_SYSTEM_CAN_DEVICES = {{ boards | length }}
+} SystemCanDevice;
+
+{% for message in messages %}
+#define SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} \
+    ({{ message.id }} << 5) + SYSTEM_CAN_DEVICE_{{ message.sender | upper }}
+{% endfor %}
