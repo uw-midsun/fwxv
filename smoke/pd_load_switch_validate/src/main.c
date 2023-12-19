@@ -1,11 +1,11 @@
 #include <stdio.h>
 
 #include "delay.h"
+#include "i2c.h"
 #include "log.h"
 #include "master_task.h"
 #include "pca_config.h"
 #include "tasks.h"
-#include "i2c.h"
 
 Pca9555GpioAddress addy[] = {
   { .i2c_address = I2C_ADDRESS_1, .pin = PCA9555_PIN_IO1_0 },

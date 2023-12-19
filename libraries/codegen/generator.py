@@ -112,8 +112,5 @@ def main():
             output = env.get_template(template).render(data=data)
             Path(output_dir, get_file_name(template, args.board)).write_text(output)
 
-    print("Done autogenerating")
-
-
 if __name__ == "__main__":
     main()

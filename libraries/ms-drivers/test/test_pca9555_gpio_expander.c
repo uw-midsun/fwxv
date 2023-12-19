@@ -36,7 +36,6 @@ void setup_test(void) {
 void teardown_test(void) {}
 
 TEST_IN_TASK
-
 void test_gpio_set_state(void) {
   StatusCode status;
   uint8_t data = MOCK_REG;
