@@ -201,7 +201,7 @@ typedef enum EESolarRelayOpenErrorReason {
   NUM_EE_SOLAR_RELAY_OPEN_ERROR_REASON
 } EESolarRelayOpenErrorReason;
 
-enum GlobalErrorCode {
+typedef enum {
   NO_ERROR = 0,
   PEDAL_OFFLINE,
   MCI_CAN_FAULT,

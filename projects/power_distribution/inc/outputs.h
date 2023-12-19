@@ -60,6 +60,11 @@ typedef enum {
   OUTPUT_GROUP_LEFT_TURN,
   OUTPUT_GROUP_RIGHT_TURN,
   OUTPUT_GROUP_HAZARD,
+  // Power States
+  OUTPUT_GROUP_BMS_RELAYS,
+  OUTPUT_GROUP_POWER_OFF,
+  OUTPUT_GROUP_POWER_ON,
+  OUTPUT_GROUP_DRIVE,
   OUTPUT_GROUP_TEST,
   NUM_OUTPUT_GROUPS,
 } OutputGroup;
@@ -81,3 +86,5 @@ StatusCode pd_output_init(void);
 
 // Sets an output group to an output state
 StatusCode pd_set_output_group(OutputGroup group, OutputState state);
+
+StatusCode pd_set_active_output_group(OutputGroup group);

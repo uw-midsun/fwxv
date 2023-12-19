@@ -41,8 +41,9 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
 
+  fsm_run_cycle(power_seq);
   fsm_run_cycle(lights);
-  wait_tasks(1);
+  wait_tasks(2);
 
   adc_run();
 
@@ -53,7 +54,6 @@ void run_medium_cycle() {
 void run_slow_cycle() {}
 
 int main() {
-  LOG_DEBUG("starting here...\n");
   tasks_init();
   log_init();
   gpio_init();
@@ -61,8 +61,10 @@ int main() {
   i2c_init(I2C_PORT_1, &i2c_settings);
   pca9555_gpio_init(I2C_PORT_1);
   can_init(&s_can_storage, &can_settings);
-  // init_power_seq();
+  init_power_seq();
   init_lights();
+  set_master_cycle_time(250);  // Give it enough time to run an entire medium cycle
+  set_medium_cycle_count(2);   // adjust medium cycle count to run once per 500ms
 
   LOG_DEBUG("Welcome to PD!\n");
   init_master_task();

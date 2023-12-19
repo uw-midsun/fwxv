@@ -99,6 +99,10 @@
       target:
         centre_console:
           watchdog: 0
+        power_distribution:
+          watchdog: 0
       signals:
         notification:
+          length: 8
+        relay_status:
           length: 8

@@ -16,3 +16,9 @@ typedef struct
     bool received_{{message}};
 {%- endfor %}
 } {{board}}_rx_struct;
+
+{%- for message, message_data in messages.items() %}
+  {% if message_data["target"][board]["watchdog"] != 0 %}
+uint8_t check_{{message}}_msg_watchdog();
+  {%- endif %}
+{%- endfor %}

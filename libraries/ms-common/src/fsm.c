@@ -51,7 +51,7 @@ void _fsm_task(void *context) {
       LOG_DEBUG("FSM timeout\n");
     }
     // Indicate that a fsm_cycle is finished
-    send_task_end();
+    send_task_end();  // TODO: should it send task end if fsm times out?
   }
 }
 
