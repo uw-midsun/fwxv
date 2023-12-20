@@ -1,2 +1,0 @@
-  text    data     bss     dec     hex filename
-  28368    1416   17072   46856    b708 build/arm/bin/projects/centre_console
