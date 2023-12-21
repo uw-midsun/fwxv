@@ -97,7 +97,7 @@ def run_test(target, source, env):
                 if line.startswith('OK'):
                     break
                 if line.startswith('FAIL'):
-                    fails += 1
+                    fails.append(test_name)
                     break
 
     print(f"{len(run_list)} Files tested {len(fails)} Failures")
