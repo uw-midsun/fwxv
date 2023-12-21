@@ -58,12 +58,7 @@ def get_lib_deps(entry):
 # Header file generation from jinja templates
 ###########################################################
 autogen_sources = [BOARDS_DIR.glob("*"), TEMPLATES_DIR.glob("*"), GENERATOR]
-env.Command(
-    PY_DIR.File("can.py"),
-    autogen_sources,
-    env.Action(f"python3 {GENERATOR} -f {PY_DIR} -t can.py.jinja",
-               f"Autogen    {PY_DIR}/can.py")
-)
+
 env.Command(
     LIBRARIES_INC_DIR.File("can_board_ids.h"),
     autogen_sources,
