@@ -8,7 +8,6 @@ int main(void) {
   while (true) {
     in++;
     LOG_DEBUG("%d, Hello World\n", in);
-    sleep(1);
   }
 
   return 0;
