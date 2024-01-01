@@ -8,7 +8,7 @@
 #include "misc.h"
 #include "tasks.h"
 
-// Non blocking delay. Simply consumes cpu cycles until a given time has passed
+// Non blocking delay. Simply consumes cpu cycles until a given time passes
 static void prv_delay(const TickType_t delay_ms) {
   TickType_t curr_tick = xTaskGetTickCount();
   while (xTaskGetTickCount() - curr_tick < pdMS_TO_TICKS(delay_ms)) {
