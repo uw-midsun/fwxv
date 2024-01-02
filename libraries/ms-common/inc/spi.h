@@ -8,7 +8,7 @@
 #include "status.h"
 
 #define SPI_TIMEOUT_MS 100
-#define SPI_MAX_NUM_DATA 32
+#define SPI_MAX_NUM_DATA 100
 
 typedef enum {
   SPI_MODE_0 = 0,  // CPOL: 0 CPHA: 0

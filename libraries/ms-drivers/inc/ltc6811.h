@@ -116,7 +116,7 @@ typedef struct {
   LtcAfeWriteDeviceConfigPacket devices[LTC_AFE_MAX_CELLS_PER_DEVICE];
 } _PACKED LtcAfeWriteConfigPacket;
 #define SIZEOF_LTC_AFE_WRITE_CONFIG_PACKET(devices) \
-  (LTC6811_CMD_SIZE + (devices) * sizeof(LtcAfeWriteConfigPacket))
+  (LTC6811_CMD_SIZE + (devices) * sizeof(LtcAfeWriteDeviceConfigPacket))
 
 typedef union {
   uint16_t voltages[3];
