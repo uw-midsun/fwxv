@@ -7,14 +7,8 @@
 #include "pca9555_gpio_expander.h"
 #include "seg_display.h"
 
-// Multiplication factor to convert CAN motor velocity (cm/s) into drive output velocity (mm/s)
-#define CONVERT_VELOCITY 1.2
-
-// Multiplication factor to convert CAN drive output velocity to kph
-#define CONVERT_VELOCITY_TO_KPH 0.0036
-
-// Multiplication Factor to convert CAN Velocity in 100 * m/s to kph
-#define CONVERT_VELOCITY_TO_SPEED 0.018
+// Multiplication factor to convert CAN drive output velocity (cm/s) to kph
+#define CONVERT_VELOCITY_TO_KPH 0.036
 
 SegDisplay all_displays = ALL_DISPLAYS;
 
@@ -115,8 +109,9 @@ void monitor_cruise_control() {
   if (new_cc_state != s_cc_enabled) {
     if (new_cc_state) {
       // Store recent speed from MCI as initial cruise control speed
+      // Average left and right readings, multiply by conversion factor
       float converted_val =
-          (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) * CONVERT_VELOCITY;
+          (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2 * CONVERT_VELOCITY_TO_KPH;
       s_target_velocity = (unsigned int)converted_val;
       pca9555_gpio_set_state(&s_output_leds[CRUISE_LED], PCA9555_GPIO_STATE_HIGH);
     } else {
@@ -139,8 +134,9 @@ void monitor_cruise_control() {
 
 void update_displays(void) {
   // Read data from CAN structs and update displays with those values
+  // Average left and right readings, multiply by conversion factor
   float speed_kph =
-      (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) * CONVERT_VELOCITY;
+      (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2 * CONVERT_VELOCITY_TO_KPH;
   uint16_t batt_perc_val = get_battery_status_batt_perc();
   if (speed_kph >= 100) {
     seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, s_target_velocity);

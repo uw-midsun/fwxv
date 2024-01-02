@@ -5,7 +5,6 @@
 #define MAX_DISPLAY_VALUE 999
 #define DELAY_BETWEEN_DIGITS_MS 3
 
-void set_seg_displays(SegDisplay *display, uint16_t val1, uint16_t val2, uint16_t val3);
 void seg_displays_reset(SegDisplay *display);
 void set_digit(SegDisplay *display, GpioAddress *digit, uint16_t val1, uint16_t val2,
                uint16_t val3);
@@ -50,7 +49,7 @@ void seg_displays_reset(SegDisplay *display) {
   gpio_set_state(&display->Digit3, GPIO_STATE_HIGH);
 }
 
-void set_seg_displays(SegDisplay *display, uint16_t val1, uint16_t val2,
+static void prv_set_seg_displays(SegDisplay *display, uint16_t val1, uint16_t val2,
                       uint16_t val3) {  // Sets ABCD according to value
   GpioState state;
 
@@ -94,7 +93,7 @@ void set_seg_displays(SegDisplay *display, uint16_t val1, uint16_t val2,
 void set_digit(SegDisplay *display, GpioAddress *digit, uint16_t val1, uint16_t val2,
                uint16_t val3) {  // Sets D1 D2 D3
   gpio_set_state(digit, GPIO_STATE_LOW);
-  set_seg_displays(display, val1, val2, val3);
+  prv_set_seg_displays(display, val1, val2, val3);
   delay_ms(DELAY_BETWEEN_DIGITS_MS);
   gpio_set_state(digit, GPIO_STATE_HIGH);
 }
