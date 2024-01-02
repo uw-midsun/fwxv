@@ -25,27 +25,24 @@ TASK(task1, TASK_STACK_512) {
   uint32_t to_send = 0;
   while (true) {
     // Your code goes here
-    queue_send(&s_queue1, &to_send, 0);
-
-    delay_ms(100);
-    ret = queue_send(&s_queue1, &to_send, 0);
+    ret = queue_send(&s_queue1, s_list[to_send], 0);
     if (ret != STATUS_CODE_OK) {
       LOG_DEBUG("write to queue failed\n");
     }
-    to_send++;
+    delay_ms(100);
+    ++to_send;
   }
 }
+
 TASK(task2, TASK_STACK_512) {
   LOG_DEBUG("Task 2 initialized!\n");
-  const char outstr[ITEM_SZ];
-  char *read = outstr;
+  const char outstr[ITEM_SZ] = {};
   StatusCode ret;
-  uint32_t receive = 0;
   while (true) {
     // Your code goes here
-    ret = queue_receive(&s_queue1, &receive, 1000);
+    ret = queue_receive(&s_queue1, outstr, 1000);
     if (ret == STATUS_CODE_OK) {
-      LOG_DEBUG("%c\n", *read);
+      LOG_DEBUG("%s\n", outstr);
     } else {
       LOG_DEBUG("read from queue failed\n");
     }
