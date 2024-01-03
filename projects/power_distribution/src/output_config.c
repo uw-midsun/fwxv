@@ -1,6 +1,5 @@
 #include "outputs.h"
 
-
 static Bts7xxxPin s_solar_sense_1_en = {
   .pin_pca9555 = &(Pca9555GpioAddress)SOLAR_SENSE_1_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
@@ -162,7 +161,6 @@ static Bts7xxxPin s_telemetry_spare_5v_aux_dsel = {
   .pin_pca9555 = &(Pca9555GpioAddress)TELEMETRY_SPARE_5V_AUX_DSEL,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-
 
 // TODO: Update select states
 BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
