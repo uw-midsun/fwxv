@@ -50,7 +50,7 @@ void seg_displays_reset(SegDisplay *display) {
 }
 
 static void prv_set_seg_displays(SegDisplay *display, uint16_t val1, uint16_t val2,
-                      uint16_t val3) {  // Sets ABCD according to value
+                                 uint16_t val3) {  // Sets ABCD according to value
   GpioState state;
 
   state = ((val1 & 8) != 0) ? GPIO_STATE_HIGH : GPIO_STATE_LOW;

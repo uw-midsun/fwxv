@@ -109,8 +109,7 @@ void monitor_cruise_control() {
   if (new_cc_state != s_cc_enabled) {
     if (new_cc_state) {
       // Store recent speed from MCI as initial cruise control speed
-      float avg_speed = (get_motor_velocity_velocity_l() +
-          get_motor_velocity_velocity_r()) / 2;
+      float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
       float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
       s_target_velocity = (unsigned int)speed_kph;
       pca9555_gpio_set_state(&s_output_leds[CRUISE_LED], PCA9555_GPIO_STATE_HIGH);
@@ -134,8 +133,7 @@ void monitor_cruise_control() {
 
 void update_displays(void) {
   // Read data from CAN structs and update displays with those values
-  float avg_speed = (get_motor_velocity_velocity_l() +
-      get_motor_velocity_velocity_r()) / 2;
+  float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
   float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
   uint16_t batt_perc_val = get_battery_status_batt_perc();
   if (speed_kph >= 100) {
