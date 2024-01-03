@@ -94,18 +94,6 @@ static Bts7xxxPin s_spare_12v_1_en = {
   .pin_pca9555 = &(Pca9555GpioAddress)SPARE_12V_1_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_left_rear_cam_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)LEFT_REAR_CAMERA_EN,  // NOLINT
-  .pin_type = BTS7XXX_PIN_PCA9555,
-};
-static Bts7xxxPin s_right_cam_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)RIGHT_CAMERA_EN,  // NOLINT
-  .pin_type = BTS7XXX_PIN_PCA9555,
-};
-static Bts7xxxPin s_left_rear_right_cam_dsel = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_RIGHT_CAMERA_DSEL,  // NOLINT
-  .pin_type = BTS7XXX_PIN_PCA9555,
-};
 
 static Bts7xxxPin s_spare_12v_2_en = {
   .pin_pca9555 = &(Pca9555GpioAddress)SPARE_12V_2_EN,  // NOLINT
@@ -304,22 +292,6 @@ BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
     .resistor = 0,
   },
-  [LEFT_REAR_CAMERA] = {
-    .enable_pin = &s_left_rear_cam_en,
-    .select_pin = &s_left_rear_right_cam_dsel,
-    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_LOW  },
-    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .resistor = 0,
-    .mux_val = MUX_SEL_LEFT_RIGHT_REAR_CAMERA,
-  },
-  [RIGHT_CAMERA] = {
-    .enable_pin = &s_right_cam_en,
-    .select_pin = &s_left_rear_right_cam_dsel,
-    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
-    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .resistor = 0,
-    .mux_val = MUX_SEL_LEFT_RIGHT_REAR_CAMERA,
-  },
 };
 
 // Output Group Definitions
@@ -338,9 +310,7 @@ static OutputGroupDef s_output_group_hazards = {
   .outputs = { LEFT_TURN, RIGHT_TURN },
 };
 
-static OutputGroupDef s_output_group_test = {
-  .num_outputs = 2, .outputs = { FRONT_OUTPUT_STEERING, FRONT_OUTPUT_PEDAL }
-};
+static OutputGroupDef s_output_group_test = { .num_outputs = 2, .outputs = { STEERING, PEDAL } };
 
 const OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS] = {
   [OUTPUT_GROUP_ALL] = NULL,  // Special case
