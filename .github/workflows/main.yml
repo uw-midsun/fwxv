@@ -61,6 +61,7 @@ jobs:
           if [[ $(git diff --name-only) ]] ; then 
             echo -e "\n unformatted files:";
             git diff --name-only;
+            git diff
             exit 1;
           fi
 
