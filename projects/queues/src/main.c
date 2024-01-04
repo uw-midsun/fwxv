@@ -25,12 +25,17 @@ TASK(task1, TASK_STACK_512) {
   uint32_t to_send = 0;
   while (true) {
     // Your code goes here
-    ret = queue_send(&s_queue1, s_list[to_send], 0);
-    if (ret != STATUS_CODE_OK) {
-      LOG_DEBUG("write to queue failed\n");
-    }
+    ret = queue_send(&s_queue1, &s_list[to_send], 0);
+
     delay_ms(100);
     ++to_send;
+    if (to_send >= 5) {
+      ret = STATUS_CODE_OUT_OF_RANGE;
+    }
+    if (ret != STATUS_CODE_OK) {
+      LOG_DEBUG("write to queue failed\n");
+      break;
+    }
   }
 }
 
@@ -45,6 +50,7 @@ TASK(task2, TASK_STACK_512) {
       LOG_DEBUG("%s\n", outstr);
     } else {
       LOG_DEBUG("read from queue failed\n");
+      break;
     }
   }
 }
