@@ -1,3 +1,5 @@
+#include "bps_indicator.h"
+
 #define BPS_FAULT_INDICATOR_PERIOD_MS 375
 
 static SoftTimer s_bps_indicator_timer;
@@ -19,12 +21,11 @@ static void prv_callback() {
   }
 } 
 
-static void start_bps_fault_indicator() {
+void start_bps_fault_indicator() {
   s_bps_fault_enabled = true;
   soft_timer_start(BPS_FAULT_INDICATOR_PERIOD_MS, prv_callback, &s_bps_indicator_timer);
 }
 
-static void stop_bps_fault_indicator() {
+void stop_bps_fault_indicator() {
   s_bps_fault_enabled = false;
-	soft_timer_cancel(&s_bps_indicator_timer);
 }
