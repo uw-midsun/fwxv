@@ -34,12 +34,13 @@ typedef enum DriveLeds {
 static Pca9555GpioAddress s_output_leds[NUM_DRIVE_LED] = {
   [POWER_LED] = POWER_LED_ADDR,   [HAZARD_LED] = HAZARD_LED_ADDR, [LEFT_LED] = LEFT_LED_ADDR,
   [RIGHT_LED] = RIGHT_LED_ADDR,   [CRUISE_LED] = CRUISE_LED_ADDR, [REGEN_LED] = REGEN_LED_ADDR,
-  [LIGHTS_LED] = LIGHTS_LED_ADDR,
+  [AUX_WARNING_LED] = AUX_WARNING_LED_ADDR,
 };
 
 void update_indicators(uint32_t notif) {
   // Update hazard light
   if (notify_check_event(&notif, HAZARD_BUTTON_EVENT)) {
+
     if (!s_hazard_state) {
       s_hazard_state = true;
       pca9555_gpio_set_state(&s_output_leds[HAZARD_LED], PCA9555_GPIO_STATE_HIGH);
@@ -89,6 +90,11 @@ void update_indicators(uint32_t notif) {
         break;
     }
     s_last_lights_state = get_steering_info_input_lights();
+  }
+
+  // Update Aux warning LED
+  if (get_pd_status_fault_bitset() != 0) {
+    pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_HIGH);
   }
 }
 
