@@ -151,3 +151,16 @@
 #define MUX_SEL_INFOTAINMENT_DISPLAY_BMS 13  // aka main display
 #define MUX_SEL_FAN_1_2 14
 #define MUX_SEL_UV_VBAT 15
+
+// Fault pin addresses
+// GPIO
+#define AUX_FAULT_GPIO_1 \
+  { .port = GPIO_PORT_B, .pin = 3 }
+#define AUX_FAULT_GPIO_2 \
+  { .port = GPIO_PORT_B, .pin = 4 }
+#define DCDC_FAULT_GPIO_1 \
+  { .port = GPIO_PORT_A, .pin = 15 }
+#define DCDC_FAULT_GPIO_2 \
+  { .port = GPIO_PORT_B, .pin = 5 }
+#define DCDC_FAULT_GPIO_3 \
+  { .port = GPIO_PORT_A, .pin = 6 }

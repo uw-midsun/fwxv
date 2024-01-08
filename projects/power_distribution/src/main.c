@@ -44,6 +44,8 @@ void run_medium_cycle() {
   fsm_run_cycle(lights);
   wait_tasks(1);
 
+  adc_run();
+
   run_can_tx_cycle();
   wait_tasks(1);
 }
