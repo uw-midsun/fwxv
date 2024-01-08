@@ -25,13 +25,10 @@ TASK(task1, TASK_STACK_512) {
   uint32_t to_send = 0;
   while (true) {
     // Your code goes here
-    ret = queue_send(&s_queue1, &s_list[to_send], 0);
+    ret = queue_send(&s_queue1, &s_list[to_send % QUEUE_LEN], 0);
 
     delay_ms(100);
     ++to_send;
-    if (to_send >= 5) {
-      ret = STATUS_CODE_OUT_OF_RANGE;
-    }
     if (ret != STATUS_CODE_OK) {
       LOG_DEBUG("write to queue failed\n");
       break;
