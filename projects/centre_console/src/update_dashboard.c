@@ -99,6 +99,8 @@ void update_indicators(uint32_t notif) {
   // Update Aux warning LED
   if (get_pd_status_fault_bitset() != 0) {
     pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_HIGH);
+  } else {
+    pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_LOW);
   }
 }
 
