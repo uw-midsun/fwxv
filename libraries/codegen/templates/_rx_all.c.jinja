@@ -7,7 +7,7 @@
 
 {% for message, message_data in messages.items() %}
     {%- if message_data["target"][board]["watchdog"] != 0 %}
-static CanWatchDog s_{{message}}_msg_watchdog = {0, {{message_data["target"][board]["watchdog"] | lower}}, 0};
+CanWatchDog s_{{message}}_msg_watchdog = {0, {{message_data["target"][board]["watchdog"] | lower}}, 0};
     {%- endif %}
 {%- endfor %}
 
@@ -65,10 +65,3 @@ StatusCode check_can_watchdogs() {
     return status;
 }
 
-{%- for message, message_data in messages.items() %}
-    {% if message_data["target"][board]["watchdog"] != 0 %}
-uint8_t check_{{message}}_msg_watchdog() {
-    return s_{{message}}_msg_watchdog.missed;
-}
-    {%- endif %}
-{%- endfor %}

@@ -14,16 +14,16 @@
   { GPIO_PORT_A, 15 }
 
 #define check_pd_fault(fsm)                 \
-  power_context.fault = prv_fault_check();  \
-  if (power_context.fault != NO_ERROR) {    \
-    fsm_transition(fsm, POWER_STATE_FAULT); \
-    return;                                 \
-  }
+  power_context.fault = prv_fault_check();  
+  // if (power_context.fault != NO_ERROR) {    
+  //   fsm_transition(fsm, POWER_STATE_FAULT); 
+  //   return;                                 
+  // }
 
 #define NUM_POWER_STATES 6
 
 DECLARE_FSM(power_seq);
-typedef enum {
+typedef enum PowerSeqStateId {
   POWER_STATE_OFF = 0,
   TRANSMIT_BMS_CLOSE_RELAYS,
   POWER_STATE_ON,

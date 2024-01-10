@@ -26,6 +26,7 @@ static void prv_off_state_output(void *context) {
 
 static void prv_off_state_input(Fsm *fsm, void *context) {
   // TODO: Do we need to check fault here?
+  LOG_DEBUG("IN off state - %d\n", get_received_cc_power_control());
   if (!get_received_cc_power_control()) {
     return;
   }
@@ -40,7 +41,7 @@ static void prv_off_state_input(Fsm *fsm, void *context) {
 }
 
 static void prv_close_relays_state_output(void *context) {
-  LOG_DEBUG("Transitioned to close relays STATE\n");
+  LOG_DEBUG("Transitioned to CLOSE RELAYS STATE\n");
   pd_set_output_group(OUTPUT_GROUP_BMS_RELAYS, OUTPUT_STATE_ON);
   power_context.latest_state = TRANSMIT_BMS_CLOSE_RELAYS;
   power_context.timer_start_ticks = xTaskGetTickCount();
@@ -52,10 +53,10 @@ static void prv_close_relays_state_input(Fsm *fsm, void *context) {
   if (bms_relay_state == EE_RELAY_STATE_CLOSE) {
     GpioState dcdc_state;
     if (gpio_get_state(&dcdc_valid_pin, &dcdc_state) == STATUS_CODE_OK &&
-        dcdc_state == GPIO_STATE_LOW) {
-      fsm_transition(fsm, POWER_STATE_OFF);
-    } else {
+        dcdc_state == GPIO_STATE_HIGH) {
       fsm_transition(fsm, POWER_STATE_ON);
+    } else {
+      fsm_transition(fsm, POWER_STATE_OFF);
     }
   } else if ((xTaskGetTickCount() - power_context.timer_start_ticks) >
              pdMS_TO_TICKS(BMS_RESPONSE_TIMEOUT_MS)) {
@@ -102,7 +103,7 @@ static void prv_turn_on_drive_outputs_state_output(void *context) {
 }
 
 static void prv_turn_on_drive_outputs_state_input(Fsm *fsm, void *context) {
-  uint8_t mci_relay_state = get_precharge_completed_relay_status();
+  uint8_t mci_relay_state = get_mc_status_precharge_status();
   if (mci_relay_state == EE_RELAY_STATE_CLOSE) {
     fsm_transition(fsm, POWER_STATE_DRIVE);
   } else if ((xTaskGetTickCount() - power_context.timer_start_ticks) >
@@ -171,6 +172,5 @@ static bool s_power_seq_transitions[NUM_POWER_STATES][NUM_POWER_STATES] = {
 
 StatusCode init_power_seq(void) {
   fsm_init(power_seq, s_power_seq_state_list, s_power_seq_transitions, POWER_STATE_OFF, NULL);
-  gpio_init_pin(&dcdc_valid_pin, GPIO_INPUT_FLOATING, GPIO_STATE_HIGH);
-  return STATUS_CODE_OK;
+  return gpio_init_pin(&dcdc_valid_pin, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
 }
