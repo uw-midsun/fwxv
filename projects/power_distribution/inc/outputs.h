@@ -24,28 +24,28 @@ typedef enum {
   SOLAR_SENSE_2,
   PEDAL,
   STEERING,
-  LEFT_TURN,
-  RIGHT_TURN,
   DRL_LIGHT,
-  BRAKE_LIGHT,
-
   CENTER_CONSOLE,
   BMS_DCDC,
   MCI,
-  BPS_LIGHT,
-
   SPARE_12V_1,
   SPARE_12V_2,
   BMS_AUX,
   DRIVER_FAN,
   REAR_CAM_LCD,
   SPARE_5V_DCDC,
-
   TELEMETRY,
   SPARE_5V_AUX,
+  NUM_POWER_FSM_OUTPUTS,
+} OutputPowerFsm;
 
+typedef enum {
+  BPS_LIGHT = NUM_POWER_FSM_OUTPUTS,
+  RIGHT_TURN,
+  LEFT_TURN,
+  BRAKE_LIGHT,
   NUM_OUTPUTS,
-} Output;
+} OutputLights;
 
 typedef enum {
   OUTPUT_STATE_OFF = 0,
@@ -57,15 +57,14 @@ typedef enum {
 typedef enum {
   OUTPUT_GROUP_ALL = 0,  // Reserved Value
   // Lights
-  OUTPUT_GROUP_LEFT_TURN,
-  OUTPUT_GROUP_RIGHT_TURN,
-  OUTPUT_GROUP_HAZARD,
+  OUTPUT_GROUP_LIGHTS_LEFT_TURN,
+  OUTPUT_GROUP_LIGHTS_RIGHT_TURN,
+  OUTPUT_GROUP_LIGHTS_HAZARD,
   // Power States
-  OUTPUT_GROUP_BMS_RELAYS,
   OUTPUT_GROUP_POWER_OFF,
   OUTPUT_GROUP_POWER_ON,
-  OUTPUT_GROUP_DRIVE,
-  OUTPUT_GROUP_TEST,
+  OUTPUT_GROUP_POWER_DRIVE,
+  OUTPUT_GROUP_POWER_FAULT,
   NUM_OUTPUT_GROUPS,
 } OutputGroup;
 
@@ -75,7 +74,7 @@ typedef struct OutputMeasurementConfig {
 
 typedef struct OutputGroupDef {
   uint8_t num_outputs;
-  Output outputs[];
+  uint8_t outputs[];
 } OutputGroupDef;
 
 extern BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS];

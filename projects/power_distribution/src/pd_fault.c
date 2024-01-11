@@ -23,38 +23,33 @@ static void prv_set_fault_bit(uint8_t mask, bool condition) {
   }
 }
 
-static StatusCode prv_check_aux_fault(void) {
+static bool prv_check_aux_fault(void) {
   GpioState aux_gpio_1_state;
   GpioState aux_gpio_2_state;
-  status_ok_or_return(gpio_get_state(&aux_fault_gpio_1, &aux_gpio_1_state));
-  status_ok_or_return(gpio_get_state(&aux_fault_gpio_2, &aux_gpio_2_state));
-
-  bool aux_fault = (aux_gpio_1_state == GPIO_STATE_LOW || aux_gpio_2_state == GPIO_STATE_LOW);
-  prv_set_fault_bit(EE_PD_STATUS_FAULT_BITSET_AUX_FAULT_MASK, aux_fault);
-
-  return STATUS_CODE_OK;
+  if (!status_ok(gpio_get_state(&aux_fault_gpio_1, &aux_gpio_1_state)) ||
+      !status_ok(gpio_get_state(&aux_fault_gpio_2, &aux_gpio_2_state))) {
+    return true;
+  }
+  return (aux_gpio_1_state == GPIO_STATE_LOW || aux_gpio_2_state == GPIO_STATE_LOW);
 }
 
-static StatusCode prv_check_dcdc_fault(void) {
+static bool prv_check_dcdc_fault(void) {
   GpioState dcdc_gpio_1_state;
   GpioState dcdc_gpio_2_state;
   GpioState dcdc_gpio_3_state;
-  status_ok_or_return(gpio_get_state(&dcdc_fault_gpio_1, &dcdc_gpio_1_state));
-  status_ok_or_return(gpio_get_state(&dcdc_fault_gpio_2, &dcdc_gpio_2_state));
-  status_ok_or_return(gpio_get_state(&dcdc_fault_gpio_3, &dcdc_gpio_3_state));
+  if (!status_ok(gpio_get_state(&dcdc_fault_gpio_1, &dcdc_gpio_1_state)) ||
+      !status_ok(gpio_get_state(&dcdc_fault_gpio_2, &dcdc_gpio_2_state)) ||
+      !status_ok(gpio_get_state(&dcdc_fault_gpio_3, &dcdc_gpio_3_state))) {
+    return true;
+  }
 
-  bool dcdc_fault = (dcdc_gpio_1_state == GPIO_STATE_LOW || dcdc_gpio_2_state == GPIO_STATE_LOW ||
-                     dcdc_gpio_3_state == GPIO_STATE_HIGH);
-  prv_set_fault_bit(EE_PD_STATUS_FAULT_BITSET_DCDC_FAULT_MASK, dcdc_fault);
-
-  return STATUS_CODE_OK;
+  return (dcdc_gpio_1_state == GPIO_STATE_LOW || dcdc_gpio_2_state == GPIO_STATE_LOW ||
+          dcdc_gpio_3_state == GPIO_STATE_HIGH);
 }
 
-StatusCode check_pd_fault() {
-  status_ok_or_return(prv_check_aux_fault());
-  status_ok_or_return(prv_check_dcdc_fault());
-
+uint8_t check_pd_fault(void) {
+  prv_set_fault_bit(EE_PD_STATUS_FAULT_BITSET_AUX_FAULT_MASK, prv_check_aux_fault());
+  prv_set_fault_bit(EE_PD_STATUS_FAULT_BITSET_DCDC_FAULT_MASK, prv_check_dcdc_fault());
   set_pd_status_fault_bitset(s_fault_bitset);
-
-  return STATUS_CODE_OK;
+  return s_fault_bitset;
 }

@@ -3,8 +3,8 @@
 #include "fsm1.h"
 #include "fsm2.h"
 #include "log.h"
-#include "tasks.h"
 #include "master_task.h"
+#include "tasks.h"
 
 // TASK(master_task, TASK_STACK_512) {
 //   while (true) {

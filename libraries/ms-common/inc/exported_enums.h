@@ -79,6 +79,7 @@ typedef enum {
 // POWER DISTRIBUTION (TODO)
 typedef enum {
   EE_POWER_OFF_STATE = 0,
+  EE_POWER_TRANSMIT_CLOSE_RELAYS,
   EE_POWER_ON_STATE,
   EE_POWER_DRIVE_STATE,
 } PowerDistributionPowerState;

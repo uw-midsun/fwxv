@@ -1,21 +1,20 @@
 #include "power_seq_fsm.h"
 
 #include "outputs.h"
+#include "pd_fault.h"
 #include "power_distribution_getters.h"
 #include "power_distribution_setters.h"
+
+#define pd_fault_ok_or_transition(fsm)                                     \
+  power_context.fault = check_pd_fault();                                  \
+  if (check_battery_status_msg_watchdog() || get_battery_status_fault()) { \
+    fsm_transition(fsm, POWER_STATE_FAULT);                                \
+    return;                                                                \
+  }
 
 FSM(power_seq, NUM_POWER_STATES);
 
 static PowerFsmContext power_context = { 0 };
-static const GpioAddress dcdc_valid_pin = DCDC_VALID;
-
-static GlobalErrorCode prv_fault_check() {
-  if (check_battery_status_msg_watchdog()) {
-    return PD_BMS_LOSS;
-  }
-  // TODO(devAdhiraj): Call PD fault checks function
-  return NO_ERROR;
-}
 
 static void prv_off_state_output(void *context) {
   LOG_DEBUG("Transitioned to OFF STATE\n");
@@ -25,7 +24,7 @@ static void prv_off_state_output(void *context) {
 }
 
 static void prv_off_state_input(Fsm *fsm, void *context) {
-  // TODO: Do we need to check fault here?
+  pd_fault_ok_or_transition(fsm);
   LOG_DEBUG("IN off state - %d\n", get_received_cc_power_control());
   if (!get_received_cc_power_control()) {
     return;
@@ -42,18 +41,16 @@ static void prv_off_state_input(Fsm *fsm, void *context) {
 
 static void prv_close_relays_state_output(void *context) {
   LOG_DEBUG("Transitioned to CLOSE RELAYS STATE\n");
-  pd_set_output_group(OUTPUT_GROUP_BMS_RELAYS, OUTPUT_STATE_ON);
+  set_power_info_power_state() pd_set_output_group(OUTPUT_GROUP_POWER_ON, OUTPUT_STATE_ON);
   power_context.latest_state = TRANSMIT_BMS_CLOSE_RELAYS;
   power_context.timer_start_ticks = xTaskGetTickCount();
 }
 
 static void prv_close_relays_state_input(Fsm *fsm, void *context) {
-  check_pd_fault(fsm);
+  pd_fault_ok_or_transition(fsm);
   uint8_t bms_relay_state = get_battery_relay_info_state();
   if (bms_relay_state == EE_RELAY_STATE_CLOSE) {
-    GpioState dcdc_state;
-    if (gpio_get_state(&dcdc_valid_pin, &dcdc_state) == STATUS_CODE_OK &&
-        dcdc_state == GPIO_STATE_HIGH) {
+    if (power_context.fault == 0) {
       fsm_transition(fsm, POWER_STATE_ON);
     } else {
       fsm_transition(fsm, POWER_STATE_OFF);
@@ -68,11 +65,11 @@ static void prv_on_state_output(void *context) {
   LOG_DEBUG("Transitioned to ON STATE\n");
   pd_set_active_output_group(OUTPUT_GROUP_POWER_ON);
   power_context.latest_state = POWER_STATE_ON;
-  set_power_info_power_state(EE_POWER_ON_STATE);
+  set_power_info_power_state(EE_POWER_TRANSMIT_CLOSE_RELAYS);
 }
 
 static void prv_on_state_input(Fsm *fsm, void *context) {
-  check_pd_fault(fsm);
+  pd_fault_ok_or_transition(fsm);
   if (power_context.target_state == POWER_STATE_OFF) {
     fsm_transition(fsm, POWER_STATE_OFF);
     return;
@@ -97,7 +94,7 @@ static void prv_on_state_input(Fsm *fsm, void *context) {
 
 static void prv_turn_on_drive_outputs_state_output(void *context) {
   LOG_DEBUG("Transitioned to TURN ON DRIVE STATE\n");
-  pd_set_active_output_group(OUTPUT_GROUP_DRIVE);
+  pd_set_active_output_group(OUTPUT_GROUP_POWER_DRIVE);
   power_context.latest_state = TURN_ON_DRIVE_OUTPUTS;
   power_context.timer_start_ticks = xTaskGetTickCount();
 }
@@ -119,7 +116,7 @@ static void prv_drive_state_output(void *context) {
 }
 
 static void prv_drive_state_input(Fsm *fsm, void *context) {
-  check_pd_fault(fsm);
+  pd_fault_ok_or_transition(fsm);
   if (!get_received_cc_power_control()) {
     return;
   }
@@ -132,11 +129,7 @@ static void prv_drive_state_input(Fsm *fsm, void *context) {
 
 static void prv_fault_state_output(void *context) {
   LOG_DEBUG("Transitioned to FAULT STATE\n");
-  if (power_context.latest_state == POWER_STATE_DRIVE ||
-      power_context.latest_state == TURN_ON_DRIVE_OUTPUTS) {
-    pd_set_output_group(OUTPUT_GROUP_DRIVE, OUTPUT_STATE_OFF);
-  }
-  pd_set_output_group(OUTPUT_GROUP_POWER_ON, OUTPUT_STATE_ON);
+  pd_set_active_output_group(OUTPUT_GROUP_POWER_FAULT);
   set_power_info_pd_fault(power_context.fault);
   // TODO(devAdhiraj): start bps strobe
 }
@@ -172,5 +165,5 @@ static bool s_power_seq_transitions[NUM_POWER_STATES][NUM_POWER_STATES] = {
 
 StatusCode init_power_seq(void) {
   fsm_init(power_seq, s_power_seq_state_list, s_power_seq_transitions, POWER_STATE_OFF, NULL);
-  return gpio_init_pin(&dcdc_valid_pin, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
+  return STATUS_CODE_OK;
 }

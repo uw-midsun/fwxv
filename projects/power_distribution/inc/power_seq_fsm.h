@@ -10,16 +10,6 @@
 #define BMS_RESPONSE_TIMEOUT_MS 10000
 #define MCI_RESPONSE_TIMEOUT_MS 12000
 
-#define DCDC_VALID \
-  { GPIO_PORT_A, 15 }
-
-#define check_pd_fault(fsm)                 \
-  power_context.fault = prv_fault_check();  
-  // if (power_context.fault != NO_ERROR) {    
-  //   fsm_transition(fsm, POWER_STATE_FAULT); 
-  //   return;                                 
-  // }
-
 #define NUM_POWER_STATES 6
 
 DECLARE_FSM(power_seq);
@@ -36,7 +26,7 @@ typedef struct {
   PowerSeqStateId target_state;
   PowerSeqStateId latest_state;
   TickType_t timer_start_ticks;
-  GlobalErrorCode fault;
+  uint8_t fault;
 } PowerFsmContext;
 
 StatusCode init_power_seq(void);

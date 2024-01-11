@@ -34,7 +34,7 @@ StatusCode pd_set_output_group(OutputGroup group, OutputState state) {
     }
 
     for (uint8_t out = 0; out < grp->num_outputs; out++) {
-      Output output = grp->outputs[out];
+      uint8_t output = grp->outputs[out];
       if (state == OUTPUT_STATE_ON) {
         status_ok_or_return(bts_output_enable_output(&g_output_config[output]));
       } else {
@@ -57,7 +57,7 @@ StatusCode pd_set_active_output_group(OutputGroup group) {
   if (grp == NULL) {
     return STATUS_CODE_UNINITIALIZED;
   }
-  for (Output output = 0; output < NUM_OUTPUTS; output++) {
+  for (OutputPowerFsm output = 0; output < NUM_POWER_FSM_OUTPUTS; output++) {
     bool found = false;
     for (OutputGroup i = 0; i < grp->num_outputs; i++) {
       if (grp->outputs[i] == output) {
@@ -67,7 +67,7 @@ StatusCode pd_set_active_output_group(OutputGroup group) {
       }
     }
     if (!found) {
-      status_ok_or_return(bts_output_enable_output(&g_output_config[output]));
+      status_ok_or_return(bts_output_disable_output(&g_output_config[output]));
     }
   }
   return STATUS_CODE_OK;
