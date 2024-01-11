@@ -134,7 +134,7 @@ TASK(smoke_spi_task, TASK_STACK_512) {
     LOG_DEBUG("STAT1 %d stat2: %d\n\r", stat, stat2);
     printBytesInHex(rd_data, sizeof(LtcAfeConfigRegisterData));
     //print_cfg_reg(&rd_data);
-    delay_ms(5000);
+    delay_ms(1000);
   }
 }
 
@@ -142,7 +142,7 @@ int main() {
   gpio_init();
   tasks_init();
   log_init();
-  // LOG_DEBUG("Welcome to TEST!");
+  LOG_DEBUG("Welcome to TEST!");
 
   tasks_init_task(smoke_spi_task, TASK_PRIORITY(1), NULL);
 

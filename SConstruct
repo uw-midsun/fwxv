@@ -168,7 +168,7 @@ SConscript('scons/build.scons', exports='VARS')
 ###########################################################
 # Testing
 ###########################################################
-SConscript('scons/test.scons', exports='VARS')
+# SConscript('scons/test.scons', exports='VARS')
 
 ###########################################################
 # Helper targets

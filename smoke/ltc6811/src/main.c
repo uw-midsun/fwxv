@@ -2,6 +2,7 @@
 
 #include "log.h"
 #include "delay.h"
+#include "interrupt.h"
 
 #include "tasks.h"
 #include "ltc_afe.h"
@@ -45,6 +46,8 @@ TASK(smoke_ltc, TASK_STACK_512) {
 }
 
 int main() {
+   gpio_init();
+   interrupt_init();
    tasks_init();
    log_init();
    LOG_DEBUG("Welcome to TEST!");
