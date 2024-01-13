@@ -310,12 +310,29 @@ static OutputGroupDef s_output_group_hazards = {
   .outputs = { LEFT_TURN, RIGHT_TURN },
 };
 
+static OutputGroupDef s_output_group_power_off = { .num_outputs = 2,
+                                                   .outputs = { CENTER_CONSOLE, BMS_DCDC } };
+
+static OutputGroupDef s_output_group_power_on = {
+  .num_outputs = 7,
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, STEERING, SOLAR_SENSE_1, SOLAR_SENSE_2 }
+};
+
+static OutputGroupDef s_output_group_power_drive = {
+  .num_outputs = 13,
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, STEERING, SOLAR_SENSE_1, SOLAR_SENSE_2,
+               MCI, DRL_LIGHT, DRIVER_FAN, TELEMETRY, REAR_CAM_LCD, SPARE_5V_DCDC }
+};
+
+static OutputGroupDef s_output_group_power_fault = {
+  .num_outputs = 4, .outputs = { CENTER_CONSOLE, BMS_DCDC, PEDAL, STEERING }
+};
+
 static OutputGroupDef s_output_group_test = { .num_outputs = 2, .outputs = { STEERING, PEDAL } };
 
 const OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS] = {
   [OUTPUT_GROUP_ALL] = NULL,  // Special case
-  [OUTPUT_GROUP_LEFT_TURN] = &s_output_group_left_signal,
-  [OUTPUT_GROUP_RIGHT_TURN] = &s_output_group_right_signal,
-  [OUTPUT_GROUP_HAZARD] = &s_output_group_hazards,
-  [OUTPUT_GROUP_TEST] = &s_output_group_test,
+  [OUTPUT_GROUP_LIGHTS_LEFT_TURN] = &s_output_group_left_signal,
+  [OUTPUT_GROUP_LIGHTS_RIGHT_TURN] = &s_output_group_right_signal,
+  [OUTPUT_GROUP_LIGHTS_HAZARD] = &s_output_group_hazards,
 };
