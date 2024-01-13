@@ -1,8 +1,10 @@
 #include "max17261_fuel_gauge.h"
 
-#define PCT_LSB (1.0 / 256)                             // LSBit is 1/256%
-#define CAP_LSB (5.0 / storage->settings.r_sense_ohms)  // LSBit is 5 micro Volt hrs / Rsense
-#define TIM_LSB (5625U)                                 // LSBit is 5625ms
+#define PCT_LSB (1.0 / 256)  // LSBit is 1/256%
+#define TIM_LSB (5625U)      // LSBit is 5625ms
+#define CAP_LSB \
+  (5000000.0 / storage->settings.r_sense_uohms)  // LSBit is 5 micro Volt hrs / Rsense
+                                                 // Which is 5000000 pico Volt hrs / micro Rsense
 
 StatusCode max17261_get_reg(Max17261Storage *storage, Max17261Registers reg, uint16_t *value) {
   // unsure of underlying type of enum, cast to uint8_t to be sure

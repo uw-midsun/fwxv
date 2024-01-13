@@ -26,7 +26,7 @@ typedef struct {
   uint16_t empty_voltage;        // Only a 9-bit field, LSB = 78.125 (micro Volts)
   uint16_t charge_term_current;  // LSB = 1.5625 (micro Volts / R Sense)
 
-  uint16_t r_sense_ohms;
+  uint16_t r_sense_uohms;
 } Max17261Settings;
 
 typedef struct {
@@ -74,3 +74,7 @@ StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms);
  * @return STATUS_CODE_OK on success
  */
 StatusCode max17261_init(Max17261Storage *storage, Max17261Settings settings);
+
+StatusCode max17261_get_reg(Max17261Storage *storage, Max17261Registers reg, uint16_t *value);
+
+StatusCode max17261_set_reg(Max17261Storage *storage, Max17261Registers reg, uint16_t value);
