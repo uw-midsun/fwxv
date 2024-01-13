@@ -18,8 +18,9 @@ static PowerFsmContext power_context = { 0 };
 
 static void prv_off_state_output(void *context) {
   LOG_DEBUG("Transitioned to OFF STATE\n");
-  power_context.latest_state = POWER_STATE_OFF;
+  set_bms_relays_relays_state(EE_RELAY_STATE_OPEN);
   pd_set_active_output_group(OUTPUT_GROUP_POWER_OFF);
+  power_context.latest_state = POWER_STATE_OFF;
   set_power_info_power_state(EE_POWER_OFF_STATE);
 }
 
@@ -41,7 +42,8 @@ static void prv_off_state_input(Fsm *fsm, void *context) {
 
 static void prv_close_relays_state_output(void *context) {
   LOG_DEBUG("Transitioned to CLOSE RELAYS STATE\n");
-  set_power_info_power_state() pd_set_output_group(OUTPUT_GROUP_POWER_ON, OUTPUT_STATE_ON);
+  set_bms_relays_relays_state(EE_RELAY_STATE_CLOSE);
+  pd_set_output_group(OUTPUT_GROUP_POWER_ON, OUTPUT_STATE_ON);
   power_context.latest_state = TRANSMIT_BMS_CLOSE_RELAYS;
   power_context.timer_start_ticks = xTaskGetTickCount();
 }
@@ -65,7 +67,7 @@ static void prv_on_state_output(void *context) {
   LOG_DEBUG("Transitioned to ON STATE\n");
   pd_set_active_output_group(OUTPUT_GROUP_POWER_ON);
   power_context.latest_state = POWER_STATE_ON;
-  set_power_info_power_state(EE_POWER_TRANSMIT_CLOSE_RELAYS);
+  set_power_info_power_state(EE_POWER_ON_STATE);
 }
 
 static void prv_on_state_input(Fsm *fsm, void *context) {
