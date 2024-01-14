@@ -201,6 +201,5 @@ def test_runner(target, source, env):
 
     print(f"{len(test_list)} Files tested {fails} Failures")
 
-test = Command('test.txt', [], test_runner)
+test = Command('#/test', [], test_runner)
 Depends(test, get_test_list())
-Alias('test', test)

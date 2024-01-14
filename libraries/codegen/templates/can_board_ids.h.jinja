@@ -1,19 +1,18 @@
 {% set boards = data["Boards"] -%}
+{% set messages = data["Messages"] -%}
 
 #pragma once
 #include <stdbool.h>
 
 // For setting the CAN device
 typedef enum {
-    {% for board, board_data in boards.items() -%}
+    {% for board in boards -%}
     SYSTEM_CAN_DEVICE_{{ board | upper }} = {{ loop.index0 }},
     {% endfor -%}
     NUM_SYSTEM_CAN_DEVICES = {{ boards | length }}
 } SystemCanDevice;
 
-{%- for board, board_data in boards.items() -%}
-  {% for message, message_data in board_data["Messages"].items() %}
-#define SYSTEM_CAN_MESSAGE_{{board|upper}}_{{message|upper}} \
-  ({{message_data["id"]}} << 5) + SYSTEM_CAN_DEVICE_{{board|upper}}
-  {% endfor %}
+{% for message in messages %}
+#define SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} \
+    ({{ message.id }} << 5) + SYSTEM_CAN_DEVICE_{{ message.sender | upper }}
 {% endfor %}

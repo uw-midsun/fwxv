@@ -2,7 +2,6 @@ import os
 import sys
 import subprocess
 from scons.common import parse_config
-from scons.new_task import make_new_task
 
 ###########################################################
 # Build arguments
@@ -63,7 +62,6 @@ AddOption(
     type='string',
     action='store'
 )
-
 
 # Adding Memory Report Argument to Environment Flags
 # Note platform needs to be explicitly set to arm
@@ -160,36 +158,39 @@ PLATFORM_DIR = Dir('#/platform')
 
 VariantDir(OBJ_DIR, '.', duplicate=0)
 
+COMMAND = COMMAND_LINE_TARGETS[0] if COMMAND_LINE_TARGETS else None
+
 ###########################################################
 # Build
 ###########################################################
-SConscript('scons/build.scons', exports='VARS')
+if COMMAND == None or COMMAND == "test":
+    SConscript('scons/build.scons', exports='VARS')
 
 ###########################################################
 # Testing
 ###########################################################
-SConscript('scons/test.scons', exports='VARS')
+if COMMAND == "test":
+    SConscript('scons/test.scons', exports='VARS')
 
 ###########################################################
 # Helper targets
 ###########################################################
-SConscript('scons/new_target.scons', exports='VARS')
-Alias('new_task', env.Command('new_task.txt', [], make_new_task))
+if COMMAND == "new_task":
+    SConscript('scons/new_target.scons', exports='VARS')
 
 ###########################################################
 # Clean
 ###########################################################
-# 'clean.txt' is a dummy file that doesn't get created
+# 'clean' is a dummy file that doesn't get created
 # This is required for phony targets for scons to be happy
-clean = Command('clean.txt', [], 'rm -rf build/*')
-Alias('clean', clean)
+Command('#/clean', [], 'rm -rf build/*')
+# Alias('clean', clean)
 
 ###########################################################
 # Linting and Formatting
 ###########################################################
-SConscript('scons/lint_format.scons', exports='VARS')
-
-
+if COMMAND == "lint" or COMMAND == "format":
+    SConscript('scons/lint_format.scons', exports='VARS')
 
 # ELFs are used for gdb and x86
 def proj_elf(proj_name, is_smoke=False):
@@ -241,6 +242,11 @@ if PLATFORM == 'arm' and TYPE == 'project':
         
     # flash the MCU using openocd
     def flash_run(target, source, env):
+        import serial
+        output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
+        device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
+        serialData = serial.Serial(device_path,115200)
+
         OPENOCD = 'openocd'
         OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
         PROBE = 'cmsis-dap'
@@ -256,6 +262,15 @@ if PLATFORM == 'arm' and TYPE == 'project':
         ]
         cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
         subprocess.run(cmd, shell=True)
+        
+        while True:
+            line: str = serialData.readline().decode("utf-8")
+            print(line, end='')
+            if line.startswith('OK'):
+                break
+            if line.startswith('FAIL'):
+                fails += 1
+                break
 
     flash = Command('flash.txt', [], flash_run)
     Depends(flash, proj_bin(TARGET))

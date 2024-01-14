@@ -39,7 +39,6 @@ README_TEMPLATE = Template("""\
 
     """)
 
-
 DEFAULT_DEPS = ["FreeRTOS", "ms-common"]
 
 main_template_file = open(os.path.join('template', 'main_template.txt'), 'r')
