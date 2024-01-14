@@ -122,19 +122,15 @@ OBJ_DIR = BUILD_DIR.Dir('obj')
 
 VariantDir(OBJ_DIR, '.', duplicate=0)
 
-COMMAND = COMMAND_LINE_TARGETS[0] if COMMAND_LINE_TARGETS else None
-
-###########################################################
-# Build
-###########################################################
-if COMMAND == None or COMMAND == "test":
-    SConscript('scons/build.scons', exports='VARS')
-
 ###########################################################
 # Testing
 ###########################################################
 if COMMAND == "test":
+    # Add flags when compiling a test
+    TEST_CFLAGS = ['-DMS_TEST=1']
+    env['CCFLAGS'] += TEST_CFLAGS
     SConscript('scons/test.scons', exports='VARS')
+    SConscript('scons/build.scons', exports='VARS')
 
 ###########################################################
 # Helper targets
