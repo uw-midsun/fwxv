@@ -61,9 +61,12 @@ static void prv_update_target_current_velocity() {
   if (drive_state == DRIVE && cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
     drive_state = CRUISE;
   }
-  if (brake_percent > 0 || (throttle_percent == 0 && !cruise)) {
+  if (brake_percent > 0 || (throttle_percent == 0 && drive_state != CRUISE)) {
     drive_state = regen ? BRAKE : NEUTRAL;
   }
+
+  drive_state = DRIVE;
+  throttle_percent = 1;
 
   // set target current and velocity based on drive state
   // https://tritiumcharging.com/wp-content/uploads/2020/11/TritiumWaveSculptor22_Manual.pdf 18.3
@@ -98,7 +101,7 @@ static void motor_controller_tx_all() {
   // TODO: add can watchdog to shut down motor controller if messages are not received from
   // center console
   // LOG_DEBUG("%d, %d\n", get_received_drive_output(), get_drive_output_drive_state());
-  if (!get_received_drive_output()) return;
+  // if (!get_received_drive_output()) return;
   // if (!get_pedal_output_brake_output()) return;
 
   prv_update_target_current_velocity();
@@ -110,6 +113,7 @@ static void motor_controller_tx_all() {
   memcpy(&message.data_u32[0], &s_target_current, sizeof(uint32_t));
   memcpy(&message.data_u32[1], &s_target_velocity, sizeof(uint32_t));
 
+  // LOG_DEBUG("WAVESCULPTOR\n");
   mcp2515_transmit(&message);
 }
 

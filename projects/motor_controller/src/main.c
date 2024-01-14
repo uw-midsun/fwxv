@@ -46,33 +46,14 @@ static Mcp2515Settings s_mcp2515_settings = {
 static PrechargeControlSettings s_precharge_settings = {
   .precharge_control = { GPIO_PORT_A, 9 },
   .precharge_monitor = { GPIO_PORT_A, 10 },
-  .precharge_monitor2 = { GPIO_PORT_B, 0 },  // LATCH OUT, High if connected
+  .precharge_monitor2 = { GPIO_PORT_B, 0 },
 };
 
 void pre_loop_init() {}
 
-void push_mc_message(uint32_t id, float data_1, float data_2) {
-  CanMessage message = {
-    .id.raw = id,
-    .dlc = 8,
-  };
-  memcpy(&message.data_u32[0], &data_1, sizeof(float));
-  memcpy(&message.data_u32[1], &data_2, sizeof(float));
-
-  mcp2515_hw_transmit(message.id.raw, message.extended, message.data_u8, message.dlc);
-}
-
 void run_fast_cycle() {
-  // push_mc_message(MOTOR_CONTROLLER_BASE_L + 0x03, -0.1f, 0.2f);
-  // push_mc_message(MOTOR_CONTROLLER_BASE_R + 0x03, -0.3f, 0.4f);
-
-  // run_mcp2515_rx_cycle();
+  // run_can_rx_cycle();
   // wait_tasks(1);
-}
-
-void run_medium_cycle() {
-  run_can_rx_cycle();
-  wait_tasks(1);
 
   run_mcp2515_tx_cycle();
   wait_tasks(1);
@@ -80,13 +61,13 @@ void run_medium_cycle() {
   run_mcp2515_rx_cycle();
   wait_tasks(1);
 
-  run_can_tx_cycle();
-  wait_tasks(1);
+  // run_can_tx_cycle();
+  // wait_tasks(1);
 }
 
-void run_slow_cycle() {
-  // LOG_DEBUG("\n");
-}
+void run_medium_cycle() {}
+
+void run_slow_cycle() {}
 
 int main() {
   tasks_init();
@@ -96,7 +77,7 @@ int main() {
   gpio_it_init();
   can_init(&s_can_storage, &can_settings);
   mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
-  // precharge_control_init(&s_precharge_settings);
+
   init_motor_controller_can();
   LOG_DEBUG("Motor Controller Task\n");
 

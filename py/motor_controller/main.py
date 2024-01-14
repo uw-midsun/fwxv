@@ -12,7 +12,7 @@ from can.util import set_output, parse_line
 import threading
 
 DRIVE_STATE_STR = ["DRIVE", "NEUTRAL", "REVERSE"]
-
+CAN = "can0"
 
 def handle_stdin(state):
     '''handle stdin input, updates velocity, drive state, etc.'''
@@ -61,7 +61,7 @@ board fault: {rx["bfalt"]}   overtemp: {rx["ovtmp"]:}    precharge: {rx["prchg"]
 
 def handle_rx(rx):
     '''rx all msgs from can'''
-    with subprocess.Popen(['candump', 'can0'], stdout=subprocess.PIPE) as proc:
+    with subprocess.Popen(['candump', CAN], stdout=subprocess.PIPE) as proc:
         while True:
             line = proc.stdout.readline().decode().strip()
             can_id, data = parse_line(line)

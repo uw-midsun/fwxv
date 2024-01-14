@@ -126,14 +126,15 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
     }
   }
 
-  // set spi CS state LOW
-  gpio_set_state(&s_port[spi].cs, GPIO_STATE_LOW);
-
   // Enable interrupts and start transaction
   // Transaction started when we spi is enabled, and tx register is empty
   SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE, ENABLE);
   s_port[spi].base->CR2 |= FLIP_ERR;
+
+  taskENTER_CRITICAL();
   SPI_Cmd(s_port[spi].base, ENABLE);
+  gpio_set_state(&s_port[spi].cs, GPIO_STATE_LOW);
+  taskEXIT_CRITICAL();
 
   for (size_t i = 0; i < tx_len + rx_len; i++) {
     if (queue_receive(&s_port[spi].spi_buf.rx_queue, &data, SPI_TIMEOUT_MS)) {
@@ -161,6 +162,7 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
 
 static void prv_spi_irq_handler(SpiPort spi) {
   BaseType_t xTaskWoken = pdFALSE;
+
   if (SPI_I2S_GetITStatus(s_port[spi].base, SPI_I2S_IT_TXE) == SET) {
     // Handle TX
     // Receive byte in top byte of 16-bit reg
@@ -168,7 +170,9 @@ static void prv_spi_irq_handler(SpiPort spi) {
     uint16_t tx_data;
     if (xQueueReceiveFromISR(s_port[spi].spi_buf.tx_queue.handle, (uint8_t *)&tx_data,
                              &xTaskWoken)) {
+      // if (tx_data != 0) {
       SPI_I2S_SendData(s_port[spi].base, tx_data);
+      // }
     } else {
       // We have sent all data, so close spi
       SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE,
@@ -176,11 +180,15 @@ static void prv_spi_irq_handler(SpiPort spi) {
       SPI_Cmd(s_port[spi].base, DISABLE);
     }
   }
+
   if (SPI_I2S_GetITStatus(s_port[spi].base, SPI_I2S_IT_RXNE) == SET) {
     uint16_t rx_data = SPI_I2S_ReceiveData(s_port[spi].base);
+    LOG_DEBUG("RXED : %d", rx_data);
     xQueueSendFromISR(s_port[spi].spi_buf.rx_queue.handle, (uint8_t *)&rx_data, &xTaskWoken);
   }
+
   if (SPI_I2S_GetITStatus(s_port[spi].base, SPI_IT_MODF) == SET) {
+    LOG_DEBUG("ERROR\n");
     // Mode fault - If this is happening we most likely have an invalid hardware setup
     SPI_Cmd(s_port[spi].base, ENABLE);
   } else {
