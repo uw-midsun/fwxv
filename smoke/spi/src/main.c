@@ -224,8 +224,8 @@ static const Mcp2515RxBuffer s_rx_buffers[] = {
 };
 
 static SpiSettings spi_settings = {
-  .baudrate = 10000000,  // 10 Mhz
-  .mode = SPI_MODE_3,
+  .baudrate = 1000000,  // 1 Mhz
+  .mode = SPI_MODE_0,
   .mosi = { GPIO_PORT_B, 15 },
   .miso = { GPIO_PORT_B, 14 },
   .sclk = { GPIO_PORT_B, 13 },

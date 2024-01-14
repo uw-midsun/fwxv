@@ -40,10 +40,10 @@ void check_late_cycle(BaseType_t delay) {
       --s_cycles_over;
     }
   }
-  if (s_cycles_over > MAX_CYCLES_OVER) {
-    LOG_CRITICAL("Master Task out of sync!! Ending Scheduler\n");
-    vTaskEndScheduler();
-  }
+  // if (s_cycles_over > MAX_CYCLES_OVER) {
+  //   LOG_CRITICAL("Master Task out of sync!! Ending Scheduler\n");
+  //   vTaskEndScheduler();
+  // }
 }
 
 TASK(master_task, TASK_STACK_512) {

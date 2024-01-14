@@ -274,13 +274,10 @@ if PLATFORM == 'arm' and TYPE == 'project':
         print("Flashing complete")
         
         while True:
-            line: str = serialData.readline().decode("utf-8")
+            line = serialData.readline()
+            # print(line, end='')
+            line = line.decode("utf-8")
             print(line, end='')
-            if line.startswith('OK'):
-                break
-            if line.startswith('FAIL'):
-                fails += 1
-                break
 
     flash = Command('flash.txt', [], flash_run)
     Depends(flash, proj_bin(TARGET))

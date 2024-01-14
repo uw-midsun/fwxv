@@ -113,7 +113,6 @@ static void motor_controller_tx_all() {
   memcpy(&message.data_u32[0], &s_target_current, sizeof(uint32_t));
   memcpy(&message.data_u32[1], &s_target_velocity, sizeof(uint32_t));
 
-  // LOG_DEBUG("WAVESCULPTOR\n");
   mcp2515_transmit(&message);
 }
 

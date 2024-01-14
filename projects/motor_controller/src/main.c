@@ -28,7 +28,7 @@ static Mcp2515Storage s_mcp2515_storage = { 0 };
 static Mcp2515Settings s_mcp2515_settings = {
   .spi_port = SPI_PORT_2,
   .spi_settings = {
-    .baudrate = 10000000,  // 10 Mhz
+    .baudrate = 1000000,  // 1 Mhz
     .mode = SPI_MODE_0,
     .mosi = { GPIO_PORT_B, 15 },
     .miso = { GPIO_PORT_B, 14 },
@@ -52,17 +52,13 @@ static PrechargeControlSettings s_precharge_settings = {
 void pre_loop_init() {}
 
 void run_fast_cycle() {
-  // run_can_rx_cycle();
-  // wait_tasks(1);
+  run_can_rx_cycle();
+  run_mcp2515_rx_cycle();
+  wait_tasks(2);
 
   run_mcp2515_tx_cycle();
-  wait_tasks(1);
-
-  run_mcp2515_rx_cycle();
-  wait_tasks(1);
-
-  // run_can_tx_cycle();
-  // wait_tasks(1);
+  run_can_tx_cycle();
+  wait_tasks(2);
 }
 
 void run_medium_cycle() {}

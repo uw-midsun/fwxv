@@ -141,9 +141,9 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
       // timeout
       SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE,
                        DISABLE);
-      SPI_Cmd(s_port[spi].base, DISABLE);
       // set spi CS state HIGH
       gpio_set_state(&s_port[spi].cs, GPIO_STATE_HIGH);
+      SPI_Cmd(s_port[spi].base, DISABLE);
       mutex_unlock(&s_port[spi].spi_buf.mutex);
       return STATUS_CODE_TIMEOUT;
     }
@@ -183,12 +183,12 @@ static void prv_spi_irq_handler(SpiPort spi) {
 
   if (SPI_I2S_GetITStatus(s_port[spi].base, SPI_I2S_IT_RXNE) == SET) {
     uint16_t rx_data = SPI_I2S_ReceiveData(s_port[spi].base);
-    LOG_DEBUG("RXED : %d", rx_data);
+    // LOG_DEBUG("RXED : %d\n", rx_data);
     xQueueSendFromISR(s_port[spi].spi_buf.rx_queue.handle, (uint8_t *)&rx_data, &xTaskWoken);
   }
 
   if (SPI_I2S_GetITStatus(s_port[spi].base, SPI_IT_MODF) == SET) {
-    LOG_DEBUG("ERROR\n");
+    // LOG_DEBUG("ERROR\n");
     // Mode fault - If this is happening we most likely have an invalid hardware setup
     SPI_Cmd(s_port[spi].base, ENABLE);
   } else {
