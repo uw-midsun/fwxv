@@ -21,19 +21,19 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
   switch (light_id_callback) {
     case EE_LIGHT_TYPE_SIGNAL_LEFT:
       left_signal_state ^= 1;
-      pd_set_output_group(OUTPUT_GROUP_LEFT_TURN, left_signal_state);
+      pd_set_output_group(OUTPUT_GROUP_LIGHTS_LEFT_TURN, left_signal_state);
       if (right_signal_state == OUTPUT_STATE_ON) {
         right_signal_state = OUTPUT_STATE_OFF;
-        pd_set_output_group(OUTPUT_GROUP_RIGHT_TURN, right_signal_state);
+        pd_set_output_group(OUTPUT_GROUP_LIGHTS_RIGHT_TURN, right_signal_state);
       }
       soft_timer_start(&s_timer_single);
       break;
     case EE_LIGHT_TYPE_SIGNAL_RIGHT:
       right_signal_state ^= 1;
-      pd_set_output_group(OUTPUT_GROUP_RIGHT_TURN, right_signal_state);
+      pd_set_output_group(OUTPUT_GROUP_LIGHTS_RIGHT_TURN, right_signal_state);
       if (left_signal_state == OUTPUT_STATE_ON) {
         left_signal_state = OUTPUT_STATE_OFF;
-        pd_set_output_group(OUTPUT_GROUP_LEFT_TURN, left_signal_state);
+        pd_set_output_group(OUTPUT_GROUP_LIGHTS_LEFT_TURN, left_signal_state);
       }
       soft_timer_start(&s_timer_single);
       break;
@@ -44,13 +44,13 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
       }
       left_signal_state ^= 1;
       right_signal_state ^= 1;
-      pd_set_output_group(OUTPUT_GROUP_HAZARD, left_signal_state);
+      pd_set_output_group(OUTPUT_GROUP_LIGHTS_HAZARD, left_signal_state);
       soft_timer_start(&s_timer_single);
       break;
     default:
       left_signal_state = OUTPUT_STATE_OFF;
       right_signal_state = OUTPUT_STATE_OFF;
-      pd_set_output_group(OUTPUT_GROUP_HAZARD, left_signal_state);
+      pd_set_output_group(OUTPUT_GROUP_LIGHTS_HAZARD, left_signal_state);
   }
 }
 
