@@ -10,7 +10,7 @@
 #include "power_distribution.h"
 #include "tasks.h"
 
-static const OutputGroup output_groups_to_test[] = { OUTPUT_GROUP_TEST };
+static const OutputGroup output_groups_to_test[] = { OUTPUT_GROUP_LIGHTS_LEFT_TURN };
 
 static const GpioAddress test_gpio = { .port = GPIO_PORT_B, .pin = 5 };
 
@@ -23,7 +23,7 @@ void pd_print_adc_readings(OutputGroup group) {
     // Get specific group, iterate through set of pins
     OutputGroupDef *grp = g_output_group_map[group];
     for (uint8_t out = 0; out < grp->num_outputs; out++) {
-      Output output = grp->outputs[out];
+      uint8_t output = grp->outputs[out];
       LOG_DEBUG("sense group: %d, value: %d\n", output, g_output_config[output].reading_out);
     }
   }

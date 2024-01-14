@@ -67,5 +67,19 @@
           length: 8
         pd_fault:
           length: 8
-        hazard_state:
+    pd_status:
+      id: 1
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        fault_bitset:
+          length: 8
+    bms_relays:
+      id: 10
+      target:
+        bms_carrier:
+          watchdog: 0
+      signals:
+        relays_state:
           length: 8

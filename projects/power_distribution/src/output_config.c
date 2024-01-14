@@ -1,232 +1,338 @@
 #include "outputs.h"
 
-static Bts7xxxPin s_front_pin_centre_console_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)FRONT_PIN_CENTRE_CONSOLE_EN,  // NOLINT
+static Bts7xxxPin s_solar_sense_1_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)SOLAR_SENSE_1_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_front_pin_steering_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)FRONT_PIN_STEERING_EN,  // NOLINT
+
+static Bts7xxxPin s_solar_sense_2_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)SOLAR_SENSE_2_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_front_pin_pedal_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)FRONT_PIN_PEDAL_EN,  // NOLINT
+
+static Bts7xxxPin s_solar_sense_1_2_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)SOLAR_SENSE_1_2_DSEL,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_front_pin_daytime_running_lights_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)FRONT_PIN_DAYTIME_RUNNING_LIGHTS_EN,  // NOLINT
+
+static Bts7xxxPin s_pedal_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)PEDAL_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_front_pin_front_left_turn_light_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)FRONT_PIN_FRONT_LEFT_TURN_LIGHT_EN,  // NOLINT
+
+static Bts7xxxPin s_steering_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)STEERING_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_front_pin_front_right_turn_light_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)FRONT_PIN_FRONT_RIGHT_TURN_LIGHT_EN,  // NOLINT
+
+static Bts7xxxPin s_pedal_steering_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)PEDAL_STEERING_DSEL,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_front_pin_main_pi_camera_display_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)FRONT_PIN_MAIN_PI_CAMERA_DISPLAY_EN,  // NOLINT
+
+static Bts7xxxPin s_turn_left_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)LEFT_TURN_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_front_pin_centre_console_rear_display_dsel = {
-  .pin_pca9555 = &(Pca9555GpioAddress)FRONT_PIN_CENTRE_CONSOLE_REAR_DISPLAY_DSEL,  // NOLINT
+
+static Bts7xxxPin s_right_turn_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)RIGHT_TURN_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_front_pin_pedal_steering_dsel = {
-  .pin_pca9555 = &(Pca9555GpioAddress)FRONT_PIN_PEDAL_STEERING_DSEL,  // NOLINT
+
+static Bts7xxxPin s_left_right_turn_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)LEFT_RIGHT_TURN_DSEL,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_front_pin_front_left_right_turn_light_dsel = {
-  .pin_pca9555 = &(Pca9555GpioAddress)FRONT_PIN_FRONT_LEFT_RIGHT_TURN_LIGHT_DSEL,  // NOLINT
+
+static Bts7xxxPin s_drl_light_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)DRL_LIGHT_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_rear_pin_mci_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_PIN_MCI_EN,  // NOLINT
+
+static Bts7xxxPin s_brake_light_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)BRAKE_LIGHT_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_rear_pin_bms_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_PIN_BMS_EN,  // NOLINT
+
+static Bts7xxxPin s_drl_brake_light_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)DRL_BRAKE_LIGHT_DSEL,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_rear_pin_solar_sense_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_PIN_SOLAR_SENSE_EN,  // NOLINT
+
+static Bts7xxxPin s_center_console_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)CENTER_CONSOLE_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_rear_pin_fan_1_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_PIN_FAN_1_EN,  // NOLINT
+
+static Bts7xxxPin s_bms_dcdc_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)BMS_DCDC_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_rear_pin_strobe_light_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_PIN_STROBE_LIGHT_EN,  // NOLINT
+
+static Bts7xxxPin s_center_console_bms_dcdc_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)CENTER_CONSOLE_BMS_DCDC_DSEL,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_rear_pin_brake_light_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_PIN_BRAKE_LIGHT_EN,  // NOLINT
+
+static Bts7xxxPin s_mci_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)MCI_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_rear_pin_strobe_light_dsel = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_PIN_STROBE_LIGHT_DSEL,  // NOLINT
+
+static Bts7xxxPin s_bps_light_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)BPS_LIGHT_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_rear_pin_rear_left_right_turn_light_dsel = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_PIN_REAR_LEFT_RIGHT_TURN_LIGHT_DSEL,  // NOLINT
+
+static Bts7xxxPin s_mci_bps_light_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)MCI_BPS_LIGHT_DSEL,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_rear_pin_fan_1_2_dsel = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_PIN_FAN_1_2_DSEL,  // NOLINT
+
+static Bts7xxxPin s_spare_12v_1_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)SPARE_12V_1_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_left_rear_cam_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)LEFT_REAR_CAMERA_EN,  // NOLINT
+
+static Bts7xxxPin s_spare_12v_2_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)SPARE_12V_2_EN,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_right_cam_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)RIGHT_CAMERA_EN,  // NOLINT
+
+static Bts7xxxPin s_spare_12v_1_2_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)SPARE_12V_1_2_DSEL,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
-static Bts7xxxPin s_left_rear_right_cam_dsel = {
-  .pin_pca9555 = &(Pca9555GpioAddress)REAR_RIGHT_CAMERA_DSEL,  // NOLINT
+
+static Bts7xxxPin s_bms_aux_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)BMS_AUX_EN,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
+
+static Bts7xxxPin s_driver_fan_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)DRIVER_FAN_EN,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
+
+static Bts7xxxPin s_bms_aux_driver_fan_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)BMS_AUX_DRIVER_FAN_DSEL,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
+
+static Bts7xxxPin s_rear_cam_lcd_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)REAR_CAM_LCD_EN,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
+
+static Bts7xxxPin s_spare_5v_dcdc_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)SPARE_5V_DCDC_EN,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
+
+static Bts7xxxPin s_rear_cam_lcd_spare_5v_dcdc_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)REAR_CAM_LCD_SPARE_5V_DCDC_DSEL,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
+
+static Bts7xxxPin s_telemetry_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)TELEMETRY_EN,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
+
+static Bts7xxxPin s_spare_5v_aux_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)SPARE_5V_AUX_EN,  // NOLINT
+  .pin_type = BTS7XXX_PIN_PCA9555,
+};
+
+static Bts7xxxPin s_telemetry_spare_5v_aux_dsel = {
+  .pin_pca9555 = &(Pca9555GpioAddress)TELEMETRY_SPARE_5V_AUX_DSEL,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
 
 // TODO: Update select states
 BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
-  [FRONT_OUTPUT_CENTRE_CONSOLE] = {
-    .enable_pin = &s_front_pin_centre_console_en,
-    .select_pin = &s_front_pin_centre_console_rear_display_dsel,
+  [SOLAR_SENSE_1] = {
+    .enable_pin = &s_solar_sense_1_en,
+    .select_pin = &s_solar_sense_1_2_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
     .resistor = 0,
-    .mux_val = MUX_SEL_CENTRE_CONSOLE_REAR_DISPLAY,
   },
-  [FRONT_OUTPUT_PEDAL] = {
-    .enable_pin = &s_front_pin_pedal_en,
-    .select_pin = &s_front_pin_pedal_steering_dsel,
-    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_LOW  },
-    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .resistor = 0,
-    .mux_val = MUX_SEL_PEDAL_STEERING,
-  },
-  [FRONT_OUTPUT_STEERING] = {
-    .enable_pin = &s_front_pin_steering_en,
-    .select_pin = &s_front_pin_pedal_steering_dsel,
+  [SOLAR_SENSE_2] = {
+    .enable_pin = &s_solar_sense_2_en,
+    .select_pin = &s_solar_sense_1_2_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
     .resistor = 0,
-    .mux_val = MUX_SEL_PEDAL_STEERING,
   },
-  [FRONT_OUTPUT_LEFT_FRONT_TURN_LIGHT] = {
-    .enable_pin = &s_front_pin_front_left_turn_light_en,
-    .select_pin = &s_rear_pin_rear_left_right_turn_light_dsel,
-    .select_state =  { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
-    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .resistor = 0,
-    .mux_val = MUX_SEL_FRONT_REAR_LEFT_RIGHT_TURN_LIGHT,
-  },
-  [FRONT_OUTPUT_RIGHT_FRONT_TURN_LIGHT] = {
-    .enable_pin = &s_front_pin_front_right_turn_light_en,
-    .select_pin = &s_rear_pin_rear_left_right_turn_light_dsel,
+  [PEDAL] = {
+    .enable_pin = &s_pedal_en,
+    .select_pin = &s_pedal_steering_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
     .resistor = 0,
-    .mux_val = MUX_SEL_FRONT_REAR_LEFT_RIGHT_TURN_LIGHT,
   },
-  [FRONT_OUTPUT_DAYTIME_RUNNING_LIGHTS] = {
-    .enable_pin = &s_front_pin_daytime_running_lights_en,
-    .select_pin = NULL,
-    .select_state = {0},
-    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .resistor = 0,
-    .mux_val = MUX_SEL_DAYTIME_RUNNING_LIGHTS_BRAKE_LIGHTS,
-  },
-  [FRONT_OUTPUT_CAMERA_DISPLAY] = {
-    .enable_pin = &s_front_pin_main_pi_camera_display_en,
-    .select_pin = NULL,
-    .select_state = {0},
-    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .resistor = 0,
-    .mux_val = MUX_SEL_INFOTAINMENT_DISPLAY_BMS,
-  },
-  [REAR_OUTPUT_BMS] = {
-    .enable_pin = &s_rear_pin_bms_en,
-    .select_pin = NULL,
-    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .resistor = 0,
-    .mux_val = MUX_SEL_INFOTAINMENT_DISPLAY_BMS,
-  },
-  [REAR_OUTPUT_MCI] = {
-    .enable_pin = &s_rear_pin_mci_en,
-    .select_pin = NULL,
-    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .resistor = 0,
-    .mux_val = MUX_SEL_MCI,
-  },
-  [REAR_OUTPUT_SOLAR_SENSE] = {
-    .enable_pin = &s_rear_pin_solar_sense_en,
-    .select_state = {0},
-    .select_pin = NULL,
-    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .resistor = 0,
-    .mux_val = MUX_SEL_SPEAKER_SOLAR,
-  },
-  [REAR_OUTPUT_BPS_STROBE_LIGHT] = {
-    .enable_pin = &s_rear_pin_strobe_light_en,
-    .select_pin = &s_rear_pin_strobe_light_dsel,
+  [STEERING] = {
+    .enable_pin = &s_steering_en,
+    .select_pin = &s_pedal_steering_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
     .resistor = 0,
-    .mux_val = MUX_SEL_LEFT_RIGHT_DISPLAY_STROBE_LIGHTS,
   },
-  [REAR_OUTPUT_FAN_1] = {
-    .enable_pin = &s_rear_pin_fan_1_en,
-    .select_pin = &s_rear_pin_fan_1_2_dsel,
+  [LEFT_TURN] = {
+    .enable_pin = &s_turn_left_en,
+    .select_pin = &s_left_right_turn_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
     .resistor = 0,
-    .mux_val = MUX_SEL_FAN_1_2,
   },
-  [LEFT_REAR_CAMERA] = {
-    .enable_pin = &s_left_rear_cam_en,
-    .select_pin = &s_left_rear_right_cam_dsel,
-    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_LOW  },
-    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .resistor = 0,
-    .mux_val = MUX_SEL_LEFT_RIGHT_REAR_CAMERA,
-  },
-  [RIGHT_CAMERA] = {
-    .enable_pin = &s_right_cam_en,
-    .select_pin = &s_left_rear_right_cam_dsel,
+  [RIGHT_TURN] = {
+    .enable_pin = &s_right_turn_en,
+    .select_pin = &s_left_right_turn_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
     .resistor = 0,
-    .mux_val = MUX_SEL_LEFT_RIGHT_REAR_CAMERA,
+  },
+  [DRL_LIGHT] = {
+    .enable_pin = &s_drl_light_en,
+    .select_pin = &s_drl_brake_light_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [BRAKE_LIGHT] = {
+    .enable_pin = &s_brake_light_en,
+    .select_pin = &s_drl_brake_light_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [CENTER_CONSOLE] = {
+    .enable_pin = &s_center_console_en,
+    .select_pin = &s_center_console_bms_dcdc_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [BMS_DCDC] = {
+    .enable_pin = &s_bms_dcdc_en,
+    .select_pin = &s_center_console_bms_dcdc_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [MCI] = {
+    .enable_pin = &s_mci_en,
+    .select_pin = &s_mci_bps_light_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [BPS_LIGHT] = {
+    .enable_pin = &s_bps_light_en,
+    .select_pin = &s_mci_bps_light_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [SPARE_12V_1] = {
+    .enable_pin = &s_spare_12v_1_en,
+    .select_pin = &s_spare_12v_1_2_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [SPARE_12V_2] = {
+    .enable_pin = &s_spare_12v_2_en,
+    .select_pin = &s_spare_12v_1_2_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [BMS_AUX] = {
+    .enable_pin = &s_bms_aux_en,
+    .select_pin = &s_bms_aux_driver_fan_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [DRIVER_FAN] = {
+    .enable_pin = &s_driver_fan_en,
+    .select_pin = &s_bms_aux_driver_fan_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [REAR_CAM_LCD] = {
+    .enable_pin = &s_rear_cam_lcd_en,
+    .select_pin = &s_rear_cam_lcd_spare_5v_dcdc_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [SPARE_5V_DCDC] = {
+    .enable_pin = &s_spare_5v_dcdc_en,
+    .select_pin = &s_rear_cam_lcd_spare_5v_dcdc_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [TELEMETRY] = {
+    .enable_pin = &s_telemetry_en,
+    .select_pin = &s_telemetry_spare_5v_aux_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
+  },
+  [SPARE_5V_AUX] = {
+    .enable_pin = &s_spare_5v_aux_en,
+    .select_pin = &s_telemetry_spare_5v_aux_dsel,
+    .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
+    .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
+    .resistor = 0,
   },
 };
 
 // Output Group Definitions
 static OutputGroupDef s_output_group_left_signal = {
   .num_outputs = 1,
-  .outputs = { FRONT_OUTPUT_PEDAL },
+  .outputs = { LEFT_TURN },
 };
 
 static OutputGroupDef s_output_group_right_signal = {
   .num_outputs = 1,
-  .outputs = { FRONT_OUTPUT_STEERING },
+  .outputs = { RIGHT_TURN },
 };
 
 static OutputGroupDef s_output_group_hazards = {
   .num_outputs = 2,
-  .outputs = { FRONT_OUTPUT_STEERING, FRONT_OUTPUT_PEDAL },
+  .outputs = { LEFT_TURN, RIGHT_TURN },
 };
 
-static OutputGroupDef s_output_group_test = {
-  .num_outputs = 2, .outputs = { FRONT_OUTPUT_STEERING, FRONT_OUTPUT_PEDAL }
+static OutputGroupDef s_output_group_power_off = { .num_outputs = 2,
+                                                   .outputs = { CENTER_CONSOLE, BMS_DCDC } };
+
+static OutputGroupDef s_output_group_power_on = {
+  .num_outputs = 7,
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, STEERING, SOLAR_SENSE_1, SOLAR_SENSE_2 }
 };
+
+static OutputGroupDef s_output_group_power_drive = {
+  .num_outputs = 13,
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, STEERING, SOLAR_SENSE_1, SOLAR_SENSE_2,
+               MCI, DRL_LIGHT, DRIVER_FAN, TELEMETRY, REAR_CAM_LCD, SPARE_5V_DCDC }
+};
+
+static OutputGroupDef s_output_group_power_fault = {
+  .num_outputs = 4, .outputs = { CENTER_CONSOLE, BMS_DCDC, PEDAL, STEERING }
+};
+
+static OutputGroupDef s_output_group_test = { .num_outputs = 2, .outputs = { STEERING, PEDAL } };
 
 const OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS] = {
   [OUTPUT_GROUP_ALL] = NULL,  // Special case
-  [OUTPUT_GROUP_LEFT_TURN] = &s_output_group_left_signal,
-  [OUTPUT_GROUP_RIGHT_TURN] = &s_output_group_right_signal,
-  [OUTPUT_GROUP_HAZARD] = &s_output_group_hazards,
-  [OUTPUT_GROUP_TEST] = &s_output_group_test,
+  [OUTPUT_GROUP_LIGHTS_LEFT_TURN] = &s_output_group_left_signal,
+  [OUTPUT_GROUP_LIGHTS_RIGHT_TURN] = &s_output_group_right_signal,
+  [OUTPUT_GROUP_LIGHTS_HAZARD] = &s_output_group_hazards,
 };

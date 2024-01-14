@@ -5,6 +5,14 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "can_watchdog.h"
+
+{% for message in messages %}
+    {%- if message.receiver[board].watchdog != 0 %}
+#define check_{{message.name}}_msg_watchdog() \
+    s_{{message.name}}_msg_watchdog.missed
+    {%- endif %}
+{%- endfor %}
 
 typedef struct
 {
@@ -17,3 +25,9 @@ typedef struct
     bool received_{{message.name}};
 {%- endfor %}
 } {{board}}_rx_struct;
+
+{% for message in messages %}
+    {%- if message.receiver[board].watchdog != 0 %}
+extern CanWatchDog s_{{message.name}}_msg_watchdog;
+    {%- endif %}
+{%- endfor %}

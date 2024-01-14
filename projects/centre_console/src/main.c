@@ -40,6 +40,7 @@ void pre_loop_init() {
 
 void run_fast_cycle() {
   get_button_press();
+  update_displays();
 }
 
 void run_medium_cycle() {
@@ -50,7 +51,6 @@ void run_medium_cycle() {
   notify_get(&notif);
   update_indicators(notif);
   monitor_cruise_control();
-  update_displays();
   fsm_run_cycle(drive);
   wait_tasks(1);
 

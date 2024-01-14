@@ -71,7 +71,6 @@ def generate_can_files(env, project):
     project_can_dir = OBJ_DIR.Dir(project).Dir("can")
     source_dir = project_can_dir.Dir("src")
     header_dir = project_can_dir.Dir("inc")
-
     header_files = []
     source_files = []
     source_command = f"-f {source_dir} -t"
