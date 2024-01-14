@@ -39,47 +39,47 @@ Commands:
     NONE
         Build the specified target, or all target if not specified.
         - e.g. `scons`
-        - e.g. `scons <target>`
+        - e.g. `scons <target>` (`scons --project=leds`)
         if the target is a python project, run the project.
 
     test
         Test the specified target, or all target if not specified.
         - e.g. `scons test`
-        - e.g. `scons test <target>`
+        - e.g. `scons test <target>` (`scons test --project=leds`)
     
     new
         Creates a new project, smoke project, or library with the given name.
-        - e.g. `scons new <target>`
+        - e.g. `scons new <target>` (`scons new --project=new_led`)
         if --task=<task> option is specified, instead create a new task within the target
-        - e.g. `scons new <target> --task=<task_name>`
+        - e.g. `scons new <target> --task=<task_name>` (`scons new --project=leds --task=led_task`)
 
     sim
         (x86) Run the project's binary.
-        - e.g. `scons sim <target>`
+        - e.g. `scons sim <target>` (`scons sim --project=new_led`)
 
     gdb
         (x86) Run the project's binary with gdb.
-        - e.g. `scons gdb <target>`
+        - e.g. `scons gdb <target>` (`scons gdb --project=new_led`)
 
     flash
         (arm) Flash the project's binary using openocd. A controller board must be connected an powered.
-        - e.g. `scons flash <target>`
+        - e.g. `scons flash <target>` (`scons flash --project=new_led`)
 
     format
         Format a target, or all targets if not specified. uses autopep8 for python and clang-format for c.
         - e.g. `scons format`
-        - e.g. `scons format <target>`
+        - e.g. `scons format <target>` (`scons format --project=new_led`)
 
     lint
         Lint a target, or all targets if not specified. uses pylint for python and cpplint for c.
         - e.g. `scons lint`
-        - e.g. `scons lint <target>`
+        - e.g. `scons lint <target>` (`scons lint --project=new_led`)
 
     clean
         Delete the `build` directory.
 
-Targets:
-targests can be specified with an option.
+Target:
+targest can be specified with an option.
 
     --project=<name>
         specify the target as a project with `name`
@@ -107,6 +107,11 @@ Convenience Commands:
         build the target with the path. 
         - e.g. `scons projects/leds`
         - e.g. `scons libraries/ms-common`
+
+    test <name>/<path>
+        test the target with the name/path
+        - e.g. `scons test projects/leds`
+        (experimental, use at own risk)
 ```
 
 # Future Improvements
