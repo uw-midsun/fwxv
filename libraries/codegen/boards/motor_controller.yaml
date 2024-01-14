@@ -11,7 +11,7 @@
 ---
   Messages:
     motor_controller_vc:
-      id: 30
+      id: 35
       target:
         centre_console:
           watchdog: 0
@@ -26,7 +26,7 @@
           length: 16
 
     motor_velocity:
-      id: 31
+      id: 36
       target:
         centre_console:
           watchdog: 0
@@ -37,7 +37,7 @@
           length: 16
 
     motor_status:
-      id: 32
+      id: 37
       target:
         centre_console:
           watchdog: 0
@@ -97,7 +97,7 @@
           length: 8
 
     precharge_completed:
-      id: 14
+      id: 16
       target:
         centre_console:
           watchdog: 0
