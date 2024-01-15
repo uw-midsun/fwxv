@@ -11,7 +11,7 @@ SYSTEM_CAN_MESSAGE_{{  message["sender"] | upper }}_{{ message.name | upper }} =
 # Send single message
 def send_message(id, data):
     # id: int -> hex, data: str
-    cmd = f"cansend vcan0 {hex(id)[2:]}#{data}"
+    cmd = f"cansend vcan0 {hex(id)[2:].zfill(3)}#{data}"
     subprocess.run(cmd, shell=True)
 
 def pack(num, size):

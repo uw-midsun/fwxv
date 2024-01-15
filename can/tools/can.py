@@ -52,7 +52,7 @@ SYSTEM_CAN_MESSAGE_UV_CUTOFF_UV_CUTOFF_NOTIFICATION1 = 1454
 # Send single message
 def send_message(id, data):
     # id: int -> hex, data: str
-    cmd = f"cansend vcan0 {hex(id)[2:]}#{data}"
+    cmd = f"cansend vcan0 {hex(id)[2:].zfill(3)}#{data}"
     subprocess.run(cmd, shell=True)
 
 def pack(num, size):
