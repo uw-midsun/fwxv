@@ -34,7 +34,7 @@ static const uint8_t bytes_to_write[] = { 0xFC };
 // ==== END OF PARAMETERS ====
 
 static SpiSettings spi_settings = {
-  .baudrate = 1000000,  // TO FIND
+  .baudrate = 100000,  // TO FIND
   .mode = SPI_MODE_3,
   .mosi = { .port = GPIO_PORT_B, .pin = 15 },
   .miso = { .port = GPIO_PORT_B, .pin = 14 },
@@ -50,36 +50,36 @@ static void prv_wakeup_idle(SpiSettings *settings) {
     delay_ms(0.3);
 }
 
-static StatusCode prv_build_cmd(uint16_t command, uint8_t *cmd, size_t len) {
-  if (len != LTC6811_CMD_SIZE) {
-    return status_code(STATUS_CODE_INVALID_ARGS);
-  }
+// static StatusCode prv_build_cmd(uint16_t command, uint8_t *cmd, size_t len) {
+//   if (len != LTC6811_CMD_SIZE) {
+//     return status_code(STATUS_CODE_INVALID_ARGS);
+//   }
 
-  cmd[0] = (uint8_t)(command >> 8);
-  cmd[1] = (uint8_t)(command & 0xFF);
+//   cmd[0] = (uint8_t)(command >> 8);
+//   cmd[1] = (uint8_t)(command & 0xFF);
 
-  uint16_t cmd_pec = crc15_calculate(cmd, 2);
-  cmd[2] = (uint8_t)(cmd_pec >> 8);
-  cmd[3] = (uint8_t)(cmd_pec);
+//   uint16_t cmd_pec = crc15_calculate(cmd, 2);
+//   cmd[2] = (uint8_t)(cmd_pec >> 8);
+//   cmd[3] = (uint8_t)(cmd_pec);
 
-  return STATUS_CODE_OK;
-}
+//   return STATUS_CODE_OK;
+// }
 
 
-static void print_cfg_reg(LtcAfeConfigRegisterData *data) {
-  LOG_DEBUG("CFG REG:\n\r");
-  LOG_DEBUG(" %d\n\r", data->adcopt);
-  LOG_DEBUG(" %d\n\r", data->swtrd);
-  LOG_DEBUG(" %d\n\r", data->refon);
+// static void print_cfg_reg(LtcAfeConfigRegisterData *data) {
+//   LOG_DEBUG("CFG REG:\n\r");
+//   LOG_DEBUG(" %d\n\r", data->adcopt);
+//   LOG_DEBUG(" %d\n\r", data->swtrd);
+//   LOG_DEBUG(" %d\n\r", data->refon);
 
-  LOG_DEBUG(" %d\n\r", data->gpio);  // GPIO pin control
+//   LOG_DEBUG(" %d\n\r", data->gpio);  // GPIO pin control
 
-  LOG_DEBUG(" %d\n\r", data->undervoltage);  // Undervoltage Comparison Voltage
-  LOG_DEBUG(" %d\n\r", data->overvoltage);   // Overvoltage Comparison Voltage
+//   LOG_DEBUG(" %d\n\r", data->undervoltage);  // Undervoltage Comparison Voltage
+//   LOG_DEBUG(" %d\n\r", data->overvoltage);   // Overvoltage Comparison Voltage
 
-  LOG_DEBUG(" %d\n\r", data->discharge_bitset);
-  LOG_DEBUG(" %d\n\r", data->discharge_timeout);
-}
+//   LOG_DEBUG(" %d\n\r", data->discharge_bitset);
+//   LOG_DEBUG(" %d\n\r", data->discharge_timeout);
+// }
 
 void printBytesInHex(unsigned char *array, size_t length) {
     for (size_t i = 0; i < length; i++) {
@@ -90,50 +90,61 @@ void printBytesInHex(unsigned char *array, size_t length) {
 
 TASK(smoke_spi_task, TASK_STACK_512) {
   spi_init(SPI_PORT_2, &spi_settings);
-  LtcAfeWriteConfigPacket config_packet = { 0 };
+  // LtcAfeWriteConfigPacket config_packet = { 0 };
   while (true) {
     prv_wakeup_idle(&spi_settings);
-    uint8_t gpio_bits =
-        LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
-    prv_build_cmd(LTC6811_WRCFG_RESERVED, config_packet.wrcfg, SIZEOF_ARRAY(config_packet.wrcfg));
-    uint8_t enable = gpio_bits;
+    // uint8_t gpio_bits =
+    //     LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
+    // prv_build_cmd(LTC6811_WRCFG_RESERVED, config_packet.wrcfg, SIZEOF_ARRAY(config_packet.wrcfg));
+    // uint8_t enable = gpio_bits;
 
-    uint16_t undervoltage = 0;
-    uint16_t overvoltage = 0;
+    // uint16_t undervoltage = 0;
+    // uint16_t overvoltage = 0;
 
-    config_packet.devices[0].reg.discharge_bitset = 0xA;
-    config_packet.devices[0].reg.discharge_timeout = LTC_AFE_DISCHARGE_TIMEOUT_30_S;
+    // config_packet.devices[0].reg.discharge_bitset = 0xA;
+    // config_packet.devices[0].reg.discharge_timeout = LTC_AFE_DISCHARGE_TIMEOUT_30_S;
 
-    config_packet.devices[0].reg.adcopt = 1; // ((LTC_AFE_ADC_MODE_7KHZ + 1) > 3);
-    config_packet.devices[0].reg.swtrd = true;
+    // config_packet.devices[0].reg.adcopt = 1; // ((LTC_AFE_ADC_MODE_7KHZ + 1) > 3);
+    // config_packet.devices[0].reg.swtrd = true;
 
-    config_packet.devices[0].reg.undervoltage = undervoltage;
-    config_packet.devices[0].reg.overvoltage = overvoltage;
+    // config_packet.devices[0].reg.undervoltage = undervoltage;
+    // config_packet.devices[0].reg.overvoltage = overvoltage;
 
-    // GPIO 1 is used to read data from the mux
-    config_packet.devices[0].reg.gpio = (enable >> 3);
+    // // GPIO 1 is used to read data from the mux
+    // config_packet.devices[0].reg.gpio = (enable >> 3);
 
-    uint16_t cfgr_pec = crc15_calculate((uint8_t *)&config_packet.devices[0].reg, 6);
-    config_packet.devices[0].pec = SWAP_UINT16(cfgr_pec);
+    // uint16_t cfgr_pec = crc15_calculate((uint8_t *)&config_packet.devices[0].reg, 6);
+    // config_packet.devices[0].pec = SWAP_UINT16(cfgr_pec);
 
-    size_t len = SIZEOF_LTC_AFE_WRITE_CONFIG_PACKET(1);
+    // size_t len = SIZEOF_LTC_AFE_WRITE_CONFIG_PACKET(1);
 
-    LOG_DEBUG("TX_LEN, data: %d\n\r", len);
-    print_cfg_reg(&config_packet.devices[0].reg);
-    printBytesInHex((unsigned char *)&config_packet, len);
-    StatusCode stat = spi_exchange(SPI_PORT_2, (uint8_t *)&config_packet, len, NULL, 0);
+    // LOG_DEBUG("TX_LEN, data: %d\n\r", len);
+    // print_cfg_reg(&config_packet.devices[0].reg);
+    // printBytesInHex((unsigned char *)&config_packet, len);
+    // StatusCode stat = spi_exchange(SPI_PORT_2, (uint8_t *)&config_packet, len, NULL, 0);
 
     
-    uint8_t rd_cmd[4] = { 0 };
-    prv_build_cmd(LTC6811_RDCFG_RESERVED, rd_cmd, 4);
-    //LtcAfeConfigRegisterData rd_data;
+    // uint8_t rd_cmd[4] = { 0 };
+    // prv_build_cmd(LTC6811_RDCFG_RESERVED, rd_cmd, 4);
+    // //LtcAfeConfigRegisterData rd_data;
 
-    unsigned char rd_data[sizeof(LtcAfeConfigRegisterData) + 1];
+    // unsigned char rd_data[sizeof(LtcAfeConfigRegisterData) + 1];
     
-    StatusCode stat2 = spi_exchange(SPI_PORT_2, rd_cmd, 4, (uint8_t*)&rd_data, sizeof(LtcAfeConfigRegisterData));
-    LOG_DEBUG("STAT1 %d stat2: %d\n\r", stat, stat2);
-    printBytesInHex(rd_data, sizeof(LtcAfeConfigRegisterData));
-    //print_cfg_reg(&rd_data);
+    // StatusCode stat2 = spi_exchange(SPI_PORT_2, rd_cmd, 4, (uint8_t*)&rd_data, sizeof(LtcAfeConfigRegisterData));
+    // LOG_DEBUG("STAT1 %d stat2: %d\n\r", stat, stat2);
+    // printBytesInHex(rd_data, sizeof(LtcAfeConfigRegisterData));
+    // //print_cfg_reg(&rd_data);
+    // delay_ms(1000);
+
+    static uint8_t tx_bytes[4] = { 0x00, 0x02, 0x2b, 0x0a };
+    static uint8_t rx_bytes[6] = { 0 };
+    StatusCode stat2 = spi_exchange(SPI_PORT_2, tx_bytes, 4, rx_bytes, 6);
+
+    // static uint8_t tx_bytes[1] = { 0xaa };
+    // static uint8_t rx_bytes[6] = { 0 };
+    // StatusCode stat2 = spi_exchange(SPI_PORT_2, tx_bytes, 1, rx_bytes, 0);
+
+    LOG_DEBUG("RECV: %x %x %x %x %x %x\n", rx_bytes[0], rx_bytes[1], rx_bytes[2], rx_bytes[3], rx_bytes[4], rx_bytes[5]);
     delay_ms(1000);
   }
 }
