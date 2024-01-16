@@ -126,14 +126,16 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
     }
   }
 
-  // set spi CS state LOW
-  gpio_set_state(&s_port[spi].cs, GPIO_STATE_LOW);
-
   // Enable interrupts and start transaction
   // Transaction started when we spi is enabled, and tx register is empty
   SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE, ENABLE);
   s_port[spi].base->CR2 |= FLIP_ERR;
+
+  taskENTER_CRITICAL();
   SPI_Cmd(s_port[spi].base, ENABLE);
+  // set spi CS state LOW
+  gpio_set_state(&s_port[spi].cs, GPIO_STATE_LOW);
+  taskEXIT_CRITICAL();
 
   for (size_t i = 0; i < tx_len + rx_len; i++) {
     if (queue_receive(&s_port[spi].spi_buf.rx_queue, &data, SPI_TIMEOUT_MS)) {
