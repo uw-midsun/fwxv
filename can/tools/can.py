@@ -3,8 +3,6 @@ import subprocess
 import time 
 import multiprocessing
 
-process_dict = {}
-
 SYSTEM_CAN_MESSAGE_BABYDRIVER_BABYDRIVER = 2016
 SYSTEM_CAN_MESSAGE_BMS_CARRIER_BATTERY_STATUS = 1
 SYSTEM_CAN_MESSAGE_BMS_CARRIER_BATTERY_VT = 961
