@@ -1,8 +1,9 @@
 #include <stdbool.h>
 #include <stdio.h>
-#include "can_board_ids.h"
+
 #include "adc.h"
 #include "can.h"
+#include "can_board_ids.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "gpio_mcu.h"

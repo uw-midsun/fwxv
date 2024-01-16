@@ -1,7 +1,8 @@
 #include <stdio.h>
-#include "can_board_ids.h"
+
 #include "bts_load_switch.h"
 #include "can.h"
+#include "can_board_ids.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "interrupt.h"

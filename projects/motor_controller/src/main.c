@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #include "can.h"
 #include "can_board_ids.h"
 #include "delay.h"

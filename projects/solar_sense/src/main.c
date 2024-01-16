@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #include "can_board_ids.h"
 #include "log.h"
 #include "master_task.h"
