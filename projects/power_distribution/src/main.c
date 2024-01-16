@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+#include "can_board_ids.h"
 #include "bts_load_switch.h"
 #include "can.h"
 #include "gpio.h"
@@ -13,11 +13,9 @@
 #include "power_seq_fsm.h"
 #include "tasks.h"
 
-#define DEVICE_ID 0x06
-
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
-  .device_id = DEVICE_ID,
+  .device_id = SYSTEM_CAN_DEVICE_POWER_DISTRIBUTION,
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },

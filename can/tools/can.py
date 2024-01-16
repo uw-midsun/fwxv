@@ -1,5 +1,9 @@
 import struct
 import subprocess
+import time 
+import multiprocessing
+
+process_dict = {}
 
 SYSTEM_CAN_MESSAGE_BABYDRIVER_BABYDRIVER = 2016
 SYSTEM_CAN_MESSAGE_BMS_CARRIER_BATTERY_STATUS = 1
@@ -339,3 +343,21 @@ def send_telemetry_test_msg(test):
 def send_uv_cutoff_uv_cutoff_notification1(signal1):
     send_message(SYSTEM_CAN_MESSAGE_UV_CUTOFF_UV_CUTOFF_NOTIFICATION1,
         pack(signal1, 8))
+
+
+def repeat(repeat_period, send_device_message, *args):
+    def multiprocessing_repeat(kill_process):
+        while not kill_process.is_set():
+            send_device_message(*args)
+            time.sleep(repeat_period)
+
+    kill_process = multiprocessing.Event()
+
+    process_name = multiprocessing.Process(target=multiprocessing_repeat, args=(kill_process,))
+    process_name.start()
+
+    return process_name, kill_process
+
+def end_repeat(send_device_message_process, kill_process):
+    kill_process.set()
+    send_device_message_process.join()

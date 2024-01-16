@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+#include "can_board_ids.h"
 #include "log.h"
 #include "master_task.h"
 #include "mppt.h"
@@ -18,7 +18,7 @@ void run_slow_cycle() {}
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
-  .device_id = 0x1,
+  .device_id = SYSTEM_CAN_DEVICE_SOLAR_SENSE,
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },

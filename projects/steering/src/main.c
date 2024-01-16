@@ -1,6 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
-
+#include "can_board_ids.h"
 #include "adc.h"
 #include "can.h"
 #include "gpio.h"
@@ -11,11 +11,9 @@
 #include "steering_task.h"
 #include "tasks.h"
 
-#define DEVICE_ID 0x02
-
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
-  .device_id = DEVICE_ID,
+  .device_id = SYSTEM_CAN_DEVICE_STEERING,
   .bitrate = CAN_HW_BITRATE_125KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
