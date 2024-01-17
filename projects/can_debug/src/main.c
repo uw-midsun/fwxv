@@ -1,3 +1,4 @@
+#include "can_board_ids.h"
 #include "can.h"
 #include "can_debug.h"
 #include "log.h"
@@ -9,7 +10,7 @@
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
-  .device_id = 0x1,
+  .device_id = SYSTEM_CAN_DEVICE_CAN_DEBUG,
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
