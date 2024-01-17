@@ -1,5 +1,5 @@
-#include "can_board_ids.h"
 #include "can.h"
+#include "can_board_ids.h"
 #include "can_debug.h"
 #include "log.h"
 #include "tasks.h"
