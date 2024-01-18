@@ -4,7 +4,7 @@
 import struct
 import subprocess
 import time 
-import multiprocessing
+import threading
 
 {% for message in messages -%}
 SYSTEM_CAN_MESSAGE_{{  message["sender"] | upper }}_{{ message.name | upper }} = {{ message.id * 0x20 +  + boards.index(message.sender)}}
@@ -40,14 +40,14 @@ def send_{{ message["sender"] }}_{{ message.name }}(
 {% endfor %}
 
 def repeat(repeat_period, send_device_message, *args):
-    def multiprocessing_repeat(kill_process):
+    def threading_repeat(kill_process):
         while not kill_process.is_set():
             send_device_message(*args)
             time.sleep(repeat_period)
 
-    kill_process = multiprocessing.Event()
+    kill_process = threading.Event()
 
-    process_name = multiprocessing.Process(target=multiprocessing_repeat, args=(kill_process,))
+    process_name = threading.Thread(target=threading_repeat, args=(kill_process,))
     process_name.start()
 
     return process_name, kill_process
