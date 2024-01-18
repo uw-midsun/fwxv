@@ -35,6 +35,8 @@ void pre_loop_init() {
   pd_sense_init();
   adc_init();
   pd_set_active_output_group(OUTPUT_GROUP_POWER_OFF);
+  i2c_init(I2C_PORT_1, &i2c_settings);
+  pca9555_gpio_init(I2C_PORT_1);
 }
 
 void run_fast_cycle() {}
@@ -58,8 +60,6 @@ int main() {
   log_init();
   interrupt_init();
   gpio_init();
-  i2c_init(I2C_PORT_1, &i2c_settings);
-  pca9555_gpio_init(I2C_PORT_1);
   can_init(&s_can_storage, &can_settings);
   // set_master_cycle_time(250);  // Give it enough time to run an entire medium cycle
   // set_medium_cycle_count(2);   // adjust medium cycle count to run once per 500ms

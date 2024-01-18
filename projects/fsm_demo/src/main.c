@@ -25,7 +25,6 @@ void run_medium_cycle() {
   wait_tasks(1);
   fsm_run_cycle(fsm2);
   wait_tasks(1);
-  delay_ms(1000);
 }
 
 int main(void) {
