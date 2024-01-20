@@ -1,17 +1,16 @@
 #include <stdio.h>
 
-#include "log.h"
 #include "delay.h"
 #include "interrupt.h"
-
-#include "tasks.h"
+#include "log.h"
 #include "ltc_afe.h"
 #include "ltc_afe_impl.h"
+#include "tasks.h"
 
 LtcAfeStorage s_ltc_store;
 
 LtcAfeSettings s_afe_settings = {
-    // Settings pending hardware validation
+  // Settings pending hardware validation
   .mosi = { .port = GPIO_PORT_B, .pin = 15 },
   .miso = { .port = GPIO_PORT_B, .pin = 14 },
   .sclk = { .port = GPIO_PORT_B, .pin = 13 },
@@ -33,11 +32,11 @@ LtcAfeSettings s_afe_settings = {
 TASK(smoke_ltc, TASK_STACK_512) {
   ltc_afe_init(&s_ltc_store, &s_afe_settings);
   delay_ms(10);
-  while(1){
+  while (1) {
     ltc_afe_impl_trigger_cell_conv(&s_ltc_store);
     delay_ms(10);
     ltc_afe_impl_read_cells(&s_ltc_store);
-    for(int cell = 0; cell < 12; cell++) {
+    for (int cell = 0; cell < 12; cell++) {
       LOG_DEBUG("CELL %d: %d\n\r", cell, s_ltc_store.cell_voltages[cell]);
     }
     LOG_DEBUG("\n\n\r");
@@ -46,16 +45,15 @@ TASK(smoke_ltc, TASK_STACK_512) {
 }
 
 int main() {
-   gpio_init();
-   interrupt_init();
-   tasks_init();
-   log_init();
-   LOG_DEBUG("Welcome to TEST!");
+  gpio_init();
+  interrupt_init();
+  tasks_init();
+  log_init();
+  LOG_DEBUG("Welcome to TEST!");
 
-   tasks_init_task(smoke_ltc, 1, NULL);
-   tasks_start();
+  tasks_init_task(smoke_ltc, 1, NULL);
+  tasks_start();
 
-   LOG_DEBUG("exiting main?");
-   return 0;
+  LOG_DEBUG("exiting main?");
+  return 0;
 }
-

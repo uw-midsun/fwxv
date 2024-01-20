@@ -1,13 +1,12 @@
 #include <stdio.h>
-#include "ltc_afe_impl.h"
-#include "ltc6811.h"
 
-#include "gpio.h"
+#include "crc15.h"
 #include "delay.h"
+#include "gpio.h"
 #include "log.h"
+#include "ltc_afe_impl.h"
 #include "spi.h"
 #include "tasks.h"
-#include "crc15.h"
 
 // ==== WRITE PARAMETERS ====
 
@@ -44,17 +43,13 @@ static SpiSettings spi_settings = {
 
 static void prv_wakeup_idle(SpiSettings *settings) {
   // Wakeup method 2 - pair of long -1, +1 for each device
-    gpio_set_state(&settings->cs, GPIO_STATE_LOW);
-    gpio_set_state(&settings->cs, GPIO_STATE_HIGH);
-    // Wait for 300us - greater than tWAKE, less than tIDLE
-    delay_ms(0.3);
+  gpio_set_state(&settings->cs, GPIO_STATE_LOW);
+  gpio_set_state(&settings->cs, GPIO_STATE_HIGH);
+  // Wait for 300us - greater than tWAKE, less than tIDLE
+  delay_ms(1);
 }
 
-// static StatusCode prv_build_cmd(uint16_t command, uint8_t *cmd, size_t len) {
-//   if (len != LTC6811_CMD_SIZE) {
-//     return status_code(STATUS_CODE_INVALID_ARGS);
-//   }
-
+// static StatusCode prv_build_cmd(uint16_t command, uint8_t *cmd) {
 //   cmd[0] = (uint8_t)(command >> 8);
 //   cmd[1] = (uint8_t)(command & 0xFF);
 
@@ -65,87 +60,72 @@ static void prv_wakeup_idle(SpiSettings *settings) {
 //   return STATUS_CODE_OK;
 // }
 
-
-// static void print_cfg_reg(LtcAfeConfigRegisterData *data) {
-//   LOG_DEBUG("CFG REG:\n\r");
-//   LOG_DEBUG(" %d\n\r", data->adcopt);
-//   LOG_DEBUG(" %d\n\r", data->swtrd);
-//   LOG_DEBUG(" %d\n\r", data->refon);
-
-//   LOG_DEBUG(" %d\n\r", data->gpio);  // GPIO pin control
-
-//   LOG_DEBUG(" %d\n\r", data->undervoltage);  // Undervoltage Comparison Voltage
-//   LOG_DEBUG(" %d\n\r", data->overvoltage);   // Overvoltage Comparison Voltage
-
-//   LOG_DEBUG(" %d\n\r", data->discharge_bitset);
-//   LOG_DEBUG(" %d\n\r", data->discharge_timeout);
-// }
-
 void printBytesInHex(unsigned char *array, size_t length) {
-    for (size_t i = 0; i < length; i++) {
-        LOG_DEBUG("%02X ", array[i]); // Print each byte in hexadecimal format
-    }
-    printf("\n\r");
+  for (size_t i = 0; i < length; i++) {
+    LOG_DEBUG("%02X \n\r", array[i]);  // Print each byte in hexadecimal format
+  }
+  printf("\n\r");
 }
 
 TASK(smoke_spi_task, TASK_STACK_512) {
   spi_init(SPI_PORT_2, &spi_settings);
-  // LtcAfeWriteConfigPacket config_packet = { 0 };
   while (true) {
+    // LTC6811
+
+    // Wake
     prv_wakeup_idle(&spi_settings);
-    // uint8_t gpio_bits =
-    //     LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
-    // prv_build_cmd(LTC6811_WRCFG_RESERVED, config_packet.wrcfg, SIZEOF_ARRAY(config_packet.wrcfg));
-    // uint8_t enable = gpio_bits;
+    static uint8_t rx_bytes[8] = { 0 };
+    static uint8_t tx_bytes[8] = { 0x00, 0x01, 0x3d, 0x6e, 0xea, 0x00, 0x00, 0x00 };
+    // Write Config
+    spi_exchange(SPI_PORT_2, tx_bytes, 8, rx_bytes, 0);
+    LOG_DEBUG("Wrote Config \n");
 
-    // uint16_t undervoltage = 0;
-    // uint16_t overvoltage = 0;
+    // Idle
+    delay_ms(10);
 
-    // config_packet.devices[0].reg.discharge_bitset = 0xA;
-    // config_packet.devices[0].reg.discharge_timeout = LTC_AFE_DISCHARGE_TIMEOUT_30_S;
+    // Wake
+    prv_wakeup_idle(&spi_settings);
+    // Read Config
+    static uint8_t tx_bytes2[4] = { 0x00, 0x02, 0x2b, 0x0a };
+    spi_exchange(SPI_PORT_2, tx_bytes2, 4, rx_bytes, 8);
+    LOG_DEBUG("Config Read: %x %x %x %x %x %x %x %x\n", rx_bytes[0], rx_bytes[1], rx_bytes[2],
+              rx_bytes[3], rx_bytes[4], rx_bytes[5], rx_bytes[6], rx_bytes[7]);
 
-    // config_packet.devices[0].reg.adcopt = 1; // ((LTC_AFE_ADC_MODE_7KHZ + 1) > 3);
-    // config_packet.devices[0].reg.swtrd = true;
+    // Idle
+    delay_ms(10);
 
-    // config_packet.devices[0].reg.undervoltage = undervoltage;
-    // config_packet.devices[0].reg.overvoltage = overvoltage;
+    // Wake
+    prv_wakeup_idle(&spi_settings);
+    // Start conversion
+    // 0b 00000 01 10 11 0 0 000
+    // 0b 0000 0011 0110 0000
+    static uint8_t tx_bytes3[4] = { 0b00000011, 0b01100000, 0xf4, 0x6c };
+    spi_exchange(SPI_PORT_2, tx_bytes3, 4, rx_bytes, 0);
 
-    // // GPIO 1 is used to read data from the mux
-    // config_packet.devices[0].reg.gpio = (enable >> 3);
+    // Wait for conversion to complete
+    delay_ms(10);
 
-    // uint16_t cfgr_pec = crc15_calculate((uint8_t *)&config_packet.devices[0].reg, 6);
-    // config_packet.devices[0].pec = SWAP_UINT16(cfgr_pec);
+    // Wake
+    prv_wakeup_idle(&spi_settings);
+    // Read converted data
+    // 0b 00000 0 0 0 0 0 0 0 0 1 0 0
+    // 0b 0000 0000 0000 0100
+    static uint8_t tx_bytes4[4] = { 0b00000000, 0b00000100, 0x07, 0xc2 };
+    spi_exchange(SPI_PORT_2, tx_bytes4, 4, rx_bytes, 8);
+    LOG_DEBUG("Cell Voltage Group A: %x %x %x %x %x %x %x %x\n", rx_bytes[0], rx_bytes[1],
+              rx_bytes[2], rx_bytes[3], rx_bytes[4], rx_bytes[5], rx_bytes[6], rx_bytes[7]);
 
-    // size_t len = SIZEOF_LTC_AFE_WRITE_CONFIG_PACKET(1);
+    // Convert cell 1 to uV and mV
+    uint32_t cell = 0;
+    cell = (uint32_t)((rx_bytes[1] << 8) | rx_bytes[0]);
+    LOG_DEBUG("Cell 1 raw hex: %lX\n", cell);
+    cell *= 100;
+    LOG_DEBUG("Cell 1 uV: %ld\n", cell);
+    cell /= 1000;
+    LOG_DEBUG("Cell 1 mV: %ld\n", cell);
 
-    // LOG_DEBUG("TX_LEN, data: %d\n\r", len);
-    // print_cfg_reg(&config_packet.devices[0].reg);
-    // printBytesInHex((unsigned char *)&config_packet, len);
-    // StatusCode stat = spi_exchange(SPI_PORT_2, (uint8_t *)&config_packet, len, NULL, 0);
-
-    
-    // uint8_t rd_cmd[4] = { 0 };
-    // prv_build_cmd(LTC6811_RDCFG_RESERVED, rd_cmd, 4);
-    // //LtcAfeConfigRegisterData rd_data;
-
-    // unsigned char rd_data[sizeof(LtcAfeConfigRegisterData) + 1];
-    
-    // StatusCode stat2 = spi_exchange(SPI_PORT_2, rd_cmd, 4, (uint8_t*)&rd_data, sizeof(LtcAfeConfigRegisterData));
-    // LOG_DEBUG("STAT1 %d stat2: %d\n\r", stat, stat2);
-    // printBytesInHex(rd_data, sizeof(LtcAfeConfigRegisterData));
-    // //print_cfg_reg(&rd_data);
-    // delay_ms(1000);
-
-    static uint8_t tx_bytes[4] = { 0x00, 0x02, 0x2b, 0x0a };
-    static uint8_t rx_bytes[6] = { 0 };
-    StatusCode stat2 = spi_exchange(SPI_PORT_2, tx_bytes, 4, rx_bytes, 6);
-
-    // static uint8_t tx_bytes[1] = { 0xaa };
-    // static uint8_t rx_bytes[6] = { 0 };
-    // StatusCode stat2 = spi_exchange(SPI_PORT_2, tx_bytes, 1, rx_bytes, 0);
-
-    LOG_DEBUG("RECV: %x %x %x %x %x %x\n", rx_bytes[0], rx_bytes[1], rx_bytes[2], rx_bytes[3], rx_bytes[4], rx_bytes[5]);
-    delay_ms(1000);
+    // IC fully asleep
+    delay_ms(2000);
   }
 }
 

@@ -39,8 +39,8 @@ static void prv_wakeup_idle(LtcAfeStorage *afe) {
   for (size_t i = 0; i < settings->num_devices; i++) {
     gpio_set_state(&settings->cs, GPIO_STATE_LOW);
     gpio_set_state(&settings->cs, GPIO_STATE_HIGH);
-    // Wait for 300us - greater than tWAKE, less than tIDLE
-    delay_ms(0.3);
+    // Wait for 1ms (should be 300us) - greater than tWAKE, less than tIDLE
+    delay_ms(1);
   }
 }
 
@@ -289,6 +289,11 @@ StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
       uint16_t data_pec = crc15_calculate((uint8_t *)&voltage_register[device], 6);
       if (received_pec != data_pec) {
         // return early on failure
+        LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
+        LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
+        LOG_DEBUG("Voltage: %d %d %d\n\r", voltage_register[device].reg.voltages[0],
+                  voltage_register[device].reg.voltages[1],
+                  voltage_register[device].reg.voltages[2]);
         return status_code(STATUS_CODE_INTERNAL_ERROR);
       }
     }
