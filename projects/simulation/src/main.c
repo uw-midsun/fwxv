@@ -14,11 +14,11 @@ void sim_init(int sock_num) {
 
   while (s_keep_alive) {
     res = 0;
-    memset(buffer, 0, sizeof( buffer ));
+    memset(buffer, 0, sizeof(buffer));
     p = 0;
     LOG_DEBUG("Listening\n");
     while (s_keep_alive) {
-      memset(rcv, 0, sizeof( rcv ));
+      memset(rcv, 0, sizeof(rcv));
       res = recv(sock_num, rcv, 1, 0);
       if (res == 1) {
         if (rcv[0] != '\n') {
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
   server_addr.sin_family = AF_INET;
   server_addr.sin_port = htons(2520);
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-  int status = bind(socketfd, (struct sockaddr*) &server_addr, sizeof(server_addr));
+  int status = bind(socketfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
   if (status < 0) {
     LOG_DEBUG("Bind failed: %d\n", status);
     return 0;

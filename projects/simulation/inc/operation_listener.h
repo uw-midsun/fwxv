@@ -1,5 +1,7 @@
 #pragma once
 
+#include <arpa/inet.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <linux/can.h>
 #include <linux/can/raw.h>
@@ -11,15 +13,14 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <errno.h>
+
+#include "adc.h"
 #include "gpio.h"
 #include "gpio_it.h"
-#include "log.h"
-#include "adc.h"
 #include "i2c.h"
+#include "log.h"
 
 #define x86 1
 #define PORT 2520
