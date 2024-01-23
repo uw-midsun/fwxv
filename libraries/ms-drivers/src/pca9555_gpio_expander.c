@@ -140,15 +140,15 @@ StatusCode pca9555_get_register_state(I2CAddress addr, uint16_t *reg_val) {
   if (addr >= NUM_I2C_PORTS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid PCA9555 port.");
   }
-  uint8_t reg_arr[2];            // store read value
+  uint8_t reg_arr[2] = {};       // store read value
   uint8_t reg_to_read = INPUT0;  // read the first register
   status_ok_or_return(i2c_write(s_i2c_port, addr, &reg_to_read, sizeof(INPUT0)));
   status_ok_or_return(
-      i2c_read(s_i2c_port, addr, reg_arr[0], sizeof(reg_to_read)));  // store value in reg_arr
+      i2c_read(s_i2c_port, addr, &reg_arr[0], sizeof(reg_to_read)));  // store value in reg_arr
 
   reg_to_read = INPUT1;  // read the second register
   status_ok_or_return(i2c_write(s_i2c_port, addr, &reg_to_read, sizeof(INPUT1)));
-  status_ok_or_return(i2c_read(s_i2c_port, addr, reg_arr[1], sizeof(reg_to_read)));
+  status_ok_or_return(i2c_read(s_i2c_port, addr, &reg_arr[1], sizeof(reg_to_read)));
 
   *reg_val = (reg_arr[0] << 8) +
              reg_arr[1];  // return the 16-bit value with the first register as the 8 leftmost bits

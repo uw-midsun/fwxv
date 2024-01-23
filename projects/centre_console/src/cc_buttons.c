@@ -11,7 +11,6 @@ StatusCode get_button_press(void) {
   // value leftmost 8 bits are the pin values at INPUT0, rightmost 8 bits are the pin values at
   // INPUT 1
   status_ok_or_return(pca9555_get_register_state(PCA9555_I2C_ADDR, &pca9555_reg_val));
-
   if (pca9555_reg_val == PCA9555_REG_DEFAULT) {  // No button pressed
     return STATUS_CODE_OK;
   }
