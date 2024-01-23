@@ -2,9 +2,9 @@
 
 // See Table 3 on pg.18 of the datasheet
 #define PCT_LSB (1.0f / 256)                                  // LSBit is 1/256%
-#define CAP_LSB (5.0f / storage->settings->r_sense_uohms)     // LSBit is 5 micro Volt hrs / Rsense
+#define CAP_LSB (5.0f / storage->settings->r_sense_mohms)     // LSBit is 5 micro Volt hrs / Rsense
 #define TIM_LSB (5625U)                                       // LSBit is 5625ms
-#define CUR_LSB (1.5625f / storage->settings->r_sense_uohms)  // LSBit is 1.5625uA / Rsense
+#define CUR_LSB (1.5625f / storage->settings->r_sense_mohms)  // LSBit is 1.5625uA / Rsense
 #define VOLT_LSB (1.25f / 16)                                 // LSBit is 1.25mV / 16
 #define TEMP_LSB (1.0f / 256)                                 // LSBit is 1 / 256 C
 
@@ -67,10 +67,10 @@ StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms) {
   return STATUS_CODE_OK;
 }
 
-StatusCode max17261_current(Max17261Storage *storage, uint16_t *current_a) {
+StatusCode max17261_current(Max17261Storage *storage, uint16_t *current_ua) {
   uint16_t current_reg_val = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_CURRENT, &current_reg_val));
-  *current_a = current_reg_val * CUR_LSB;
+  *current_ua = current_reg_val * CUR_LSB;
   return STATUS_CODE_OK;
 }
 

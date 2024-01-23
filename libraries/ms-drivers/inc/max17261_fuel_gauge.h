@@ -30,7 +30,7 @@ typedef struct {
   uint16_t i_thresh_min;
   uint16_t temp_thresh_max;
 
-  float r_sense_uohms;  // Rsense in micro ohms
+  float r_sense_mohms;  // Rsense in micro ohms
 } Max17261Settings;
 
 typedef struct {

@@ -12,23 +12,24 @@
 #include "soft_timer.h"
 #include "tasks.h"
 
-#define MAX17261_I2C_PORT (I2C_PORT_1)
-#define MAX17261_I2C_ADDR (0x6C)
+#define MAX17261_I2C_PORT (I2C_PORT_2)
+#define MAX17261_I2C_ADDR (0x36)
 
 // TODO (Adel C): Change these values to their actual values
-#define CURRENT_SENSE_R_SENSE_U_OHMS (0.5)
+#define CURRENT_SENSE_R_SENSE_MILLI_OHMS (0.5)
 #define MAIN_PACK_DESIGN_CAPACITY \
-  (1.0f / CURRENT_SENSE_R_SENSE_U_OHMS)          // LSB = 5.0 (micro Volt Hours / R Sense)
+  (1.0f / CURRENT_SENSE_R_SENSE_MILLI_OHMS)      // LSB = 5.0 (micro Volt Hours / R Sense)
 #define MAIN_PACK_EMPTY_VOLTAGE (1.0f / 78.125)  // Only a 9-bit field, LSB = 78.125 (micro Volts)
-#define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_U_OHMS))
+#define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_MILLI_OHMS))
 
 // Thresholds for ALRT Pin
-#define CURRENT_SENSE_MAX_CURRENT (58.2f)
-#define CURRENT_SENSE_MIN_CURRENT (27.0f)  // Actually -27
+#define CURRENT_SENSE_MAX_CURRENT_A (58.2f)
+#define CURRENT_SENSE_MIN_CURRENT_A (27.0f)  // Actually -27
 #define CURRENT_SENSE_MAX_TEMP (60U)
 #define ALRT_PIN_V_RES_MICRO_V (400)
 
 static Max17261Storage s_fuel_guage_storage;
+static Max17261Settings s_fuel_gauge_settings;
 static CurrentStorage *s_current_storage;
 static SoftTimer s_timer;
 static bool s_is_charging;
@@ -50,6 +51,7 @@ static StatusCode prv_fuel_gauge_read() {
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault
     // Open Relays
+    return status;
   }
 
   // Set Battery VT message signals
@@ -112,30 +114,29 @@ StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings
 
   memset(storage, 0, sizeof(CurrentStorage));
   s_current_storage = storage;
-  const Max17261Settings fuel_gauge_settings = {
-    .i2c_port = MAX17261_I2C_PORT,
-    .i2c_address = MAX17261_I2C_ADDR,
 
-    .charge_term_current = CHARGE_TERMINATION_CURRENT,
-    .design_capacity = MAIN_PACK_DESIGN_CAPACITY,
-    .empty_voltage = MAIN_PACK_EMPTY_VOLTAGE,
+  s_fuel_gauge_settings.i2c_port = MAX17261_I2C_PORT;
+  s_fuel_gauge_settings.i2c_address = MAX17261_I2C_ADDR;
 
-    // Expected MAX current / (uV / uOhmsSense) resolution
-    .i_thresh_max =
-        ((CURRENT_SENSE_MAX_CURRENT) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_U_OHMS)),
-    // Expected MIN current / (uV / uOhmsSense) resolution
-    .i_thresh_min =
-        ((CURRENT_SENSE_MIN_CURRENT) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_U_OHMS)),
-    // Interrupt threshold limits are stored in 2s-complement format with 1C resolution
-    .temp_thresh_max = CURRENT_SENSE_MAX_TEMP,
+  s_fuel_gauge_settings.charge_term_current = CHARGE_TERMINATION_CURRENT;
+  s_fuel_gauge_settings.design_capacity = MAIN_PACK_DESIGN_CAPACITY;
+  s_fuel_gauge_settings.empty_voltage = MAIN_PACK_EMPTY_VOLTAGE;
 
-    .r_sense_uohms = CURRENT_SENSE_R_SENSE_U_OHMS
-  };
+  // Expected MAX current / (uV / uOhmsSense) resolution
+  s_fuel_gauge_settings.i_thresh_max =
+      ((CURRENT_SENSE_MAX_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MILLI_OHMS));
+  // Expected MIN current / (uV / uOhmsSense) resolution
+  s_fuel_gauge_settings.i_thresh_min =
+      ((CURRENT_SENSE_MIN_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MILLI_OHMS));
+  // Interrupt threshold limits are stored in 2s-complement format with 1C resolution
+  s_fuel_gauge_settings.temp_thresh_max = CURRENT_SENSE_MAX_TEMP;
+
+  s_fuel_gauge_settings.r_sense_mohms = CURRENT_SENSE_R_SENSE_MILLI_OHMS;
 
   // Soft timer period for soc & chargin check
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
 
-  status_ok_or_return(max17261_init(&s_fuel_guage_storage, &fuel_gauge_settings));
+  status_ok_or_return(max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings));
   tasks_init_task(current_sense, TASK_PRIORITY(3), NULL);
   return STATUS_CODE_OK;
 }

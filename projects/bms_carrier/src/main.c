@@ -8,10 +8,10 @@
 #include "max17261_fuel_gauge.h"
 #include "tasks.h"
 
-#define I2C1_SDA \
-  { .port = GPIO_PORT_B, .pin = 9 }
-#define I2C1_SCL \
-  { .port = GPIO_PORT_B, .pin = 8 }
+#define I2C2_SDA \
+  { .port = GPIO_PORT_B, .pin = 11 }
+#define I2C2_SCL \
+  { .port = GPIO_PORT_B, .pin = 10 }
 
 #define FUEL_GAUGE_CYCLE_TIME_MS 100
 
@@ -28,7 +28,7 @@ void run_medium_cycle() {
 void run_slow_cycle() {}
 
 int main() {
-  I2CSettings i2c_settings = { .sda = I2C1_SDA, .scl = I2C1_SCL, .speed = I2C_SPEED_STANDARD };
+  I2CSettings i2c_settings = { .sda = I2C2_SDA, .scl = I2C2_SCL, .speed = I2C_SPEED_STANDARD };
 
   tasks_init();
   log_init();
