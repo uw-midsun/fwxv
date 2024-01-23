@@ -6,7 +6,11 @@ static Task *cc_notify_task = NULL;
 StatusCode get_button_press(void) {
   // TODO: Migrate this read to PCA9555
   uint16_t pca9555_reg_val = 0;
-  i2c_read_reg(I2C_PORT_1, PCA9555_I2C_ADDR, INPUT0, (uint8_t *)&pca9555_reg_val, 2);
+  // i2c_read_reg(I2C_PORT_1, PCA9555_I2C_ADDR, INPUT0, (uint8_t *)&pca9555_reg_val, 2);
+  // same functionality as i2c_read_reg, reads both PCA9555 registers and outputs them as a 16-bit
+  // value leftmost 8 bits are the pin values at INPUT0, rightmost 8 bits are the pin values at
+  // INPUT 1
+  status_ok_or_return(pca9555_get_register_state(PCA9555_I2C_ADDR, &pca9555_reg_val));
 
   if (pca9555_reg_val == PCA9555_REG_DEFAULT) {  // No button pressed
     return STATUS_CODE_OK;

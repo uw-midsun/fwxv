@@ -75,3 +75,6 @@ StatusCode pca9555_gpio_get_state(const Pca9555GpioAddress *address, Pca9555Gpio
 // as the interrupt is reset when the data is read from the port that generated the interrupt
 StatusCode pca9555_gpio_subscribe_interrupts(const GpioAddress *interrupt_pin, Event event,
                                              Task *task, void *context);
+
+// Reads both of the PCA9555 8-bit registers, and returns a 16-bit value with all the pin stats.
+StatusCode pca9555_get_register_state(I2CAddress addr, uint16_t *reg_val);
