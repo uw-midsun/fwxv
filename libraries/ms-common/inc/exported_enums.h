@@ -19,6 +19,7 @@
 typedef enum {
   EE_RELAY_STATE_OPEN = 0,
   EE_RELAY_STATE_CLOSE,
+  EE_RELAY_STATE_FAULT,
   NUM_EE_RELAY_STATES,
 } EERelayState;
 
