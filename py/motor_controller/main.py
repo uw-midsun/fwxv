@@ -12,7 +12,7 @@ from can.util import set_output, parse_line
 import threading
 
 DRIVE_STATE_STR = ["DRIVE", "NEUTRAL", "REVERSE"]
-CAN = "can0"
+CAN = "can1"
 
 def handle_stdin(state):
     '''handle stdin input, updates velocity, drive state, etc.'''

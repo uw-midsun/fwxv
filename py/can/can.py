@@ -80,7 +80,7 @@ def send_message(id, data):
     # id: int, data: str
     # cmd = f"cansend vcan0 {id:0>3x}#{data}"
     # print(cmd)
-    subprocess.run(["cansend", "can0", f"{id:0>3x}#{data}"])
+    subprocess.run(["cansend", "can1", f"{id:0>3x}#{data}"])
 
 
 def pack(num, size):

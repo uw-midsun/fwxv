@@ -55,6 +55,7 @@ void run_fast_cycle() {
   uint32_t notification;
   notify_get(&notification);
   if (notification & (1 << PRECHARGE_EVENT)) {
+    LOG_DEBUG("Precharge complete\n");
     set_mc_status_precharge_status(true);
   }
 

@@ -101,11 +101,10 @@ static void motor_controller_tx_all() {
   // TODO: add can watchdog to shut down motor controller if messages are not received from
   // center console
   // LOG_DEBUG("%d, %d\n", get_received_drive_output(), get_drive_output_drive_state());
-  // if (!get_received_drive_output()) return;
+  if (!get_received_drive_output()) return;
   // if (!get_pedal_output_brake_output()) return;
   // don't send drive command if not precharged
   if (!g_tx_struct.mc_status_precharge_status) return;
-  // LOG_DEBUG("drive command\n");
 
   prv_update_target_current_velocity();
 

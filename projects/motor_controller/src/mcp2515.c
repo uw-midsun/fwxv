@@ -14,7 +14,7 @@ TASK(MCP2515_RX, TASK_STACK_256) {
   int counter = 0;
   while (true) {
     notify_wait(NULL, BLOCK_INDEFINITELY);
-    LOG_DEBUG("mcp2515_rx called: %d!\n", counter);
+    // LOG_DEBUG("mcp2515_rx called: %d!\n", counter);
     counter++;
 
     mcp2515_rx_all();
