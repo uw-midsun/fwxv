@@ -20,7 +20,7 @@ StatusCode prv_set_precharge_control(const GpioState state) {
 StatusCode precharge_control_init(const PrechargeControlSettings *settings) {
   s_precharge_control = settings->precharge_control;
 
-  gpio_init_pin(&settings->precharge_control, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  // gpio_init_pin(&settings->precharge_control, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&settings->precharge_monitor, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
   // gpio_init_pin(&settings->precharge_monitor2, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
 
