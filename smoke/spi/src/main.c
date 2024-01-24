@@ -2,6 +2,7 @@
 
 #include "delay.h"
 #include "gpio.h"
+#include "delay.h"
 #include "log.h"
 #include "spi.h"
 #include "tasks.h"
@@ -226,10 +227,17 @@ static const Mcp2515RxBuffer s_rx_buffers[] = {
 static SpiSettings spi_settings = {
   .baudrate = 1000000,  // 1 Mhz
   .mode = SPI_MODE_0,
+<<<<<<< HEAD
   .mosi = { GPIO_PORT_B, 15 },
   .miso = { GPIO_PORT_B, 14 },
   .sclk = { GPIO_PORT_B, 13 },
   .cs = { GPIO_PORT_B, 12 },
+=======
+  .mosi = { .port = GPIO_PORT_B, .pin = 15 },
+  .miso = { .port = GPIO_PORT_B, .pin = 14 },
+  .sclk = { .port = GPIO_PORT_B, .pin = 13 },
+  .cs = { .port = GPIO_PORT_B, .pin = 12 },
+>>>>>>> main
 };
 
 // static uint8_t prv_read_status() {
@@ -317,12 +325,30 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
 }
 
 TASK(smoke_spi_task, TASK_STACK_512) {
+<<<<<<< HEAD
   mcp2515_hw_init_after_schedular_start();
   while (true) {
     uint8_t reg_val = 0;
     prv_read(MCP2515_CTRL_REG_CNF3, &reg_val, 1);
     LOG_DEBUG("%x\n", reg_val);
 
+=======
+  spi_init(SPI_PORT_2, &spi_settings);
+  uint8_t spi_tx_data[5]  = { 0x02, 0x28, 0x7, 0x8, 0x9 };
+  while (true) {
+    spi_cs_set_state(SPI_PORT_2, GPIO_STATE_LOW);
+    uint8_t read_bytes[3] = { 0 };
+    StatusCode status = spi_exchange(SPI_PORT_2, spi_tx_data, SIZEOF_ARRAY(spi_tx_data), NULL, 0);
+    spi_cs_set_state(SPI_PORT_2, GPIO_STATE_HIGH);
+
+    uint8_t read_cmd[] = { 0x03, 0x28 };
+    spi_cs_set_state(SPI_PORT_2, GPIO_STATE_LOW);
+    status = spi_exchange(SPI_PORT_2, read_cmd, 2, read_bytes, 3);
+    // status = spi_tx(SPI_PORT_2, read_cmd, 2);
+    // StatusCode status2 = spi_rx(SPI_PORT_2, read_bytes, SIZEOF_ARRAY(read_bytes), 0x0);
+    LOG_DEBUG("STATUS %d Data: %x, %x, %x\n", status, read_bytes[0], read_bytes[1], read_bytes[2]);
+    spi_cs_set_state(SPI_PORT_2, GPIO_STATE_HIGH);
+>>>>>>> main
     delay_ms(1000);
   }
 }

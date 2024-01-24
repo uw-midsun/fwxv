@@ -45,7 +45,7 @@ static void prv_periodic_ads_read(SoftTimerId id) {
   s_current_storage->ring_idx = (s_current_storage->ring_idx + 1) % NUM_STORED_CURRENT_READINGS;
   ads1259_get_conversion_data(&s_ads1259_storage);
   // Kick new soft timer
-  soft_timer_start(s_current_storage->conv_period_ms, prv_periodic_ads_read, &s_timer);
+  soft_timer_init_and_start(s_current_storage->conv_period_ms, prv_periodic_ads_read, &s_timer);
 
   // update average
   int32_t sum = 0;
@@ -92,6 +92,6 @@ StatusCode current_sense_init(CurrentStorage *storage, SpiSettings *settings,
   s_current_storage->conv_period_ms = conv_period_ms;
   status_ok_or_return(ads1259_init(&s_ads1259_storage, &ads_settings));
   ads1259_get_conversion_data(&s_ads1259_storage);
-  soft_timer_start(s_current_storage->conv_period_ms, prv_periodic_ads_read, &s_timer);
+  soft_timer_init_and_start(s_current_storage->conv_period_ms, prv_periodic_ads_read, &s_timer);
   return STATUS_CODE_OK;
 }

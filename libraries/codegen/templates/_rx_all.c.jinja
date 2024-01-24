@@ -1,13 +1,13 @@
-{% set messages = data["Messages"] -%}
 {% set board = data["Board"] -%}
+{% set messages = data["Messages"] | selectattr("receiver", "contains", board) | list -%}
 
 #include "can_board_ids.h"
 #include "can_codegen.h"
 #include "can_watchdog.h"
 
-{% for message, message_data in messages.items() %}
-    {%- if message_data["target"][board]["watchdog"] != 0 %}
-static CanWatchDog s_{{message}}_msg_watchdog = {0, {{message_data["target"][board]["watchdog"] | lower}}, 0};
+{% for message in messages %}
+    {%- if message.receiver[board].watchdog != 0 %}
+CanWatchDog s_{{message.name}}_msg_watchdog = {0, {{message.receiver[board].watchdog | lower}}, 0};
     {%- endif %}
 {%- endfor %}
 
@@ -19,16 +19,14 @@ void can_rx_all() {
         // If store all functions in callback array may be better?
         // Or do some sort or binary search for O(lgn)
         switch (msg.id.raw) {
-        {%- for message, message_data in messages.items() %}
-            case SYSTEM_CAN_MESSAGE_{{message_data["src"] | upper}}_{{message | upper}}:
-            {%- set offset = namespace(value=0) %}
-            {%- for signal, signal_data in message_data['signals'].items() %}
-                g_rx_struct.{{message}}_{{signal}} = (msg.data >> {{offset.value}});
-                {%- set offset.value = offset.value + signal_data.length %}
+        {%- for message in messages %}
+            case SYSTEM_CAN_MESSAGE_{{message.sender | upper}}_{{message.name | upper}}:
+            {%- for signal in message.signals %}
+                g_rx_struct.{{message.name}}_{{signal.name}} = (msg.data >> {{signal.start_bit}});
             {%- endfor %}
-                g_rx_struct.received_{{message}} = true;
-            {%- if message_data["target"][board]["watchdog"] %}
-                s_{{message}}_msg_watchdog.cycles_over = 0;
+                g_rx_struct.received_{{message.name}} = true;
+            {%- if message.receiver[board].watchdog %}
+                s_{{message.name}}_msg_watchdog.cycles_over = 0;
             {%- endif %}
                 break;
         {%- endfor %}
@@ -39,25 +37,29 @@ void can_rx_all() {
 }
 
 void clear_rx_received() {
-{%- for message, message_data in messages.items() %}
-    g_rx_struct.received_{{message}} = false;
+{%- for message in messages %}
+    g_rx_struct.received_{{message.name}} = false;
 {%- endfor %}
 }
 
 StatusCode check_can_watchdogs() {
-{%- for message, message_data in messages.items() %}
-    {%- if message_data["target"][board]["watchdog"] != 0 %}
-    if (!g_rx_struct.received_{{message}}) {
-        ++s_{{message}}_msg_watchdog.cycles_over;
-        if (s_{{message}}_msg_watchdog.cycles_over >= s_{{message}}_msg_watchdog.max_cycles) {
-            LOG_CRITICAL("DID NOT RECEIVE CAN MESSAGE: %u IN MAX CYCLES : %u\n", SYSTEM_CAN_MESSAGE_{{message_data["src"] | upper}}_{{message | upper}},
-                            s_{{message}}_msg_watchdog.max_cycles);
-            s_{{message}}_msg_watchdog.missed = 1;
-        } else {
-            s_{{message}}_msg_watchdog.missed = 0;
+    StatusCode status = STATUS_CODE_OK;
+{%- for message in messages %}
+    {%- if message.receiver[board].watchdog != 0 %}
+    if (!g_rx_struct.received_{{message.name}}) {
+        ++s_{{message.name}}_msg_watchdog.cycles_over;
+        if (s_{{message.name}}_msg_watchdog.cycles_over >= s_{{message.name}}_msg_watchdog.max_cycles) {
+            LOG_CRITICAL("DID NOT RECEIVE CAN MESSAGE: %u IN MAX CYCLES : %u\n", SYSTEM_CAN_MESSAGE_{{message.sender | upper}}_{{message.name | upper}},
+                            s_{{message.name}}_msg_watchdog.max_cycles);
+            s_{{message.name}}_msg_watchdog.missed = 1;
+            status = STATUS_CODE_TIMEOUT;
         }
+    } else {
+        s_{{message.name}}_msg_watchdog.cycles_over = 0;
+        s_{{message.name}}_msg_watchdog.missed = 0;
     }
     {%- endif %}
 {%- endfor %}
-    return STATUS_CODE_OK;
+    return status;
 }
+

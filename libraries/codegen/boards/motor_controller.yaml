@@ -1,5 +1,5 @@
 # Message Definitions in plaintext are on the wiki at:
-# https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
+# https://uwmidsun.atlassian.net/l/cp/Pxn8Xhm8
 #
 # If you are making changes to this file please update the corresponding entry
 # on the wiki. If you need to add a new message use a reasonable
@@ -11,7 +11,7 @@
 ---
   Messages:
     motor_controller_vc:
-      id: 35
+      id: 30
       target:
         centre_console:
           watchdog: 0
@@ -26,7 +26,7 @@
           length: 16
 
     motor_velocity:
-      id: 36
+      id: 31
       target:
         centre_console:
           watchdog: 0
@@ -67,6 +67,8 @@
       target:
         centre_console:
           watchdog: 0
+        power_distribution:
+          watchdog: 0
       signals:
         limit_bitset_l:
           length: 8
@@ -85,7 +87,7 @@
 
     # THIS MESSAGE DOESN'T EXIST
     precharge_completed:
-      id: 16
+      id: 14
       target:
         centre_console:
           watchdog: 0

@@ -100,8 +100,6 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
         inc_dirs = [entry.Dir('inc')]
         inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
         if config["can"]:
-            if entry.name == "power_distribution":
-                inc_dirs.append(OBJ_DIR.Dir(entry.path + "_" + str(GetOption("location"))).Dir('can').Dir("inc"))
             inc_dirs.append(OBJ_DIR.Dir(entry.path).Dir('can').Dir("inc"))
             inc_dirs.append(CAN_DIR.Dir("inc"))
         lib_incs = [lib_dir.Dir('inc') for lib_dir in LIB_DIRS]
@@ -211,6 +209,5 @@ def test_runner(target, source, env):
 
     print(f"{len(test_list)} Files tested {fails} Failures")
 
-test = Command('test.txt', [], test_runner)
+test = Command('#/test', [], test_runner)
 Depends(test, get_test_list())
-Alias('test', test)

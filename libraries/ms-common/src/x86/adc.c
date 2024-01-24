@@ -64,7 +64,7 @@ StatusCode adc_get_channel(GpioAddress address, uint8_t *adc_channel) {
       *adc_channel += 10;
       break;
     case NUM_GPIO_PORTS:  // for special channels BAT/REF/TEMP
-      if (address.pin != ADC_Channel_Vrefint || address.pin != ADC_Channel_TempSensor) {
+      if (address.pin != ADC_Channel_Vrefint && address.pin != ADC_Channel_TempSensor) {
         return status_code(STATUS_CODE_INVALID_ARGS);
       }
       break;
@@ -125,7 +125,7 @@ StatusCode adc_init(void) {
 
   adc_add_channel(ADC_REF);
 
-  s_adc_readings[s_adc_ranks[ADC_Channel_TempSensor] - 1] = MOCK_VREFINT;
+  s_adc_readings[s_adc_ranks[ADC_Channel_Vrefint] - 1] = MOCK_VREFINT;
 
   // Initialize static variables
   sem_init(&s_adc_status.converting, 1, 0);

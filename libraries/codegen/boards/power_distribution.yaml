@@ -1,0 +1,85 @@
+# Message Definitions in plaintext are on the wiki at:
+# https://uwmidsun.atlassian.net/l/cp/Pxn8Xhm8
+#
+# If you are making changes to this file please update the corresponding entry
+# on the wiki. If you need to add a new message use a reasonable
+# reserved ID. The higher ID the lower the priority. Generally
+# - 0-13: Critical messages (have ACK)
+# - 14-30: Actionable messages (trigger a change in another system)
+# - 30-63: Data messages (usually not actionable by an onboard device)
+
+---
+  Messages:
+    uv_cutoff_notification:
+      id: 45
+      target:
+        telemetry:
+          watchdog: 0
+      signals:
+        signal1:
+          length: 8
+    current_measurement:
+      id: 54
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        current_id:
+          length: 16
+        current:
+          length: 16
+    pd_fault:
+      id: 62
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        fault_data:
+          length: 16
+        faulting_output:
+          length: 16
+    horn_and_lights:
+      id: 46
+      target:
+        uv_cutoff:
+          watchdog: 0
+      signals:
+        horn_state:
+          length: 8
+        lights_state:
+          length: 8
+    lights_sync:
+      id: 23
+      target:
+        lights_front:
+          watchdog: 0
+      signals:
+        signal1:
+          length: 8
+    power_info:
+      id: 3
+      target:
+        centre_console:
+          watchdog: 0
+      critical: true
+      signals:
+        power_state:
+          length: 8
+        pd_fault:
+          length: 8
+    pd_status:
+      id: 1
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        fault_bitset:
+          length: 8
+    bms_relays:
+      id: 10
+      target:
+        bms_carrier:
+          watchdog: 0
+      signals:
+        relays_state:
+          length: 8

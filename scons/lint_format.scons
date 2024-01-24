@@ -105,8 +105,5 @@ def run_format(target, source, env):
 
     print('Done Formatting.')
 
-lint = Command('lint.txt', [], run_lint)
-Alias('lint', lint)
-
-format = Command('format.txt', [], run_format)
-Alias('format', format)
+Command('#/lint', [], run_lint)
+Command('#/format', [], run_format)

@@ -40,7 +40,7 @@ TASK(CAN_TX, TASK_STACK_256)
     LOG_DEBUG("can_tx called: %d!\n", counter);
     counter++;
 
-    check_can_watchdogs();
+    check_can_watchdogs(); // TODO: handle STATUS_CODE_TIMEOUT here
 
     can_tx_all();
 

@@ -1,15 +1,15 @@
-#pragma once
+{% set board = data["Board"] -%}
+{% set messages = data["Messages"] | selectattr("receiver", "contains", board) | list -%}
 
-{%- set board = data["Board"] %}
-{%- set messages = data["Messages"] %}
+#pragma once
 
 #include "can_codegen.h"
 
-{% for message, message_data in messages.items() %}
-    {%- for signal, signal_data in message_data['signals'].items() %}
-#define get_{{message}}_{{signal}}() \
-    g_rx_struct.{{message}}_{{signal}}
+{% for message in messages %}
+    {%- for signal in message.signals %}
+#define get_{{message.name}}_{{signal.name}}() \
+    g_rx_struct.{{message.name}}_{{signal.name}}
     {% endfor %}
-#define get_received_{{message}}() \
-    g_rx_struct.received_{{message}}
+#define get_received_{{message.name}}() \
+    g_rx_struct.received_{{message.name}}
 {% endfor %}

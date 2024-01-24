@@ -200,11 +200,18 @@ StatusCode adc_init(void) {
   while (ADC_GetCalibrationStatus(ADC1)) {
   }
 
+  // Initialize static variables
+  sem_init(&s_adc_status.converting, 1, 0);
+  DMA_ClearITPendingBit(DMA1_IT_TC1);
+  DMA_ClearITPendingBit(DMA1_IT_HT1);
+  DMA_ClearITPendingBit(DMA1_IT_GL1);
+
   // Enable interrupts for the end of each full conversion
   stm32f10x_interrupt_nvic_enable(DMA1_Channel1_IRQn, INTERRUPT_PRIORITY_LOW);
 
-  // Initialize static variables
-  sem_init(&s_adc_status.converting, 1, 0);
+  // goes into ISR after enabling interrupts so sem_wait here to reset semaphore
+  status_ok_or_return(sem_wait(&s_adc_status.converting, ADC_TIMEOUT_MS));
+
   s_adc_status.initialized = true;
 
   return STATUS_CODE_OK;
@@ -262,5 +269,7 @@ void DMA1_Channel1_IRQHandler() {
   BaseType_t higher_prio;
   xSemaphoreGiveFromISR(s_adc_status.converting.handle, &higher_prio);
   DMA_ClearITPendingBit(DMA1_IT_TC1);
+  DMA_ClearITPendingBit(DMA1_IT_HT1);
+  DMA_ClearITPendingBit(DMA1_IT_GL1);
   portYIELD_FROM_ISR(higher_prio);
 }

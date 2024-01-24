@@ -1,0 +1,9 @@
+virtualenv
+autopep8
+pylint
+cpplint
+python-can
+cantools
+Jinja2
+PyYAML
+pyserial

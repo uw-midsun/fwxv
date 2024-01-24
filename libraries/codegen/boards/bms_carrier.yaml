@@ -1,5 +1,5 @@
 # Message Definitions in plaintext are on the wiki at:
-# https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
+# https://uwmidsun.atlassian.net/l/cp/Pxn8Xhm8
 #
 # If you are making changes to this file please update the corresponding entry
 # on the wiki. If you need to add a new message use a reasonable
@@ -10,14 +10,20 @@
 
 ---
   Messages:
-    bps_heartbeat:
+    battery_status:
       id: 0
       target:
         centre_console:
           watchdog: 0
+        power_distribution:
+          watchdog: 3
       critical: true
       signals:
+        batt_perc:
+          length: 16
         status:
+          length: 8
+        fault:
           length: 8
     
     battery_vt:
@@ -34,9 +40,6 @@
         voltage:
           length: 16
         temperature:
-          length: 16
-        # This field will change
-        batt_perc:
           length: 16
     
     battery_aggregate_vc:
@@ -73,18 +76,11 @@
         fan_8:
           length: 8
 
-    battery_relay_state:
+    battery_relay_info:
       id: 58
       target:
-        bms_carrier:
-          watchdog: 0
-        centre_console:
+        power_distribution:
           watchdog: 0
       signals:
-        hv:
+        state:
           length: 8
-        gnd:
-          length: 8
-
-
-

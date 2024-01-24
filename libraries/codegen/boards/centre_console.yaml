@@ -1,5 +1,5 @@
 # Message Definitions in plaintext are on the wiki at:
-# https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
+# https://uwmidsun.atlassian.net/l/cp/Pxn8Xhm8
 #
 # If you are making changes to this file please update the corresponding entry
 # on the wiki. If you need to add a new message use a reasonable
@@ -10,94 +10,20 @@
 
 ---
   Messages:
-    set_bms_power:
-      id: 4
-      target:
-        power_distribution_front:
-          watchdog: 0
-        power_distribution_rear:
-          watchdog: 0
-      critical: true
-      signals:
-        bms_power_on_notification:
-          length: 8
-
-    set_power_state:
-      id: 5
-      target:
-        power_distribution_front:
-          watchdog: 0
-        power_distribution_rear:
-          watchdog: 0
-      critical: true
-      signals:
-        turn_on_everything_notification:
-          length: 8
-
-    set_relay_states:
+    cc_power_control:
       id: 1
       target:
-        bms_carrier:
-          watchdog: 0
-        motor_controller:
-          watchdog: 0
-        solar_5_mppts:
-          watchdog: 0
-        solar_6_mppts:
+        power_distribution:
           watchdog: 0
       critical: true
       signals:
-        relay_mask:
-          length: 16
-        relay_state:
-          length: 16
+        power_event: # (POWER_EV_NONE | POWER_EV_BTN | POWER_EV_BTN_AND_BRAKE)
+          length: 8
+        hazard_enabled:
+          length: 8
 
-    power_on_main_sequence:
-      id: 6
-      target:
-        pedal:
-          watchdog: 0
-        power_distribution_front:
-          watchdog: 0
-        power_distribution_rear :
-          watchdog: 0
-      critical: true
-      signals:
-        sequence:
-          length: 16
-
-    power_off_main_sequence:
-      id: 7
-      target:
-        pedal:
-          watchdog: 0
-        power_distribution_front:
-          watchdog: 0
-        power_distribution_rear:
-          watchdog: 0
-      critical: true
-      signals:
-        sequence:
-          length: 16
-
-    power_on_aux_sequence:
-      id: 8
-      target:
-        motor_controller:
-          watchdog: 0
-        pedal:
-          watchdog: 0
-        power_distribution_front:
-          watchdog: 0
-        power_distribution_rear:
-          watchdog: 0
-      critical: true
-      signals:
-        sequence:
-          length: 16
-
-    drive_output:
-      id: 9
+    drive_output: 
+      id: 2
       target:
         motor_controller:
           watchdog: 0
@@ -112,81 +38,4 @@
         regen_braking:
           length: 8
         precharge:
-          length: 8
-
-    set_ebrake_state:
-      id: 10
-      target:
-        centre_console:
-          watchdog: 0
-      critical: true
-      signals:
-        ebrake_state:
-          length: 8
-
-    ready_to_drive:
-      id: 13
-      target:
-        telemetry:
-          watchdog: 0
-      signals:
-        ready_state:
-          length: 8
-
-    begin_precharge:
-      id: 28
-      target:
-        motor_controller:
-          watchdog: 0
-      signals:
-        signal1:
-          length: 8
-
-    hazard:
-      id: 32
-      target:
-        centre_console:
-          watchdog: 0
-      signals:
-        state:
-          length: 8
-
-    discharge_precharge:
-      id: 31
-      target:
-        motor_controller:
-          watchdog: 0
-      signals:
-        signal1:
-          length: 8
-
-    state_transition_fault:
-      id: 34
-      target:
-        telemetry:
-          watchdog: 0
-      signals:
-        state_machine:
-          length: 16
-        fault_reason:
-          length: 16
-
-    allow_charging:
-      id: 49
-      target:
-        charger:
-          watchdog: 0
-      signals:
-        signal1:
-          length: 8
-
-    power_info:
-      id: 47
-      target:
-        power_distribution_front:
-          watchdog: 0
-      signals:
-        hazard_state:
-          length: 8
-        power_state:
           length: 8

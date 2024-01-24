@@ -49,7 +49,7 @@ void uv_smoke_logic() {
     state = UV_CUTOFF_ACTIVE;
   }
 
-  set_uv_cutoff_notification_signal1(state);
+  set_uv_cutoff_notification1_signal1(state);
 
   if (state == UV_CUTOFF_DISCONNECTED) {
     return;
@@ -91,14 +91,14 @@ TASK(smoke_task, TASK_MIN_STACK_SIZE) {
   LOG_DEBUG("Running test for UV Disconnected state\n");
   gpio_set_state(&uv_status,GPIO_STATE_LOW);
   uv_smoke_logic();
-  assert( g_tx_struct.uv_cutoff_notification_signal1 == UV_CUTOFF_DISCONNECTED );
+  assert( g_tx_struct.uv_cutoff_notification1_signal1 == UV_CUTOFF_DISCONNECTED );
   LOG_DEBUG("uv_cutoff notification signal set to 'UV_CUTOFF_DISCONNECTED'\n");
   delay_ms(1000);
   //TEST 2 - Active UV status
   LOG_DEBUG("Running test for UV Active state\n");
   gpio_set_state(&uv_status,GPIO_STATE_HIGH);
   uv_smoke_logic();
-  assert( g_tx_struct.uv_cutoff_notification_signal1 == UV_CUTOFF_ACTIVE );
+  assert( g_tx_struct.uv_cutoff_notification1_signal1 == UV_CUTOFF_ACTIVE );
   LOG_DEBUG("uv_cutoff notification signal set to 'UV_CUTOFF_ACTIVE'\n");
   delay_ms(1000);
   //TEST 3 - Horn state HIGH
