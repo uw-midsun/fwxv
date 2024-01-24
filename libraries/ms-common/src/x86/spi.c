@@ -16,7 +16,12 @@ typedef struct {
   Mutex mutex;
 } SPIBuffer;
 
-static SPIBuffer s_buf[NUM_SPI_PORTS];
+typedef struct {
+  GpioState cs_state;
+  SPIBuffer spi_buf;
+} SpiPortData;
+
+static SpiPortData s_port[NUM_SPI_PORTS];
 
 StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   if (spi >= NUM_SPI_PORTS) {
@@ -25,108 +30,90 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI mode.");
   }
 
-  s_buf[spi].tx_queue.num_items = SPI_BUF_SIZE;
-  s_buf[spi].tx_queue.item_size = sizeof(uint8_t);
-  s_buf[spi].tx_queue.storage_buf = s_buf[spi].tx_buf;
-  s_buf[spi].rx_queue.num_items = SPI_BUF_SIZE;
-  s_buf[spi].rx_queue.item_size = sizeof(uint8_t);
-  s_buf[spi].rx_queue.storage_buf = s_buf[spi].rx_buf;
-
-  status_ok_or_return(mutex_init(&s_buf[spi].mutex));
-  status_ok_or_return(queue_init(&s_buf[spi].rx_queue));
-  status_ok_or_return(queue_init(&s_buf[spi].tx_queue));
+  s_port[spi].spi_buf.rx_queue.num_items = SPI_MAX_NUM_DATA;
+  s_port[spi].spi_buf.rx_queue.item_size = sizeof(uint8_t);
+  s_port[spi].spi_buf.rx_queue.storage_buf = s_port[spi].spi_buf.rx_buf;
+  s_port[spi].spi_buf.tx_queue.num_items = SPI_MAX_NUM_DATA;
+  s_port[spi].spi_buf.tx_queue.item_size = sizeof(uint8_t);
+  s_port[spi].spi_buf.tx_queue.storage_buf = s_port[spi].spi_buf.tx_buf;
+  status_ok_or_return(mutex_init(&s_port[spi].spi_buf.mutex));
+  status_ok_or_return(queue_init(&s_port[spi].spi_buf.rx_queue));
+  status_ok_or_return(queue_init(&s_port[spi].spi_buf.tx_queue));
 
   return STATUS_CODE_OK;
-}
-
-StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
-  if (spi >= NUM_SPI_PORTS) {
-    return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI port.");
-  }
-
-  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_TIMEOUT_MS));
-
-  for (size_t tx = 0; tx < tx_len; tx++) {
-    if (queue_send(&s_buf[spi].tx_queue, &tx_data[tx], SPI_QUEUE_DELAY_MS)) {
-      queue_reset(&s_buf[spi].tx_queue);
-      mutex_unlock(&s_buf[spi].mutex);
-      return STATUS_CODE_RESOURCE_EXHAUSTED;
-    }
-  }
-
-  mutex_unlock(&s_buf[spi].mutex);
-  return STATUS_CODE_OK;
-}
-
-StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placeholder) {
-  if (spi >= NUM_SPI_PORTS) {
-    return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI port.");
-  }
-
-  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_TIMEOUT_MS));
-
-  for (size_t rx = 0; rx < rx_len; rx++) {
-    if (queue_receive(&s_buf[spi].rx_queue, &rx_data[rx], SPI_QUEUE_DELAY_MS)) {
-      queue_reset(&s_buf[spi].rx_queue);
-      mutex_unlock(&s_buf[spi].mutex);
-      return STATUS_CODE_EMPTY;
-    }
-  }
-
-  mutex_unlock(&s_buf[spi].mutex);
-  return STATUS_CODE_OK;
-}
-
-StatusCode spi_cs_set_state(SpiPort spi, GpioState state) {
-  return STATUS_CODE_UNIMPLEMENTED;
-}
-
-StatusCode spi_cs_get_state(SpiPort spi, GpioState *input_state) {
-  return STATUS_CODE_UNIMPLEMENTED;
 }
 
 StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
                         size_t rx_len) {
   if (spi >= NUM_SPI_PORTS) {
-    return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI port.");
+    return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
   }
-  spi_cs_set_state(spi, GPIO_STATE_LOW);
+  // Proceed if mutex is unlocked
+  status_ok_or_return(mutex_lock(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
 
-  spi_tx(spi, tx_data, tx_len);
+  queue_reset(&s_port[spi].spi_buf.tx_queue);
+  queue_reset(&s_port[spi].spi_buf.rx_queue);
 
-  spi_rx(spi, rx_data, rx_len, 0x00);
+  // Copy data into queue
+  uint8_t data = 0;
+  for (size_t i = 0; i < tx_len + rx_len; i++) {
+    data = (i < tx_len) ? tx_data[i] : 0;
+    if (queue_send(&s_port[spi].spi_buf.tx_queue, &data, 0)) {
+      mutex_unlock(&s_port[spi].spi_buf.mutex);
+      return STATUS_CODE_RESOURCE_EXHAUSTED;
+    }
+  }
 
-  spi_cs_set_state(spi, GPIO_STATE_HIGH);
+  // set spi CS state LOW
+  s_port[spi].cs_state = GPIO_STATE_LOW;
+
+  for (size_t i = 0; i < tx_len + rx_len; i++) {
+    if (queue_receive(&s_port[spi].spi_buf.rx_queue, &data, SPI_TIMEOUT_MS)) {
+      // timeout
+      // set spi CS state HIGH
+      s_port[spi].cs_state = GPIO_STATE_HIGH;
+      mutex_unlock(&s_port[spi].spi_buf.mutex);
+      return STATUS_CODE_TIMEOUT;
+    }
+    if (i >= tx_len) {
+      // ignore first tx_len num of receieved data, store the rest into rx_data
+      rx_data[i - tx_len] = data;
+    }
+  }
+
+  // set spi CS state HIGH
+  s_port[spi].cs_state = GPIO_STATE_HIGH;
+  mutex_unlock(&s_port[spi].spi_buf.mutex);
 
   return STATUS_CODE_OK;
 }
 
 StatusCode spi_get_tx(SpiPort spi, uint8_t *data, uint8_t len) {
-  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_TIMEOUT_MS));
+  status_ok_or_return(mutex_lock(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
 
   for (size_t tx = 0; tx < len; tx++) {
-    if (queue_receive(&s_buf[spi].tx_queue, &data[tx], SPI_QUEUE_DELAY_MS)) {
-      queue_reset(&s_buf[spi].tx_queue);
-      mutex_unlock(&s_buf[spi].mutex);
+    if (queue_receive(&s_port[spi].spi_buf.tx_queue, &data[tx], SPI_QUEUE_DELAY_MS)) {
+      queue_reset(&s_port[spi].spi_buf.tx_queue);
+      mutex_unlock(&s_port[spi].spi_buf.mutex);
       return STATUS_CODE_EMPTY;
     }
   }
 
-  mutex_unlock(&s_buf[spi].mutex);
+  mutex_unlock(&s_port[spi].spi_buf.mutex);
   return STATUS_CODE_OK;
 }
 
 StatusCode spi_set_rx(SpiPort spi, uint8_t *data, uint8_t len) {
-  status_ok_or_return(mutex_lock(&s_buf[spi].mutex, SPI_TIMEOUT_MS));
+  status_ok_or_return(mutex_lock(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
 
   for (size_t rx = 0; rx < len; rx++) {
-    if (queue_send(&s_buf[spi].rx_queue, &data[rx], SPI_QUEUE_DELAY_MS)) {
-      queue_reset(&s_buf[spi].rx_queue);
-      mutex_unlock(&s_buf[spi].mutex);
+    if (queue_send(&s_port[spi].spi_buf.rx_queue, &data[rx], SPI_QUEUE_DELAY_MS)) {
+      queue_reset(&s_port[spi].spi_buf.rx_queue);
+      mutex_unlock(&s_port[spi].spi_buf.mutex);
       return STATUS_CODE_RESOURCE_EXHAUSTED;
     }
   }
 
-  mutex_unlock(&s_buf[spi].mutex);
+  mutex_unlock(&s_port[spi].spi_buf.mutex);
   return STATUS_CODE_OK;
 }
