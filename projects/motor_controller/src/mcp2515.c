@@ -40,7 +40,7 @@ TASK(MCP2515_TX, TASK_STACK_256) {
   int counter = 0;
   while (true) {
     notify_wait(NULL, BLOCK_INDEFINITELY);
-    LOG_DEBUG("mcp2515_tx called: %d!\n", counter);
+    // LOG_DEBUG("mcp2515_tx called: %d!\n", counter);
     counter++;
 
     mcp2515_tx_all();
@@ -77,7 +77,9 @@ StatusCode mcp2515_transmit(const CanMessage *msg) {
   return mcp2515_hw_transmit(msg->id.raw, msg->extended, msg->data_u8, msg->dlc);
 }
 
-static void no_op() {}
+static void no_op() {
+  LOG_DEBUG("error - no-op\n");
+}
 
 StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings) {
   memset(storage, 0, sizeof(*storage));

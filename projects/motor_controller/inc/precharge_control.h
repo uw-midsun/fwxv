@@ -5,6 +5,7 @@
 #include "gpio.h"
 #include "status.h"
 
+#define PRECHARGE_EVENT 0
 // Requires GPIO to be initialized
 // Requires GPIO interrupts to be initialized
 
@@ -17,7 +18,6 @@ typedef enum {
 typedef struct PrechargeControlSettings {
   GpioAddress precharge_control;
   GpioAddress precharge_monitor;
-  GpioAddress precharge_monitor2;
 } PrechargeControlSettings;
 
 StatusCode run_precharge_rx_cycle();

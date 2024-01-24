@@ -285,7 +285,7 @@ StatusCode mcp2515_hw_init(Mcp2515Storage *storage, const Mcp2515Settings *setti
       gpio_it_register_interrupt(&settings->RX1BF, &it_settings, 2, MCP2515_INTERRUPT));
 
   // ! Ensure the task priority is higher than the rx/tx tasks in mcp2515.c
-  status_ok_or_return(tasks_init_task(MCP2515_INTERRUPT, TASK_PRIORITY(5), NULL));
+  status_ok_or_return(tasks_init_task(MCP2515_INTERRUPT, TASK_PRIORITY(4), NULL));
 
   return STATUS_CODE_OK;
 }

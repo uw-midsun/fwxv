@@ -12,6 +12,7 @@
 #include "mcp2515.h"
 #include "misc.h"
 #include "motor_can.h"
+#include "motor_controller_setters.h"
 #include "precharge_control.h"
 #include "soft_timer.h"
 #include "tasks.h"
@@ -28,7 +29,7 @@ static Mcp2515Storage s_mcp2515_storage = { 0 };
 static Mcp2515Settings s_mcp2515_settings = {
   .spi_port = SPI_PORT_2,
   .spi_settings = {
-    .baudrate = 1000000,  // 1 Mhz
+    .baudrate = 10000000,  // 10Mhz
     .mode = SPI_MODE_0,
     .mosi = { GPIO_PORT_B, 15 },
     .miso = { GPIO_PORT_B, 14 },
@@ -45,20 +46,25 @@ static Mcp2515Settings s_mcp2515_settings = {
 };
 static PrechargeControlSettings s_precharge_settings = {
   .precharge_control = { GPIO_PORT_A, 9 },
-  .precharge_monitor = { GPIO_PORT_A, 10 },
-  .precharge_monitor2 = { GPIO_PORT_B, 0 },
+  .precharge_monitor = { GPIO_PORT_B, 0 },
 };
 
 void pre_loop_init() {}
 
 void run_fast_cycle() {
-  run_can_rx_cycle();
+  uint32_t notification;
+  notify_get(&notification);
+  if (notification & (1 << PRECHARGE_EVENT)) {
+    set_mc_status_precharge_status(true);
+  }
+
+  // run_can_rx_cycle();
   run_mcp2515_rx_cycle();
-  wait_tasks(2);
+  wait_tasks(1);
 
   run_mcp2515_tx_cycle();
-  run_can_tx_cycle();
-  wait_tasks(2);
+  // run_can_tx_cycle();
+  wait_tasks(1);
 }
 
 void run_medium_cycle() {}
@@ -71,10 +77,12 @@ int main() {
   gpio_init();
   interrupt_init();
   gpio_it_init();
+
   can_init(&s_can_storage, &can_settings);
+  init_motor_controller_can();
   mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
 
-  init_motor_controller_can();
+  precharge_control_init(&s_precharge_settings);
   LOG_DEBUG("Motor Controller Task\n");
 
   init_master_task();
