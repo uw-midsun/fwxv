@@ -72,14 +72,6 @@ static void prv_on_state_output(void *context) {
 
 static void prv_on_state_input(Fsm *fsm, void *context) {
   pd_fault_ok_or_transition(fsm);
-  if (power_context.target_state == POWER_STATE_OFF) {
-    fsm_transition(fsm, POWER_STATE_OFF);
-    return;
-  }
-  if (power_context.target_state == POWER_STATE_DRIVE) {
-    fsm_transition(fsm, TURN_ON_DRIVE_OUTPUTS);
-    return;
-  }
 
   if (!get_received_cc_power_control()) {
     return;
