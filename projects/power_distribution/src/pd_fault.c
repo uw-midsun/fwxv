@@ -1,8 +1,9 @@
 #include "pd_fault.h"
-#include "log.h"
+
 #include "adc.h"
 #include "exported_enums.h"
 #include "gpio.h"
+#include "log.h"
 #include "pin_defs.h"
 #include "power_distribution_setters.h"
 

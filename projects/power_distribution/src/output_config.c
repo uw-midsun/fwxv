@@ -310,9 +310,7 @@ static OutputGroupDef s_output_group_hazards = {
   .outputs = { LEFT_TURN, RIGHT_TURN },
 };
 
-static OutputGroupDef s_output_group_brake = {
-  .num_outputs = 1, .outputs = { BRAKE_LIGHT }
-};
+static OutputGroupDef s_output_group_brake = { .num_outputs = 1, .outputs = { BRAKE_LIGHT } };
 
 static OutputGroupDef s_output_group_power_off = { .num_outputs = 2,
                                                    .outputs = { CENTER_CONSOLE, BMS_DCDC } };

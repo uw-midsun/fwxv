@@ -10,7 +10,7 @@
   if (check_battery_status_msg_watchdog() || get_battery_status_fault()) { \
     fsm_transition(fsm, POWER_STATE_FAULT);                                \
     return;                                                                \
-  }                                                                        \
+  }
 
 FSM(power_seq, NUM_POWER_STATES);
 

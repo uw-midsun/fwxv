@@ -4,9 +4,11 @@
 #include "outputs.h"
 #include "power_distribution_getters.h"
 
-#define brake_lights()                                                                            \
-  if (get_pedal_output_brake_output()) pd_set_output_group(OUTPUT_GROUP_BRAKE, OUTPUT_STATE_ON);  \
-  else pd_set_output_group(OUTPUT_GROUP_BRAKE, OUTPUT_STATE_OFF);                                 \
+#define brake_lights()                                        \
+  if (get_pedal_output_brake_output())                        \
+    pd_set_output_group(OUTPUT_GROUP_BRAKE, OUTPUT_STATE_ON); \
+  else                                                        \
+    pd_set_output_group(OUTPUT_GROUP_BRAKE, OUTPUT_STATE_OFF);
 
 // Placeholder GPIO Address, will be updated
 GpioAddress RIGHT_LIGHT_ADDR = { .port = GPIO_PORT_B, .pin = 5 };
