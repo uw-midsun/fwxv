@@ -65,9 +65,6 @@ static void prv_update_target_current_velocity() {
     drive_state = regen ? BRAKE : NEUTRAL;
   }
 
-  drive_state = DRIVE;
-  throttle_percent = 1;
-
   // set target current and velocity based on drive state
   // https://tritiumcharging.com/wp-content/uploads/2020/11/TritiumWaveSculptor22_Manual.pdf 18.3
   switch (drive_state) {

@@ -14,7 +14,7 @@
 #include "mcp2515.h"
 #include "misc.h"
 #include "motor_can.h"
-#include "precharge_control.h"
+#include "precharge.h"
 #include "soft_timer.h"
 #include "task_test_helpers.h"
 #include "tasks.h"

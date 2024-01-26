@@ -28,36 +28,6 @@ static const uint8_t bytes_to_write[] = { 0xFC };
 // Fill in this variable with the number of bytes to read.
 #define NUM_BYTES_TO_READ 1
 
-// TX/RX buffer ID registers - See Registers 3-3 to 3-7, 4-4 to 4-8
-typedef union {
-  struct {
-    uint32_t eid : 18;
-    uint8_t _ : 1;
-    uint8_t extended : 1;
-    uint8_t srr : 1;
-    uint32_t sid : 11;
-  };
-  uint8_t registers[4];
-} Mcp2515IdRegs;
-
-typedef enum {
-  MCP2515_FILTER_ID_RXF0 = 0,
-  MCP2515_FILTER_ID_RXF1,
-  NUM_MCP2515_FILTER_IDS
-} Mcp2515FiltersIds;
-
-typedef struct Mcp2515TxBuffer {
-  uint8_t id;
-  uint8_t data;
-  uint8_t rts;
-} Mcp2515TxBuffer;
-
-typedef struct Mcp2515RxBuffer {
-  uint8_t id;
-  uint8_t data;
-  uint8_t int_flag;
-} Mcp2515RxBuffer;
-
 static SpiSettings spi_settings = {
   .baudrate = 10000000,  // 10 Mhz
   .mode = SPI_MODE_0,

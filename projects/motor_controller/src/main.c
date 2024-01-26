@@ -13,9 +13,11 @@
 #include "misc.h"
 #include "motor_can.h"
 #include "motor_controller_setters.h"
-#include "precharge_control.h"
+#include "precharge.h"
 #include "soft_timer.h"
 #include "tasks.h"
+
+#define PRECHARGE_EVENT 0
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
@@ -44,7 +46,7 @@ static Mcp2515Settings s_mcp2515_settings = {
     .loopback = false,
   },
 };
-static PrechargeControlSettings s_precharge_settings = {
+static PrechargeSettings s_precharge_settings = {
   .precharge_control = { GPIO_PORT_A, 9 },
   .precharge_monitor = { GPIO_PORT_B, 0 },
 };
@@ -82,7 +84,7 @@ int main() {
   can_init(&s_can_storage, &can_settings);
   mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
   init_motor_controller_can();
-  precharge_control_init(&s_precharge_settings);
+  precharge_init(&s_precharge_settings, PRECHARGE_EVENT, get_master_task());
 
   LOG_DEBUG("Motor Controller Task\n");
 

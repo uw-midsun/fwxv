@@ -89,32 +89,27 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
 }
 
 StatusCode spi_get_tx(SpiPort spi, uint8_t *data, uint8_t len) {
-  status_ok_or_return(mutex_lock(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
-
+  uint8_t dummy = 0;
   for (size_t tx = 0; tx < len; tx++) {
-    if (queue_receive(&s_port[spi].spi_buf.tx_queue, &data[tx], SPI_QUEUE_DELAY_MS)) {
+    if (queue_receive(&s_port[spi].spi_buf.tx_queue, &data[tx], SPI_TIMEOUT_MS)) {
       queue_reset(&s_port[spi].spi_buf.tx_queue);
-      mutex_unlock(&s_port[spi].spi_buf.mutex);
       return STATUS_CODE_EMPTY;
     }
+    queue_send(&s_port[spi].spi_buf.rx_queue, &dummy, SPI_TIMEOUT_MS);
   }
 
-  mutex_unlock(&s_port[spi].spi_buf.mutex);
   return STATUS_CODE_OK;
 }
 
 StatusCode spi_set_rx(SpiPort spi, uint8_t *data, uint8_t len) {
-  status_ok_or_return(mutex_lock(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
-
+  uint8_t dummy = 0;
   for (size_t rx = 0; rx < len; rx++) {
-    if (queue_send(&s_port[spi].spi_buf.rx_queue, &data[rx], SPI_QUEUE_DELAY_MS)) {
+    if (queue_receive(&s_port[spi].spi_buf.tx_queue, &dummy, SPI_TIMEOUT_MS)) {
       queue_reset(&s_port[spi].spi_buf.rx_queue);
-      mutex_unlock(&s_port[spi].spi_buf.mutex);
       return STATUS_CODE_RESOURCE_EXHAUSTED;
     }
-    queue_send(&s_port[spi].spi_buf.rx_queue, &data[rx], 0);
+    queue_send(&s_port[spi].spi_buf.rx_queue, &data[rx], SPI_TIMEOUT_MS);
   }
 
-  mutex_unlock(&s_port[spi].spi_buf.mutex);
   return STATUS_CODE_OK;
 }

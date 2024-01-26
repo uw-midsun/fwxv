@@ -64,7 +64,13 @@ static void assert_drive_command(float current_percent, float velocity_rpm) {
 
 bool initialized = false;
 void setup_test(void) {
-  if (initialized) return;
+  // set received drive_output and precharge to true, true for most test
+  g_rx_struct.received_drive_output = true;
+  g_tx_struct.mc_status_precharge_status = true;
+
+  if (initialized) {
+    return;
+  }
   initialized = true;
 
   tasks_init();
@@ -84,6 +90,28 @@ void run_motor_controller_cycle() {
 }
 
 TEST_IN_TASK
+void no_drive_command_without_center_console_msg(void) {
+  g_rx_struct.received_drive_output = false;
+  g_tx_struct.mc_status_precharge_status = true;
+
+  run_motor_controller_cycle();
+
+  CanMessage can_message;
+  TEST_ASSERT_EQUAL(STATUS_CODE_EMPTY, can_queue_pop(&s_mcp2515_tx_queue, &can_message));
+}
+
+TEST_IN_TASK
+void no_drive_command_without_precharge(void) {
+  g_rx_struct.received_drive_output = true;
+  g_tx_struct.mc_status_precharge_status = false;
+
+  run_motor_controller_cycle();
+
+  CanMessage can_message;
+  TEST_ASSERT_EQUAL(STATUS_CODE_EMPTY, can_queue_pop(&s_mcp2515_tx_queue, &can_message));
+}
+
+TEST_IN_TASK
 void test_reverse(void) {
   g_rx_struct.drive_output_drive_state = REVERSE;
   g_rx_struct.drive_output_cruise_control = false;
@@ -94,7 +122,7 @@ void test_reverse(void) {
 
   run_motor_controller_cycle();
 
-  assert_drive_command(0.3f, TORQUE_CONTROL_VEL);
+  assert_drive_command(0.3f, -TORQUE_CONTROL_VEL);
 }
 
 TEST_IN_TASK

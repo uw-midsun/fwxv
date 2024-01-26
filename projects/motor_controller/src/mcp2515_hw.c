@@ -135,8 +135,6 @@ static void prv_handle_rx(uint8_t buffer_id) {
   memcpy(rx_msg.data_u8, &data[5], rx_msg.dlc);
 
   can_queue_push(&s_storage->rx_queue, &rx_msg);
-
-  // LOG_DEBUG("complete rx %d id: %lx\n", buffer_id, rx_msg.id.raw);
 }
 
 static void prv_handle_error() {
@@ -285,7 +283,7 @@ StatusCode mcp2515_hw_init(Mcp2515Storage *storage, const Mcp2515Settings *setti
       gpio_it_register_interrupt(&settings->RX1BF, &it_settings, 2, MCP2515_INTERRUPT));
 
   // ! Ensure the task priority is higher than the rx/tx tasks in mcp2515.c
-  status_ok_or_return(tasks_init_task(MCP2515_INTERRUPT, TASK_PRIORITY(4), NULL));
+  status_ok_or_return(tasks_init_task(MCP2515_INTERRUPT, TASK_PRIORITY(3), NULL));
 
   return STATUS_CODE_OK;
 }

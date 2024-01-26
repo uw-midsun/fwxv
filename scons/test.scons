@@ -88,9 +88,9 @@ for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
             objs += OBJ_DIR.Dir(entry.path).Dir('can').Dir("src").Dir(PLATFORM).glob('*.o')
 
             # set up vcan device if not setup
-            if subprocess.run("ip link show vcan0".split(" "), stdout=subprocess.DEVNULL).returncode:
-                subprocess.run("sudo ip link add dev vcan0 type vcan".split(" "))
-                subprocess.run("sudo ip link set up vcan0".split(" "))
+            # if subprocess.run("ip link show vcan0".split(" "), stdout=subprocess.DEVNULL).returncode:
+            #     subprocess.run("sudo ip link add dev vcan0 type vcan".split(" "))
+            #     subprocess.run("sudo ip link set up vcan0".split(" "))
 
         entry_objects = []
         for obj in objs:

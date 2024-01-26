@@ -159,27 +159,29 @@ void test_rx(void) {
   TEST_ASSERT_OK(gpio_it_trigger_interrupt(&s_mcp2515_settings.RX0BF));
 
   // id and data
-  TEST_ASSERT_OK(spi_get_tx(SPI_PORT_2, &data, 1));
-  TEST_ASSERT_EQUAL(MCP2515_CMD_READ_RX | MCP2515_READ_RXB0SIDH, data);
   Mcp2515IdRegs id_regs = { .sid = 641 };
-  uint8_t regs_data[] = { id_regs.registers[3],
-                          id_regs.registers[2],
-                          id_regs.registers[1],
-                          id_regs.registers[0],
-                          8,
-                          0,
-                          1,
-                          2,
-                          3,
-                          4,
-                          5,
-                          6,
-                          7 };
+  uint8_t regs_data[] = {
+    id_regs.registers[3],
+    id_regs.registers[2],
+    id_regs.registers[1],
+    id_regs.registers[0],
+    8,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+  };
+  TEST_ASSERT_OK(spi_get_tx(SPI_PORT_2, &data, 1));
   spi_set_rx(SPI_PORT_2, regs_data, sizeof(regs_data));
+  TEST_ASSERT_EQUAL(MCP2515_CMD_READ_RX | MCP2515_READ_RXB0SIDH, data);
 
   // assert message
   CanMessage message;
-  TEST_ASSERT_OK(queue_receive(&s_storage.rx_queue.queue, &message, 10));
+  TEST_ASSERT_OK(queue_receive(&s_storage.rx_queue.queue, &message, 100));
 
   TEST_ASSERT_EQUAL(641, message.id.raw);
   TEST_ASSERT_EQUAL(8, message.dlc);
