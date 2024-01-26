@@ -95,9 +95,7 @@ static void prv_update_target_current_velocity() {
 }
 
 static void motor_controller_tx_all() {
-  // TODO: add can watchdog to shut down motor controller if messages are not received from
-  // center console
-  // LOG_DEBUG("%d, %d\n", get_received_drive_output(), get_drive_output_drive_state());
+  // don't send drive command if didn't get centre console's drive output msg
   if (!get_received_drive_output()) return;
   // if (!get_pedal_output_brake_output()) return;
   // don't send drive command if not precharged

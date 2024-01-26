@@ -49,14 +49,6 @@ void run_fast_cycle() {
     LOG_DEBUG("Precharge complete\n");
     set_mc_status_precharge_status(true);
   }
-
-  // run_can_rx_cycle();
-  // run_mcp2515_rx_cycle();
-  // wait_tasks(2);
-
-  // run_mcp2515_tx_cycle();
-  // run_can_tx_cycle();
-  // wait_tasks(2);
 }
 
 TEST_IN_TASK

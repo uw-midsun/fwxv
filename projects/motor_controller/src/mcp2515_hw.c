@@ -94,27 +94,6 @@ static uint8_t prv_read_status() {
 
 static void prv_handle_rx(uint8_t buffer_id) {
   CanMessage rx_msg = { 0 };
-
-  // bad code incoming:
-  // uint8_t command = MCP2515_CMD_READ_RX | s_rx_buffers[buffer_id].id;
-  // uint8_t *buffer = rx_msg.data_u8 - 5;
-  // spi_exchange(s_storage->spi_port, &command, 1, buffer, 5 + 8);
-  // Mcp2515IdRegs read_id_regs = {
-  //   .registers = { buffer[3], buffer[2], buffer[1], buffer[0] },
-  // };
-  // LOG_DEBUG("%d, %d, %d, %d, %d\n", buffer[3], buffer[2], buffer[1], buffer[0], buffer[4]);
-  // rx_msg.dlc = buffer[4] & 0xf;
-  // rx_msg.extended = read_id_regs.extended;
-
-  // if (!rx_msg.extended) {
-  //   rx_msg.id.raw = read_id_regs.sid;
-  // } else {
-  //   rx_msg.id.raw = (uint32_t)(read_id_regs.sid << MCP2515_EXTENDED_ID_LEN) | read_id_regs.eid;
-  // }
-  // rx_msg.type = CAN_MSG_TYPE_DATA;
-  // can_queue_push(&s_storage->rx_queue, &rx_msg);
-  // bad code ended
-
   // Read ID and Data
   uint8_t command = MCP2515_CMD_READ_RX | s_rx_buffers[buffer_id].id;
   uint8_t data[5 + 8];  // id + data
