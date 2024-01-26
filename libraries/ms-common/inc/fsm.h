@@ -63,7 +63,7 @@
 #include "status.h"
 #include "tasks.h"
 
-#define FSM_PRIORITY 2
+#define FSM_PRIORITY 1
 // TODO(mitchellostler): make user defined
 #define FSM_TASK_STACK TASK_STACK_1024
 #define FSM_TIMEOUT_MS 1000
@@ -110,7 +110,7 @@ typedef struct Fsm {
   Fsm *name##_fsm = &((Fsm){        \
       .num_states = num_fsm_states, \
   });                               \
-  TASK(name, TASK_STACK_512) {      \
+  TASK(name, TASK_STACK_256) {      \
     _fsm_task(context);             \
   }
 

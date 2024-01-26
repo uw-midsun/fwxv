@@ -10,7 +10,7 @@
   if (check_battery_status_msg_watchdog() || get_battery_status_fault()) { \
     fsm_transition(fsm, POWER_STATE_FAULT);                                \
     return;                                                                \
-  }
+  }                                                                        \
 
 FSM(power_seq, NUM_POWER_STATES);
 
@@ -32,7 +32,7 @@ static void prv_off_state_input(Fsm *fsm, void *context) {
   }
   CentreConsoleCCPwrEvent cc_power_event = get_cc_power_control_power_event();
   if (cc_power_event == EE_CC_PWR_CTL_EVENT_BTN_AND_BRAKE) {
-    power_context.target_state = POWER_STATE_DRIVE;
+    power_context.target_state = POWER_STATE_ON;
     fsm_transition(fsm, TRANSMIT_BMS_CLOSE_RELAYS);
   } else if (cc_power_event == EE_CC_PWR_CTL_EVENT_BTN) {
     power_context.target_state = POWER_STATE_ON;

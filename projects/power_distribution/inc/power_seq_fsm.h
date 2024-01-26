@@ -7,8 +7,8 @@
 #include "task.h"
 
 // TODO: figure out actual values for timeout
-#define BMS_RESPONSE_TIMEOUT_MS 10000
-#define MCI_RESPONSE_TIMEOUT_MS 12000
+#define BMS_RESPONSE_TIMEOUT_MS 3000
+#define MCI_RESPONSE_TIMEOUT_MS 300
 
 #define NUM_POWER_STATES 6
 
