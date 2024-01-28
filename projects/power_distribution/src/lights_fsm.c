@@ -4,11 +4,12 @@
 #include "outputs.h"
 #include "power_distribution_getters.h"
 
-#define brake_lights()                                        \
-  if (get_pedal_output_brake_output())                        \
-    pd_set_output_group(OUTPUT_GROUP_BRAKE, OUTPUT_STATE_ON); \
-  else                                                        \
+prv_brake_lights() {
+  if (get_pedal_output_brake_output())
+    pd_set_output_group(OUTPUT_GROUP_BRAKE, OUTPUT_STATE_ON);
+  else
     pd_set_output_group(OUTPUT_GROUP_BRAKE, OUTPUT_STATE_OFF);
+}
 
 // Placeholder GPIO Address, will be updated
 GpioAddress RIGHT_LIGHT_ADDR = { .port = GPIO_PORT_B, .pin = 5 };
@@ -18,7 +19,7 @@ GpioAddress LEFT_LIGHT_ADDR = { .port = GPIO_PORT_A, .pin = 15 };
 static SoftTimer s_timer_single;
 static EELightType light_id_callback;
 
-FSM(lights, NUM_LIGHTS_STATES);
+FSM(lights, NUM_LIGHTS_STATES, TASK_STACK_512);
 static OutputState left_signal_state = OUTPUT_STATE_OFF;
 static OutputState right_signal_state = OUTPUT_STATE_OFF;
 static LightsStateId fsm_prev_state = INIT_STATE;
@@ -61,7 +62,7 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
 }
 
 static void prv_init_state_input(Fsm *fsm, void *context) {
-  brake_lights();
+  prv_brake_lights();
   // can transition to LEFT, RIGHT, HAZARD
   EELightType light_event = get_steering_info_input_lights();
   HazardStatus hazard_status = get_cc_power_control_hazard_enabled();
@@ -82,7 +83,7 @@ static void prv_init_state_output(void *context) {
 }
 
 static void prv_left_signal_input(Fsm *fsm, void *context) {
-  brake_lights();
+  prv_brake_lights();
   // can transition to INIT, RIGHT, HAZARD
   EELightType light_event = get_steering_info_input_lights();
   HazardStatus hazard_status = get_cc_power_control_hazard_enabled();
@@ -107,7 +108,7 @@ static void prv_left_signal_output(void *context) {
 }
 
 static void prv_right_signal_input(Fsm *fsm, void *context) {
-  brake_lights();
+  prv_brake_lights();
   // can transition to INIT, LEFT, HAZARD
   EELightType light_event = get_steering_info_input_lights();
   HazardStatus hazard_status = get_cc_power_control_hazard_enabled();
@@ -132,7 +133,7 @@ static void prv_right_signal_output(void *context) {
 }
 
 static void prv_hazard_input(Fsm *fsm, void *context) {
-  brake_lights();
+  prv_brake_lights();
   // can transition to INIT, BPS_FAULT
   EELightType light_event = get_steering_info_input_lights();
   HazardStatus hazard_status = get_cc_power_control_hazard_enabled();

@@ -12,7 +12,7 @@
     return;                                                                \
   }
 
-FSM(power_seq, NUM_POWER_STATES);
+FSM(power_seq, NUM_POWER_STATES, TASK_STACK_256);
 
 static PowerFsmContext power_context = { 0 };
 

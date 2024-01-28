@@ -4,7 +4,7 @@
 #include "centre_console_getters.h"
 #include "centre_console_setters.h"
 
-FSM(drive, NUM_DRIVE_STATES);
+FSM(drive, NUM_DRIVE_STATES, TASK_STACK_512);
 
 #define NUM_DRIVE_FSM_BUTTONS 3
 
