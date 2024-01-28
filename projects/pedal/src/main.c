@@ -5,6 +5,8 @@
 #include "can.h"
 #include "can_board_ids.h"
 #include "can_msg.h"
+#include "gpio.h"
+#include "gpio_it.h"
 #include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
@@ -16,6 +18,9 @@
 #include "pedal_shared_resources_provider.h"
 #include "soft_timer.h"
 #include "tasks.h"
+
+static const GpioAddress brake = ADC_POT1_BRAKE;
+static const GpioAddress throttle = ADC_HALL_SENSOR;
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
@@ -44,8 +49,12 @@ void pedal_init() {
     .sda = { .port = GPIO_PORT_B, .pin = 11 },
   };
   i2c_init(I2C_PORT_2, &i2c_settings);
-  adc_init();
-  max11600_init(&s_max11600_storage, I2C_PORT_2);
+
+  gpio_init_pin(&brake, GPIO_ANALOG, GPIO_STATE_LOW);
+  gpio_init_pin(&throttle, GPIO_ANALOG, GPIO_STATE_LOW);
+  adc_add_channel(brake);
+  adc_add_channel(throttle);
+  // No longer using Max11600 ADC. Replaced with STM32 onboard ADC
 }
 
 void pre_loop_init() {}
@@ -53,6 +62,8 @@ void pre_loop_init() {}
 void run_fast_cycle() {
   run_can_tx_cycle();
   wait_tasks(1);
+
+  adc_run();
 
   uint32_t brake_position = UINT32_MAX;
   uint32_t throttle_position = 0;
@@ -87,8 +98,11 @@ int main() {
   tasks_init();
   log_init();
 
-  LOG_DEBUG("Welcome to CAN!\n");
+  LOG_DEBUG("Welcome to PEDAL!\n");
+  gpio_init();
+  gpio_it_init();
   pedal_init();
+  adc_init();
   can_init(&s_can_storage, &can_settings);
   can_add_filter_in(SYSTEM_CAN_MESSAGE_PEDAL_PEDAL_OUTPUT);
 

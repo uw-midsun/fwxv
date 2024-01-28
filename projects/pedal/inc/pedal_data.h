@@ -1,6 +1,12 @@
 #pragma once
 #include "max11600.h"
 
+#define ADC_POT1_BRAKE \
+  { .port = GPIO_PORT_A, .pin = 0 }
+
+#define ADC_HALL_SENSOR \
+  { .port = GPIO_PORT_A, .pin = 1 }
+
 // Read the trottle value
 // Requires the MAX11600 to be initialized
 StatusCode read_throttle_data(uint32_t *position);
