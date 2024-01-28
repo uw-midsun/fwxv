@@ -26,11 +26,15 @@ typedef struct {
   uint16_t empty_voltage;        // Only a 9-bit field, LSB = 78.125 (micro Volts)
   uint16_t charge_term_current;  // LSB = 1.5625 (micro Volts / R Sense)
 
-  uint16_t r_sense_ohms;
+  uint16_t i_thresh_max;
+  uint16_t i_thresh_min;
+  uint16_t temp_thresh_max;
+
+  float r_sense_mohms;  // Rsense in micro ohms
 } Max17261Settings;
 
 typedef struct {
-  Max17261Settings settings;
+  Max17261Settings *settings;
 } Max17261Storage;
 
 /* @brief Gets the current state of charge given by the max17261 in percentage
@@ -68,9 +72,30 @@ StatusCode max17261_time_to_empty(Max17261Storage *storage, uint16_t *tte_ms);
  */
 StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms);
 
+/* @brief Gets a current reading in amps
+ * @param storage - a pointer to an already initialized Max17261Storage struct
+ * @param soc_pct - current in amps returned in this var
+ * @return STATUS_CODE_OK on success
+ */
+StatusCode max17261_current(Max17261Storage *storage, uint16_t *current_a);
+
+/* @brief Gets a single cell's voltage in mV
+ * @param storage - a pointer to an already initialized Max17261Storage struct
+ * @param soc_pct - voltage in mV returned in this var
+ * @return STATUS_CODE_OK on success
+ */
+StatusCode max17261_voltage(Max17261Storage *storage, uint16_t *vcell_mv);
+
+/* @brief Gets a temperature reading in celcius
+ * @param storage - a pointer to an already initialized Max17261Storage struct
+ * @param soc_pct - temperature in celcius returned in this var
+ * @return STATUS_CODE_OK on success
+ */
+StatusCode max17261_temp(Max17261Storage *storage, uint16_t *temp_c);
+
 /* @brief Gets the time to full in milliseconds
  * @param storage - a pointer to an uninitialized Max17261Storage struct
  * @param settings - populated settings struct
  * @return STATUS_CODE_OK on success
  */
-StatusCode max17261_init(Max17261Storage *storage, Max17261Settings settings);
+StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings);
