@@ -21,7 +21,7 @@ LtcAfeSettings s_afe_settings = {
 
   .adc_mode = LTC_AFE_ADC_MODE_7KHZ,
 
-  .cell_bitset = { 0 },
+  .cell_bitset = { 0xFF },
   .aux_bitset = { 0 },
 
   .num_devices = 1,
@@ -29,7 +29,7 @@ LtcAfeSettings s_afe_settings = {
   .num_thermistors = 12,
 };
 
-TASK(smoke_ltc, TASK_STACK_512) {
+TASK(smoke_ltc, TASK_STACK_1024) {
   ltc_afe_init(&s_ltc_store, &s_afe_settings);
   delay_ms(10);
   while (1) {
@@ -37,7 +37,9 @@ TASK(smoke_ltc, TASK_STACK_512) {
     delay_ms(10);
     ltc_afe_impl_read_cells(&s_ltc_store);
     for (int cell = 0; cell < 12; cell++) {
-      LOG_DEBUG("CELL %d: %d\n\r", cell, s_ltc_store.cell_voltages[cell]);
+      LOG_DEBUG("CELL %d: %d\n\r", cell,
+                s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]);
+      delay_ms(1);
     }
     LOG_DEBUG("\n\n\r");
     delay_ms(5000);
