@@ -55,7 +55,7 @@ Commands:
 
     sim
         (x86) Run the project's binary.
-        - e.g. `scons sim <target>` (`scons sim --project=new_led`)
+        - e.g. `scons sim --platform=x86 <target>` (`scons sim --platform=x86 --project=new_led`)
 
     gdb
         (x86) Run the project's binary with gdb.
