@@ -2,68 +2,84 @@
 
 #include <string.h>
 
-#include "ads1259.h"
 #include "bms.h"
+#include "bms_carrier_setters.h"
 #include "exported_enums.h"
 #include "fault_bps.h"
+#include "gpio_it.h"
+#include "interrupt.h"
 #include "log.h"
 #include "soft_timer.h"
+#include "tasks.h"
 
-static Ads1259Storage s_ads1259_storage;
+#define MAX17261_I2C_PORT (I2C_PORT_2)
+#define MAX17261_I2C_ADDR (0x36)
+
+// TODO (Adel C): Change these values to their actual values
+#define CURRENT_SENSE_R_SENSE_MILLI_OHMS (0.5)
+#define MAIN_PACK_DESIGN_CAPACITY \
+  (1.0f / CURRENT_SENSE_R_SENSE_MILLI_OHMS)      // LSB = 5.0 (micro Volt Hours / R Sense)
+#define MAIN_PACK_EMPTY_VOLTAGE (1.0f / 78.125)  // Only a 9-bit field, LSB = 78.125 (micro Volts)
+#define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_MILLI_OHMS))
+
+// Thresholds for ALRT Pin
+#define CURRENT_SENSE_MAX_CURRENT_A (58.2f)
+#define CURRENT_SENSE_MIN_CURRENT_A (27.0f)  // Actually -27
+#define CURRENT_SENSE_MAX_TEMP (60U)
+#define ALRT_PIN_V_RES_MICRO_V (400)
+
+static Max17261Storage s_fuel_guage_storage;
+static Max17261Settings s_fuel_gauge_settings;
 static CurrentStorage *s_current_storage;
 static SoftTimer s_timer;
 static bool s_is_charging;
 
-static void prv_ads_error_cb(Ads1259StatusCode code, void *context) {
-  if (code == ADS1259_STATUS_CODE_OUT_OF_RANGE) {
-    LOG_WARN("ADS1259 ERROR: OUT OF RANGE\n");
-  } else if (code == ADS1259_STATUS_CODE_CHECKSUM_FAULT) {
-    LOG_WARN("ADS1259 ERROR: CHECKSUM FAULT\n");
+// Periodically read and update the SoC of the car & update charging bool
+static StatusCode prv_fuel_gauge_read() {
+  StatusCode status = STATUS_CODE_OK;
+
+  uint16_t soc = 0;
+  uint16_t current = 0;
+  uint16_t voltage = 0;
+  uint16_t temperature = 0;
+
+  status |= max17261_state_of_charge(&s_fuel_guage_storage, &soc);
+  status |= max17261_current(&s_fuel_guage_storage, &current);
+  status |= max17261_voltage(&s_fuel_guage_storage, &voltage);
+  status |= max17261_temp(&s_fuel_guage_storage, &temperature);
+
+  if (status != STATUS_CODE_OK) {
+    // TODO (Adel): Handle a fuel gauge fault
+    // Open Relays
+    return status;
   }
 
-  if (code != ADS1259_STATUS_CODE_OK) {
-    fault_bps_set(EE_BPS_STATE_FAULT_CURRENT_SENSE);
-  } else {
-    fault_bps_clear(EE_BPS_STATE_FAULT_CURRENT_SENSE);
-  }
-}
-
-// returns value in centiamps
-static int16_t prv_voltage_to_current(double reading) {
-  // current = voltage * 100, see confluence
-  return (int16_t)(100 * 100 * reading);
-}
-
-static void prv_periodic_ads_read(SoftTimerId id) {
-  // ADC reading
-  double reading = s_ads1259_storage.reading;
-  // Convert ADC value to current
-  int16_t val = prv_voltage_to_current(reading);
-
-  // Update the current sense storage
-  s_current_storage->readings_ring[s_current_storage->ring_idx] = val;
-  s_current_storage->ring_idx = (s_current_storage->ring_idx + 1) % NUM_STORED_CURRENT_READINGS;
-  ads1259_get_conversion_data(&s_ads1259_storage);
-  // Kick new soft timer
-  soft_timer_init_and_start(s_current_storage->conv_period_ms, prv_periodic_ads_read, &s_timer);
-
-  // update average
-  int32_t sum = 0;
-  for (uint16_t i = 0; i < NUM_STORED_CURRENT_READINGS; i++) {
-    sum += s_current_storage->readings_ring[i];
-  }
-  s_current_storage->average = sum / NUM_STORED_CURRENT_READINGS;
+  // Set Battery VT message signals
+  set_battery_vt_batt_perc(soc);
+  set_battery_vt_current(current);
+  set_battery_vt_voltage(voltage);
+  set_battery_vt_temperature(temperature);
 
   // update s_is_charging
   // note that a negative value indicates the battery is charging
   s_is_charging = s_current_storage->average < 0;
 
-  // check faults
-  if (s_current_storage->average > DISCHARGE_OVERCURRENT_CA ||
-      s_current_storage->average < CHARGE_OVERCURRENT_CA) {
-    fault_bps_set(EE_BPS_STATE_FAULT_CURRENT_SENSE);
-  } else {
-    fault_bps_clear(EE_BPS_STATE_FAULT_CURRENT_SENSE);
+  return status;
+}
+
+TASK(current_sense, TASK_MIN_STACK_SIZE) {
+  while (true) {
+    uint32_t notification = 0;
+    notify_wait(&notification, BLOCK_INDEFINITELY);
+    LOG_DEBUG("Running Current Sense Cycle!\n");
+
+    // Handle alert from fuel gauge
+    if (notification & (1 << ALRT_GPIO_IT)) {
+      // TODO (Adel): BMS Open Relays
+    }
+
+    prv_fuel_gauge_read();
+    send_task_end();
   }
 }
 
@@ -71,27 +87,56 @@ bool current_sense_is_charging() {
   return s_is_charging;
 }
 
-StatusCode current_sense_init(CurrentStorage *storage, SpiSettings *settings,
-                              uint32_t conv_period_ms) {
-  // Clear the current CurrentStorage
-  memset(storage, 0, sizeof(CurrentStorage));
-  // Initialize static pointer to caller's struct
-  s_current_storage = storage;
-  // Setup ADS settings
-  const Ads1259Settings ads_settings = {
-    .spi_port = CURRENT_SENSE_SPI_PORT,
-    .spi_baudrate = settings->baudrate,
-    .mosi = settings->mosi,
-    .miso = settings->miso,
-    .sclk = settings->sclk,
-    .cs = settings->cs,
-    .handler = prv_ads_error_cb,
-    .error_context = NULL,
+StatusCode run_current_sense_cycle() {
+  StatusCode ret = notify(current_sense, CURRENT_SENSE_RUN_CYCLE);
+  if (ret == pdFALSE) {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
+  return STATUS_CODE_OK;
+}
+
+StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings,
+                              uint32_t fuel_guage_cycle_ms) {
+  interrupt_init();
+  gpio_it_init();
+  i2c_init(I2C_PORT_1, i2c_settings);
+
+  GpioAddress alrt_pin = { .port = GPIO_PORT_B, .pin = 1 };
+
+  InterruptSettings it_settings = {
+    .priority = INTERRUPT_PRIORITY_NORMAL,
+    .type = INTERRUPT_TYPE_INTERRUPT,
+    .edge = INTERRUPT_EDGE_RISING,
   };
-  // Update conversion period (soft timer period)
-  s_current_storage->conv_period_ms = conv_period_ms;
-  status_ok_or_return(ads1259_init(&s_ads1259_storage, &ads_settings));
-  ads1259_get_conversion_data(&s_ads1259_storage);
-  soft_timer_init_and_start(s_current_storage->conv_period_ms, prv_periodic_ads_read, &s_timer);
+
+  gpio_it_register_interrupt(&alrt_pin, &it_settings, ALRT_GPIO_IT, current_sense);
+
+  memset(storage, 0, sizeof(CurrentStorage));
+  s_current_storage = storage;
+
+  s_fuel_gauge_settings.i2c_port = MAX17261_I2C_PORT;
+  s_fuel_gauge_settings.i2c_address = MAX17261_I2C_ADDR;
+
+  s_fuel_gauge_settings.charge_term_current = CHARGE_TERMINATION_CURRENT;
+  s_fuel_gauge_settings.design_capacity = MAIN_PACK_DESIGN_CAPACITY;
+  s_fuel_gauge_settings.empty_voltage = MAIN_PACK_EMPTY_VOLTAGE;
+
+  // Expected MAX current / (uV / uOhmsSense) resolution
+  s_fuel_gauge_settings.i_thresh_max =
+      ((CURRENT_SENSE_MAX_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MILLI_OHMS));
+  // Expected MIN current / (uV / uOhmsSense) resolution
+  s_fuel_gauge_settings.i_thresh_min =
+      ((CURRENT_SENSE_MIN_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MILLI_OHMS));
+  // Interrupt threshold limits are stored in 2s-complement format with 1C resolution
+  s_fuel_gauge_settings.temp_thresh_max = CURRENT_SENSE_MAX_TEMP;
+
+  s_fuel_gauge_settings.r_sense_mohms = CURRENT_SENSE_R_SENSE_MILLI_OHMS;
+
+  // Soft timer period for soc & chargin check
+  s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
+
+  status_ok_or_return(max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings));
+  tasks_init_task(current_sense, TASK_PRIORITY(3), NULL);
   return STATUS_CODE_OK;
 }

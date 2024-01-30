@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "delay.h"
 #include "gpio.h"
 #include "log.h"
 #include "spi.h"
@@ -32,21 +33,29 @@ static const uint8_t bytes_to_write[] = { 0xFC };
 static SpiSettings spi_settings = {
   .baudrate = 1000000,  // TO FIND
   .mode = SPI_MODE_0,
-  .mosi = { .port = GPIO_PORT_A, .pin = 7 },
-  .miso = { .port = GPIO_PORT_A, .pin = 6 },
-  .sclk = { .port = GPIO_PORT_A, .pin = 5 },
-  .cs = { .port = GPIO_PORT_A, .pin = 4 },
+  .mosi = { .port = GPIO_PORT_B, .pin = 15 },
+  .miso = { .port = GPIO_PORT_B, .pin = 14 },
+  .sclk = { .port = GPIO_PORT_B, .pin = 13 },
+  .cs = { .port = GPIO_PORT_B, .pin = 12 },
 };
 
 TASK(smoke_spi_task, TASK_STACK_512) {
-  spi_init(SPI_PORT_1, &spi_settings);
+  spi_init(SPI_PORT_2, &spi_settings);
+  uint8_t spi_tx_data[5] = { 0x02, 0x28, 0x7, 0x8, 0x9 };
   while (true) {
-    uint8_t read_bytes[NUM_BYTES_TO_READ] = { 0 };
-    StatusCode status = spi_exchange(READ_SPI_PORT, bytes_to_write, SIZEOF_ARRAY(bytes_to_write),
-                                     read_bytes, NUM_BYTES_TO_READ);
-    if (status == STATUS_CODE_OK) {
-      LOG_DEBUG("Successfully did a read and write cycle.\n");
-    }
+    spi_cs_set_state(SPI_PORT_2, GPIO_STATE_LOW);
+    uint8_t read_bytes[3] = { 0 };
+    StatusCode status = spi_exchange(SPI_PORT_2, spi_tx_data, SIZEOF_ARRAY(spi_tx_data), NULL, 0);
+    spi_cs_set_state(SPI_PORT_2, GPIO_STATE_HIGH);
+
+    uint8_t read_cmd[] = { 0x03, 0x28 };
+    spi_cs_set_state(SPI_PORT_2, GPIO_STATE_LOW);
+    status = spi_exchange(SPI_PORT_2, read_cmd, 2, read_bytes, 3);
+    // status = spi_tx(SPI_PORT_2, read_cmd, 2);
+    // StatusCode status2 = spi_rx(SPI_PORT_2, read_bytes, SIZEOF_ARRAY(read_bytes), 0x0);
+    LOG_DEBUG("STATUS %d Data: %x, %x, %x\n", status, read_bytes[0], read_bytes[1], read_bytes[2]);
+    spi_cs_set_state(SPI_PORT_2, GPIO_STATE_HIGH);
+    delay_ms(1000);
   }
 }
 
