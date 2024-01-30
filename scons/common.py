@@ -26,9 +26,13 @@ def parse_config(entry):
 
 def flash_run(entry):
     '''flash and run file, return a pyserial object which monitors the device serial output'''
-    output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
-    device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
-    serialData = serial.Serial(device_path, 115200)
+    try:
+        output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
+        device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
+        serialData = serial.Serial(device_path, 115200)
+    except:
+        print()
+        print("Flashing requires a controller board to be connected, use --platform=x86 for x86 targets")
 
     OPENOCD = 'openocd'
     OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
@@ -46,8 +50,7 @@ def flash_run(entry):
     ]
     cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
 
-    subprocess.run(cmd, shell=True,
-                   stdout=subprocess.DEVNULL,
-                   stderr=subprocess.DEVNULL)
+    subprocess.run(cmd, shell=True).check_returncode()
 
+    print("Flash complete")
     return serialData
