@@ -18,7 +18,7 @@ static const GpioAddress turn_signal_address = TURN_SIGNAL_GPIO;
 static const GpioAddress cc_address = CC_CHANGE_GPIO;
 
 void pre_loop_init() {
-  steering_init();
+  steering_init(get_master_task());
   adc_init();
 }
 
