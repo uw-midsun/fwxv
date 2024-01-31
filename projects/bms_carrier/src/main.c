@@ -16,13 +16,6 @@
 #include "relays_fsm.h"
 #include "tasks.h"
 
-#define I2C2_SDA \
-  { .port = GPIO_PORT_B, .pin = 11 }
-#define I2C2_SCL \
-  { .port = GPIO_PORT_B, .pin = 10 }
-
-I2CSettings i2c_settings = { .sda = I2C2_SDA, .scl = I2C2_SCL, .speed = I2C_SPEED_STANDARD };
-
 #define FUEL_GAUGE_CYCLE_TIME_MS 100
 
 static CurrentStorage s_currentsense_storage;
@@ -44,7 +37,9 @@ I2CSettings i2c_settings = {
 
 // const CurrentStorage current_storage = { 0 };
 
-void pre_loop_init() {}
+void pre_loop_init() {
+  LOG_DEBUG("Welcome to BMS \n");
+}
 
 void run_fast_cycle() {
   fsm_run_cycle(relays);
@@ -55,8 +50,8 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
 
-  run_current_sense_cycle();
-  wait_tasks(1);
+  // run_current_sense_cycle();
+  // wait_tasks(1);
 
   run_can_tx_cycle();
   wait_tasks(1);
@@ -67,11 +62,12 @@ void run_slow_cycle() {}
 int main() {
   tasks_init();
   log_init();
+  gpio_init();
   can_init(&s_can_storage, &can_settings);
   i2c_init(BMS_PERIPH_I2C_PORT, &i2c_settings);
 
   init_relays();
-  current_sense_init(&s_currentsense_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
+  // current_sense_init(&s_currentsense_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
 
   LOG_DEBUG("Welcome to BMS!\n");
   init_master_task();

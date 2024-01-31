@@ -1,7 +1,7 @@
 #include "current_sense.h"
 
 #include <string.h>
-
+#include "relays_fsm.h"
 #include "bms.h"
 #include "bms_carrier_setters.h"
 #include "exported_enums.h"
@@ -51,6 +51,7 @@ static StatusCode prv_fuel_gauge_read() {
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault
     // Open Relays
+    open_relays();
     return status;
   }
 
@@ -76,6 +77,7 @@ TASK(current_sense, TASK_MIN_STACK_SIZE) {
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
       // TODO (Adel): BMS Open Relays
+      open_relays();
     }
 
     prv_fuel_gauge_read();

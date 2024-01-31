@@ -1,8 +1,5 @@
 #include "relays_fsm.h"
-
-#include "bms_carrier_getters.h"
-#include "bms_carrier_setters.h"
-
+#include "gpio.h"
 // check current sense CS_FAULT pin
 // AFE cell conversions, wait 10ms by reading start time
 // Peform current sense read and check
@@ -13,8 +10,25 @@
 FSM(relays, NUM_RELAY_STATES, TASK_STACK_512);
 static RelaysStateId fsm_prev_state = RELAYS_OPEN;
 
+GpioAddress const POS_RELAY_EN = { .port = GPIO_PORT_B, .pin = 8 };
+GpioAddress const NEG_RELAY_EN = { .port = GPIO_PORT_B, .pin = 4 };
+GpioAddress const SOLAR_RELAY_EN = { .port = GPIO_PORT_C, .pin = 13 };
+
+void close_relays() {
+  gpio_set_state(&POS_RELAY_EN, GPIO_STATE_HIGH);
+  gpio_set_state(&NEG_RELAY_EN, GPIO_STATE_HIGH);
+  gpio_set_state(&SOLAR_RELAY_EN, GPIO_STATE_HIGH);
+}
+
+void open_relays() {
+  gpio_set_state(&POS_RELAY_EN, GPIO_STATE_LOW);
+  gpio_set_state(&NEG_RELAY_EN, GPIO_STATE_LOW);
+  gpio_set_state(&SOLAR_RELAY_EN, GPIO_STATE_LOW);
+} 
+
 static void prv_relays_open_output(void *context) {
   LOG_DEBUG("Transitioned to RELAYS_OPEN\n");
+  open_relays();
   set_battery_relay_info_state(EE_RELAY_STATE_OPEN);
   fsm_prev_state = RELAYS_OPEN;
 }
@@ -29,6 +43,7 @@ static void prv_relays_open_input(Fsm *fsm, void *context) {
 
 static void prv_relays_closed_output(void *context) {
   LOG_DEBUG("Transitioned to RELAYS_CLOSED\n");
+  close_relays();
   set_battery_relay_info_state(EE_RELAY_STATE_CLOSE);
   fsm_prev_state = RELAYS_CLOSED;
 }
@@ -43,6 +58,7 @@ static void prv_relays_closed_input(Fsm *fsm, void *context) {
 
 static void prv_relays_fault_output(void *context) {
   LOG_DEBUG("Transitioned to RELAYS_FAULT\n");
+  open_relays();
   set_battery_relay_info_state(EE_RELAY_STATE_FAULT);
   fsm_prev_state = RELAYS_FAULT;
 }
@@ -62,6 +78,9 @@ static bool s_relays_transitions[NUM_RELAY_STATES][NUM_RELAY_STATES] = {
 };
 
 StatusCode init_relays(void) {
+  gpio_init_pin(&POS_RELAY_EN, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&NEG_RELAY_EN, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&SOLAR_RELAY_EN, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   fsm_init(relays, s_relays_state_list, s_relays_transitions, RELAYS_OPEN, NULL);
   return STATUS_CODE_OK;
 }
