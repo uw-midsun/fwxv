@@ -32,6 +32,5 @@ extern PedalCalibBlob global_calib_blob;
 StatusCode pedal_calib_init(PedalCalibrationStorage *storage);
 
 // Re-initializes the MAX11600 to the correct channel
-StatusCode pedal_calib_sample(Max11600Storage *max11600_storage,
-                              PedalCalibrationStorage *calib_storage, PedalCalibrationData *data,
+StatusCode pedal_calib_sample(PedalCalibrationStorage *calib_storage, PedalCalibrationData *data,
                               MAX11600Channel channel, PedalState state, GpioAddress *address);

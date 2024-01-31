@@ -134,7 +134,7 @@ StatusCode adc_init(void) {
     return STATUS_CODE_INVALID_ARGS;  // Need to have added channels
   }
 
-  // adc_add_channel(ADC_REF);
+  adc_add_channel(ADC_REF);
 
   // Enable ADC1/DMA1 Clock
   RCC_ADCCLKConfig(RCC_PCLK2_Div2);
@@ -210,7 +210,7 @@ StatusCode adc_init(void) {
   stm32f10x_interrupt_nvic_enable(DMA1_Channel1_IRQn, INTERRUPT_PRIORITY_LOW);
 
   // goes into ISR after enabling interrupts so sem_wait here to reset semaphore
-  // xSemaphoreTake(s_adc_status.converting.handle, portMAX_DELAY);
+  status_ok_or_return(sem_wait(&s_adc_status.converting, ADC_TIMEOUT_MS));
 
   s_adc_status.initialized = true;
 
