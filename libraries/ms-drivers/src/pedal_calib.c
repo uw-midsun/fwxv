@@ -29,11 +29,11 @@ StatusCode pedal_calib_sample(Max11600Storage *max11600_storage,
     // Read the values from the MAX, at this point the pedal should be in either a fully pressed or
     // released state
     uint16_t adc_reading;
-    status = adc_read_raw(address, &adc_reading);
+    status = adc_read_raw(*address, &adc_reading);
     if (status != STATUS_CODE_OK) {
       return STATUS_CODE_INCOMPLETE;
     }
-    uint8_t reading = (uint8_t)reading;
+    uint8_t reading = (uint8_t)adc_reading;
     calib_storage->sample_counter++;
     average_value += channel;
     calib_storage->min_reading = MIN(calib_storage->min_reading, reading);

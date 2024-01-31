@@ -51,12 +51,14 @@ StatusCode read_pedal_data(uint32_t *reading, MAX11600Channel channel) {
 
   int32_t range_throttle =
       s_calib_blob->throttle_calib.upper_value - s_calib_blob->throttle_calib.lower_value;
-
-  int32_t reading_upscaled_brake =
-      (*reading - s_calib_blob->brake_calib.lower_value) * EE_PEDAL_VALUE_DENOMINATOR;
-
-  int32_t reading_upscaled_throttle =
-      (*reading - s_calib_blob->throttle_calib.lower_value) * EE_PEDAL_VALUE_DENOMINATOR;
+  
+  int32_t brake_lower_value = (int32_t) s_calib_blob->brake_calib.lower_value; 
+  int16_t reading_upscaled_brake =
+      ((int16_t)*reading - s_calib_blob->brake_calib.lower_value) * EE_PEDAL_VALUE_DENOMINATOR;
+  
+  int32_t throttle_lower_value = (int32_t) s_calib_blob->throttle_calib.lower_value;
+  int16_t reading_upscaled_throttle =
+      ((int16_t)*reading - s_calib_blob->throttle_calib.lower_value) * EE_PEDAL_VALUE_DENOMINATOR;
 
   reading_upscaled_brake *= 100;
   reading_upscaled_throttle *= 100;
