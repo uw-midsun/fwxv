@@ -105,15 +105,15 @@ def main():
             "brake": 0,
         }
 
-        rx = defaultdict(int)
+        rx_data = defaultdict(int)
 
         while True:
             # std input
             state |= handle_stdin()
             # Can RX
-            rx |= rx_all(proc)
+            rx_data |= rx_all(proc)
 
-            update_display(state, rx)
+            update_display(state, rx_data)
 
             # every 200 ms
             can.send_centre_console_drive_output(

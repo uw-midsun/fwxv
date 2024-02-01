@@ -1,20 +1,18 @@
 #include <stdio.h>
 
-#include "log.h"
-#include "tasks.h"
-#include "master_task.h"
-#include "delay.h"
 #include "adc.h"
-#include "power_distribution.h"
-#include "outputs.h"
-#include "output_current_sense.h"
+#include "delay.h"
 #include "interrupt.h"
+#include "log.h"
+#include "master_task.h"
+#include "output_current_sense.h"
+#include "outputs.h"
+#include "power_distribution.h"
+#include "tasks.h"
 
-static const OutputGroup output_groups_to_test[] = {
-  OUTPUT_GROUP_LIGHTS_LEFT_TURN
-};
+static const OutputGroup output_groups_to_test[] = { OUTPUT_GROUP_LIGHTS_LEFT_TURN };
 
-static const GpioAddress test_gpio =   { .port = GPIO_PORT_B, .pin = 5 };
+static const GpioAddress test_gpio = { .port = GPIO_PORT_B, .pin = 5 };
 
 void pd_print_adc_readings(OutputGroup group) {
   if (group == OUTPUT_GROUP_ALL) {
@@ -31,18 +29,18 @@ void pd_print_adc_readings(OutputGroup group) {
   }
 }
 
-TASK(smoke_pd, TASK_STACK_512){
+TASK(smoke_pd, TASK_STACK_512) {
   gpio_init_pin(&test_gpio, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  
+
   pd_output_init();
   pd_sense_init();
   adc_init();
   uint16_t num_test_grps = SIZEOF_ARRAY(output_groups_to_test);
 
-  while(true) {
-    for(uint8_t i = 0; i < num_test_grps; i++) {
+  while (true) {
+    for (uint8_t i = 0; i < num_test_grps; i++) {
       uint16_t sense = 0;
-      
+
       gpio_toggle_state(&test_gpio);
       pd_set_output_group(output_groups_to_test[i], OUTPUT_STATE_ON);
       delay_ms(2000);
@@ -73,4 +71,3 @@ int main() {
   LOG_DEBUG("exiting main?");
   return 0;
 }
-

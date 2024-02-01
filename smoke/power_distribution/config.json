@@ -6,11 +6,11 @@
         "master"
     ],
     "include": [
-        "#/projects/power_distribution/inc"
+        "projects/power_distribution/inc"
     ],
     "sources": [
-        "#/projects/power_distribution/src/outputs.c",
-        "#/projects/power_distribution/src/output_config.c",
-        "#/projects/power_distribution/src/output_current_sense.c"
+        "projects/power_distribution/src/outputs.o",
+        "projects/power_distribution/src/output_config.o",
+        "projects/power_distribution/src/output_current_sense.o"
     ]
 }

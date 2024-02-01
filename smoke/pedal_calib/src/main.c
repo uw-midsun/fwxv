@@ -25,7 +25,6 @@ I2CSettings i2c_settings = {
   .sda = { .port = GPIO_PORT_B, .pin = 11 },
 };
 
-
 /* TODO - ads1015 storage needs to be changed to MAX11600 (pending driver completion) */
 void test_throttle_calibration_run(void) {
   LOG_DEBUG("Please ensure the throttle is not being pressed.\n");
@@ -74,9 +73,9 @@ int main(void) {
 
   StatusCode ret = calib_init(&global_calib_blob, sizeof(global_calib_blob), true);
   if (ret == STATUS_CODE_OK) {
-      LOG_DEBUG("calib_init test: OK\n");
+    LOG_DEBUG("calib_init test: OK\n");
   } else {
-      LOG_DEBUG("calib_init test: FAILED (Error code: %d)\n", (int)ret);
+    LOG_DEBUG("calib_init test: FAILED (Error code: %d)\n", (int)ret);
   }
 
   pedal_calib_init(&s_throttle_calibration_storage);
@@ -85,5 +84,6 @@ int main(void) {
   test_throttle_calibration_run();
   test_brake_calibration_run();
 
-  while(1);
+  while (1) {
+  }
 }

@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "gpio.h"
 #include "delay.h"
+#include "gpio.h"
 #include "log.h"
 #include "spi.h"
 #include "tasks.h"
@@ -41,7 +41,7 @@ static SpiSettings spi_settings = {
 
 TASK(smoke_spi_task, TASK_STACK_512) {
   spi_init(SPI_PORT_2, &spi_settings);
-  uint8_t spi_tx_data[5]  = { 0x02, 0x28, 0x7, 0x8, 0x9 };
+  uint8_t spi_tx_data[5] = { 0x02, 0x28, 0x7, 0x8, 0x9 };
   while (true) {
     spi_cs_set_state(SPI_PORT_2, GPIO_STATE_LOW);
     uint8_t read_bytes[3] = { 0 };

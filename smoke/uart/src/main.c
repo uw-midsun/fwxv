@@ -8,7 +8,8 @@
 
 static const char test[] = "test uart\n";
 
-// This might cause issues because logs are initialized on the same port at a different baudrate, check this if there are issues
+// This might cause issues because logs are initialized on the same port at a different baudrate,
+// check this if there are issues
 static UartSettings uart_settings = { .tx = { .port = GPIO_PORT_A, .pin = 10 },
                                       .rx = { .port = GPIO_PORT_A, .pin = 11 },
                                       .baudrate = 9600 };

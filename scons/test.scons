@@ -1,32 +1,12 @@
-from scons.common import parse_config
+from scons.common import parse_config, flash_run
 import subprocess
-import serial # pip install pyserial
+from pathlib import Path
 
 Import('VARS')
 
-TYPE = VARS.get("TYPE")
 TARGET = VARS.get("TARGET")
 PLATFORM = VARS.get("PLATFORM")
 env = VARS.get("env")
-
-# Recursively get library dependencies for entry
-def get_lib_deps(entry):
-    config = parse_config(entry)
-    deps = config['libs'] + config['{}_libs'.format(PLATFORM)]
-    for dep in deps:
-        deps += get_lib_deps(LIB_DIR.Dir(dep))
-    return deps
-
-def lib_bin(lib_name):
-    return BIN_DIR.Dir(LIB_DIR.name).File('lib{}.a'.format(lib_name))
-
-# ELFs are used for gdb and x86
-def proj_elf(proj_name, is_smoke=False):
-    return BIN_DIR.Dir(SMOKE_DIR.name if is_smoke else PROJ_DIR.name).File(proj_name)
-
-# .bin is used for flashing to MCU
-def proj_bin(proj_name, is_smoke=False):
-    return proj_elf(proj_name, is_smoke).File(proj_name + '.bin')
 
 ROOT = Dir('#')
 
@@ -38,156 +18,77 @@ TEST_DIR = BUILD_DIR.Dir('test')
 PROJ_DIR = ROOT.Dir('projects')
 LIB_DIR = ROOT.Dir('libraries')
 SMOKE_DIR = ROOT.Dir('smoke')
-CAN_DIR = ROOT.Dir('can')
-
-PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
-LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
-SMOKE_DIRS = [entry for entry in SMOKE_DIR.glob('*')]
-
-LIB_BIN_DIR = BIN_DIR.Dir('libraries')
-
-PLATFORM_DIR = ROOT.Dir('platform')
-
-CODEGEN_DIR = LIB_DIR.Dir("codegen")
-BOARDS_DIR = CODEGEN_DIR.Dir("boards")
-GENERATOR = CODEGEN_DIR.File("generator.py")
-TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
-
-LIBRARIES_INC_DIR = LIB_DIR.Dir("ms-common").Dir("inc")
 
 GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.py'
 GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
 
-# tests dict maps proj/lib -> list of their test executables
-tests = {}
+###########################################################
+# Create appropriate test targets, (when lib/proj target is defined)
+###########################################################
+run_list = []
 
-def addBuildPath(string: str):
-    if (not string.startswith('build')):
-        return f"#/{OBJ_DIR.path}/{string}"
-    else:
-        return f"#/{string}"
 
-# Create the test executable targets
-for entry in PROJ_DIRS + LIB_DIRS + SMOKE_DIRS:
-    tests[entry.name] = []
-    for test_file in OBJ_DIR.Dir(str(entry)).Dir('test').glob('*.c'):
-        # Link runner object, test file object, and proj/lib objects
-        # into executable
-        config = parse_config(entry)
-        test_module_name = test_file.name.replace('test_', '').replace('.c', '')
-        mock_link_flags = []
-        if test_module_name in config['mocks']:
-            mocks = config['mocks'][test_module_name]
-            mock_link_flags = ['-Wl,-wrap,' + mock for mock in mocks]
+def add_to_run_list(target, source, env):
+    run_list.extend(source)
 
-        objs = OBJ_DIR.Dir(str(entry.path)).Dir('src').glob('*.o')
-        objs += OBJ_DIR.Dir(str(entry.path)).Dir('src').Dir(PLATFORM).glob('*.o')
 
-        if config["can"]:
-            objs += OBJ_DIR.Dir(entry.path).Dir('can').Dir("src").glob('*.o')
-            objs += OBJ_DIR.Dir(entry.path).Dir('can').Dir("src").Dir(PLATFORM).glob('*.o')
+def add_test_targets(target, source, env):
+    entry = ROOT.Dir(Path(target[0].path).relative_to(BIN_DIR.path))
+    config = parse_config(entry)
 
-        entry_objects = []
-        for obj in objs:
-            if 'main.o' not in obj.name:
-                entry_objects.append(obj)
+    if entry.path.startswith("libraries"):
+        # libraries target will look like libraries/lib[name].a
+        # extract the name and convert to the directory of the actual library
+        entry = ROOT.Dir(f"libraries/{entry.name[3:-2]}")
+    # non-libraries has a main.o that needs to be removed from the source for tests
+    sources_no_main = list(filter(lambda f: f.name != "main.o", source))
 
-        inc_dirs = [entry.Dir('inc')]
-        inc_dirs += [entry.Dir('inc').Dir(PLATFORM)]
-        if config["can"]:
-            inc_dirs.append(OBJ_DIR.Dir(entry.path).Dir('can').Dir("inc"))
-            inc_dirs.append(CAN_DIR.Dir("inc"))
-        lib_incs = [lib_dir.Dir('inc') for lib_dir in LIB_DIRS]
-        lib_incs += [lib_dir.Dir('inc').Dir(PLATFORM) for lib_dir in LIB_DIRS]
-        lib_deps = get_lib_deps(entry)
+    # create target for every test
+    for test_file in entry.glob('test/*.c'):
+        test_module_name = Path(test_file.path).stem
 
-        # Flags used for both preprocessing and compiling
-        cpppath = env['CPPPATH'] + [inc_dirs, lib_incs]
-        ccflags = env['CCFLAGS'] + config['cflags']
+        mocks = config.get("mocks", {}).get(test_module_name, [])
+        mock_link_flags = [f'-Wl,-wrap,{mock}' for mock in mocks]
 
-        # Create the test_*_runner.c file
-        runner_file = TEST_DIR.Dir(entry.name).File(test_file.name.replace('.c', '_runner.c'))
-        test_runner = env.Command(runner_file, test_file,
-            Action(
-                'python3 {} {} $SOURCE $TARGET'.format(GEN_RUNNER, GEN_RUNNER_CONFIG),
-                cmdstr='Generating test runner $TARGET'))
+        runner_exec = TEST_DIR.File(f"{entry.path}/bin/{test_module_name}")
 
-        output = TEST_DIR.Dir(entry.name).Dir('test').File(test_file.name.replace('.c', ''))
+        runner_file = TEST_DIR.File(test_file.path)
+        autogen = env.Action(f'python3 {GEN_RUNNER} {GEN_RUNNER_CONFIG} {test_file.path} {runner_file.path}',
+                             f'Autogen    {test_file.path} test_runner')
+        runner_file = env.Command(
+            runner_file,
+            [test_file, ROOT.Dir("libraries/unity/auto").glob("*")],
+            autogen)
+        test_sources = [runner_file, OBJ_DIR.File(test_file.path)]
 
-        srcs = [test_file] + test_runner + entry_objects
-        srcs = [addBuildPath(x.path) for x in srcs]
-
-        target = env.Program(
-            target=output,
-            source=srcs,
-            # We do env['variable'] + [entry-specific variables] to avoid
-            # mutating the environment for other entries
-            CPPPATH=cpppath,
-            LIBS=env['LIBS'] + lib_deps * 2 + ['unity'],
-            LIBPATH=[LIB_BIN_DIR],
-            CCFLAGS=ccflags,
+        test_target = env.Program(
+            target=runner_exec,
+            source=sources_no_main + test_sources,
+            LIBS=env['LIBS'] + ['unity'],
             LINKFLAGS=env['LINKFLAGS'] + mock_link_flags,
+            PROGEMITTER=None,  # don't trigger emitter recursively
         )
+
         if PLATFORM == 'arm':
-            target = env.Bin(target=output.File(test_file.name + '.bin'), source=target)
+            test_target = env.Bin(target=ROOT.File(runner_exec.path+'.bin'),
+                                  source=test_target)
+        env.Command(f"test/{entry.path}/{test_module_name}",
+                    test_target, env.Action(add_to_run_list, None))
+    # target and source are not modified
+    # this emitter only adds the test targets based on the project/library's inc + src
+    return target, source
 
-        # Make test executable depend on the project / library final target
-        if entry in PROJ_DIRS:
-            Depends(target, proj_elf(entry.name, entry in SMOKE_DIRS))
-        elif entry in LIB_DIRS:
-            Depends(target, lib_bin(entry.name))
 
-        # Add to tests dict
-        tests[entry.name] += [node for node in target]
-
-def get_test_list():
-    # Based on the project/library and test in options,
-    # create a list of tests to run
-    # Assume only one of project or library is set
-    entry = TARGET
-    if entry and tests.get(entry):
-        if GetOption('testfile'):
-            return [test for test in tests[entry] if (test.name + '.').startswith(f"test_{GetOption('testfile')}.")]
-        else:
-            return [test for test in tests[entry]]
-    else:
-        ret = []
-        for test_list in tests.values():
-            ret += test_list
-        return ret
-
-def test_runner(target, source, env):
-    test_list = get_test_list()
-
-    if PLATFORM == "arm":
-        output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
-        device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
-        serialData = serial.Serial(device_path,115200)
-    
-    fails = 0
-    for test in test_list:
+def run_test(target, source, env):
+    fails = []
+    for test_name, test_file in zip(source, run_list):
         if PLATFORM == "x86":
-            test_process = subprocess.run(test.get_path())
-            fails += (test_process.returncode != 0)
+            test_process = subprocess.run(test_file.path)
+            if test_process.returncode != 0:
+                fails.append(test_name)
 
         elif PLATFORM == "arm":
-            OPENOCD = 'openocd'
-            OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
-            PROBE = 'cmsis-dap'
-            OPENOCD_CFG = [
-                OPENOCD,
-                '-s {}'.format(OPENOCD_SCRIPT_DIR),
-                '-f interface/{}.cfg'.format(PROBE),
-                '-f target/stm32f1x.cfg',
-                '-f {}/stm32f1-openocd.cfg'.format(PLATFORM_DIR),
-                '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
-                '-c "stm_flash {}"'.format(test),
-                '-c shutdown'
-            ]
-            cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
-            print(f"Flashing {test}")
-            subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print(f"Starting {test}")
+            serialData = flash_run(test_file)
 
             # wait until test ok or fail
             while True:
@@ -196,10 +97,24 @@ def test_runner(target, source, env):
                 if line.startswith('OK'):
                     break
                 if line.startswith('FAIL'):
-                    fails += 1
+                    fails.append(test_name)
                     break
 
-    print(f"{len(test_list)} Files tested {fails} Failures")
+    print(f"{len(run_list)} Files tested {len(fails)} Failures")
+    for fail in fails:
+        print(f"  {fail}")
+    return ""
 
-test = Command('#/test', [], test_runner)
-Depends(test, get_test_list())
+
+env.Append(PROGEMITTER=add_test_targets)
+env.Append(LIBEMITTER=add_test_targets)
+# generate all test target names
+all_tests = []
+for entry in PROJ_DIR.glob('*') + LIB_DIR.glob('*') + SMOKE_DIR.glob('*'):
+    for test_file in entry.glob('test/*.c'):
+        test_module_name = Path(test_file.path).stem
+        all_tests.append(f"test/{entry.path}/{test_module_name}")
+
+TARGET = str(Path("test", TARGET or '', GetOption("testfile") or ''))
+selected_tests = [t for t in all_tests if t.startswith(TARGET)]
+env.Command("#/test", selected_tests, env.Action(run_test, "Running tests:"))
