@@ -38,11 +38,10 @@ BU_:
 
 {% for message in messages -%}
 
-BO_ {{message.id * 0x20 + boards.index(message.sender)}} {{message.name}} {{message.signals | sum("length")}} {{message.sender}}
+BO_ {{message.id * 0x20 + boards.index(message.sender)}} {{message.name}}: {{message.signals | sum("length") // 8 }} {{message.sender}}
 
   {%- for signal in message.signals %}
-  SG_ {{signal.name}} : {{signal.start_bit}}|{{signal.length}}@1+ ({{signal["scale"]}},{{signal["offset"]}}) [{{signal["min"]}}|{{signal["max"]}}] "{{signal["unit"]}}" {{signal.receiver | join(" ")}}
-  {# SG_ {{signal["signal_name"]}} : {{signal["start_bit"]}}|{{signal["length"]}}@1+ ({{signal["scale"]}},{{signal["offset"]}}) [{{signal["min"]}}|{{signal["max"]}}] "{{signal["unit"]}}" {{signal["receiver"]}} #}
+  SG_ {{signal.name}} : {{signal.start_bit}}|{{signal.length}}@1+ ({{signal["scale"]}},{{signal["offset"]}}) [{{signal["min"]}}|{{signal["max"]}}] "{{signal["unit"]}}" {{signal.receiver | join(", ")}}
   {%- endfor %}
 
 {% endfor -%}
