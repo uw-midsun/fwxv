@@ -63,7 +63,7 @@
 #include "status.h"
 #include "tasks.h"
 
-#define FSM_PRIORITY 2
+#define FSM_PRIORITY 1
 // TODO(mitchellostler): make user defined
 #define FSM_TASK_STACK TASK_STACK_1024
 #define FSM_TIMEOUT_MS 1000
@@ -106,12 +106,12 @@ typedef struct Fsm {
 // Creates the FSM structure with the supplied number of states
 // and initializes its associated FSM task
 // num_states must be a defined constant
-#define FSM(name, num_fsm_states)   \
-  Fsm *name##_fsm = &((Fsm){        \
-      .num_states = num_fsm_states, \
-  });                               \
-  TASK(name, TASK_STACK_512) {      \
-    _fsm_task(context);             \
+#define FSM(name, num_fsm_states, stack_size) \
+  Fsm *name##_fsm = &((Fsm){                  \
+      .num_states = num_fsm_states,           \
+  });                                         \
+  TASK(name, stack_size) {                    \
+    _fsm_task(context);                       \
   }
 
 // Creates state with associated id in a state list

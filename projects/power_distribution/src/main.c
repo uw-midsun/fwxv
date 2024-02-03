@@ -30,6 +30,7 @@ I2CSettings i2c_settings = {
 };
 
 void pre_loop_init() {
+  pca9555_gpio_init(I2C_PORT_1);
   pd_output_init();
   pd_sense_init();
   adc_init();
@@ -57,9 +58,8 @@ int main() {
   log_init();
   interrupt_init();
   gpio_init();
-  i2c_init(I2C_PORT_1, &i2c_settings);
-  pca9555_gpio_init(I2C_PORT_1);
   can_init(&s_can_storage, &can_settings);
+  i2c_init(I2C_PORT_1, &i2c_settings);
   // set_master_cycle_time(250);  // Give it enough time to run an entire medium cycle
   // set_medium_cycle_count(2);   // adjust medium cycle count to run once per 500ms
   init_power_seq();

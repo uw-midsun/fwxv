@@ -12,7 +12,7 @@
     return;                                                                \
   }
 
-FSM(power_seq, NUM_POWER_STATES);
+FSM(power_seq, NUM_POWER_STATES, TASK_STACK_256);
 
 static PowerFsmContext power_context = { 0 };
 
@@ -32,7 +32,7 @@ static void prv_off_state_input(Fsm *fsm, void *context) {
   }
   CentreConsoleCCPwrEvent cc_power_event = get_cc_power_control_power_event();
   if (cc_power_event == EE_CC_PWR_CTL_EVENT_BTN_AND_BRAKE) {
-    power_context.target_state = POWER_STATE_DRIVE;
+    power_context.target_state = POWER_STATE_ON;
     fsm_transition(fsm, TRANSMIT_BMS_CLOSE_RELAYS);
   } else if (cc_power_event == EE_CC_PWR_CTL_EVENT_BTN) {
     power_context.target_state = POWER_STATE_ON;
@@ -72,14 +72,6 @@ static void prv_on_state_output(void *context) {
 
 static void prv_on_state_input(Fsm *fsm, void *context) {
   pd_fault_ok_or_transition(fsm);
-  if (power_context.target_state == POWER_STATE_OFF) {
-    fsm_transition(fsm, POWER_STATE_OFF);
-    return;
-  }
-  if (power_context.target_state == POWER_STATE_DRIVE) {
-    fsm_transition(fsm, TURN_ON_DRIVE_OUTPUTS);
-    return;
-  }
 
   if (!get_received_cc_power_control()) {
     return;

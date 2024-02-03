@@ -12,7 +12,7 @@
 #define NUM_TEST1_EVENTS 3
 #define NUM_TEST1_TRANSITIONS 7
 
-FSM(test1, NUM_TEST1_STATES);
+FSM(test1, NUM_TEST1_STATES, TASK_STACK_512);
 
 // State Definitions for fsm "test1"
 typedef enum TestStateId {

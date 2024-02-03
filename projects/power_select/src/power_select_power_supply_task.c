@@ -11,7 +11,7 @@ const GpioAddress g_power_supply_current_pin = POWER_SELECT_PWR_SUP_ISENSE_ADDR;
 static uint16_t adc_reading_voltage;
 static uint16_t adc_reading_current;
 
-FSM(power_supply, NUM_POWER_SELECT_STATES);
+FSM(power_supply, NUM_POWER_SELECT_STATES, TASK_STACK_512);
 
 static void prv_power_supply_inactive_input(Fsm *fsm, void *context) {
   GpioState state = GPIO_STATE_LOW;
