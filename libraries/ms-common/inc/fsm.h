@@ -63,7 +63,7 @@
 #include "status.h"
 #include "tasks.h"
 
-#define FSM_PRIORITY 1
+#define FSM_PRIORITY 2
 // TODO(mitchellostler): make user defined
 #define FSM_TASK_STACK TASK_STACK_1024
 #define FSM_TIMEOUT_MS 1000

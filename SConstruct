@@ -164,14 +164,14 @@ if PLATFORM == 'x86' and TARGET:
     # os.exec the x86 project ELF file to simulate it
 
     def sim_run(target, source, env):
-        print('Simulating', project_elf)
-        subprocess.run([project_elf.path])
+        print('Simulating', source)
+        subprocess.run([source.path])
 
-    AlwaysBuild(Command('#/sim', [], sim_run))
+    AlwaysBuild(Command('#/sim', project_elf, sim_run))
 
     # open gdb with the elf file
     def gdb_run(target, source, env):
-        subprocess.run(['/usr/bin/gdb', project_elf.path])
+        subprocess.run(['/usr/bin/gdb', source.path])
 
     AlwaysBuild(Command('#/gdb', project_elf, gdb_run))
 
@@ -188,7 +188,8 @@ if PLATFORM == 'arm' and TARGET:
 
     # flash the MCU using openocd
     def flash_run_target(target, source, env):
-        serialData = flash_run(project_bin)
+        serialData = flash_run(source)
+        print("\nSerial output:")
         while True:
             line: str = serialData.readline().decode("utf-8")
             print(line, end='')

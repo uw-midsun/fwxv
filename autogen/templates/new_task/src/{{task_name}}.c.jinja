@@ -5,8 +5,7 @@
 static SemaphoreHandle_t s_{{ task_name }}_sem_handle;
 static StaticSemaphore_t s_{{ task_name }}_sem;
 
-void run_{{ task_name }}_cycle()
-{
+void run_{{ task_name }}_cycle() {
     BaseType_t ret = xSemaphoreGive(s_{{ task_name }}_sem_handle);
 
     if (ret == pdFALSE) {
@@ -16,8 +15,7 @@ void run_{{ task_name }}_cycle()
     return STATUS_CODE_OK;
 }
 
-TASK({{ task_name }}, TASK_MIN_STACK_SIZE)
-{
+TASK({{ task_name }}, TASK_MIN_STACK_SIZE) {
     int counter = 0;
     while (true)
     {
@@ -32,20 +30,13 @@ TASK({{ task_name }}, TASK_MIN_STACK_SIZE)
     }
 }
 
-void run_{{ task_name }}_fast_cycle()
-{
-}
+void run_{{ task_name }}_fast_cycle() {}
 
-void run_{{ task_name }}_medium_cycle()
-{
-}
+void run_{{ task_name }}_medium_cycle() {}
 
-void run_{{ task_name }}_slow_cycle()
-{
-}
+void run_{{ task_name }}_slow_cycle() {}
 
-StatusCode init_{{ task_name }}()
-{
+StatusCode init_{{ task_name }}() {
     status_ok_or_return(tasks_init_task({{ task_name }}, TASK_PRIORITY(2), NULL));
     return STATUS_CODE_OK;
 }

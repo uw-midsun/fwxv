@@ -54,7 +54,9 @@ def get_lib_deps(entry):
 ###########################################################
 # Header file generation from jinja templates
 ###########################################################
-autogen_sources = list(CODEGEN_DIR.glob("*"))
+# print(CODEGEN_DIR.abspath)
+autogen_sources = list(Path(CODEGEN_DIR.abspath).rglob("*"))
+# print([i.absolute() for i in autogen_sources])
 env.Command(
     PY_DIR.File("can/message.py"),
     autogen_sources,
@@ -160,7 +162,8 @@ for entry in PY_DIR.glob("*", exclude=["*.*", "__pycache__"]):
                          f"PYTHONPATH={PY_DIR.path} python3 {entry.path}/main.py")
     config = parse_config(entry)
     if config["can"]:
-        Depends(target, PY_DIR.File("can/message.py"))
+        # Depends(target, PY_DIR.File("can/message.py"))
+        pass
     Alias(entry.path, target)
     Alias(entry.name, target)
 

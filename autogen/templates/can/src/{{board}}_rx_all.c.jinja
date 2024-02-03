@@ -6,7 +6,7 @@
 
 {%- for message in messages %}
     {%- if message.receiver[board].watchdog != 0 %}
-static CanWatchDog s_{{message.name}}_msg_watchdog = {0, {{message.receiver[board].watchdog | lower}}, 0};
+CanWatchDog s_{{message.name}}_msg_watchdog = {0, {{message.receiver[board].watchdog | lower}}, 0};
     {%- endif %}
 {%- endfor %}
 

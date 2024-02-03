@@ -78,6 +78,11 @@ def run_test(target, source, env):
     fails = []
     for test_name, test_file in zip(source, run_list):
         if PLATFORM == "x86":
+            # set up vcan device if not setup
+            if subprocess.run("ip link show vcan0".split(" "), stdout=subprocess.DEVNULL).returncode:
+                subprocess.run("sudo ip link add dev vcan0 type vcan".split(" "))
+                subprocess.run("sudo ip link set up vcan0".split(" "))
+            # run test file
             test_process = subprocess.run(test_file.path)
             if test_process.returncode != 0:
                 fails.append(test_name)
@@ -92,7 +97,7 @@ def run_test(target, source, env):
                 if line.startswith('OK'):
                     break
                 if line.startswith('FAIL'):
-                    fails += 1
+                    fails.append(test_name)
                     break
 
     print(f"{len(run_list)} Files tested {len(fails)} Failures")

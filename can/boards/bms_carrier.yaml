@@ -15,6 +15,8 @@
       target:
         centre_console:
           watchdog: 0
+        power_distribution:
+          watchdog: 3
       critical: true
       signals:
         batt_perc:
@@ -33,11 +35,13 @@
           watchdog: 0
       critical: false
       signals:
-        module_id:
-          length: 16
         voltage:
           length: 16
+        current:
+          length: 16
         temperature:
+          length: 16
+        batt_perc:
           length: 16
     
     battery_aggregate_vc:
@@ -74,18 +78,11 @@
         fan_8:
           length: 8
 
-    battery_relay_state:
+    battery_relay_info:
       id: 58
       target:
-        bms_carrier:
-          watchdog: 0
-        centre_console:
+        power_distribution:
           watchdog: 0
       signals:
-        hv:
+        state:
           length: 8
-        gnd:
-          length: 8
-
-
-

@@ -36,7 +36,11 @@ void test_leds(void) {
     LOG_DEBUG("blink\n");
     for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
       gpio_toggle_state(&leds[i]);
+#ifdef x86
+      delay_ms(10);
+#else
       delay_ms(200);
+#endif
     }
   }
 }

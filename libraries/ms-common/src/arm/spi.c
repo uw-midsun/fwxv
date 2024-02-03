@@ -15,18 +15,16 @@ typedef struct {
   Queue tx_queue;
   uint8_t rx_buf[SPI_MAX_NUM_DATA];
   Queue rx_queue;
-  Semaphore mutex;
+  Mutex mutex;
 } SPIBuffer;
 
 typedef struct {
   void (*rcc_cmd)(uint32_t periph, FunctionalState state);
   uint32_t periph;
   uint8_t irqn;
-  SpiMode mode;
   SPI_TypeDef *base;
   GpioAddress cs;
   SPIBuffer spi_buf;
-  volatile uint8_t num_rx_bytes;  // Number of bytes left to receive in rx mode
 } SpiPortData;
 
 static SpiPortData s_port[NUM_SPI_PORTS] = {
@@ -37,7 +35,7 @@ static SpiPortData s_port[NUM_SPI_PORTS] = {
   [SPI_PORT_2] = { .rcc_cmd = RCC_APB1PeriphClockCmd,
                    .periph = RCC_APB1Periph_SPI2,
                    .base = SPI2,
-                   .irqn = SPI1_IRQn },
+                   .irqn = SPI2_IRQn },
 };
 
 StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
@@ -46,7 +44,8 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   } else if (settings->mode >= NUM_SPI_MODES) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid SPI mode.");
   }
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
+
+  s_port[spi].rcc_cmd(s_port[spi].periph, ENABLE);
   RCC_ClocksTypeDef clocks;
   RCC_GetClocksFreq(&clocks);
   uint32_t clk_freq;
@@ -65,7 +64,6 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   if (!IS_SPI_BAUDRATE_PRESCALER(prescaler)) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid baudrate");
   }
-  s_port[spi].rcc_cmd(s_port[spi].periph, ENABLE);
   s_port[spi].cs = settings->cs;
 
   // Confifgure spi pins to correct modes
@@ -98,7 +96,7 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   s_port[spi].spi_buf.tx_queue.num_items = SPI_MAX_NUM_DATA;
   s_port[spi].spi_buf.tx_queue.item_size = sizeof(uint8_t);
   s_port[spi].spi_buf.tx_queue.storage_buf = s_port[spi].spi_buf.tx_buf;
-  status_ok_or_return(sem_init(&s_port[spi].spi_buf.mutex, 1, 1));
+  status_ok_or_return(mutex_init(&s_port[spi].spi_buf.mutex));
   status_ok_or_return(queue_init(&s_port[spi].spi_buf.rx_queue));
   status_ok_or_return(queue_init(&s_port[spi].spi_buf.tx_queue));
 
@@ -107,92 +105,58 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   return STATUS_CODE_OK;
 }
 
-StatusCode spi_tx(SpiPort spi, uint8_t *tx_data, size_t tx_len) {
+StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
+                        size_t rx_len) {
   if (spi >= NUM_SPI_PORTS) {
     return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
   }
   // Proceed if mutex is unlocked
-  status_ok_or_return(sem_wait(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
+  status_ok_or_return(mutex_lock(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
+
+  queue_reset(&s_port[spi].spi_buf.tx_queue);
+  queue_reset(&s_port[spi].spi_buf.rx_queue);
 
   // Copy data into queue
-  for (size_t tx = 0; tx < tx_len; tx++) {
-    if (queue_send(&s_port[spi].spi_buf.tx_queue, &tx_data[tx], 0)) {
-      queue_reset(&s_port[spi].spi_buf.tx_queue);
-      sem_post(&s_port[spi].spi_buf.mutex);
+  uint8_t data = 0;
+  for (size_t i = 0; i < tx_len + rx_len; i++) {
+    data = (i < tx_len) ? tx_data[i] : 0;
+    if (queue_send(&s_port[spi].spi_buf.tx_queue, &data, 0)) {
+      mutex_unlock(&s_port[spi].spi_buf.mutex);
       return STATUS_CODE_RESOURCE_EXHAUSTED;
     }
   }
 
   // Enable interrupts and start transaction
   // Transaction started when we spi is enabled, and tx register is empty
-  SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE, ENABLE);
-  SPI_Cmd(s_port[spi].base, ENABLE);
-
-  // Wait on IT handler to return mutex when txn complete
-  if (sem_wait(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS)) {
-    SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE, DISABLE);
-    // if we time out dump queue
-    SPI_Cmd(s_port[spi].base, DISABLE);
-    queue_reset(&s_port[spi].spi_buf.tx_queue);
-    sem_post(&s_port[spi].spi_buf.mutex);
-    return STATUS_CODE_TIMEOUT;
-  }
-  sem_post(&s_port[spi].spi_buf.mutex);
-  return STATUS_CODE_OK;
-}
-
-StatusCode spi_rx(SpiPort spi, uint8_t *rx_data, size_t rx_len, uint8_t placeholder) {
-  // Proceed if mutex is unlocked
-  if (spi >= NUM_SPI_PORTS) {
-    return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
-  }
-
-  status_ok_or_return(sem_wait(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
-  s_port[spi].num_rx_bytes = rx_len;
-  // Enable interrupts and start transaction
-  // Transaction started when we sent first byte, then it handler takes over
-  // Seems to potentially be a bug in the SPL where it doesn't flip the bits it's supposed to
-  // Hardcode this for now
-  // Interrupt for error and then for RXNE
-  SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_RXNE, ENABLE);
-  s_port[spi].base->CR2 ^= FLIP_RXNE;
+  SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE, ENABLE);
   s_port[spi].base->CR2 |= FLIP_ERR;
+
+  taskENTER_CRITICAL();
   SPI_Cmd(s_port[spi].base, ENABLE);
-  // Wait on IT handler to return mutex when txn complete
-  if (sem_wait(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS)) {
-    // if we time out dump queue - txn invalid
-    SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_RXNE, DISABLE);
-    s_port[spi].base->CR2 ^= FLIP_ERR;
-    SPI_Cmd(s_port[spi].base, DISABLE);
-    queue_reset(&s_port[spi].spi_buf.rx_queue);
-    sem_post(&s_port[spi].spi_buf.mutex);
-    return STATUS_CODE_TIMEOUT;
+  // set spi CS state LOW
+  gpio_set_state(&s_port[spi].cs, GPIO_STATE_LOW);
+  taskEXIT_CRITICAL();
+
+  for (size_t i = 0; i < tx_len + rx_len; i++) {
+    if (queue_receive(&s_port[spi].spi_buf.rx_queue, &data, SPI_TIMEOUT_MS)) {
+      // timeout
+      SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE,
+                       DISABLE);
+      SPI_Cmd(s_port[spi].base, DISABLE);
+      // set spi CS state HIGH
+      gpio_set_state(&s_port[spi].cs, GPIO_STATE_HIGH);
+      mutex_unlock(&s_port[spi].spi_buf.mutex);
+      return STATUS_CODE_TIMEOUT;
+    }
+    if (i >= tx_len) {
+      // ignore first tx_len num of receieved data, store the rest into rx_data
+      rx_data[i - tx_len] = data;
+    }
   }
-  sem_post(&s_port[spi].spi_buf.mutex);
-  xQueueReceive(s_port[spi].spi_buf.rx_queue.handle, rx_data, portMAX_DELAY);
-  return STATUS_CODE_OK;
-}
 
-StatusCode spi_cs_set_state(SpiPort spi, GpioState state) {
-  return gpio_set_state(&s_port[spi].cs, state);
-}
-
-StatusCode spi_cs_get_state(SpiPort spi, GpioState *input_state) {
-  return gpio_get_state(&s_port[spi].cs, input_state);
-}
-
-StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
-                        size_t rx_len) {
-  if (spi >= NUM_SPI_PORTS) {
-    return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
-  }
-  spi_cs_set_state(spi, GPIO_STATE_LOW);
-
-  spi_tx(spi, tx_data, tx_len);
-
-  spi_rx(spi, rx_data, rx_len, 0x00);
-
-  spi_cs_set_state(spi, GPIO_STATE_HIGH);
+  // set spi CS state HIGH
+  gpio_set_state(&s_port[spi].cs, GPIO_STATE_HIGH);
+  mutex_unlock(&s_port[spi].spi_buf.mutex);
 
   return STATUS_CODE_OK;
 }
@@ -209,23 +173,16 @@ static void prv_spi_irq_handler(SpiPort spi) {
       SPI_I2S_SendData(s_port[spi].base, tx_data);
     } else {
       // We have sent all data, so close spi
-      // TODO(mitchellostler): Add Busy check
-      SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE, DISABLE);
+      SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_TXE | SPI_I2S_IT_RXNE,
+                       DISABLE);
       SPI_Cmd(s_port[spi].base, DISABLE);
-      xSemaphoreGiveFromISR(s_port[spi].spi_buf.mutex.handle, &xTaskWoken);
     }
-  } else if (SPI_I2S_GetITStatus(s_port[spi].base, SPI_I2S_IT_RXNE) == SET) {
+  }
+  if (SPI_I2S_GetITStatus(s_port[spi].base, SPI_I2S_IT_RXNE) == SET) {
     uint16_t rx_data = SPI_I2S_ReceiveData(s_port[spi].base);
-    if (--s_port[spi].num_rx_bytes > 0) {
-      xQueueSendFromISR(s_port[spi].spi_buf.rx_queue.handle, (uint8_t *)&rx_data, &xTaskWoken);
-    } else {
-      xQueueSendFromISR(s_port[spi].spi_buf.rx_queue.handle, (uint8_t *)&rx_data, &xTaskWoken);
-      SPI_I2S_ITConfig(s_port[spi].base, SPI_I2S_IT_ERR | SPI_I2S_IT_RXNE, DISABLE);
-      s_port[spi].base->CR2 ^= FLIP_ERR;
-      SPI_Cmd(s_port[spi].base, DISABLE);
-      xSemaphoreGiveFromISR(s_port[spi].spi_buf.mutex.handle, &xTaskWoken);
-    }
-  } else if (SPI_I2S_GetITStatus(s_port[spi].base, SPI_IT_MODF) == SET) {
+    xQueueSendFromISR(s_port[spi].spi_buf.rx_queue.handle, (uint8_t *)&rx_data, &xTaskWoken);
+  }
+  if (SPI_I2S_GetITStatus(s_port[spi].base, SPI_IT_MODF) == SET) {
     // Mode fault - If this is happening we most likely have an invalid hardware setup
     SPI_Cmd(s_port[spi].base, ENABLE);
   } else {
