@@ -2,6 +2,7 @@
 
 #include "bts_load_switch.h"
 #include "can.h"
+#include "can_board_ids.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "interrupt.h"
@@ -13,11 +14,9 @@
 #include "power_seq_fsm.h"
 #include "tasks.h"
 
-#define DEVICE_ID 0x06
-
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
-  .device_id = DEVICE_ID,
+  .device_id = SYSTEM_CAN_DEVICE_POWER_DISTRIBUTION,
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
@@ -31,6 +30,7 @@ I2CSettings i2c_settings = {
 };
 
 void pre_loop_init() {
+  pca9555_gpio_init(I2C_PORT_1);
   pd_output_init();
   pd_sense_init();
   adc_init();
@@ -58,9 +58,8 @@ int main() {
   log_init();
   interrupt_init();
   gpio_init();
-  i2c_init(I2C_PORT_1, &i2c_settings);
-  pca9555_gpio_init(I2C_PORT_1);
   can_init(&s_can_storage, &can_settings);
+  i2c_init(I2C_PORT_1, &i2c_settings);
   // set_master_cycle_time(250);  // Give it enough time to run an entire medium cycle
   // set_medium_cycle_count(2);   // adjust medium cycle count to run once per 500ms
   init_power_seq();

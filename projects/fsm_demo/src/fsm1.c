@@ -6,7 +6,7 @@
 #include "notify.h"
 #include "task.h"
 
-FSM(fsm1, NUM_FSM1_STATES);
+FSM(fsm1, NUM_FSM1_STATES, TASK_STACK_512);
 
 // Input functions are executed each iteration of run_cycle, and
 // Output functions are executed only when a state is transitioned to
