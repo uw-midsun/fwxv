@@ -1,4 +1,5 @@
 #include "relays_fsm.h"
+
 #include "gpio.h"
 // check current sense CS_FAULT pin
 // AFE cell conversions, wait 10ms by reading start time
@@ -11,7 +12,7 @@ static RelaysStateId fsm_prev_state = RELAYS_OPEN;
 static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   LOG_DEBUG("Bms fault check \n");
   StatusCode status = STATUS_CODE_OK;
-  status |= current_sense_fault_check(); // This task checks and opens relays if fault
+  status |= current_sense_fault_check();  // This task checks and opens relays if fault
   if (status != STATUS_CODE_OK) {
     fsm_transition(fsm, RELAYS_FAULT);
   }
@@ -31,7 +32,7 @@ void open_relays() {
   gpio_set_state(&POS_RELAY_EN, GPIO_STATE_LOW);
   gpio_set_state(&NEG_RELAY_EN, GPIO_STATE_LOW);
   gpio_set_state(&SOLAR_RELAY_EN, GPIO_STATE_LOW);
-} 
+}
 
 static void prv_relays_open_output(void *context) {
   LOG_DEBUG("Transitioned to RELAYS_OPEN\n");

@@ -42,7 +42,7 @@ void pre_loop_init() {
 }
 
 void run_fast_cycle() {
-  fsm_run_cycle(relays);
+  fsm_run_cycle(relays);  // runs current sense cycle too
   wait_tasks(1);
 }
 

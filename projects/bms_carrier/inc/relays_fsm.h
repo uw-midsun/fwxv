@@ -1,16 +1,16 @@
 #pragma once
 
-#include "can.h"
-#include "exported_enums.h"
-#include "fsm.h"
-#include "log.h"
-#include "gpio.h"
-#include "status.h"
-#include "task.h"
 #include "bms.h"
-#include "current_sense.h"
 #include "bms_carrier_getters.h"
 #include "bms_carrier_setters.h"
+#include "can.h"
+#include "current_sense.h"
+#include "exported_enums.h"
+#include "fsm.h"
+#include "gpio.h"
+#include "log.h"
+#include "status.h"
+#include "task.h"
 
 #define NUM_RELAY_STATES 3
 

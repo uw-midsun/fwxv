@@ -1,7 +1,7 @@
 #include "current_sense.h"
 
 #include <string.h>
-#include "relays_fsm.h"
+
 #include "bms.h"
 #include "bms_carrier_setters.h"
 #include "exported_enums.h"
@@ -9,6 +9,7 @@
 #include "gpio_it.h"
 #include "interrupt.h"
 #include "log.h"
+#include "relays_fsm.h"
 #include "soft_timer.h"
 #include "tasks.h"
 
