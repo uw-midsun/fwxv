@@ -33,9 +33,14 @@ static Max17261Settings s_fuel_gauge_settings;
 static CurrentStorage *s_current_storage;
 static SoftTimer s_timer;
 static bool s_is_charging;
+StatusCode fault_bitset = STATUS_CODE_OK;
+
+StatusCode current_sense_fault_check() {
+  return STATUS_CODE_OK | fault_bitset;
+}
 
 // Periodically read and update the SoC of the car & update charging bool
-StatusCode fuel_gauge_read() {
+static StatusCode prv_fuel_gauge_read() {
   StatusCode status = STATUS_CODE_OK;
 
   uint16_t soc = 0;
@@ -52,6 +57,7 @@ StatusCode fuel_gauge_read() {
     // TODO (Adel): Handle a fuel gauge fault
     // Open Relays
     open_relays();
+    fault_bitset = status;
     return status;
   }
 
@@ -65,6 +71,7 @@ StatusCode fuel_gauge_read() {
   // note that a negative value indicates the battery is charging
   s_is_charging = s_current_storage->average < 0;
 
+  fault_bitset = status;
   return status;
 }
 
@@ -77,7 +84,7 @@ TASK(current_sense, TASK_MIN_STACK_SIZE) {
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
       // TODO (Adel): BMS Open Relays
-      open_relays();
+      fault_bitset = notification & (1 << ALRT_GPIO_IT);
     }
 
     prv_fuel_gauge_read();
@@ -92,7 +99,6 @@ bool current_sense_is_charging() {
 StatusCode run_current_sense_cycle() {
   StatusCode ret = notify(current_sense, CURRENT_SENSE_RUN_CYCLE);
   if (ret == pdFALSE) {
-    open_relays();
     return STATUS_CODE_INTERNAL_ERROR;
   }
 

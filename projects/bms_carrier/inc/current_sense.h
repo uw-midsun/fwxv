@@ -32,6 +32,8 @@ typedef struct CurrentStorage {
   uint32_t fuel_guage_cycle_ms;  // Time in ms between conversions (soft timer kicks)
 } CurrentStorage;
 
+StatusCode current_sense_fault_check();
+
 StatusCode run_current_sense_cycle();
 
 bool current_sense_is_charging();

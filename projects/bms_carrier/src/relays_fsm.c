@@ -5,13 +5,17 @@
 // Peform current sense read and check DONE
 // Read AFE Cells and do checks
 
-static void prv_bms_fault_ok_or_transition(fsm) {
-  LOG_DEBUG("Bms fault check \n");
-  run_current_sense_cycle(); // This task checks + runs, and opens relays if fault
-}
-
 FSM(relays, NUM_RELAY_STATES, TASK_STACK_512);
 static RelaysStateId fsm_prev_state = RELAYS_OPEN;
+
+static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
+  LOG_DEBUG("Bms fault check \n");
+  StatusCode status = STATUS_CODE_OK;
+  status |= current_sense_fault_check(); // This task checks and opens relays if fault
+  if (status != STATUS_CODE_OK) {
+    fsm_transition(fsm, RELAYS_FAULT);
+  }
+}
 
 GpioAddress const POS_RELAY_EN = { .port = GPIO_PORT_B, .pin = 8 };
 GpioAddress const NEG_RELAY_EN = { .port = GPIO_PORT_B, .pin = 4 };
