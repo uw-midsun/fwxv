@@ -65,6 +65,7 @@ static void prv_update_target_current_velocity() {
   float brake_percent = prv_get_float(get_pedal_output_brake_output());
   float target_vel = prv_get_float(get_drive_output_target_velocity()) * VEL_TO_RPM_RATIO;
   float car_vel = (s_motor_velocity_l + s_motor_velocity_r) / 2;
+  car_vel *= CONVERT_VELOCITY_TO_KPH;
 
   DriveState drive_state = get_drive_output_drive_state();
   bool regen = get_drive_output_regen_braking();
