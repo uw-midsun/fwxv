@@ -55,6 +55,7 @@ jobs:
           clang --version
           clang-format --version
           pylint --version
+          python3 --version
 
       - name: Format and lint
         run: |
