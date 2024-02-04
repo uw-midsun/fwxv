@@ -52,12 +52,10 @@ static float prv_get_float(uint32_t u) {
 }
 
 static float prv_one_pedal_drive_current(float throttle_percent, float car_velocity) {
-  if (car_velocity <= MAX_OPD_SPEED) {
-    return (throttle_percent - (car_velocity * COASTING_THERSHOLD_SCALE)) /
-           (1 - (car_velocity * COASTING_THERSHOLD_SCALE));
-  } else {
-    return (throttle_percent - MAX_COASTING_THRESHOLD) / (1 - MAX_COASTING_THRESHOLD);
-  }
+  float threshold = car_velocity <= MAX_OPD_SPEED ? car_velocity * COASTING_THERSHOLD_SCALE
+                                                  : MAX_COASTING_THRESHOLD;
+  return throttle_percent >= threshold ? (throttle_percent - threshold) / (1 - threshold)
+                                       : (threshold - throttle_percent) / (threshold);
 }
 
 static void prv_update_target_current_velocity() {
