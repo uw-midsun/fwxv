@@ -35,10 +35,13 @@ typedef enum DriveState {
   // extra drive state types used only by mci
   CRUISE,
   BRAKE,
+  OPD_BRAKE,
 } DriveState;
 
 static float s_target_current;
 static float s_target_velocity;
+static float s_motor_velocity_l = 0.0;
+static float s_motor_velocity_r = 0.0;
 
 static float prv_get_float(uint32_t u) {
   union {
@@ -48,17 +51,28 @@ static float prv_get_float(uint32_t u) {
   return fu.f;
 }
 
+static float prv_one_pedal_drive_current(float throttle_percent, float car_velocity) {
+  if (car_velocity <= MAX_OPD_SPEED) {
+    return (throttle_percent - (car_velocity * COASTING_THERSHOLD_SCALE)) / (1 - (car_velocity * COASTING_THERSHOLD_SCALE));
+  }
+  else {
+    return (throttle_percent - MAX_COASTING_THRESHOLD) / (1 - MAX_COASTING_THRESHOLD);
+  }
+}
+
 static void prv_update_target_current_velocity() {
   float throttle_percent = prv_get_float(get_pedal_output_throttle_output());
   float brake_percent = prv_get_float(get_pedal_output_brake_output());
   float target_vel = prv_get_float(get_drive_output_target_velocity()) * VEL_TO_RPM_RATIO;
+  float car_vel = (s_motor_velocity_l + s_motor_velocity_r) / 2;
 
   DriveState drive_state = get_drive_output_drive_state();
   bool regen = get_drive_output_regen_braking();
   bool cruise = get_drive_output_cruise_control();
 
   if (cruise && throttle_percent > CRUISE_THROTTLE_THRESHOLD) {
-    drive_state = DRIVE;
+    // drive_state = DRIVE;
+    drive_state = prv_one_pedal_drive_current(throttle_percent, car_vel) > 0 ? DRIVE : OPD_BRAKE; 
   }
   if (brake_percent > 0 || throttle_percent == 0) {
     drive_state = regen ? BRAKE : NEUTRAL;
@@ -68,8 +82,12 @@ static void prv_update_target_current_velocity() {
   // https://tritiumcharging.com/wp-content/uploads/2020/11/TritiumWaveSculptor22_Manual.pdf 18.3
   switch (drive_state) {
     case DRIVE:
-      s_target_current = throttle_percent;
+      s_target_current = prv_one_pedal_drive_current(throttle_percent, car_vel);
       s_target_velocity = TORQUE_CONTROL_VEL;
+      break;
+    case NEUTRAL:
+      s_target_current = 0;
+      s_target_velocity = 0;
       break;
     case REVERSE:
       s_target_current = throttle_percent;
@@ -83,8 +101,8 @@ static void prv_update_target_current_velocity() {
       s_target_current = ACCERLATION_FORCE;
       s_target_velocity = 0;
       break;
-    case NEUTRAL:
-      s_target_current = 0;
+    case OPD_BRAKE:
+      s_target_current = prv_one_pedal_drive_current(throttle_percent, car_vel);
       s_target_velocity = 0;
       break;
     default:
@@ -130,9 +148,11 @@ static void motor_controller_rx_all() {
 
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
         set_motor_velocity_velocity_l(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE);
+        s_motor_velocity_l = prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE;
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
         set_motor_velocity_velocity_r(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE);
+        s_motor_velocity_r = prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE;
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:
