@@ -35,23 +35,22 @@ I2CSettings i2c_settings = {
   .scl = BMS_PERIPH_I2C_SCL_PIN,
 };
 
-// const CurrentStorage current_storage = { 0 };
-
 void pre_loop_init() {
+  current_sense_init(&s_currentsense_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
   LOG_DEBUG("Welcome to BMS \n");
 }
 
 void run_fast_cycle() {
-  fsm_run_cycle(relays);  // runs current sense cycle too
+  run_current_sense_cycle();
+  wait_tasks(1);
+
+  fsm_run_cycle(relays);
   wait_tasks(1);
 }
 
 void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
-
-  // run_current_sense_cycle();
-  // wait_tasks(1);
 
   run_can_tx_cycle();
   wait_tasks(1);
@@ -67,7 +66,6 @@ int main() {
   i2c_init(BMS_PERIPH_I2C_PORT, &i2c_settings);
 
   init_relays();
-  // current_sense_init(&s_currentsense_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
 
   LOG_DEBUG("Welcome to BMS!\n");
   init_master_task();
