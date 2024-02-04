@@ -17,13 +17,15 @@ static const GpioAddress leds[] = {
 void pre_loop_init() {}
 
 TASK(hw_timer_task, TASK_STACK_512) {
-   gpio_init_pin(&leds[0], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-   gpio_init_pin(&leds[3], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
+  for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
+    gpio_init_pin(&leds[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  }
+
   while (true) {
     gpio_toggle_state(&leds[0]);
     gpio_toggle_state(&leds[3]);
     LOG_DEBUG("HW Delay");
-    hw_timer_delay_ms(100);
+    hw_timer_delay_us(100);
   }
 }
 
