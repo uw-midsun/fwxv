@@ -11,7 +11,7 @@
 ---
   Messages:
     cc_power_control:
-      id: 1
+      id: 8
       target:
         power_distribution:
           watchdog: 0
@@ -23,7 +23,7 @@
           length: 8
 
     drive_output: 
-      id: 2
+      id: 9
       target:
         motor_controller:
           watchdog: 0
