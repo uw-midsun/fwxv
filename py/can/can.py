@@ -1,7 +1,7 @@
 import threading
 import subprocess
 import re
-
+import time
 
 def set_output(output):
     '''set the terminal output to the output string'''
@@ -45,3 +45,21 @@ class Can:
 
     def tx(self, message):
         subprocess.run(["cansend", self.device, message], check=False)
+
+# not sure how this will work out, needs reconciliation
+def repeat(repeat_period, send_device_message, *args):
+    def threading_repeat(kill_process):
+        while not kill_process.is_set():
+            send_device_message(*args)
+            time.sleep(repeat_period)
+
+    kill_process = threading.Event()
+
+    process_name = threading.Thread(target=threading_repeat, args=(kill_process,))
+    process_name.start()
+
+    return process_name, kill_process
+
+def end_repeat(send_device_message_process, kill_process):
+    kill_process.set()
+    send_device_message_process.join()

@@ -1,6 +1,6 @@
 #include "log.h"
 #include "tasks.h"
-#include "{{ task_name }}_task.h"
+#include "{{ task_name }}.h"
 
 static SemaphoreHandle_t s_{{ task_name }}_sem_handle;
 static StaticSemaphore_t s_{{ task_name }}_sem;
@@ -26,7 +26,7 @@ TASK({{ task_name }}, TASK_MIN_STACK_SIZE) {
             run_{{ task_name }}_medium_cycle();
         if ((counter % 100) == 0)
             run_{{ task_name }}_slow_cycle();
-        xSemaphoreGive(s_end_task_sem);
+        send_task_end();
     }
 }
 
