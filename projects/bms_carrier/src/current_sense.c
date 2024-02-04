@@ -35,7 +35,7 @@ static SoftTimer s_timer;
 static bool s_is_charging;
 
 // Periodically read and update the SoC of the car & update charging bool
-static StatusCode prv_fuel_gauge_read() {
+StatusCode fuel_gauge_read() {
   StatusCode status = STATUS_CODE_OK;
 
   uint16_t soc = 0;
@@ -92,6 +92,7 @@ bool current_sense_is_charging() {
 StatusCode run_current_sense_cycle() {
   StatusCode ret = notify(current_sense, CURRENT_SENSE_RUN_CYCLE);
   if (ret == pdFALSE) {
+    open_relays();
     return STATUS_CODE_INTERNAL_ERROR;
   }
 

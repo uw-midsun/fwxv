@@ -8,6 +8,7 @@
 #include "status.h"
 #include "task.h"
 #include "bms.h"
+#include "current_sense.h"
 #include "bms_carrier_getters.h"
 #include "bms_carrier_setters.h"
 

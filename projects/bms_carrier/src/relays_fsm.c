@@ -2,10 +2,13 @@
 #include "gpio.h"
 // check current sense CS_FAULT pin
 // AFE cell conversions, wait 10ms by reading start time
-// Peform current sense read and check
+// Peform current sense read and check DONE
 // Read AFE Cells and do checks
 
-#define bms_fault_ok_or_transition(fsm) LOG_DEBUG("Bms fault check \n");
+static void prv_bms_fault_ok_or_transition(fsm) {
+  LOG_DEBUG("Bms fault check \n");
+  run_current_sense_cycle(); // This task checks + runs, and opens relays if fault
+}
 
 FSM(relays, NUM_RELAY_STATES, TASK_STACK_512);
 static RelaysStateId fsm_prev_state = RELAYS_OPEN;
@@ -34,7 +37,7 @@ static void prv_relays_open_output(void *context) {
 }
 
 static void prv_relays_open_input(Fsm *fsm, void *context) {
-  bms_fault_ok_or_transition(fsm);
+  prv_bms_fault_ok_or_transition(fsm);
   RelaysStateId relay_event = get_bms_relays_relays_state();
   if (relay_event == RELAYS_CLOSED) {
     fsm_transition(fsm, RELAYS_CLOSED);
@@ -49,7 +52,7 @@ static void prv_relays_closed_output(void *context) {
 }
 
 static void prv_relays_closed_input(Fsm *fsm, void *context) {
-  bms_fault_ok_or_transition(fsm);
+  prv_bms_fault_ok_or_transition(fsm);
   RelaysStateId relay_event = get_bms_relays_relays_state();
   if (relay_event == RELAYS_OPEN) {
     fsm_transition(fsm, RELAYS_OPEN);
