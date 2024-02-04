@@ -1,8 +1,9 @@
 #include <stdio.h>
-#include "hw_timer.h"
+
+#include "adc.h"
 #include "delay.h"
 #include "gpio.h"
-#include "adc.h"
+#include "hw_timer.h"
 #include "interrupt.h"
 #include "log.h"
 #include "tasks.h"
@@ -30,17 +31,15 @@ TASK(hw_timer_task, TASK_STACK_512) {
 }
 
 int main() {
-   tasks_init();
-   interrupt_init();
-   gpio_init();
-   hw_timer_init();
-   log_init();
+  tasks_init();
+  interrupt_init();
+  gpio_init();
+  hw_timer_init();
+  log_init();
 
-   tasks_init_task(hw_timer_task, TASK_PRIORITY(2), NULL);
+  tasks_init_task(hw_timer_task, TASK_PRIORITY(2), NULL);
 
-   tasks_start();
+  tasks_start();
 
-   return 0;
+  return 0;
 }
-
-
