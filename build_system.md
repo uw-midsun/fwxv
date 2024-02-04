@@ -78,8 +78,8 @@ Commands:
     clean
         Delete the `build` directory.
 
-Target:
-targest can be specified with an option.
+Targets:
+targets can be specified with an option.
 
     --project=<name>
         specify the target as a project with `name`

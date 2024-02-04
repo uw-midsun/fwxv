@@ -1,0 +1,29 @@
+{% set messages = messages | selectattr("receiver", "contains", board) | list -%}
+
+#pragma once
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "can_watchdog.h"
+
+typedef struct
+{
+{%- for message in messages %}
+    {%- for signal in message.signals %}
+    uint{{signal.length}}_t {{message.name}}_{{signal.name}};
+    {%- endfor %}
+{%- endfor %}
+{%- for message in messages %}
+    bool received_{{message.name}};
+{%- endfor %}
+} {{board}}_rx_struct;
+
+{% for message in messages %}
+    {%- if message.receiver[board].watchdog != 0 %}
+#define check_{{message.name}}_msg_watchdog() \
+    s_{{message.name}}_msg_watchdog.missed
+
+extern CanWatchDog s_{{message.name}}_msg_watchdog;
+    {%- endif %}
+{%- endfor %}

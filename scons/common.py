@@ -33,6 +33,7 @@ def flash_run(entry):
     except:
         print()
         print("Flashing requires a controller board to be connected, use --platform=x86 for x86 targets")
+        exit(1)
 
     OPENOCD = 'openocd'
     OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'

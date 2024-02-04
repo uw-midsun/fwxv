@@ -1,0 +1,12 @@
+{% set messages = messages | selectattr("sender", "eq", board) | list -%}
+
+#pragma once
+
+#include "can_codegen.h"
+
+{% for message in messages %}    
+    {%- for signal in message.signals %}
+#define set_{{message.name}}_{{signal.name}}(val) \
+    g_tx_struct.{{message.name}}_{{signal.name}} = val
+    {% endfor %}
+{%- endfor %}

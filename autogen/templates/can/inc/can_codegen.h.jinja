@@ -1,0 +1,19 @@
+#pragma once
+
+#include "{{board}}_rx_structs.h"
+#include "{{board}}_tx_structs.h"
+#include "can.h"
+
+// TODO: Shouldn't add these?
+// #include "new_can_receive_all.h"
+// #include "new_can_transmit_all.h"
+
+typedef {{board}}_rx_struct rx_struct;
+typedef {{board}}_tx_struct tx_struct;
+
+// TODO: Should I expose these structs?
+extern rx_struct g_rx_struct;
+extern tx_struct g_tx_struct;
+
+void can_tx_all();
+void can_rx_all();
