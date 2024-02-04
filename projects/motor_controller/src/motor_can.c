@@ -53,9 +53,9 @@ static float prv_get_float(uint32_t u) {
 
 static float prv_one_pedal_drive_current(float throttle_percent, float car_velocity) {
   if (car_velocity <= MAX_OPD_SPEED) {
-    return (throttle_percent - (car_velocity * COASTING_THERSHOLD_SCALE)) / (1 - (car_velocity * COASTING_THERSHOLD_SCALE));
-  }
-  else {
+    return (throttle_percent - (car_velocity * COASTING_THERSHOLD_SCALE)) /
+           (1 - (car_velocity * COASTING_THERSHOLD_SCALE));
+  } else {
     return (throttle_percent - MAX_COASTING_THRESHOLD) / (1 - MAX_COASTING_THRESHOLD);
   }
 }
@@ -71,11 +71,13 @@ static void prv_update_target_current_velocity() {
   bool cruise = get_drive_output_cruise_control();
 
   if (cruise && throttle_percent > CRUISE_THROTTLE_THRESHOLD) {
-    // drive_state = DRIVE;
-    drive_state = prv_one_pedal_drive_current(throttle_percent, car_vel) > 0 ? DRIVE : OPD_BRAKE; 
+    drive_state = DRIVE;
   }
   if (brake_percent > 0 || throttle_percent == 0) {
     drive_state = regen ? BRAKE : NEUTRAL;
+  }
+  if (drive_state == DRIVE) {
+    drive_state = prv_one_pedal_drive_current(throttle_percent, car_vel) > 0 ? DRIVE : OPD_BRAKE;
   }
 
   // set target current and velocity based on drive state
