@@ -59,7 +59,7 @@ static float prv_one_pedal_drive_current(float throttle_percent, float car_veloc
   }
 
   return throttle_percent >= threshold ? (throttle_percent - threshold) / (1 - threshold)
-                                       : (throttle_percent - threshold) / (threshold * 2);
+                                       : (throttle_percent - threshold) / (threshold);
 }
 
 static void prv_update_target_current_velocity() {
