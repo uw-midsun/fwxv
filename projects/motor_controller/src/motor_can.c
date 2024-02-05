@@ -55,7 +55,7 @@ static float prv_one_pedal_drive_current(float throttle_percent, float car_veloc
   float threshold = car_velocity <= MAX_OPD_SPEED ? car_velocity * COASTING_THERSHOLD_SCALE
                                                   : MAX_COASTING_THRESHOLD;
   return throttle_percent >= threshold ? (throttle_percent - threshold) / (1 - threshold)
-                                       : (threshold - throttle_percent) / (threshold);
+                                       : (throttle_percent - threshold) / (threshold * 2);
 }
 
 static void prv_update_target_current_velocity() {
@@ -76,7 +76,8 @@ static void prv_update_target_current_velocity() {
     drive_state = regen ? BRAKE : NEUTRAL;
   }
   if (drive_state == DRIVE) {
-    drive_state = prv_one_pedal_drive_current(throttle_percent, car_vel) > 0 ? DRIVE : OPD_BRAKE;
+    // return negative if throttle pressed less than threshold
+    drive_state = prv_one_pedal_drive_current(throttle_percent, car_vel) >= 0 ? DRIVE : OPD_BRAKE;
   }
 
   // set target current and velocity based on drive state
@@ -103,7 +104,7 @@ static void prv_update_target_current_velocity() {
       s_target_velocity = 0;
       break;
     case OPD_BRAKE:
-      s_target_current = prv_one_pedal_drive_current(throttle_percent, car_vel);
+      s_target_current = -prv_one_pedal_drive_current(throttle_percent, car_vel);
       s_target_velocity = 0;
       break;
     default:
