@@ -12,7 +12,8 @@ static RelaysStateId fsm_prev_state = RELAYS_OPEN;
 static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   LOG_DEBUG("Bms fault check \n");
   StatusCode status = STATUS_CODE_OK;
-  status |= current_sense_fault_check();  // This task checks and opens relays if fault
+  status |= current_sense_fault_check();  // This task checks the fault bitset in current sense
+  status |= ltc_afe_impl_fault_check();
   if (status != STATUS_CODE_OK) {
     fsm_transition(fsm, RELAYS_FAULT);
   }

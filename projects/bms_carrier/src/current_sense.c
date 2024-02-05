@@ -58,7 +58,7 @@ static StatusCode prv_fuel_gauge_read() {
     // TODO (Adel): Handle a fuel gauge fault
     // Open Relays
     open_relays();
-    fault_bitset = status;
+    fault_bitset |= status;
     return status;
   }
 
@@ -85,7 +85,7 @@ TASK(current_sense, TASK_MIN_STACK_SIZE) {
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
       // TODO (Adel): BMS Open Relays
-      fault_bitset = notification & (1 << ALRT_GPIO_IT);
+      fault_bitset |= notification & (1 << ALRT_GPIO_IT);
     }
 
     prv_fuel_gauge_read();

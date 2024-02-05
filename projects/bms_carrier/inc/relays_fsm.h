@@ -9,6 +9,7 @@
 #include "fsm.h"
 #include "gpio.h"
 #include "log.h"
+#include "ltc_afe_impl.h"
 #include "status.h"
 #include "task.h"
 
