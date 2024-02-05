@@ -40,8 +40,8 @@ typedef enum DriveState {
 
 static float s_target_current;
 static float s_target_velocity;
-static float s_motor_velocity_l = 0.0;
-static float s_motor_velocity_r = 0.0;
+static float s_car_velocity_l = 0.0;
+static float s_car_velocity_r = 0.0;
 
 static float prv_get_float(uint32_t u) {
   union {
@@ -54,6 +54,10 @@ static float prv_get_float(uint32_t u) {
 static float prv_one_pedal_drive_current(float throttle_percent, float car_velocity) {
   float threshold = car_velocity <= MAX_OPD_SPEED ? car_velocity * COASTING_THERSHOLD_SCALE
                                                   : MAX_COASTING_THRESHOLD;
+  if (throttle_percent <= threshold + 0.05 && throttle_percent >= threshold - 0.05) {
+    return 0.0;
+  }
+
   return throttle_percent >= threshold ? (throttle_percent - threshold) / (1 - threshold)
                                        : (throttle_percent - threshold) / (threshold * 2);
 }
@@ -62,8 +66,7 @@ static void prv_update_target_current_velocity() {
   float throttle_percent = prv_get_float(get_pedal_output_throttle_output());
   float brake_percent = prv_get_float(get_pedal_output_brake_output());
   float target_vel = prv_get_float(get_drive_output_target_velocity()) * VEL_TO_RPM_RATIO;
-  float car_vel = (s_motor_velocity_l + s_motor_velocity_r) / 2;
-  car_vel *= CONVERT_VELOCITY_TO_KPH;
+  float car_vel = (s_car_velocity_l + s_car_velocity_r) / 2;
 
   DriveState drive_state = get_drive_output_drive_state();
   bool regen = get_drive_output_regen_braking();
@@ -75,9 +78,10 @@ static void prv_update_target_current_velocity() {
   if (brake_percent > 0 || throttle_percent == 0) {
     drive_state = regen ? BRAKE : NEUTRAL;
   }
-  if (drive_state == DRIVE) {
+  if (drive_state == DRIVE || drive_state == REVERSE) {
     // return negative if throttle pressed less than threshold
-    drive_state = prv_one_pedal_drive_current(throttle_percent, car_vel) >= 0 ? DRIVE : OPD_BRAKE;
+    drive_state =
+        prv_one_pedal_drive_current(throttle_percent, car_vel) >= 0 ? drive_state : OPD_BRAKE;
   }
 
   // set target current and velocity based on drive state
@@ -92,7 +96,7 @@ static void prv_update_target_current_velocity() {
       s_target_velocity = 0;
       break;
     case REVERSE:
-      s_target_current = throttle_percent;
+      s_target_current = prv_one_pedal_drive_current(throttle_percent, car_vel);
       s_target_velocity = -TORQUE_CONTROL_VEL;
       break;
     case CRUISE:
@@ -150,11 +154,11 @@ static void motor_controller_rx_all() {
 
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
         set_motor_velocity_velocity_l(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE);
-        s_motor_velocity_l = prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE;
+        s_car_velocity_l = prv_get_float(msg.data_u32[1]) * CONVERT_VELOCITY_TO_KPH;
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
         set_motor_velocity_velocity_r(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE);
-        s_motor_velocity_r = prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE;
+        s_car_velocity_r = prv_get_float(msg.data_u32[1]) * CONVERT_VELOCITY_TO_KPH;
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:

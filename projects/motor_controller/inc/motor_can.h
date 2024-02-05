@@ -14,7 +14,7 @@
 
 #define MAX_COASTING_THRESHOLD 0.4     // Max pedal threshold when coasting at speeds > 8 km/h
 #define MAX_OPD_SPEED 8                // Max car speed before one pedal driving threshold maxes out
-#define CONVERT_VELOCITY_TO_KPH 0.036  // Converts cm/s to km/h
+#define CONVERT_VELOCITY_TO_KPH 3.6    // Converts m/s to km/h
 #define COASTING_THERSHOLD_SCALE 0.05  // Scaling value to determine coasting threshold
 
 #define DRIVER_CONTROL_BASE 0x1
