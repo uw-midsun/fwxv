@@ -65,18 +65,6 @@ void pre_loop_init() {
 }
 
 void run_fast_cycle() {
-  run_current_sense_cycle();
-  wait_tasks(1);
-
-  ltc_afe_impl_trigger_cell_conv(&s_ltc_store);
-  // delay_ms(10);
-  ltc_afe_impl_read_cells(&s_ltc_store);
-  for (int cell = 0; cell < 12; cell++) {
-    LOG_DEBUG("CELL %d: %d\n\r", cell,
-              s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]);
-    // delay_ms(1);
-  }
-
   fsm_run_cycle(relays);
   wait_tasks(1);
 }

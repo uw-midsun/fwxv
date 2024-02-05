@@ -9,11 +9,13 @@
 #include "fsm.h"
 #include "gpio.h"
 #include "log.h"
+#include "ltc_afe.h"
 #include "ltc_afe_impl.h"
 #include "status.h"
 #include "task.h"
 
 #define NUM_RELAY_STATES 3
+#define FUEL_GAUGE_CYCLE_TIME_MS 100
 
 void close_relays();
 void open_relays();

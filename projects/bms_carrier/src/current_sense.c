@@ -72,7 +72,6 @@ static StatusCode prv_fuel_gauge_read() {
   // note that a negative value indicates the battery is charging
   s_is_charging = s_current_storage->average < 0;
 
-  fault_bitset = status;
   return status;
 }
 
@@ -112,7 +111,7 @@ StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings
   gpio_it_init();
   i2c_init(I2C_PORT_1, i2c_settings);
 
-  GpioAddress alrt_pin = { .port = GPIO_PORT_B, .pin = 1 };
+  GpioAddress alrt_pin = { .port = GPIO_PORT_A, .pin = 7 };
 
   InterruptSettings it_settings = {
     .priority = INTERRUPT_PRIORITY_NORMAL,

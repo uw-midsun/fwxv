@@ -47,8 +47,6 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     // delay_ms(1);
   }
 
-  status |= ltc_afe_impl_fault_check();
-
   if (status != STATUS_CODE_OK) {
     fsm_transition(fsm, RELAYS_FAULT);
   }
