@@ -12,6 +12,32 @@ static RelaysStateId fsm_prev_state = RELAYS_OPEN;
 static CurrentStorage s_currentsense_storage;
 static LtcAfeStorage s_ltc_store;
 
+static const LtcAfeSettings s_afe_settings = {
+  // Settings pending hardware validation
+  .mosi = { .port = GPIO_PORT_B, .pin = 15 },
+  .miso = { .port = GPIO_PORT_B, .pin = 14 },
+  .sclk = { .port = GPIO_PORT_B, .pin = 13 },
+  .cs = { .port = GPIO_PORT_B, .pin = 12 },
+
+  .spi_port = SPI_PORT_2,
+  .spi_baudrate = 750000,
+
+  .adc_mode = LTC_AFE_ADC_MODE_7KHZ,
+
+  .cell_bitset = { 0xFF },
+  .aux_bitset = { 0 },
+
+  .num_devices = 1,
+  .num_cells = 12,
+  .num_thermistors = 12,
+};
+
+static const I2CSettings i2c_settings = {
+  .speed = I2C_SPEED_STANDARD,
+  .sda = BMS_PERIPH_I2C_SDA_PIN,
+  .scl = BMS_PERIPH_I2C_SCL_PIN,
+};
+
 GpioAddress const POS_RELAY_EN = { .port = GPIO_PORT_B, .pin = 8 };
 GpioAddress const NEG_RELAY_EN = { .port = GPIO_PORT_B, .pin = 4 };
 GpioAddress const SOLAR_RELAY_EN = { .port = GPIO_PORT_C, .pin = 13 };
@@ -106,6 +132,9 @@ static bool s_relays_transitions[NUM_RELAY_STATES][NUM_RELAY_STATES] = {
 };
 
 StatusCode init_relays(void) {
+  i2c_init(BMS_PERIPH_I2C_PORT, &i2c_settings);
+  ltc_afe_init(&s_ltc_store, &s_afe_settings);
+  current_sense_init(&s_currentsense_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
   gpio_init_pin(&POS_RELAY_EN, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&NEG_RELAY_EN, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&SOLAR_RELAY_EN, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);

@@ -32,41 +32,14 @@ static const CanSettings can_settings = {
   .loopback = false,
 };
 
-static const LtcAfeSettings s_afe_settings = {
-  // Settings pending hardware validation
-  .mosi = { .port = GPIO_PORT_B, .pin = 15 },
-  .miso = { .port = GPIO_PORT_B, .pin = 14 },
-  .sclk = { .port = GPIO_PORT_B, .pin = 13 },
-  .cs = { .port = GPIO_PORT_B, .pin = 12 },
-
-  .spi_port = SPI_PORT_2,
-  .spi_baudrate = 750000,
-
-  .adc_mode = LTC_AFE_ADC_MODE_7KHZ,
-
-  .cell_bitset = { 0xFF },
-  .aux_bitset = { 0 },
-
-  .num_devices = 1,
-  .num_cells = 12,
-  .num_thermistors = 12,
-};
-
-static const I2CSettings i2c_settings = {
-  .speed = I2C_SPEED_STANDARD,
-  .sda = BMS_PERIPH_I2C_SDA_PIN,
-  .scl = BMS_PERIPH_I2C_SCL_PIN,
-};
-
 void pre_loop_init() {
-  ltc_afe_init(&s_ltc_store, &s_afe_settings);
-  current_sense_init(&s_currentsense_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
   LOG_DEBUG("Welcome to BMS \n");
+  init_relays();
 }
 
 void run_fast_cycle() {
-  fsm_run_cycle(relays);
-  wait_tasks(1);
+  // fsm_run_cycle(relays);
+  // wait_tasks(1);
 }
 
 void run_medium_cycle() {
@@ -82,11 +55,9 @@ void run_slow_cycle() {}
 int main() {
   tasks_init();
   log_init();
+  interrupt_init();
   gpio_init();
   can_init(&s_can_storage, &can_settings);
-  i2c_init(BMS_PERIPH_I2C_PORT, &i2c_settings);
-
-  init_relays();
 
   LOG_DEBUG("Welcome to BMS!\n");
   init_master_task();
