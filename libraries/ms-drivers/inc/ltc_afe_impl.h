@@ -16,6 +16,7 @@
 // |settings.cell_bitset| and |settings.aux_bitset| should be an array of bitsets where bits 0 to 11
 // represent whether we should monitor the cell input for the given device.
 StatusCode ltc_afe_impl_init(LtcAfeStorage *afe, const LtcAfeSettings *settings);
+StatusCode ltc_afe_impl_fault_check();
 
 // Triggers a conversion. Note that we need to wait for the conversions to complete before the
 // readback will be valid.

@@ -69,7 +69,7 @@ void run_fast_cycle() {
   wait_tasks(1);
 
   ltc_afe_impl_trigger_cell_conv(&s_ltc_store);
-  delay_ms(10);
+  // delay_ms(10);
   ltc_afe_impl_read_cells(&s_ltc_store);
   for (int cell = 0; cell < 12; cell++) {
     LOG_DEBUG("CELL %d: %d\n\r", cell,
