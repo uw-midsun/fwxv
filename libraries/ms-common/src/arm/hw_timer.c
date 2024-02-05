@@ -4,6 +4,8 @@
 #include "stm32f10x.h"
 
 #define hw_timer_delay_ms(ms) hw_timer_delay_us((ms)*1000)
+#define hw_timer_callback_ms(ms, callback_function) \
+  hw_timer_delay_us((ms)*1000, (callback_function))
 
 void hw_timer_init(void) {
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
@@ -43,4 +45,10 @@ void hw_timer_delay_us(uint32_t us) {
   }
 
   TIM_Cmd(TIM2, DISABLE);
+}
+
+void hw_timer_callback_us(uint32_t us, TimerCallback callback_function) {
+  hw_timer_delay_us(us);
+
+  if (callback_function != NULL) callback_function();
 }
