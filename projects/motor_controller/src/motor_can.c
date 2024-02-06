@@ -72,13 +72,13 @@ static void prv_update_target_current_velocity() {
   bool regen = get_drive_output_regen_braking();
   bool cruise = get_drive_output_cruise_control();
 
-  if (cruise && throttle_percent > CRUISE_THROTTLE_THRESHOLD) {
-    drive_state = DRIVE;
+  if (drive_state == DRIVE && cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
+    drive_state = CRUISE;
   }
-  if (brake_percent > 0 || throttle_percent == 0) {
+  if (brake_percent > 0 || (throttle_percent == 0 && drive_state != CRUISE)) {
     drive_state = regen ? BRAKE : NEUTRAL;
   }
-  if (drive_state == DRIVE || drive_state == REVERSE) {
+  if ((drive_state == DRIVE || drive_state == REVERSE) && regen) {
     // return negative if throttle pressed less than threshold
     drive_state =
         prv_one_pedal_drive_current(throttle_percent, car_vel) >= 0 ? drive_state : OPD_BRAKE;
