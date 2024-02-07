@@ -28,7 +28,6 @@ Event prv_find_next_event() {
   }
   // Gets index of least significant 0 bit (first available event)
   Event event = __builtin_ctz(~s_registered_callbacks);
-
   return event;
 }
 
@@ -96,13 +95,13 @@ Event register_callback(CallbackFn cb, void *context) {
 TASK(callback_task, TASK_STACK_512) {
   uint32_t notification = 0;
   Event event = 0;
-  StatusCode notification_status;
   while (true) {
     notify_wait(&notification, BLOCK_INDEFINITELY);
 
-    do {
-      notification_status = event_from_notification(&notification, &event);
+    event_from_notification(&notification, &event);
+    while (event != INVALID_EVENT) {
       prv_trigger_callback(event);
-    } while (notification_status != STATUS_CODE_OK);
+      event_from_notification(&notification, &event);
+    }
   }
 }

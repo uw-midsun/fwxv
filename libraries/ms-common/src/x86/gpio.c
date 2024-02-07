@@ -50,7 +50,7 @@ StatusCode gpio_set_state(const GpioAddress *address, GpioState state) {
   }
   GpioMode mode = s_gpio_pin_modes[prv_get_index(address)];
   if (mode != GPIO_OUTPUT_OPEN_DRAIN && mode != GPIO_OUTPUT_PUSH_PULL) {
-    LOG_WARN("Attempting to set an output pin, check your configuration");
+    LOG_WARN("Attempting to set an input pin, check your configuration");
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 

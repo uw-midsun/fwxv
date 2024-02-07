@@ -26,10 +26,12 @@ uint8_t get_cycles_over() {
 }
 #endif
 
-void run_fast_cycle();
-void run_medium_cycle();
-void run_slow_cycle();
-void pre_loop_init();
+void master_no_op() {}
+
+void run_fast_cycle() __attribute__((weak, alias("master_no_op")));
+void run_medium_cycle() __attribute__((weak, alias("master_no_op")));
+void run_slow_cycle() __attribute__((weak, alias("master_no_op")));
+void pre_loop_init() __attribute__((weak, alias("master_no_op")));
 
 void check_late_cycle(BaseType_t delay) {
   if (delay != pdTRUE) {

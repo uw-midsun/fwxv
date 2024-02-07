@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "log.h"
 #include "mcp2515.h"
 #include "motor_controller_getters.h"
 #include "motor_controller_setters.h"
@@ -57,10 +58,10 @@ static void prv_update_target_current_velocity() {
   bool regen = get_drive_output_regen_braking();
   bool cruise = get_drive_output_cruise_control();
 
-  if (cruise && throttle_percent > CRUISE_THROTTLE_THRESHOLD) {
-    drive_state = DRIVE;
+  if (drive_state == DRIVE && cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
+    drive_state = CRUISE;
   }
-  if (brake_percent > 0 || throttle_percent == 0) {
+  if (brake_percent > 0 || (throttle_percent == 0 && drive_state != CRUISE)) {
     drive_state = regen ? BRAKE : NEUTRAL;
   }
 
@@ -94,16 +95,20 @@ static void prv_update_target_current_velocity() {
 }
 
 static void motor_controller_tx_all() {
-  // TODO: add can watchdog to shut down motor controller if messages are not received from
-  // center console
+  // don't send drive command if didn't get centre console's drive output msg
+  if (!get_received_drive_output()) return;
+  // if (!get_pedal_output_brake_output()) return;
+  // don't send drive command if not precharged
+  if (!g_tx_struct.mc_status_precharge_status) return;
+
   prv_update_target_current_velocity();
 
   CanMessage message = {
     .id.raw = DRIVER_CONTROL_BASE + 0x01,
     .dlc = 8,
   };
-  memcpy(&message.data_u32[0], &s_target_current, sizeof(s_target_current));
-  memcpy(&message.data_u32[1], &s_target_velocity, sizeof(s_target_velocity));
+  memcpy(&message.data_u32[0], &s_target_current, sizeof(uint32_t));
+  memcpy(&message.data_u32[1], &s_target_velocity, sizeof(uint32_t));
 
   mcp2515_transmit(&message);
 }
@@ -113,10 +118,12 @@ static void motor_controller_rx_all() {
   while (mcp2515_receive(&msg) == STATUS_CODE_OK) {
     switch (msg.id.raw) {
       case MOTOR_CONTROLLER_BASE_L + STATUS:
-        set_motor_status_motor_status_l(msg.data_u32[1]);
+        set_mc_status_error_bitset_l(msg.data_u16[2] >> 1);
+        set_mc_status_limit_bitset_l(msg.data_u16[3]);
         break;
       case MOTOR_CONTROLLER_BASE_R + STATUS:
-        set_motor_status_motor_status_r(msg.data_u32[1]);
+        set_mc_status_error_bitset_r(msg.data_u16[2] >> 1);
+        set_mc_status_limit_bitset_r(msg.data_u16[3]);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + BUS_MEASUREMENT:
@@ -129,10 +136,12 @@ static void motor_controller_rx_all() {
         break;
 
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
-        set_motor_velocity_velocity_l(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE);
+        set_motor_velocity_velocity_l(
+            (uint16_t)(int16_t)(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE));
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
-        set_motor_velocity_velocity_r(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE);
+        set_motor_velocity_velocity_r(
+            (uint16_t)(int16_t)(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE));
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:
@@ -142,6 +151,13 @@ static void motor_controller_rx_all() {
       case MOTOR_CONTROLLER_BASE_R + HEAT_SINK_MOTOR_TEMP:
         set_motor_sink_temps_heatsink_temp_r(prv_get_float(msg.data_u32[0]) * TEMP_SCALE);
         set_motor_sink_temps_motor_temp_r(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
+        break;
+
+      case MOTOR_CONTROLLER_BASE_L + DSP_BOARD_TEMP:
+        set_dsp_board_temps_dsp_temp_l(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
+        break;
+      case MOTOR_CONTROLLER_BASE_R + DSP_BOARD_TEMP:
+        set_dsp_board_temps_dsp_temp_r(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
         break;
     }
   }

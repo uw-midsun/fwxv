@@ -2,16 +2,22 @@
 
 #include "can.h"
 #include "can_board_ids.h"
+#include "can_codegen.h"
 #include "delay.h"
 #include "fsm.h"
+#include "gpio_it.h"
+#include "interrupt.h"
 #include "log.h"
 #include "master_task.h"
 #include "mcp2515.h"
 #include "misc.h"
 #include "motor_can.h"
-#include "precharge_control.h"
+#include "motor_controller_setters.h"
+#include "precharge.h"
 #include "soft_timer.h"
 #include "tasks.h"
+
+#define PRECHARGE_EVENT 0
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
@@ -19,36 +25,48 @@ const CanSettings can_settings = {
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
-  .loopback = true,
+  .loopback = false,
 };
 static Mcp2515Storage s_mcp2515_storage = { 0 };
-Mcp2515Settings mcp2515_settings = {  // place holder values
-  .spi_port = SPI_PORT_1,
+static Mcp2515Settings s_mcp2515_settings = {
+  .spi_port = SPI_PORT_2,
   .spi_settings = {
-    0
+    .baudrate = 10000000,  // 10Mhz
+    .mode = SPI_MODE_0,
+    .mosi = { GPIO_PORT_B, 15 },
+    .miso = { GPIO_PORT_B, 14 },
+    .sclk = { GPIO_PORT_B, 13 },
+    .cs = { GPIO_PORT_B, 12 },
   },
-  .interrupt_pin = { GPIO_PORT_A, 0 },
+  .interrupt_pin = { GPIO_PORT_A, 8 },
+  .RX0BF = { GPIO_PORT_B, 10 },
+  .RX1BF = { GPIO_PORT_B, 11 },
   .can_settings = {
     .bitrate = CAN_HW_BITRATE_500KBPS,
-    .loopback = true,
+    .loopback = false,
   },
 };
-PrechargeControlSettings precharge_settings = {
-  // place holder values
-  .precharge_control = { GPIO_PORT_A, 10 },
-  .precharge_monitor = { GPIO_PORT_A, 9 },
-  .precharge_monitor2 = { GPIO_PORT_A, 8 },
+static PrechargeSettings s_precharge_settings = {
+  .precharge_control = { GPIO_PORT_A, 9 },
+  .precharge_monitor = { GPIO_PORT_B, 0 },
 };
 
 void pre_loop_init() {}
 
 void run_fast_cycle() {
+  uint32_t notification;
+  notify_get(&notification);
+  if (notification & (1 << PRECHARGE_EVENT)) {
+    LOG_DEBUG("Precharge complete\n");
+    set_mc_status_precharge_status(true);
+  }
+
   run_can_rx_cycle();
   run_mcp2515_rx_cycle();
   wait_tasks(2);
 
-  run_can_tx_cycle();
   run_mcp2515_tx_cycle();
+  run_can_tx_cycle();
   wait_tasks(2);
 }
 
@@ -59,10 +77,15 @@ void run_slow_cycle() {}
 int main() {
   tasks_init();
   log_init();
+  gpio_init();
+  interrupt_init();
+  gpio_it_init();
+
   can_init(&s_can_storage, &can_settings);
-  mcp2515_init(&s_mcp2515_storage, &mcp2515_settings);
-  precharge_control_init(&precharge_settings);
+  mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
   init_motor_controller_can();
+  precharge_init(&s_precharge_settings, PRECHARGE_EVENT, get_master_task());
+
   LOG_DEBUG("Motor Controller Task\n");
 
   init_master_task();
