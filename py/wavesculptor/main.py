@@ -2,19 +2,17 @@
 Simulate a wavesculptor 22's can messages
 '''
 import subprocess
-import os
 import time
 import struct
-import sys
 from collections import defaultdict
-from can import can
-from can.util import set_output, parse_line
 import threading
+from can.util import set_output, parse_line
 
 DRIVER_CONTROL_BASE = 0x00
 MOTOR_CONTROLLER_BASE_L = 0x40
 MOTOR_CONTROLLER_BASE_R = 0x80
 CAN = "can0"
+
 
 def pack(num, size):
     '''pack a variable into the given size in hex'''
@@ -95,6 +93,7 @@ velocity:  {rx["velocity"]}
 
 
 def handle_rx(rx):
+    '''handle rx from can device'''
     with subprocess.Popen(['candump', CAN], stdout=subprocess.PIPE) as proc:
         while True:
             line = proc.stdout.readline().decode().strip()
@@ -106,14 +105,6 @@ def handle_rx(rx):
 
 
 def main():
-    last_time = time.time()
-    with subprocess.Popen(['candump', CAN], stdout=subprocess.PIPE) as proc:
-        while True:
-            proc.stdout.readline()
-            current_time = time.time()
-            print(current_time - last_time)
-            last_time = current_time
-
     '''main'''
     wake_time = time.time()
     counter = 0

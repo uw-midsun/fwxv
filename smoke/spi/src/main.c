@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "delay.h"
 #include "gpio.h"
@@ -36,8 +37,6 @@ static SpiSettings spi_settings = {
   .sclk = { .port = GPIO_PORT_B, .pin = 13 },
   .cs = { .port = GPIO_PORT_B, .pin = 12 },
 };
-
-#include <string.h>
 
 TASK(smoke_spi_task, TASK_STACK_512) {
   spi_init(SPI_PORT_2, &spi_settings);

@@ -17,6 +17,8 @@
           watchdog: 0
         centre_console:
           watchdog: 0
+        power_distribution:
+          watchdog: 0
       signals:
         throttle_output:
           length: 32

@@ -35,11 +35,13 @@
           watchdog: 0
       critical: false
       signals:
-        module_id:
-          length: 16
         voltage:
           length: 16
+        current:
+          length: 16
         temperature:
+          length: 16
+        batt_perc:
           length: 16
     
     battery_aggregate_vc:

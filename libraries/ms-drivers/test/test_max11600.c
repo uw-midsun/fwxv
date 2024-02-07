@@ -18,7 +18,7 @@ static I2CSettings i2c_settings = {
 
 void setup_test(void) {
   log_init();
-  LOG_DEBUG("here");
+  LOG_DEBUG("here\n");
   i2c_init(TEST_MAX11600_I2C_PORT, &i2c_settings);
   TEST_ASSERT_OK(max11600_init(&max_storage, TEST_MAX11600_I2C_PORT));
 }

@@ -45,7 +45,6 @@ void test_pre_task(void) {
 {% if data.has_in_task_test -%}
 /*=======IN TASK TESTS=====*/
 TASK(test_task, TASK_STACK_1024) {
-  UnityBegin("{{data.filename}}");
 
   {% for test in data.tests | selectattr("type", "eq", "TEST_IN_TASK") %}
   run_test({{test.name}}, "{{test.name}}", {{test.line}});
@@ -58,11 +57,16 @@ TASK(test_task, TASK_STACK_1024) {
 /*=======MAIN=====*/
 int main() {
   setup_test();
+
+  UnityBegin("{{data.filename}}");
   test_pre_task();
 {%- if data.has_in_task_test %}
   tasks_init();
   tasks_init_task(test_task, configMAX_PRIORITIES - 1, NULL);
   tasks_start(); 
+{%- else %}
+  exit(UnityEnd());
 {%- endif %}
+
   return 0;
 }

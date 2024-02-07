@@ -11,7 +11,7 @@
 ---
   Messages:
     motor_controller_vc:
-      id: 30
+      id: 35
       target:
         centre_console:
           watchdog: 0
@@ -26,7 +26,7 @@
           length: 16
 
     motor_velocity:
-      id: 31
+      id: 36
       target:
         centre_console:
           watchdog: 0
@@ -83,14 +83,4 @@
         overtemp_bitset:
           length: 8
         precharge_status:
-          length: 8
-
-    # THIS MESSAGE DOESN'T EXIST
-    precharge_completed:
-      id: 14
-      target:
-        centre_console:
-          watchdog: 0
-      signals:
-        notification:
           length: 8

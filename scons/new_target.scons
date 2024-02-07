@@ -1,15 +1,6 @@
-#!/usr/bin/env python3
-"""New target script.
-
-This module sets up the folder structure and config.json for a new project or library.
-
-Usage: python3 new_target.py project|library name
-"""
-import os
-import textwrap
 import json
-import sys
-from string import Template
+import jinja2
+from pathlib import Path
 
 ###########################################################
 # Variables setup
@@ -17,111 +8,86 @@ from string import Template
 
 Import('VARS')
 
-TYPE = VARS.get("TYPE")
 TARGET = VARS.get("TARGET")
 
-README_TEMPLATE = Template("""\
-    <!--
-        General guidelines
-        These are just guidelines, not strict rules - document however seems best.
-        A README for a firmware-only project (e.g. Babydriver, MPXE, bootloader, CAN explorer) should answer the following questions:
-            - What is it?
-            - What problem does it solve?
-            - How do I use it? (with usage examples / example commands, etc)
-            - How does it work? (architectural overview)
-        A README for a board project (powering a hardware board, e.g. power distribution, centre console, charger, BMS carrier) should answer the following questions:
-            - What is the purpose of the board?
-            - What are all the things that the firmware needs to do?
-            - How does it fit into the overall system?
-            - How does it work? (architectural overview, e.g. what each module's purpose is or how data flows through the firmware)
-    -->
-    # $name
+# default configuration for projects
+DEFAULT_CONFIG = {"libs": ["FreeRTOS", "ms-common"]}
 
-    """)
 
-DEFAULT_DEPS = ["FreeRTOS", "ms-common"]
+def new_task(target, task_name):
+    '''Create a new task within target'''
+    DATA = {"task_name": task_name}
+    target_path = Path(target)
+    target_path.joinpath("inc").mkdir()
+    target_path.joinpath("src").mkdir()
 
-main_template_file = open(os.path.join('template', 'main_template.txt'), 'r')
+    templateLoader = jinja2.FileSystemLoader(searchpath="scons/template")
+    env = jinja2.Environment(loader=templateLoader)
 
-def generate_config(target_type):
-    """Generates a new config.json file for a project/library.
+    template = env.get_template("_task.h.jinja")
+    output = template.render(data=DATA)
+    target_path.joinpath(f'inc/{task_name}_task.h').write_text(output)
 
-    Args:
-        target_type: Either 'project' or 'library'
+    template = env.get_template("_task.c.jinja")
+    output = template.render(data=DATA)
+    target_path.joinpath(f'src/{task_name}_task.c').write_text(output)
 
-    Returns:
-        dict: dictionary representation of the initial config.json file.
-    """
-    deps = DEFAULT_DEPS if target_type == 'project' or target_type == 'smoke' else []
 
-    return {"libs": deps}
-
-def new_target(target_type, name):
+def new_target(target, source, env):
     """Creates a new project or library.
 
     Creates a subfolder in the appropriate folder with the specified name
     with the following structure:
 
-    projects/libraries
+    project/library/smoke
     - name
         - inc
         - README.md
         - config.json 
         - src
         - test
-
-    where config.json is required for the project or library to be valid.
-
-    Args:
-        target_type: Either 'project' or 'library' or 'python'.
-        name: The new project or library's name.
-
-    Returns:
-        None
+    py
+    - name
+        - __init__.py
+        - main.py
     """
-    if (target_type == 'python'):
-        return new_py_project(name)
+    if not TARGET:
+        print("Missing target. Expected --project=..., or --library=..., or --python=..., or --smoke=...")
+        return
 
-    type_folders = {
-        'project': 'projects',
-        'library': 'libraries',
-        'smoke': 'smoke'
-    }
+    task_name = GetOption("task")
+    if task_name:
+        new_task(TARGET, task_name)
+        return
 
-    proj_path = os.path.join(type_folders[target_type], name)
-    folders = ['src', 'inc', 'test']
+    target_dir = Path(TARGET)
+    target_dir.mkdir(parents=True)
 
-    for folder in folders:
-        os.makedirs(os.path.join(proj_path, folder), exist_ok=True)
+    if TARGET.startswith('py'):
+        target_dir.joinpath('__init__.py').touch()
+        target_dir.joinpath('main.py').touch()
+        print(f'Created new {TARGET}')
+        return
 
-    with open(os.path.join(proj_path, 'config.json'), 'w') as config_file:
-        json.dump(generate_config(target_type), config_file, indent=4)
+    for folder in ['src', 'inc', 'test']:
+        target_dir.joinpath(folder).mkdir(parents=True, exist_ok=True)
 
-    with open(os.path.join(proj_path, 'README.md'), 'w') as readme_file:
-        readme_file.write(textwrap.dedent(README_TEMPLATE.substitute({'name': name})))
+    config = []
+    if TARGET.startswith("project") or TARGET.startswith("smoke"):
+        config = DEFAULT_CONFIG
 
-    with open(os.path.join(proj_path, 'src', 'main.c'), 'w') as main_file:
-        main_file.write(textwrap.dedent(main_template_file.read()))
+    target_dir.joinpath("config.json").write_text(json.dumps(config, indent=4))
 
-    print('Created new {0} {1}'.format(target_type, name))
+    readme_template = Path("scons/template/README.md")
+    readme_file = target_dir.joinpath("README.md")
+    readme_file.write_text(readme_template.read_text() + target_dir.name)
 
-def new_py_project(name):
-    os.makedirs(os.path.join('py', name), exist_ok=True)
-    open(os.path.join('py', name, '__init__.py'), 'a').close()
-    open(os.path.join('py', name, 'main.py'), 'a').close()
+    main_c_template = Path("scons/template/main.c")
+    main_c_file = target_dir.joinpath("src/main.c")
+    main_c_file.write_text(main_c_template.read_text())
 
-def make_new_target(target, source, env):
-    # No project or library option provided
-    if not TYPE:
-        print("Missing project or library name. Expected --project=..., or --library=..., or --python")
-        sys.exit(1)
-    
-    if env.get("smoke") and TYPE == 'project':
-        new_target('smoke', TARGET)
-    else:
-        new_target(TYPE, TARGET)
+    print(f'Created new {TARGET}')
 
-new = Command('new_proj.txt', [], make_new_target)
+
+new = Command('new_proj.txt', [], new_target)
 Alias('new', new)
-new = Command('new_smoke.txt', [], make_new_target, smoke=True)
-Alias('new_smoke', new)

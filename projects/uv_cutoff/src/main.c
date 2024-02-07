@@ -36,7 +36,7 @@ static const GpioAddress lights = { .port = LIGHTS_PORT, .pin = LIGHTS_PIN };
 
 static CanStorage s_can_storage = { 0 };
 static const CanSettings can_settings = {
-  .device_id = 0x1,
+  .device_id = SYSTEM_CAN_DEVICE_UV_CUTOFF,
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },

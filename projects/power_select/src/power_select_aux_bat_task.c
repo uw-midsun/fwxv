@@ -13,7 +13,7 @@ static uint16_t adc_reading_voltage;
 static uint16_t adc_reading_current;
 static uint16_t adc_reading_temp;
 
-FSM(aux_bat, NUM_POWER_SELECT_STATES);
+FSM(aux_bat, NUM_POWER_SELECT_STATES, TASK_STACK_512);
 
 static void prv_aux_bat_inactive_input(Fsm *fsm, void *context) {
   GpioState state = GPIO_STATE_LOW;

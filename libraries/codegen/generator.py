@@ -76,6 +76,11 @@ def get_data():
                     "name": signal_name,
                     "start_bit": start_bit,
                     "length": signal["length"],
+                    "scale": 1,
+                    "offset": 0,
+                    "min": 0,
+                    "max": 100,
+                    "receiver": message["target"],
                 })
                 start_bit += signal["length"]
 
@@ -111,8 +116,6 @@ def main():
         for template in templates:
             output = env.get_template(template).render(data=data)
             Path(output_dir, get_file_name(template, args.board)).write_text(output)
-
-    print("Done autogenerating")
 
 
 if __name__ == "__main__":

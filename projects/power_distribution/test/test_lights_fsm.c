@@ -3,7 +3,7 @@
 #include "task_test_helpers.h"
 #include "unity.h"
 
-#define HAZARD_SIGNAL_MSG g_rx_struct.power_info_hazard_state
+#define HAZARD_SIGNAL_MSG g_rx_struct.cc_power_control_hazard_enabled
 #define STEERING_ANALOG_SIGNAL_MSG g_rx_struct.steering_info_input_lights
 
 void setup_test(void) {

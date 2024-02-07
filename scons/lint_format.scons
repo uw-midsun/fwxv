@@ -1,7 +1,6 @@
 from scons.common import parse_config
 import glob
 import subprocess
-import scons
 
 ###########################################################
 # Variables setup
@@ -9,79 +8,40 @@ import scons
 
 Import('VARS')
 
-TYPE = VARS.get("TYPE")
 TARGET = VARS.get("TARGET")
 
 ROOT = Dir('#')
 
-PROJ_DIR = ROOT.Dir('projects')
-LIB_DIR = ROOT.Dir('libraries')
-SMOKE_DIR = ROOT.Dir("SMOKE_DIR")
+PROJ_DIRS = ROOT.glob('projects/*')
+LIB_DIRS = ROOT.glob('libraries/*')
+SMOKE_DIRS = ROOT.glob('smoke/*')
+PY_DIRS = ROOT.glob('py/*')
 
-PROJ_DIRS = [entry for entry in PROJ_DIR.glob('*')]
-LIB_DIRS = [entry for entry in LIB_DIR.glob('*')]
 
 ###########################################################
 # Linting and Formatting
 ###########################################################
-
-# Convert a list of paths/Dirs to space-separated paths.
-def dirs_to_str(dir_list):
-    # Use str(file) to ensure Dir objects are converted to paths.
-    return ' '.join([str(file) for file in dir_list])
-
-# Glob files by extension in a particular directory. Defaults to root directory.
-def glob_by_extension(extension, dir='.'):
-    return glob.glob('{}/**/*.{}'.format(str(dir), extension), recursive=True)
-
-# Retrieve files to lint - returns a tuple (c_lint_files, py_lint_files)
-def get_lint_files():
-    c_lint_files = []
-    py_lint_files = []
-
-    lint_dirs = []
-
-    # Get directories to lint based on PROJECT/LIBRARY args.
-    # If no PROJECT/LIBRARY argument,lint all directories.
-    if TYPE == 'project':
-        lint_dirs.append(PROJ_DIR.Dir(TARGET))
-        lint_dirs.append(SMOKE_DIR.Dir(TARGET))
-    elif TYPE == 'library':
-        lint_dirs.append(LIB_DIR.Dir(TARGET))
-    else:
-        lint_dirs += PROJ_DIRS + LIB_DIRS
-
-    # Get all src and header files (*.c, *.h) to lint/format
-    for dir in lint_dirs:
-        config = parse_config(dir)
-
-        # Avoid linting/formatting external libraries
-        if not config.get('no_lint'):
-            c_lint_files += glob_by_extension('[ch]', dir)
-            py_lint_files += glob_by_extension('py', dir)
-
-    return (c_lint_files, py_lint_files)
-
 def run_lint(target, source, env):
     C_LINT_CMD = 'cpplint --quiet'
     PY_LINT_CMD = 'pylint --rcfile={}/.pylintrc'.format(ROOT.abspath)
 
-    c_lint_files, py_lint_files = get_lint_files()
-
     errors = 0
     # Lint C source files
-    if len(c_lint_files) > 0:
-        print('\nLinting *.[ch] in {}, {} ...'.format(PROJ_DIR, LIB_DIR))
-        errors += subprocess.run('{} {}'.format(C_LINT_CMD, dirs_to_str(c_lint_files)), shell=True).returncode
+    if len(c_files) > 0:
+        print(f'\nLinting *.[ch] files ...')
+        errors += subprocess.run(f'{C_LINT_CMD} {c_files_str}',
+                                 shell=True).returncode
 
     # Lint Python files
-    if len(py_lint_files) > 0:
+    if len(py_files) > 0:
         print('\nLinting *.py files ...')
-        errors += subprocess.run('{} {}'.format(PY_LINT_CMD, dirs_to_str(py_lint_files)), shell=True).returncode
+        errors += subprocess.run(f'{PY_LINT_CMD} {py_files_str}',
+                                 shell=True).returncode
 
     print('Done Linting.')
     if (errors > 0):
         Exit("Lint errors")
+
 
 def run_format(target, source, env):
     # Formatter configs
@@ -91,19 +51,40 @@ def run_format(target, source, env):
     C_FORMAT_CMD = 'clang-format {}'.format(CLANG_FORMAT_CONFIG)
     PY_FORMAT_CMD = 'autopep8 {} -i'.format(AUTOPEP8_CONFIG)
 
-    c_format_files, py_format_files = get_lint_files()
-
     # Format C source files
-    if len(c_format_files) > 0:
-        print('\nFormatting *.[ch] in {}, {} ...'.format(str(PROJ_DIR), str(LIB_DIR)))
-        subprocess.run('{} {}'.format(C_FORMAT_CMD, dirs_to_str(c_format_files)), shell=True)
+    if len(c_files) > 0:
+        print(f'\nFormatting *.[ch] files ...')
+        subprocess.run(f'{C_FORMAT_CMD} {c_files_str}', shell=True)
 
     # Format Python source files
-    if len(py_format_files) > 0:
+    if len(py_files) > 0:
         print('\nFormatting *.py files ...')
-        subprocess.run('{} {}'.format(PY_FORMAT_CMD, dirs_to_str(py_format_files)), shell=True)
+        subprocess.run(f'{PY_FORMAT_CMD} {py_files_str}', shell=True)
 
     print('Done Formatting.')
+
+
+# Retrieve files to lint - returns a tuple (c_lint_files, py_lint_files)
+c_files = []
+py_files = []
+# Get directories to lint based on PROJECT/LIBRARY args.
+# If no PROJECT/LIBRARY argument,lint all directories.
+# Get all src and header files (*.c, *.h) to lint/format
+if TARGET:
+    target_dirs = [ROOT.Dir(TARGET)]
+else:
+    target_dirs = PROJ_DIRS + LIB_DIRS + SMOKE_DIRS + PY_DIRS
+
+for dir in target_dirs:
+    config = parse_config(dir)
+    if config.get('no_lint'):  # Avoid linting/formatting external libraries
+        continue
+
+    c_files += glob.glob(f'{dir.abspath}/**/*.[ch]', recursive=True)
+    py_files += glob.glob(f'{dir.abspath}/**/*.py', recursive=True)
+
+c_files_str = ' '.join(c_files)
+py_files_str = ' '.join(py_files)
 
 Command('#/lint', [], run_lint)
 Command('#/format', [], run_format)

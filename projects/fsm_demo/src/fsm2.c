@@ -8,7 +8,7 @@
 
 // FSM2 Lags one cycle behind FSM1, so it will transition to state X
 // When FSM1 finishes state X
-FSM(fsm2, NUM_FSM2_STATES);
+FSM(fsm2, NUM_FSM2_STATES, TASK_STACK_512);
 
 static void prv_fsm2_state0_output(void *context) {
   LOG_DEBUG("Transitioned to FSM2 state0\n");
