@@ -28,9 +28,6 @@ void hw_timer_init(void) {
 }
 
 void hw_timer_delay_us(uint32_t us) {
-  TIM_SetCounter(TIM2, 0);
-  TIM_Cmd(TIM2, ENABLE);
-
   uint32_t start_count = TIM_GetCounter(TIM2);
   uint32_t elapsed_time = 0;
 
@@ -43,8 +40,6 @@ void hw_timer_delay_us(uint32_t us) {
     }
     start_count = current_count;
   }
-
-  TIM_Cmd(TIM2, DISABLE);
 }
 
 void hw_timer_callback_us(uint32_t us, TimerCallback callback_function) {
