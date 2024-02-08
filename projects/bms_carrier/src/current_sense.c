@@ -37,7 +37,7 @@ static bool s_is_charging;
 StatusCode fault_bitset = STATUS_CODE_OK;
 
 StatusCode current_sense_fault_check() {
-  return STATUS_CODE_OK | fault_bitset;
+  return fault_bitset;
 }
 
 // Periodically read and update the SoC of the car & update charging bool
@@ -57,7 +57,6 @@ static StatusCode prv_fuel_gauge_read() {
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault
     // Open Relays
-    open_relays();
     fault_bitset |= status;
     return status;
   }

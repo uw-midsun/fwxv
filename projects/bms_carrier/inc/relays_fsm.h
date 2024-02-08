@@ -5,6 +5,7 @@
 #include "bms_carrier_setters.h"
 #include "can.h"
 #include "current_sense.h"
+#include "delay.h"
 #include "exported_enums.h"
 #include "fsm.h"
 #include "gpio.h"
@@ -17,10 +18,7 @@
 #define NUM_RELAY_STATES 3
 #define FUEL_GAUGE_CYCLE_TIME_MS 100
 
-void close_relays();
-void open_relays();
-
-DECLARE_FSM(relays);
+DECLARE_FSM(bms_relays);
 typedef enum RelaysStateId { RELAYS_OPEN = 0, RELAYS_CLOSED, RELAYS_FAULT } RelaysStateId;
 
-StatusCode init_relays(void);
+StatusCode init_bms_relays(void);

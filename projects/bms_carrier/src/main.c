@@ -34,12 +34,12 @@ static const CanSettings can_settings = {
 
 void pre_loop_init() {
   LOG_DEBUG("Welcome to BMS \n");
-  init_relays();
+  init_bms_relays();
 }
 
 void run_fast_cycle() {
-  // fsm_run_cycle(relays);
-  // wait_tasks(1);
+  fsm_run_cycle(bms_relays);
+  wait_tasks(1);
 }
 
 void run_medium_cycle() {

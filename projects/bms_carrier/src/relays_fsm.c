@@ -6,7 +6,7 @@
 // Peform current sense read and check DONE
 // Read AFE Cells and do checks
 
-FSM(relays, NUM_RELAY_STATES, TASK_STACK_512);
+FSM(bms_relays, NUM_RELAY_STATES, TASK_STACK_512);
 static RelaysStateId fsm_prev_state = RELAYS_OPEN;
 
 static CurrentStorage s_currentsense_storage;
@@ -38,20 +38,20 @@ static const I2CSettings i2c_settings = {
   .scl = BMS_PERIPH_I2C_SCL_PIN,
 };
 
-GpioAddress const POS_RELAY_EN = { .port = GPIO_PORT_B, .pin = 8 };
-GpioAddress const NEG_RELAY_EN = { .port = GPIO_PORT_B, .pin = 4 };
-GpioAddress const SOLAR_RELAY_EN = { .port = GPIO_PORT_C, .pin = 13 };
+const GpioAddress pos_relay_en = { .port = GPIO_PORT_B, .pin = 8 };
+const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
+const GpioAddress solar_relay_en = { .port = GPIO_PORT_C, .pin = 13 };
 
-void close_relays() {
-  gpio_set_state(&POS_RELAY_EN, GPIO_STATE_HIGH);
-  gpio_set_state(&NEG_RELAY_EN, GPIO_STATE_HIGH);
-  gpio_set_state(&SOLAR_RELAY_EN, GPIO_STATE_HIGH);
+static void close_relays() {
+  gpio_set_state(&pos_relay_en, GPIO_STATE_HIGH);
+  gpio_set_state(&neg_relay_en, GPIO_STATE_HIGH);
+  gpio_set_state(&solar_relay_en, GPIO_STATE_HIGH);
 }
 
-void open_relays() {
-  gpio_set_state(&POS_RELAY_EN, GPIO_STATE_LOW);
-  gpio_set_state(&NEG_RELAY_EN, GPIO_STATE_LOW);
-  gpio_set_state(&SOLAR_RELAY_EN, GPIO_STATE_LOW);
+static void open_relays() {
+  gpio_set_state(&pos_relay_en, GPIO_STATE_LOW);
+  gpio_set_state(&neg_relay_en, GPIO_STATE_LOW);
+  gpio_set_state(&solar_relay_en, GPIO_STATE_LOW);
 }
 
 static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
@@ -60,8 +60,18 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
 
   status |= current_sense_fault_check();
 
+  if (status != STATUS_CODE_OK) {
+    fsm_transition(fsm, RELAYS_FAULT);
+    return;
+  }
+
   status |= ltc_afe_impl_trigger_cell_conv(&s_ltc_store);
-  // delay_ms(10);
+  delay_ms(10);
+
+  if (status != STATUS_CODE_OK) {
+    fsm_transition(fsm, RELAYS_FAULT);
+    return;
+  }
 
   status |= run_current_sense_cycle();
   wait_tasks(1);
@@ -72,11 +82,11 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
               s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]);
     // delay_ms(1);
   }
-
   status |= ltc_afe_impl_fault_check();
 
   if (status != STATUS_CODE_OK) {
     fsm_transition(fsm, RELAYS_FAULT);
+    return;
   }
 }
 
@@ -131,13 +141,13 @@ static bool s_relays_transitions[NUM_RELAY_STATES][NUM_RELAY_STATES] = {
   TRANSITION(RELAYS_CLOSED, RELAYS_OPEN), TRANSITION(RELAYS_CLOSED, RELAYS_FAULT)
 };
 
-StatusCode init_relays(void) {
+StatusCode init_bms_relays(void) {
   i2c_init(BMS_PERIPH_I2C_PORT, &i2c_settings);
   ltc_afe_init(&s_ltc_store, &s_afe_settings);
   current_sense_init(&s_currentsense_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
-  gpio_init_pin(&POS_RELAY_EN, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  gpio_init_pin(&NEG_RELAY_EN, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  gpio_init_pin(&SOLAR_RELAY_EN, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  fsm_init(relays, s_relays_state_list, s_relays_transitions, RELAYS_OPEN, NULL);
+  gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&solar_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  fsm_init(bms_relays, s_relays_state_list, s_relays_transitions, RELAYS_OPEN, NULL);
   return STATUS_CODE_OK;
 }

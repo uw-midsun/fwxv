@@ -259,7 +259,7 @@ StatusCode ltc_afe_impl_init(LtcAfeStorage *afe, const LtcAfeSettings *settings)
 }
 
 StatusCode ltc_afe_impl_fault_check() {
-  return STATUS_CODE_OK | fault_bitset;
+  return fault_bitset;
 }
 
 StatusCode ltc_afe_impl_trigger_cell_conv(LtcAfeStorage *afe) {
