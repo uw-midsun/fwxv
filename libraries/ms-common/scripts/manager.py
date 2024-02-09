@@ -1,8 +1,10 @@
 import os
 import socket
+import subprocess
 import time
+from random import randint
 
-project = [ "centre_console", "bms_carrier", "power_distribution", "motor_controller", "pedal"]
+projects = [ "centre_console", "bms_carrier", "power_distribution", "motor_controller", "pedal"]
 BUILD_DIR = 'shared/fwxv/build/bin/projects/' 
 
 class Car:
@@ -13,13 +15,15 @@ class Car:
       
   def start_project(self, project):
     if (os.path.isdir(BUILD_DIR + project)):
-        program = BUILD_DIR + project
-    socket_num = rand() # generate random socket number
+        program = os.path.join(BUILD_DIR, project)
+    socket_num = randint() # generate random socket number
     while socket_num is not available:
-      socket_num = rand() # keep generating until valid
+      socket_num = randint() # keep generating until valid
+    print(socket_num)
+
+    s = socket.socket()
       
-    process.run(program, socket_num) # Start the project with the socket number
-    # Maybe also redirect logs here?
+    subprocess.run([program, str(socket_num)]) # Start the project with the socket number
     return socket_num
     
   def call(self, project, operations): # operation
@@ -31,8 +35,7 @@ class Car:
 ### Tests
 def test_car_start():
   car = Car(projects)
-  car.call("centre_console", "connect battery.....")
-  .....
+  # car.call("centre_console", "connect battery.....")
   # Will need to look at logs to see if something went wrong
   
   

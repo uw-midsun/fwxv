@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "operation_listener.h"
 #include "can.h"
 #include "can_board_ids.h"
 #include "can_watchdog.h"
@@ -45,7 +46,12 @@ void run_medium_cycle() {
 
 void run_slow_cycle() {}
 
+#ifdef x86
+int main(int argc, char *argv[]) {
+  x86_main_init(argv[1]);
+#else 
 int main() {
+#endif
   gpio_init();
   tasks_init();
   log_init();
