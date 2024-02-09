@@ -14,7 +14,7 @@ SegDisplay all_displays = ALL_DISPLAYS;
 
 // Centre Console State Variables
 static bool s_cc_enabled;
-static bool s_regen_braking;
+static uint8_t s_regen_braking;
 static bool s_hazard_state;
 static uint32_t s_target_velocity;
 static uint32_t s_last_power_state = EE_POWER_OFF_STATE;
@@ -57,12 +57,17 @@ void update_indicators(uint32_t notif) {
   }
   // Update regen light
   if (notify_check_event(&notif, REGEN_BUTTON_EVENT)) {
-    if (s_regen_braking) {
-      s_regen_braking = false;
-      pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_LOW);
-    } else {
-      s_regen_braking = true;
+    uint16_t max_voltage = get_battery_vt_voltage();
+    uint16_t batt_current = get_battery_vt_current();
+    // solar current + regen current <= 27 AMPS
+    // regen current shouldnt push cell above 4.2 V
+    if (!s_regen_braking && batt_current < MAX_CURRENT && max_voltage < MAX_VOLTAGE) {
+      s_regen_braking =
+          1;  // MUST TALK TO FOREST ABOUT HOW VALUE CORRELATES TO REGEN BRAKING STRENGTH
       pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_HIGH);
+    } else {
+      s_regen_braking = 0;
+      pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_LOW);
     }
   }
 

@@ -6,6 +6,9 @@
 #include "exported_enums.h"
 #include "status.h"
 
+#define MAX_VOLTAGE 4.2
+#define MAX_CURRENT 27
+
 typedef enum MainTaskBtnEvents {
   POWER_BUTTON_EVENT = 0,
   REGEN_BUTTON_EVENT,

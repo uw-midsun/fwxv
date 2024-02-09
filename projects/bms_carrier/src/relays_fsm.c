@@ -57,6 +57,7 @@ static void open_relays() {
 static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   LOG_DEBUG("Bms fault check \n");
   StatusCode status = STATUS_CODE_OK;
+  uint16_t max_voltage = 0;
 
   status |= current_sense_fault_check();
 
@@ -80,8 +81,12 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   for (int cell = 0; cell < 12; cell++) {
     LOG_DEBUG("CELL %d: %d\n\r", cell,
               s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]);
+    max_voltage = s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > max_voltage
+                      ? s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]
+                      : max_voltage;
     // delay_ms(1);
   }
+  set_battery_vt_voltage(max_voltage);
   status |= ltc_afe_impl_fault_check();
 
   if (status != STATUS_CODE_OK) {
