@@ -82,6 +82,7 @@ static void prv_update_target_current_velocity() {
     // return negative if throttle pressed less than threshold
     drive_state =
         prv_one_pedal_drive_current(throttle_percent, car_vel) >= 0 ? drive_state : OPD_BRAKE;
+    throttle_percent = prv_one_pedal_drive_current(throttle_percent, car_vel);
   }
 
   // set target current and velocity based on drive state
