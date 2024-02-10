@@ -2,7 +2,6 @@
     "libs": [
         "FreeRTOS",
         "ms-common",
-        "master", 
         "ms-drivers"
     ],
     "include": [
