@@ -17,6 +17,9 @@
 // represent whether we should monitor the cell input for the given device.
 StatusCode ltc_afe_impl_init(LtcAfeStorage *afe, const LtcAfeSettings *settings);
 
+// Write an LTC config based on the given storage settings
+StatusCode ltc_afe_impl_write_config(LtcAfeStorage *afe);
+
 // Triggers a conversion. Note that we need to wait for the conversions to complete before the
 // readback will be valid.
 StatusCode ltc_afe_impl_trigger_cell_conv(LtcAfeStorage *afe);
@@ -29,3 +32,6 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t device_cell);
 // Mark cell for discharging (takes effect after config is re-written)
 // |cell| should be [0, LTC_AFE_MAX_CELLS)
 StatusCode ltc_afe_impl_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell, bool discharge);
+
+// Sets the duty cycle to the same value for all cells on all afes
+StatusCode ltc_afe_impl_set_discharge_pwm_cycle(LtcAfeStorage *afe, uint8_t duty_cycle);

@@ -187,6 +187,10 @@ static_assert(sizeof(LtcAfeAuxRegisterGroupPacket) == 8,
 
 #define LTC6811_STCOMM_RESERVED (1 << 0) | (1 << 1) | (1 << 5) | (1 << 8) | (1 << 9) | (1 << 10)
 
+#define LTC6811_WRPWM_RESERVED (1 << 5)
+
+#define LTC6811_RDPWM_RESERVED (1 << 5) | (1 << 2)
+
 // command bits
 // see Table 40 (p. 62)
 #define LTC6811_GPIO1_PD_ON (0 << 3)
@@ -224,3 +228,6 @@ static_assert(sizeof(LtcAfeAuxRegisterGroupPacket) == 8,
 
 #define LTC6811_FCOM_CSBM_LOW (0 << 0)
 #define LTC6811_FCOM_CSBM_HIGH (1 << 3) | (1 << 0)
+
+// see Table 17 (p. 38)
+#define LTC6811_PWMC_DC_100 (0xF)

@@ -23,7 +23,7 @@ static uint16_t s_read_reg_cmd[NUM_LTC_AFE_REGISTERS] = {
   [LTC_AFE_REGISTER_STATUS_A] = LTC6811_RDSTATA_RESERVED,
   [LTC_AFE_REGISTER_STATUS_B] = LTC6811_RDSTATB_RESERVED,
   [LTC_AFE_REGISTER_READ_COMM] = LTC6811_RDCOMM_RESERVED,
-  [LTC_AFE_REGISTER_START_COMM] = LTC6811_STCOMM_RESERVED
+  [LTC_AFE_REGISTER_START_COMM] = LTC6811_STCOMM_RESERVED,
 };
 
 static uint8_t s_voltage_reg[NUM_LTC_AFE_VOLTAGE_REGISTERS] = {
@@ -248,6 +248,9 @@ StatusCode ltc_afe_impl_init(LtcAfeStorage *afe, const LtcAfeSettings *settings)
   // Use GPIO1 as analog input, GPIO 3-5 for SPI
   uint8_t gpio_bits =
       LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
+
+  status_ok_or_return(ltc_afe_impl_set_discharge_pwm_cycle(afe, LTC6811_PWMC_DC_100));
+
   return prv_write_config(afe, gpio_bits);
 }
 
@@ -346,4 +349,30 @@ StatusCode ltc_afe_impl_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell,
   }
 
   return STATUS_CODE_OK;
+}
+
+// Just a wrapper setting the correct gpio bits
+StatusCode ltc_afe_impl_write_config(LtcAfeStorage *afe) {
+  uint8_t gpio_bits =
+      LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
+  return prv_write_config(afe, gpio_bits);
+}
+
+// Sets the duty cycle to the same value for all cells on all afes
+StatusCode ltc_afe_impl_set_discharge_pwm_cycle(LtcAfeStorage *afe, uint8_t duty_cycle) {
+  LtcAfeSettings *settings = &afe->settings;
+
+  uint8_t cmd[4 + (6 * 3)] = { 0 };
+  prv_build_cmd(LTC6811_WRPWM_RESERVED, cmd, 4);
+
+  // For every device, set all 6 PWM bytes to the same config
+  for (uint8_t curr_device = 0; curr_device < settings->num_devices; curr_device++) {
+    for (int cell_pwm = 0; cell_pwm < 6; cell_pwm++) {
+      cmd[(curr_device * 6) + cell_pwm] = duty_cycle;
+    }
+  }
+
+  size_t len = 4 + (6 * settings->num_devices);
+  prv_wakeup_idle(afe);
+  return spi_exchange(settings->spi_port, cmd, len, NULL, 0);
 }
