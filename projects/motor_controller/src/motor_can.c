@@ -89,7 +89,7 @@ static void prv_update_target_current_velocity() {
   // https://tritiumcharging.com/wp-content/uploads/2020/11/TritiumWaveSculptor22_Manual.pdf 18.3
   switch (drive_state) {
     case DRIVE:
-      s_target_current = prv_one_pedal_drive_current(throttle_percent, car_vel);
+      s_target_current = throttle_percent;
       s_target_velocity = TORQUE_CONTROL_VEL;
       break;
     case NEUTRAL:
@@ -97,7 +97,7 @@ static void prv_update_target_current_velocity() {
       s_target_velocity = 0;
       break;
     case REVERSE:
-      s_target_current = prv_one_pedal_drive_current(throttle_percent, car_vel);
+      s_target_current = throttle_percent;
       s_target_velocity = -TORQUE_CONTROL_VEL;
       break;
     case CRUISE:
@@ -109,7 +109,7 @@ static void prv_update_target_current_velocity() {
       s_target_velocity = 0;
       break;
     case OPD_BRAKE:
-      s_target_current = -prv_one_pedal_drive_current(throttle_percent, car_vel);
+      s_target_current = throttle_percent;
       s_target_velocity = 0;
       break;
     default:
