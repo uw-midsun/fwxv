@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "operation_listener.h"
 #include "bts_load_switch.h"
 #include "can.h"
 #include "can_board_ids.h"
@@ -52,8 +53,13 @@ void run_medium_cycle() {
 }
 
 void run_slow_cycle() {}
-
+#ifdef x86
+int main(int argc, char *argv[]) {
+  LOG_DEBUG("X86 MODE");
+  x86_main_init(argv[1]);
+#else 
 int main() {
+#endif
   tasks_init();
   log_init();
   interrupt_init();

@@ -189,8 +189,8 @@ if PLATFORM == 'arm' and TARGET:
     # flash the MCU using openocd
     def flash_run_target(target, source, env):
         serialData = flash_run(project_bin)
-        while True:
-            line: str = serialData.readline().decode("utf-8")
-            print(line, end='')
+        # while True:
+        #     line: str = serialData.readline().decode("utf-8")
+        #     print(line, end='')
 
     AlwaysBuild(Command('#/flash', project_bin, flash_run_target))

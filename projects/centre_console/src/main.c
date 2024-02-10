@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+#include "operation_listener.h"
 #include "can.h"
 #include "can_board_ids.h"
 #include "cc_buttons.h"
@@ -60,8 +60,12 @@ void run_medium_cycle() {
 }
 
 void run_slow_cycle() {}
-
+#ifdef x86
+int main(int argc, char *argv[]) {
+  x86_main_init(atoi(argv[1]));
+#else 
 int main() {
+#endif
   log_init();
   tasks_init();
   I2CSettings i2c_settings = {

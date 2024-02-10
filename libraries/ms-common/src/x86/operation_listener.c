@@ -5,6 +5,7 @@ bool s_keep_alive = true;
 void sim_init(int sock_num) {
   char buffer[BUFFER_SIZE];
   LOG_DEBUG("Simulation thread started\n");
+  LOG_DEBUG("%u \n", sock_num);
   int res;
   int operation, length, param1, param2, param3;
   char rcv[1];
@@ -20,9 +21,12 @@ void sim_init(int sock_num) {
     while (s_keep_alive) {
       memset(rcv, 0, sizeof(rcv));
       res = recv(sock_num, rcv, 1, 0);
+      // LOG_DEBUG("%d \n", sock_num);
+      // LOG_DEBUG("%u \n", res);
       if (res == 1) {
         if (rcv[0] != '\n') {
           buffer[p] = rcv[0];
+          LOG_DEBUG("%u", rcv[0]);
           p++;
         } else {
           break;
@@ -148,32 +152,34 @@ void sim_init(int sock_num) {
 
 void x86_main_init(int socket_num) {
   LOG_DEBUG("Operation listener thread started\n");
+  LOG_DEBUG("%d \n", socket_num);
   int socketfd = socket(AF_INET, SOCK_STREAM, 0);
   if (socketfd < 0) {
     LOG_DEBUG("Socket error: %d", socketfd);
-    return 0;
+    return;
   }
   LOG_DEBUG("Socket successful\n");
   struct sockaddr_in server_addr;
   server_addr.sin_family = AF_INET;
-  server_addr.sin_port = htons(PORT);
+  server_addr.sin_port = htons(socket_num);
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   int status = bind(socketfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
   if (status < 0) {
     LOG_DEBUG("Bind failed: %d\n", status);
-    return 0;
+    return;
   }
   LOG_DEBUG("Bind successful\n");
   if (listen(socketfd, 5) < 0) {
     LOG_DEBUG("Listen failed\n");
-    return 0;
+    return;
   }
   LOG_DEBUG("Listen successful\n");
   int newsockfd = accept(socketfd, NULL, NULL);
   if (newsockfd < 0) {
     LOG_DEBUG("Accept failed: %d \n", newsockfd);
-    return 0;
+    return;
   }
+  LOG_DEBUG("%d", newsockfd);
   LOG_DEBUG("Accept successful\n");
 
   sim_init(newsockfd);

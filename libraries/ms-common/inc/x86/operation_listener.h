@@ -1,4 +1,5 @@
 #pragma once
+#define x86 1
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -22,7 +23,6 @@
 #include "i2c.h"
 #include "log.h"
 
-#define x86 1
 #define PORT 2520
 #define BUFFER_SIZE 2024
 
