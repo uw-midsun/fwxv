@@ -2,10 +2,10 @@
 
 bool s_keep_alive = true;
 
-void *sim_thread(void *arg) {
-  sim_init(atoi(arg));
-  return NULL;
-}
+// void *sim_thread(void *arg) {
+//   sim_init(atoi(arg));
+//   return NULL;
+// }
 
 void sim_init(int sock_num) {
   char buffer[BUFFER_SIZE];
@@ -13,6 +13,7 @@ void sim_init(int sock_num) {
   int res;
   int operation, length, param1, param2, param3;
   char rcv[1];
+  char sen[50];
   int p;
   Operations input;
 
@@ -39,7 +40,7 @@ void sim_init(int sock_num) {
     param2 = 0;
     param3 = 0;
     sscanf(buffer, "%d: %d, %[^\n\t]", &operation, &length, buffer);
-    if (operation < 0 || operation > 6) {
+    if (operation < 0 || operation > 7) {
       LOG_DEBUG("Invalid operation: %d\n", operation);
       continue;
     }
@@ -144,6 +145,29 @@ void sim_init(int sock_num) {
       case UART:
         LOG_DEBUG("UART\n");
         break;
+      case GPIO_READ:
+        LOG_DEBUG("GPIO READ\n");
+        if (length != 0) {
+          LOG_DEBUG("Invalid length for operation: %d Length: %d\n", operation, length);
+          break;
+        }
+
+        GpioState state;
+        for (int port = 0; port < 2; port++) {
+          for (int pin = 0; pin < 16; pin++) {
+            GpioAddress ADDR = { .port = port, .pin = pin};
+            state = gpio_get_state(&ADDR, &state);
+            sprintf(sen, "GPIO_PIN %d%d | STATE = %d\n", port, pin, state);
+            LOG_DEBUG("GPIO_PIN %d%d | STATE = %d\n", port, pin, state);
+            res = send(sock_num, sen, strlen(sen), 0);
+            if (res < 0) {
+              LOG_WARN("ERROR: GPIO READ failed");
+              break;
+            }
+          }
+        }
+
+        break;
       default:
         LOG_DEBUG("UNRECOGNIZED OPERATION: %d\n", input);
     }
@@ -166,7 +190,7 @@ void x86_main_init(int socket_num) {
   server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   int status = bind(socketfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
   if (status < 0) {
-    LOG_DEBUG("Bind failed: %d\n", status);
+    LOG_DEBUG("Bind failed: %d. Socket_num: %d \n", status, socket_num);
     return;
   }
   LOG_DEBUG("Bind successful\n");
@@ -182,10 +206,11 @@ void x86_main_init(int socket_num) {
     return;
   }
   LOG_DEBUG("Accept successful\n");
-  status = pthread_create(&thread_id, NULL, &sim_thread, &newsockfd);
-  if (status != 0) {
-    LOG_WARN("THREAD CREATION FAILED");
-    close(newsockfd);
-    close(socketfd);
-  }
+  sim_init(newsockfd);
+  // status = pthread_create(&thread_id, NULL, &sim_thread, &newsockfd);
+  // if (status != 0) {
+  //   LOG_WARN("THREAD CREATION FAILED");
+  close(newsockfd);
+  close(socketfd);
+  // }
 }

@@ -6,11 +6,17 @@ import subprocess
 import can
 from random import randint
 
-projects = [ "centre_console" ]
+################################################################################
+# INITIALIZATION
+
+projects = [ "centre_console", "bms_carrier", "power_distribution" ]
 BUILD_DIR = os.path.join(os.getcwd(), 'build/x86/bin/projects')
 bus = can.interface.Bus('vcan0', bustype='virtual') 
 subprocess.run(['sudo', 'ip', 'link', 'add', 'dev', 'vcan0', 'type', 'vcan'])
 subprocess.run(['sudo', 'ip', 'link', 'set', 'up', 'vcan0'])
+
+################################################################################
+# PROJECT CLASS
 
 class ProjectManager:
   def __init__(self, project, socket_num):
@@ -39,7 +45,29 @@ class ProjectManager:
           self.manager_socket.send(op.encode())
     except Exception as e:
       print(f"ERROR: {e}")
+    
+  def read_operation(self):
+    try:
+      msg = list((self.manager_socket.recv(2048)).decode())
+      for i in range(len(msg)):
+        if msg[i] == '0':
+          msg[i] = 'A'
+          break
+        elif msg[i] == '1':
+          msg[i] = 'B'
+          break
+      msg = ''.join(msg)
+    except Exception as e:
+      print(f"ERROR: {e}")
+    finally:
+      print(msg)
+    
+  def __del__(self):
+    if self.manager_socket:
+        self.manager_socket.close()
       
+################################################################################
+# CAR CLASS
 
 class Car:
   def __init__(self, projects):
@@ -57,6 +85,13 @@ class Car:
     
   def operate(self, project, operations): # operation
     self.managers[project].call_operation(operations)
+
+  def read(self, project):
+    self.managers[project].read_operation()
+  
+  def __del__(self):
+    for manager in self.managers.values():
+        del manager
 
 ################################################################################
 # MAKE CAR
@@ -80,6 +115,13 @@ def gpio_toggle_it(project):
   pinLetter = input("Select your GPIO pin letter (0-3): ")
   pinNum = input ("Select your GPIO pin number (0-15): ")
   car.operate(str(project), f"2: 2, {pinLetter}, {pinNum}\n")
+
+def gpio_read(project):
+  car.operate(str(project), f"7: 0\n")
+  counter = 0
+  while (counter < 16):
+    counter+=1
+    car.read(str(project))
 
 def test_message():
   car.operate("centre_console", "0: 3, 2, 4, 1\n")

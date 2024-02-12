@@ -34,6 +34,7 @@ typedef enum {
   I2C_SET_READING,
   SPI_SET_RX,
   UART,
+  GPIO_READ,
   NUM_OF_OPERATIONS
 } Operations;
 
