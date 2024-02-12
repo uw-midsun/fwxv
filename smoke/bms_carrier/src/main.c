@@ -9,7 +9,7 @@
 
 TASK(smoke_bms_task, TASK_STACK_512) {
   init_bms_relays();
-    close_relays();
+  close_relays();
   while (true) {
     LOG_DEBUG("CLOSING RELAYS!!!!\n");
     delay_ms(2000);
