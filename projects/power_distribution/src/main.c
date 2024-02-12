@@ -55,8 +55,7 @@ void run_medium_cycle() {
 void run_slow_cycle() {}
 #ifdef x86
 int main(int argc, char *argv[]) {
-  LOG_DEBUG("X86 MODE");
-  x86_main_init(argv[1]);
+  x86_main_init(atoi(argv[1]));
 #else 
 int main() {
 #endif

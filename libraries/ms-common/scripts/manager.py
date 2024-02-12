@@ -37,7 +37,6 @@ class ProjectManager:
     try:
       for op in operations:
           self.manager_socket.send(op.encode())
-          print(op.encode())
     except Exception as e:
       print(f"ERROR: {e}")
       
@@ -58,15 +57,30 @@ class Car:
     
   def operate(self, project, operations): # operation
     self.managers[project].call_operation(operations)
-    
-  # def cleanup(self):
-  #     for project in self.managers:
-  #         subprocess.run(["sudo", "killall", "-9", project])
 
-  # def __del__(self):
-  #     self.cleanup()
-      
-### Tests
+################################################################################
+# MAKE CAR
 car = Car(projects)
-socket_nums = car.start_projects()
-car.operate("centre_console", "GPIO_SET")
+### Wrappers
+def start_car():
+  socket_nums = car.start_projects()
+
+def gpio_set_state(project):
+  pinLetter = input("Select your GPIO pin letter (0-3): ")
+  pinNum = input ("Select your GPIO pin number (0-15): ")
+  state = input("Select if it is high or low (0/1): ")
+  car.operate(str(project), f"0: 3, {pinLetter}, {pinNum}, {state}\n")
+
+def gpio_toggle(project):
+  pinLetter = input("Select your GPIO pin letter (0-3): ")
+  pinNum = input ("Select your GPIO pin number (0-15): ")
+  car.operate(str(project), f"1: 2, {pinLetter}, {pinNum}\n")
+
+def gpio_toggle_it(project):
+  pinLetter = input("Select your GPIO pin letter (0-3): ")
+  pinNum = input ("Select your GPIO pin number (0-15): ")
+  car.operate(str(project), f"2: 2, {pinLetter}, {pinNum}\n")
+
+def test_message():
+  car.operate("centre_console", "0: 3, 2, 4, 1\n")
+### Tests

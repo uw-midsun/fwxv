@@ -2,10 +2,14 @@
 
 bool s_keep_alive = true;
 
+void *sim_thread(void *arg) {
+  sim_init(atoi(arg));
+  return NULL;
+}
+
 void sim_init(int sock_num) {
   char buffer[BUFFER_SIZE];
   LOG_DEBUG("Simulation thread started\n");
-  LOG_DEBUG("%u \n", sock_num);
   int res;
   int operation, length, param1, param2, param3;
   char rcv[1];
@@ -20,13 +24,10 @@ void sim_init(int sock_num) {
     
     while (s_keep_alive) {
       memset(rcv, 0, sizeof(rcv));
-      res = recv(sock_num, rcv, 1, 0);
-      // LOG_DEBUG("%d \n", sock_num);
-      // LOG_DEBUG("%u \n", res);
+      res = recv(sock_num, rcv, 1, MSG_WAITALL);
       if (res == 1) {
         if (rcv[0] != '\n') {
           buffer[p] = rcv[0];
-          LOG_DEBUG("%u", rcv[0]);
           p++;
         } else {
           break;
@@ -57,7 +58,7 @@ void sim_init(int sock_num) {
           LOG_DEBUG("Invalid param, 1: %d, 2: %d, 3: %d\n", param1, param2, param3);
           continue;
         }
-
+        LOG_DEBUG("PARAM1 %d, PARAM2 %d, PARAM3 %d\n", param1, param2, param3);
         GpioAddress GPIO_SET_ADDR = { .port = param1, .pin = param2 };
         gpio_set_state(&GPIO_SET_ADDR, param3);
         break;
@@ -151,8 +152,8 @@ void sim_init(int sock_num) {
 }
 
 void x86_main_init(int socket_num) {
+  pthread_t thread_id;
   LOG_DEBUG("Operation listener thread started\n");
-  LOG_DEBUG("%d \n", socket_num);
   int socketfd = socket(AF_INET, SOCK_STREAM, 0);
   if (socketfd < 0) {
     LOG_DEBUG("Socket error: %d", socketfd);
@@ -174,15 +175,17 @@ void x86_main_init(int socket_num) {
     return;
   }
   LOG_DEBUG("Listen successful\n");
+  LOG_DEBUG("%d \n", socketfd);
   int newsockfd = accept(socketfd, NULL, NULL);
   if (newsockfd < 0) {
     LOG_DEBUG("Accept failed: %d \n", newsockfd);
     return;
   }
-  LOG_DEBUG("%d", newsockfd);
   LOG_DEBUG("Accept successful\n");
-
-  sim_init(newsockfd);
-  close(newsockfd);
-  close(socketfd);
+  status = pthread_create(&thread_id, NULL, &sim_thread, &newsockfd);
+  if (status != 0) {
+    LOG_WARN("THREAD CREATION FAILED");
+    close(newsockfd);
+    close(socketfd);
+  }
 }
