@@ -43,6 +43,7 @@ const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
 const GpioAddress solar_relay_en = { .port = GPIO_PORT_C, .pin = 13 };
 
 void close_relays() {
+  // 150 MS GAP BETWEEN EACH RELAY
   gpio_set_state(&pos_relay_en, GPIO_STATE_HIGH);
   gpio_set_state(&neg_relay_en, GPIO_STATE_HIGH);
   gpio_set_state(&solar_relay_en, GPIO_STATE_HIGH);

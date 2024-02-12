@@ -2,15 +2,8 @@
     "libs": [
         "FreeRTOS",
         "ms-common",
-        "master", 
+        "master",
         "ms-drivers"
-    ],
-    "include": [
-        "projects/bms_carrier/inc"
-    ],
-    "sources": [
-        "projects/bms_carrier/src/relays_fsm.o",
-        "projects/bms_carrier/src/current_sense.o"
     ],
     "can": true
 }
