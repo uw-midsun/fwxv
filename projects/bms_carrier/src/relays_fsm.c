@@ -42,13 +42,13 @@ const GpioAddress pos_relay_en = { .port = GPIO_PORT_B, .pin = 8 };
 const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
 const GpioAddress solar_relay_en = { .port = GPIO_PORT_C, .pin = 13 };
 
-static void close_relays() {
+void close_relays() {
   gpio_set_state(&pos_relay_en, GPIO_STATE_HIGH);
   gpio_set_state(&neg_relay_en, GPIO_STATE_HIGH);
   gpio_set_state(&solar_relay_en, GPIO_STATE_HIGH);
 }
 
-static void open_relays() {
+void open_relays() {
   gpio_set_state(&pos_relay_en, GPIO_STATE_LOW);
   gpio_set_state(&neg_relay_en, GPIO_STATE_LOW);
   gpio_set_state(&solar_relay_en, GPIO_STATE_LOW);

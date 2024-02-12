@@ -22,3 +22,7 @@ DECLARE_FSM(bms_relays);
 typedef enum RelaysStateId { RELAYS_OPEN = 0, RELAYS_CLOSED, RELAYS_FAULT } RelaysStateId;
 
 StatusCode init_bms_relays(void);
+
+// For smoke test
+void close_relays();
+void open_relays();
