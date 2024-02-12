@@ -42,6 +42,10 @@ static Pca9555GpioAddress s_output_leds[NUM_DRIVE_LED] = {
   [AUX_WARNING_LED] = AUX_WARNING_LED_ADDR,
 };
 
+static uint8_t prv_regen_calc(uint16_t batt_current, uint16_t batt_voltage) {
+  return 100 * (batt_voltage - MIN_VOLTAGE) / (MAX_VOLTAGE - MIN_VOLTAGE);
+}
+
 void update_indicators(uint32_t notif) {
   // Update hazard light
   if (notify_check_event(&notif, HAZARD_BUTTON_EVENT)) {
@@ -57,13 +61,12 @@ void update_indicators(uint32_t notif) {
   }
   // Update regen light
   if (notify_check_event(&notif, REGEN_BUTTON_EVENT)) {
-    uint16_t max_voltage = get_battery_vt_voltage();
+    uint16_t batt_voltage = get_battery_vt_voltage(); // Gets max voltage out of all cells
     uint16_t batt_current = get_battery_vt_current();
     // solar current + regen current <= 27 AMPS
     // regen current shouldnt push cell above 4.2 V
-    if (!s_regen_braking && batt_current < MAX_CURRENT && max_voltage < MAX_VOLTAGE) {
-      s_regen_braking =
-          1;  // MUST TALK TO FOREST ABOUT HOW VALUE CORRELATES TO REGEN BRAKING STRENGTH
+    if (!s_regen_braking && batt_current < MAX_CURRENT && batt_voltage < MAX_VOLTAGE) {
+      s_regen_braking = prv_regen_calc(batt_current, batt_voltage);
       pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_HIGH);
     } else {
       s_regen_braking = 0;
