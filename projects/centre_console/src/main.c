@@ -13,6 +13,7 @@
 
 #ifdef MS_PLATFORM_X86
 #define MASTER_MS_CYCLE_TIME 100
+int sockfd = 0;
 #else
 #define MASTER_MS_CYCLE_TIME 1000
 #endif
@@ -57,12 +58,16 @@ void run_medium_cycle() {
   update_drive_output(notif);
   run_can_tx_cycle();
   wait_tasks(1);
+
+  #ifdef x86
+  sim_init(sockfd);
+  #endif
 }
 
 void run_slow_cycle() {}
 #ifdef x86
 int main(int argc, char *argv[]) {
-  x86_main_init(atoi(argv[1]));
+  sockfd = x86_main_init(atoi(argv[1]));
 #else 
 int main() {
 #endif

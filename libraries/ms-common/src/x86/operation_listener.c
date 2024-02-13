@@ -2,10 +2,10 @@
 
 bool s_keep_alive = true;
 
-// void *sim_thread(void *arg) {
-//   sim_init(atoi(arg));
-//   return NULL;
-// }
+void *sim_thread(void *arg) {
+  sim_init(*((int*)arg));
+  return NULL;
+}
 
 void sim_init(int sock_num) {
   char buffer[BUFFER_SIZE];
@@ -78,6 +78,9 @@ void sim_init(int sock_num) {
 
         GpioAddress GPIO_TOGGLE_ADDR = { .port = param1, .pin = param2 };
         gpio_toggle_state(&GPIO_TOGGLE_ADDR);
+        GpioState gpiostate;
+        gpiostate = gpio_get_state(&GPIO_TOGGLE_ADDR, &gpiostate);
+        LOG_DEBUG("STATE: %d\n", gpiostate);
         break;
       case GPIO_IT_TRIGGER:
         LOG_DEBUG("GPIO_IT_TRIGGER\n");
@@ -157,7 +160,7 @@ void sim_init(int sock_num) {
           for (int pin = 0; pin < 16; pin++) {
             GpioAddress ADDR = { .port = port, .pin = pin};
             state = gpio_get_state(&ADDR, &state);
-            sprintf(sen, "GPIO_PIN %d%d | STATE = %d\n", port, pin, state);
+            sprintf(sen, "GPIO_PIN %c%d | STATE = %d\n", port == 0? 'A':'B', pin, state);
             LOG_DEBUG("GPIO_PIN %d%d | STATE = %d\n", port, pin, state);
             res = send(sock_num, sen, strlen(sen), 0);
             if (res < 0) {
@@ -171,17 +174,17 @@ void sim_init(int sock_num) {
       default:
         LOG_DEBUG("UNRECOGNIZED OPERATION: %d\n", input);
     }
-    usleep(1000000);
+    s_keep_alive=false;
   }
 }
 
-void x86_main_init(int socket_num) {
+int x86_main_init(int socket_num) {
   pthread_t thread_id;
   LOG_DEBUG("Operation listener thread started\n");
   int socketfd = socket(AF_INET, SOCK_STREAM, 0);
   if (socketfd < 0) {
     LOG_DEBUG("Socket error: %d", socketfd);
-    return;
+    return 0;
   }
   LOG_DEBUG("Socket successful\n");
   struct sockaddr_in server_addr;
@@ -191,26 +194,27 @@ void x86_main_init(int socket_num) {
   int status = bind(socketfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
   if (status < 0) {
     LOG_DEBUG("Bind failed: %d. Socket_num: %d \n", status, socket_num);
-    return;
+    return 0;
   }
   LOG_DEBUG("Bind successful\n");
   if (listen(socketfd, 5) < 0) {
     LOG_DEBUG("Listen failed\n");
-    return;
+    return 0;
   }
   LOG_DEBUG("Listen successful\n");
   LOG_DEBUG("%d \n", socketfd);
   int newsockfd = accept(socketfd, NULL, NULL);
   if (newsockfd < 0) {
     LOG_DEBUG("Accept failed: %d \n", newsockfd);
-    return;
+    return 0;
   }
   LOG_DEBUG("Accept successful\n");
-  sim_init(newsockfd);
+  return newsockfd;
+  // sim_init(newsockfd);
   // status = pthread_create(&thread_id, NULL, &sim_thread, &newsockfd);
   // if (status != 0) {
   //   LOG_WARN("THREAD CREATION FAILED");
-  close(newsockfd);
-  close(socketfd);
+  //   close(newsockfd);
+  //   close(socketfd);
   // }
-}
+} 

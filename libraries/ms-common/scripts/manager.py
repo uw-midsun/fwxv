@@ -2,6 +2,7 @@ import sys
 import signal
 import os
 import socket
+import time
 import subprocess
 import can
 from random import randint
@@ -9,7 +10,7 @@ from random import randint
 ################################################################################
 # INITIALIZATION
 
-projects = [ "centre_console", "bms_carrier", "power_distribution" ]
+projects = [ "leds" ]
 BUILD_DIR = os.path.join(os.getcwd(), 'build/x86/bin/projects')
 bus = can.interface.Bus('vcan0', bustype='virtual') 
 subprocess.run(['sudo', 'ip', 'link', 'add', 'dev', 'vcan0', 'type', 'vcan'])
@@ -29,13 +30,14 @@ class ProjectManager:
     else:
       print(f"ERROR: Project file not found for {self.project}. MUST BE x86 BUILD")
       return
-    # subprocess.run([program, str(self.socket_num)], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # subprocess.run([program, str(self.socket_num)])
 
     try:
       self.manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       self.manager_socket.connect(('127.0.0.1', self.socket_num))
     except Exception as e:
       print(f"ERROR: {e}")
+    print("PROJECT STARTED")
     
     return self.socket_num
 
@@ -48,19 +50,10 @@ class ProjectManager:
     
   def read_operation(self):
     try:
-      msg = list((self.manager_socket.recv(2048)).decode())
-      for i in range(len(msg)):
-        if msg[i] == '0':
-          msg[i] = 'A'
-          break
-        elif msg[i] == '1':
-          msg[i] = 'B'
-          break
-      msg = ''.join(msg)
+      msg = (self.manager_socket.recv(2048)).decode()
+      print(msg)
     except Exception as e:
       print(f"ERROR: {e}")
-    finally:
-      print(msg)
     
   def __del__(self):
     if self.manager_socket:
@@ -118,11 +111,8 @@ def gpio_toggle_it(project):
 
 def gpio_read(project):
   car.operate(str(project), f"7: 0\n")
-  counter = 0
-  while (counter < 16):
-    counter+=1
-    car.read(str(project))
+  car.read(str(project))
 
 def test_message():
-  car.operate("centre_console", "0: 3, 2, 4, 1\n")
+  car.read("centre_console")
 ### Tests

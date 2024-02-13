@@ -39,4 +39,4 @@ typedef enum {
 } Operations;
 
 void sim_init(int sock_num);
-void x86_main_init();
+int x86_main_init();

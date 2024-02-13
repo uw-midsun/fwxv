@@ -1,11 +1,17 @@
 #include <stdbool.h>
 
+#include "operation_listener.h"
 #include "delay.h"
 #include "gpio.h"
 #include "log.h"
 #include "misc.h"
 #include "notify.h"
 #include "tasks.h"
+
+#ifdef x86
+#define MASTER_MS_CYCLE_TIME 100
+int sockfd = 0;
+#endif
 
 static const GpioAddress leds[] = {
   { .port = GPIO_PORT_B, .pin = 5 },   //
@@ -23,11 +29,14 @@ TASK(leds_task, TASK_STACK_512) {
 
   while (true) {
     // #ifdef MS_PLATFORM_X86
-    LOG_DEBUG("blink\n");
+    // LOG_DEBUG("blink\n");
     // #endif
+    #ifdef x86
+    sim_init(sockfd);
+    #endif
     for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
       gpio_toggle_state(&leds[i]);
-      LOG_DEBUG("blink\n");
+      // LOG_DEBUG("blink\n");
       delay_ms(50);
     }
   }
@@ -35,7 +44,7 @@ TASK(leds_task, TASK_STACK_512) {
 
 #ifdef x86
 int main(int argc, char *argv[]) {
-  x86_main_init(atoi(argv[1]));
+  sockfd = x86_main_init(1025);
 #else 
 int main(void) {
 #endif
