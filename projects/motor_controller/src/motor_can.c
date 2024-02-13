@@ -51,15 +51,22 @@ static float prv_get_float(uint32_t u) {
   return fu.f;
 }
 
-static float prv_one_pedal_drive_current(float throttle_percent, float car_velocity) {
+static float prv_one_pedal_drive_current(float throttle_percent, float car_velocity,
+                                         DriveState *drive_state) {
   float threshold = car_velocity <= MAX_OPD_SPEED ? car_velocity * COASTING_THERSHOLD_SCALE
                                                   : MAX_COASTING_THRESHOLD;
   if (throttle_percent <= threshold + 0.05 && throttle_percent >= threshold - 0.05) {
     return 0.0;
   }
 
-  return throttle_percent >= threshold ? (throttle_percent - threshold) / (1 - threshold)
-                                       : (throttle_percent - threshold) / (threshold);
+  if (throttle_percent >= threshold) {
+    return (throttle_percent - threshold) / (1 - threshold);
+  } else {
+    *drive_state = BRAKE;
+    return (threshold - throttle_percent) / (threshold);
+  }
+  LOG_DEBUG("ERROR: One pedal throttle not calculated\n");
+  return 0.0;
 }
 
 static void prv_update_target_current_velocity() {
@@ -69,7 +76,7 @@ static void prv_update_target_current_velocity() {
   float car_vel = (s_car_velocity_l + s_car_velocity_r) / 2;
 
   DriveState drive_state = get_drive_output_drive_state();
-  bool regen = get_drive_output_regen_braking();
+  uint8_t regen = get_drive_output_regen_braking();
   bool cruise = get_drive_output_cruise_control();
 
   if (drive_state == DRIVE && cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
@@ -79,10 +86,7 @@ static void prv_update_target_current_velocity() {
     drive_state = regen ? BRAKE : NEUTRAL;
   }
   if ((drive_state == DRIVE || drive_state == REVERSE) && regen) {
-    // return negative if throttle pressed less than threshold
-    drive_state =
-        prv_one_pedal_drive_current(throttle_percent, car_vel) >= 0 ? drive_state : OPD_BRAKE;
-    throttle_percent = prv_one_pedal_drive_current(throttle_percent, car_vel);
+    throttle_percent = prv_one_pedal_drive_current(throttle_percent, car_vel, &drive_state);
   }
 
   // set target current and velocity based on drive state
@@ -105,11 +109,7 @@ static void prv_update_target_current_velocity() {
       s_target_velocity = target_vel;
       break;
     case BRAKE:
-      s_target_current = ACCERLATION_FORCE;
-      s_target_velocity = 0;
-      break;
-    case OPD_BRAKE:
-      s_target_current = throttle_percent;
+      s_target_current = regen < 100 ? regen / 100.0 : throttle_percent;
       s_target_velocity = 0;
       break;
     default:
