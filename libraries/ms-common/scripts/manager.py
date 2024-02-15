@@ -31,8 +31,8 @@ class ProjectManager:
       print(f"ERROR: Project file not found for {self.project}. MUST BE x86 BUILD")
       return
     subprocess.run(["scons", "--platform=x86", "--project="+self.project])
-    subprocess.run([program, str(self.socket_num)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-
+    subprocess.Popen([program, str(self.socket_num)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    time.sleep(1)
     try:
       self.manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       self.manager_socket.connect(('127.0.0.1', self.socket_num))
