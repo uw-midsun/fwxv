@@ -23,7 +23,6 @@
 #include "i2c.h"
 #include "log.h"
 
-#define PORT 2520
 #define BUFFER_SIZE 2024
 
 typedef enum {
@@ -39,4 +38,4 @@ typedef enum {
 } Operations;
 
 void sim_init(int sock_num);
-int x86_main_init();
+void x86_main_init();

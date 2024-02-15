@@ -44,7 +44,7 @@ TASK(leds_task, TASK_STACK_512) {
 
 #ifdef x86
 int main(int argc, char *argv[]) {
-  sockfd = x86_main_init(1025);
+  sockfd = x86_main_init(atoi(argv[1]));
 #else 
 int main(void) {
 #endif

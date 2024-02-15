@@ -10,7 +10,7 @@ from random import randint
 ################################################################################
 # INITIALIZATION
 
-projects = [ "leds" ]
+projects = [ "centre_console" ]
 BUILD_DIR = os.path.join(os.getcwd(), 'build/x86/bin/projects')
 bus = can.interface.Bus('vcan0', bustype='virtual') 
 subprocess.run(['sudo', 'ip', 'link', 'add', 'dev', 'vcan0', 'type', 'vcan'])
@@ -30,13 +30,15 @@ class ProjectManager:
     else:
       print(f"ERROR: Project file not found for {self.project}. MUST BE x86 BUILD")
       return
-    # subprocess.run([program, str(self.socket_num)])
+    subprocess.run(["scons", "--platform=x86", "--project="+self.project])
+    subprocess.run([program, str(self.socket_num)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
 
     try:
       self.manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       self.manager_socket.connect(('127.0.0.1', self.socket_num))
     except Exception as e:
-      print(f"ERROR: {e}")
+      print(f"ERROR: Socket failed. {e}")
+      return
     print("PROJECT STARTED")
     
     return self.socket_num
@@ -111,6 +113,7 @@ def gpio_toggle_it(project):
 
 def gpio_read(project):
   car.operate(str(project), f"7: 0\n")
+  time.sleep(1)
   car.read(str(project))
 
 def test_message():

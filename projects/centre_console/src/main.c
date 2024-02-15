@@ -59,15 +59,15 @@ void run_medium_cycle() {
   run_can_tx_cycle();
   wait_tasks(1);
 
-  #ifdef x86
-  sim_init(sockfd);
-  #endif
+  // #ifdef x86
+  // sim_init(sockfd);
+  // #endif
 }
 
 void run_slow_cycle() {}
 #ifdef x86
 int main(int argc, char *argv[]) {
-  sockfd = x86_main_init(atoi(argv[1]));
+  x86_main_init(atoi(argv[1]));
 #else 
 int main() {
 #endif
