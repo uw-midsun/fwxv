@@ -1,5 +1,4 @@
 #pragma once
-#define x86 1
 
 #include <arpa/inet.h>
 #include <errno.h>

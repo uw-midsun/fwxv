@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdio.h>
-
 #include "current_sense.h"
 #include "gpio_it.h"
 #include "log.h"
@@ -28,6 +27,8 @@ void run_medium_cycle() {
 void run_slow_cycle() {}
 
 #ifdef x86
+#include "operation_listener.h"
+
 int main(int argc, char *argv[]) {
   x86_main_init(atoi(argv[1]));
 #else 

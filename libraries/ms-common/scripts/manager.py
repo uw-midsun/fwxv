@@ -10,7 +10,8 @@ from random import randint
 ################################################################################
 # INITIALIZATION
 
-projects = [ "centre_console" ]
+projects = [ "bms_carrier", "centre_console", "motor_controller", "pedal", "power_distribution", "steering" ]
+PROJECT_DIR = os.path.join(os.getcwd(), 'projects')
 BUILD_DIR = os.path.join(os.getcwd(), 'build/x86/bin/projects')
 bus = can.interface.Bus('vcan0', bustype='virtual') 
 subprocess.run(['sudo', 'ip', 'link', 'add', 'dev', 'vcan0', 'type', 'vcan'])
@@ -25,17 +26,18 @@ class ProjectManager:
     self.socket_num = socket_num
   
   def start_project(self):
-    if os.path.exists(os.path.join(BUILD_DIR, self.project)):
+    if os.path.exists(os.path.join(PROJECT_DIR, self.project)):
       program = os.path.join(BUILD_DIR, self.project)
     else:
-      print(f"ERROR: Project file not found for {self.project}. MUST BE x86 BUILD")
+      print(f"ERROR: Project file not found for {self.project}. Doesn't exist")
       return
     subprocess.run(["scons", "--platform=x86", "--project="+self.project])
     subprocess.Popen([program, str(self.socket_num)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    time.sleep(1)
+    time.sleep(5)
     try:
       self.manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       self.manager_socket.connect(('127.0.0.1', self.socket_num))
+      print(self.socket_num)
     except Exception as e:
       print(f"ERROR: Socket failed. {e}")
       return

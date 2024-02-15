@@ -82,6 +82,9 @@ TARGET = GetOption('name')
 # Retrieve the construction environment from the appropriate platform script
 env = SConscript(f'platform/{PLATFORM}.py')
 
+if PLATFORM == 'x86':
+    env.Append(CPPINLCLUDES=['x86=1'])
+
 VARS = {
     "PLATFORM": PLATFORM,
     "TARGET": TARGET,

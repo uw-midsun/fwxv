@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "operation_listener.h"
+
 #include "can.h"
 #include "can_board_ids.h"
 #include "cc_buttons.h"
@@ -58,14 +58,12 @@ void run_medium_cycle() {
   update_drive_output(notif);
   run_can_tx_cycle();
   wait_tasks(1);
-
-  // #ifdef x86
-  // sim_init(sockfd);
-  // #endif
 }
 
 void run_slow_cycle() {}
 #ifdef x86
+#include "operation_listener.h"
+
 int main(int argc, char *argv[]) {
   x86_main_init(atoi(argv[1]));
 #else 
