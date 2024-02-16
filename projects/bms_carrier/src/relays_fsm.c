@@ -60,7 +60,7 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   StatusCode status = STATUS_CODE_OK;
   uint16_t max_voltage = 0;
 
-  status |= current_sense_fault_check();
+  // status |= current_sense_fault_check();
 
   if (status != STATUS_CODE_OK) {
     fsm_transition(fsm, RELAYS_FAULT);
@@ -75,8 +75,8 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     return;
   }
 
-  status |= run_current_sense_cycle();
-  wait_tasks(1);
+  // status |= run_current_sense_cycle();
+  // wait_tasks(1);
 
   status |= ltc_afe_impl_read_cells(&s_ltc_store);
   for (int cell = 0; cell < 12; cell++) {
@@ -85,7 +85,7 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     max_voltage = s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > max_voltage
                       ? s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]
                       : max_voltage;
-    // delay_ms(1);
+    delay_ms(1);
   }
   set_battery_vt_voltage(max_voltage);
   status |= ltc_afe_impl_fault_check();
@@ -150,6 +150,7 @@ static bool s_relays_transitions[NUM_RELAY_STATES][NUM_RELAY_STATES] = {
 StatusCode init_bms_relays(void) {
   i2c_init(BMS_PERIPH_I2C_PORT, &i2c_settings);
   ltc_afe_init(&s_ltc_store, &s_afe_settings);
+  delay_ms(10);
   current_sense_init(&s_currentsense_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
   gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);

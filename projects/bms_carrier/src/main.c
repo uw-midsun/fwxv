@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "bms.h"
+#include "pwm.h"
 #include "can.h"
 #include "can_board_ids.h"
 #include "current_sense.h"
@@ -34,6 +35,7 @@ static const CanSettings can_settings = {
 
 void pre_loop_init() {
   LOG_DEBUG("Welcome to BMS \n");
+  pwm_set_pulse(PWM_TIMER_3, BMS_FAN_PERIOD);
   init_bms_relays();
 }
 
@@ -57,6 +59,7 @@ int main() {
   log_init();
   interrupt_init();
   gpio_init();
+  pwm_init(PWM_TIMER_3, 40);
   can_init(&s_can_storage, &can_settings);
 
   LOG_DEBUG("Welcome to BMS!\n");
