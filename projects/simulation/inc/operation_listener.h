@@ -3,8 +3,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <linux/can.h>
-#include <linux/can/raw.h>
 #include <net/if.h>
 #include <poll.h>
 #include <pthread.h>
@@ -34,5 +32,6 @@ typedef enum {
   ADC_SET_READING,
   I2C_SET_READING,
   SPI_SET_RX,
-  UART
+  UART,
+  NUM_OF_OPERATIONS
 } Operations;
