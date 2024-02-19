@@ -18,40 +18,26 @@
 static const GpioAddress brake = ADC_POT1_BRAKE;
 static const GpioAddress throttle = ADC_HALL_SENSOR;
 
-PedalCalibBlob global_calib_blob;
+PedalCalibBlob global_calib_blob = { 0 };
 static PedalCalibrationStorage s_throttle_calibration_storage;
 static PedalCalibrationStorage s_brake_calibration_storage;
 
 void test_throttle_calibration_run(void) {
-  LOG_DEBUG("Please ensure the throttle is not being pressed.\n");
-  delay_s(7);
-  LOG_DEBUG("Beginning sampling\n");
-  pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib,
-                     THROTTLE_CHANNEL, PEDAL_UNPRESSED, &throttle);
-  LOG_DEBUG("Completed sampling\n");
   LOG_DEBUG("Please press and hold the throttle\n");
   delay_s(7);
   LOG_DEBUG("Beginning sampling\n");
   pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib,
                      THROTTLE_CHANNEL, PEDAL_PRESSED, &throttle);
-  LOG_DEBUG("Completed sampling\n");
+  LOG_DEBUG("Completed sampling, %d\n");
 
-  calib_commit();
-}
+  adc_run();
 
-void test_brake_calibration_run(void) {
-  LOG_DEBUG("Please ensure the brake is not being pressed.\n");
+  LOG_DEBUG("Please ensure the throttle is not being pressed.\n");
   delay_s(7);
   LOG_DEBUG("Beginning sampling\n");
-  pedal_calib_sample(&s_brake_calibration_storage, &global_calib_blob.brake_calib, BRAKE_CHANNEL,
-                     PEDAL_UNPRESSED, &brake);
-  LOG_DEBUG("Completed sampling\n");
-  LOG_DEBUG("Please press and hold the brake\n");
-  delay_s(7);
-  LOG_DEBUG("Beginning sampling\n");
-  pedal_calib_sample(&s_brake_calibration_storage, &global_calib_blob.brake_calib, BRAKE_CHANNEL,
-                     PEDAL_PRESSED, &brake);
-  LOG_DEBUG("Completed sampling\n");
+  pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib,
+                     THROTTLE_CHANNEL, PEDAL_UNPRESSED, &throttle);
+  LOG_DEBUG("Completed sampling, %d\n");
 
   calib_commit();
 }
@@ -76,7 +62,6 @@ TASK(smoke_pedal_calib_task, TASK_STACK_512) {
   pedal_calib_init(&s_brake_calibration_storage);
 
   test_throttle_calibration_run();
-  test_brake_calibration_run();
 
   while (1)
     ;
