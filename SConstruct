@@ -83,7 +83,7 @@ TARGET = GetOption('name')
 env = SConscript(f'platform/{PLATFORM}.py')
 
 if PLATFORM == 'x86':
-    env.Append(CPPINLCLUDES=['x86=1'])
+    env.Append(CPPDEFINES=['x86=1'])
 
 VARS = {
     "PLATFORM": PLATFORM,

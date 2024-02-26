@@ -10,7 +10,8 @@ from random import randint
 ################################################################################
 # INITIALIZATION
 
-projects = [ "bms_carrier", "centre_console", "motor_controller", "pedal", "power_distribution", "steering" ]
+# projects = [ "bms_carrier", "centre_console", "motor_controller", "pedal", "power_distribution", "steering" ]
+projects = [ "centre_console", "leds" ]
 PROJECT_DIR = os.path.join(os.getcwd(), 'projects')
 BUILD_DIR = os.path.join(os.getcwd(), 'build/x86/bin/projects')
 bus = can.interface.Bus('vcan0', bustype='virtual') 
@@ -31,13 +32,13 @@ class ProjectManager:
     else:
       print(f"ERROR: Project file not found for {self.project}. Doesn't exist")
       return
-    subprocess.run(["scons", "--platform=x86", "--project="+self.project])
-    subprocess.Popen([program, str(self.socket_num)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # subprocess.run(["scons", "--platform=x86", "--project="+self.project])
+    # subprocess.Popen([program, str(self.socket_num)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     time.sleep(5)
     try:
       self.manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
       self.manager_socket.connect(('127.0.0.1', self.socket_num))
-      print(self.socket_num)
+      print("ACTIVE ON PORT: ", self.socket_num)
     except Exception as e:
       print(f"ERROR: Socket failed. {e}")
       return
@@ -98,13 +99,13 @@ def start_car():
   socket_nums = car.start_projects()
 
 def gpio_set_state(project):
-  pinLetter = input("Select your GPIO pin letter (0-3): ")
+  pinLetter = input("Select your GPIO pin letter (0-2): ")
   pinNum = input ("Select your GPIO pin number (0-15): ")
   state = input("Select if it is high or low (0/1): ")
   car.operate(str(project), f"0: 3, {pinLetter}, {pinNum}, {state}\n")
 
 def gpio_toggle(project):
-  pinLetter = input("Select your GPIO pin letter (0-3): ")
+  pinLetter = input("Select your GPIO pin letter (0-2): ")
   pinNum = input ("Select your GPIO pin number (0-15): ")
   car.operate(str(project), f"1: 2, {pinLetter}, {pinNum}\n")
 
@@ -112,6 +113,26 @@ def gpio_toggle_it(project):
   pinLetter = input("Select your GPIO pin letter (0-3): ")
   pinNum = input ("Select your GPIO pin number (0-15): ")
   car.operate(str(project), f"2: 2, {pinLetter}, {pinNum}\n")
+
+def gpio_toggle_it(project):
+  pinLetter = input("Select your GPIO pin letter (0-3): ")
+  pinNum = input ("Select your GPIO pin number (0-15): ")
+  car.operate(str(project), f"3: 2, {pinLetter}, {pinNum}\n")
+  
+def gpio_toggle_it(project):
+  pinLetter = input("Select your GPIO pin letter (0-3): ")
+  pinNum = input ("Select your GPIO pin number (0-15): ")
+  car.operate(str(project), f"4: 2, {pinLetter}, {pinNum}\n")
+
+def gpio_toggle_it(project):
+  pinLetter = input("Select your GPIO pin letter (0-3): ")
+  pinNum = input ("Select your GPIO pin number (0-15): ")
+  car.operate(str(project), f"5: 2, {pinLetter}, {pinNum}\n")
+
+def gpio_toggle_it(project):
+  pinLetter = input("Select your GPIO pin letter (0-3): ")
+  pinNum = input ("Select your GPIO pin number (0-15): ")
+  car.operate(str(project), f"6: 2, {pinLetter}, {pinNum}\n")
 
 def gpio_read(project):
   car.operate(str(project), f"7: 0\n")

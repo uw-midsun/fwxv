@@ -31,11 +31,8 @@ TASK(leds_task, TASK_STACK_512) {
     // #ifdef MS_PLATFORM_X86
     // LOG_DEBUG("blink\n");
     // #endif
-    #ifdef x86
-    sim_init(sockfd);
-    #endif
     for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
-      gpio_toggle_state(&leds[i]);
+      // gpio_toggle_state(&leds[i]);
       // LOG_DEBUG("blink\n");
       delay_ms(50);
     }
@@ -43,8 +40,10 @@ TASK(leds_task, TASK_STACK_512) {
 }
 
 #ifdef x86
+#include "operation_listener.h"
+
 int main(int argc, char *argv[]) {
-  sockfd = x86_main_init(atoi(argv[1]));
+  x86_main_init(atoi(argv[1]));
 #else 
 int main(void) {
 #endif

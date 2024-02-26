@@ -70,7 +70,8 @@ void sim_init(int sock_num) {
             }
             LOG_DEBUG("SIMULATION: PARAM1 %d, PARAM2 %d, PARAM3 %d\n", param1, param2, param3);
             GpioAddress GPIO_SET_ADDR = { .port = param1, .pin = param2 };
-            gpio_set_state(&GPIO_SET_ADDR, param3);
+            StatusCode status_code = gpio_set_state(&GPIO_SET_ADDR, (GpioState)param3);
+            LOG_DEBUG("STATUS CODE: %d\n", status_code);
             break;
           case GPIO_TOGGLE:
             LOG_DEBUG("SIMULATION: GPIO_TOGGLE\n");
@@ -84,12 +85,8 @@ void sim_init(int sock_num) {
               LOG_DEBUG("SIMULATION: Invalid param, 1: %d, 2: %d, 3: %d\n", param1, param2, param3);
               continue;
             }
-
             GpioAddress GPIO_TOGGLE_ADDR = { .port = param1, .pin = param2 };
             gpio_toggle_state(&GPIO_TOGGLE_ADDR);
-            GpioState gpiostate;
-            gpiostate = gpio_get_state(&GPIO_TOGGLE_ADDR, &gpiostate);
-            LOG_DEBUG("SIMULATION: STATE: %d\n", gpiostate);
             break;
           case GPIO_IT_TRIGGER:
             LOG_DEBUG("SIMULATION: GPIO_IT_TRIGGER\n");
@@ -141,18 +138,18 @@ void sim_init(int sock_num) {
             break;
           case SPI_SET_RX:
             LOG_DEBUG("SIMULATION: SPI_SET_RX\n");
-            if (length != 2) {
+            if (length != 3) {
               LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation, length);
               break;
             }
 
-            sscanf(buffer, "%d, %[^\n\t]", &param1, buffer);
+            sscanf(buffer, "%d, %d, %[^\n\t]", &param1, &param2, buffer);
             if (param1 < 0) {
               LOG_DEBUG("SIMULATION: Invalid param, param1: %d, param2: %d\n", param1, param2);
               continue;
             }
 
-            spi_set_rx((uint8_t *)&buffer, param1);
+            spi_set_rx(param1, (uint8_t *)&buffer, param2);
             break;
           case UART:
             LOG_DEBUG("SIMULATION: UART\n");
