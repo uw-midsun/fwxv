@@ -14,7 +14,7 @@ void sim_init(int sock_num) {
   int res;
   int operation, length, param1, param2, param3;
   char rcv[1];
-  char sen[50];
+  char sen[100];
   int p;
   Operations input;
 
@@ -161,12 +161,27 @@ void sim_init(int sock_num) {
               break;
             }
 
+            char* gpio_mode_strings[] = {
+              "ANALOG",
+              "INPUT_FLOATING",
+              "INPUT_PULL_DOWN",
+              "INPUT_PULL_UP",
+              "OUTPUT_OPEN_DRAIN",
+              "OUTPUT_PUSH_PULL",
+              "ALTERNATE_FUNCTION_OPEN_DRAIN",
+              "ALTERNATE_FUNCTION_PUSH_PULL",
+              "UNKNOWN_MODE"
+            };
+
             for (int port = 0; port < 2; port++) {
               for (int pin = 0; pin < 16; pin++) {
                 GpioAddress ADDR = { .port = port, .pin = pin};
                 GpioState gpio_state;
+                GpioMode gpio_mode;
                 gpio_get_state(&ADDR, &gpio_state);
-                sprintf(sen, "GPIO_PIN %c%d | STATE = %d\n", port == 0? 'A':'B', pin, gpio_state);
+                gpio_get_mode(&ADDR, &gpio_mode);
+                sprintf(sen, "GPIO_PIN %c%d | STATE = %s | MODE = %s\n", port == 0? 'A':'B', pin, gpio_state == 0? "LOW":"HIGH",
+                gpio_mode >= 0 && gpio_mode < NUM_GPIO_MODES? gpio_mode_strings[gpio_mode] : gpio_mode_strings[NUM_GPIO_MODES]);
                 res = send(sock_num, sen, strlen(sen), 0);
                 if (res < 0) {
                   LOG_WARN("ERROR: GPIO READ failed");

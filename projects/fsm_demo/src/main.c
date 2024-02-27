@@ -28,6 +28,8 @@ void run_medium_cycle() {
 }
 
 #ifdef x86
+#include "operation_listener.h"
+
 int main(int argc, char *argv[]) {
   x86_main_init(atoi(argv[1]));
 #else 

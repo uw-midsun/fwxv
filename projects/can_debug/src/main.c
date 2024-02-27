@@ -57,12 +57,7 @@ TASK(master_task, TASK_MIN_STACK_SIZE) {
   }
 }
 
-#ifdef x86
-int main(int argc, char *argv[]) {
-  x86_main_init(atoi(argv[1]));
-#else 
 int main() {
-#endif
   tasks_init();
   log_init();
 

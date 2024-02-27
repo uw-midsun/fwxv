@@ -54,17 +54,13 @@ TASK(testing_task, TASK_STACK_256) {
 
       // Echoing back out same msg
       can_transmit(&msg);
+      LOG_DEBUG("Transmit done.\n");
     }
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
 }
 
-#ifdef x86
-int main(int argc, char *argv[]) {
-  x86_main_init(atoi(argv[1]));
-#else 
 int main() {
-#endif
   tasks_init();
   gpio_init();
   log_init();
