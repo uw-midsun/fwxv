@@ -43,13 +43,13 @@ void sim_init(int sock_num) {
               break;
             }
           }
-        } 
+        }
         LOG_DEBUG("SIMULATION: Message received!\n");
         param1 = 0;
         param2 = 0;
         param3 = 0;
         sscanf(buffer, "%d: %d, %[^\n\t]", &operation, &length, buffer);
-        if ((operation < 0 || operation > 7 ) && (operation != NUM_OF_OPERATIONS)) {
+        if ((operation < 0 || operation > 7) && (operation != NUM_OF_OPERATIONS)) {
           LOG_DEBUG("SIMULATION: Invalid operation: %d\n", operation);
           continue;
         }
@@ -58,8 +58,9 @@ void sim_init(int sock_num) {
         switch (input) {
           case GPIO_SET:
             LOG_DEBUG("SIMULATION: GPIO_SET\n");
-              if (length != 3) {
-              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation, length);
+            if (length != 3) {
+              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation,
+                        length);
               break;
             }
 
@@ -76,7 +77,8 @@ void sim_init(int sock_num) {
           case GPIO_TOGGLE:
             LOG_DEBUG("SIMULATION: GPIO_TOGGLE\n");
             if (length != 2) {
-              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation, length);
+              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation,
+                        length);
               break;
             }
 
@@ -91,7 +93,8 @@ void sim_init(int sock_num) {
           case GPIO_IT_TRIGGER:
             LOG_DEBUG("SIMULATION: GPIO_IT_TRIGGER\n");
             if (length != 2) {
-              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation, length);
+              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation,
+                        length);
               break;
             }
 
@@ -107,7 +110,8 @@ void sim_init(int sock_num) {
           case ADC_SET_READING:
             LOG_DEBUG("SIMULATION: ADC_SET_READING\n");
             if (length != 3) {
-              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation, length);
+              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation,
+                        length);
               break;
             }
 
@@ -123,7 +127,8 @@ void sim_init(int sock_num) {
           case I2C_SET_READING:
             LOG_DEBUG("SIMULATION: I2C_SET_READING\n");
             if (length != 3) {
-              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation, length);
+              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation,
+                        length);
               break;
             }
 
@@ -139,7 +144,8 @@ void sim_init(int sock_num) {
           case SPI_SET_RX:
             LOG_DEBUG("SIMULATION: SPI_SET_RX\n");
             if (length != 3) {
-              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation, length);
+              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation,
+                        length);
               break;
             }
 
@@ -157,31 +163,33 @@ void sim_init(int sock_num) {
           case GPIO_READ:
             LOG_DEBUG("SIMULATION: GPIO READ\n");
             if (length != 0) {
-              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation, length);
+              LOG_DEBUG("SIMULATION: Invalid length for operation: %d Length: %d\n", operation,
+                        length);
               break;
             }
 
-            char* gpio_mode_strings[] = {
-              "ANALOG",
-              "INPUT_FLOATING",
-              "INPUT_PULL_DOWN",
-              "INPUT_PULL_UP",
-              "OUTPUT_OPEN_DRAIN",
-              "OUTPUT_PUSH_PULL",
-              "ALTERNATE_FUNCTION_OPEN_DRAIN",
-              "ALTERNATE_FUNCTION_PUSH_PULL",
-              "UNKNOWN_MODE"
-            };
+            char *gpio_mode_strings[] = { "ANALOG",
+                                          "INPUT_FLOATING",
+                                          "INPUT_PULL_DOWN",
+                                          "INPUT_PULL_UP",
+                                          "OUTPUT_OPEN_DRAIN",
+                                          "OUTPUT_PUSH_PULL",
+                                          "ALTERNATE_FUNCTION_OPEN_DRAIN",
+                                          "ALTERNATE_FUNCTION_PUSH_PULL",
+                                          "UNKNOWN_MODE" };
 
             for (int port = 0; port < 2; port++) {
               for (int pin = 0; pin < 16; pin++) {
-                GpioAddress ADDR = { .port = port, .pin = pin};
+                GpioAddress ADDR = { .port = port, .pin = pin };
                 GpioState gpio_state;
                 GpioMode gpio_mode;
                 gpio_get_state(&ADDR, &gpio_state);
                 gpio_get_mode(&ADDR, &gpio_mode);
-                sprintf(sen, "GPIO_PIN %c%d | STATE = %s | MODE = %s\n", port == 0? 'A':'B', pin, gpio_state == 0? "LOW":"HIGH",
-                gpio_mode >= 0 && gpio_mode < NUM_GPIO_MODES? gpio_mode_strings[gpio_mode] : gpio_mode_strings[NUM_GPIO_MODES]);
+                snprintf(sen, sizeof(sen), "GPIO_PIN %c%d | STATE = %s | MODE = %s\n",
+                         port == 0 ? 'A' : 'B', pin, gpio_state == 0 ? "LOW" : "HIGH",
+                         gpio_mode >= 0 && gpio_mode < NUM_GPIO_MODES
+                             ? gpio_mode_strings[gpio_mode]
+                             : gpio_mode_strings[NUM_GPIO_MODES]);
                 res = send(sock_num, sen, strlen(sen), 0);
                 if (res < 0) {
                   LOG_WARN("ERROR: GPIO READ failed");
@@ -236,4 +244,4 @@ void x86_main_init(int socket_num) {
     close(newsockfd);
     close(socketfd);
   }
-} 
+}

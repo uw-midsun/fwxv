@@ -32,7 +32,7 @@ void run_medium_cycle() {
 
 int main(int argc, char *argv[]) {
   x86_main_init(atoi(argv[1]));
-#else 
+#else
 int main(void) {
 #endif
   log_init();

@@ -1,4 +1,5 @@
 #include "uart.h"
+
 #include <string.h>
 
 typedef struct {
@@ -12,17 +13,15 @@ typedef struct {
 } UartPortData;
 
 static UartPortData s_port[NUM_UART_PORTS] = {
-  [UART_PORT_1] = {},
-  [UART_PORT_2] = {},
-  [UART_PORT_3] = {},
-  [UART_PORT_4] = {}
+  [UART_PORT_1] = {}, [UART_PORT_2] = {}, [UART_PORT_3] = {}, [UART_PORT_4] = {}
 };
 
 StatusCode uart_init(UartPort uart, UartSettings *settings) {
   if (uart >= NUM_UART_PORTS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid UART port.");
   }
-  if (s_port[uart].initialized) return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Already initialized.");
+  if (s_port[uart].initialized)
+    return status_msg(STATUS_CODE_RESOURCE_EXHAUSTED, "Already initialized.");
 
   s_port[uart].settings = *settings;
 

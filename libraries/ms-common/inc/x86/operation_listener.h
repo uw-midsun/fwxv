@@ -16,11 +16,11 @@
 #include <unistd.h>
 
 #include "adc.h"
-#include "spi.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "i2c.h"
 #include "log.h"
+#include "spi.h"
 
 #define BUFFER_SIZE 2024
 

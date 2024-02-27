@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+
 #include "current_sense.h"
 #include "gpio_it.h"
 #include "log.h"
@@ -31,7 +32,7 @@ void run_slow_cycle() {}
 
 int main(int argc, char *argv[]) {
   x86_main_init(atoi(argv[1]));
-#else 
+#else
 int main() {
 #endif
   I2CSettings i2c_settings = { .sda = I2C2_SDA, .scl = I2C2_SCL, .speed = I2C_SPEED_STANDARD };

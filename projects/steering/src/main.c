@@ -43,7 +43,7 @@ void run_slow_cycle() {}
 
 int main(int argc, char *argv[]) {
   x86_main_init(atoi(argv[1]));
-#else 
+#else
 int main() {
 #endif
   tasks_init();

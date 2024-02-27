@@ -1,6 +1,5 @@
 #include <stdbool.h>
 
-#include "operation_listener.h"
 #include "delay.h"
 #include "gpio.h"
 #include "log.h"
@@ -43,7 +42,7 @@ TASK(leds_task, TASK_STACK_512) {
 
 int main(int argc, char *argv[]) {
   x86_main_init(atoi(argv[1]));
-#else 
+#else
 int main(void) {
 #endif
   tasks_init();

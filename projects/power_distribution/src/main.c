@@ -1,6 +1,5 @@
 #include <stdio.h>
 
-#include "operation_listener.h"
 #include "bts_load_switch.h"
 #include "can.h"
 #include "can_board_ids.h"
@@ -58,7 +57,7 @@ void run_slow_cycle() {}
 
 int main(int argc, char *argv[]) {
   x86_main_init(atoi(argv[1]));
-#else 
+#else
 int main() {
 #endif
   tasks_init();
