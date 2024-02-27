@@ -44,7 +44,7 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
 }
 
 StatusCode uart_rx(UartPort uart, uint8_t *data, size_t *len) {
-  for (size_t i = 0; i < len; i++) {
+  for (size_t i = 0; i < *len; i++) {
     if (queue_receive(&s_port[uart].rx_queue, data, 0)) {
       queue_reset(&s_port[uart].rx_queue);
       return STATUS_CODE_INTERNAL_ERROR;
@@ -58,8 +58,7 @@ StatusCode uart_set_delimiter(UartPort uart, uint8_t delimiter) {
 }
 
 StatusCode uart_tx(UartPort uart, uint8_t *data, size_t *len) {
-
-  for (size_t i = 0; i < len; i++) {
+  for (size_t i = 0; i < *len; i++) {
     if (queue_send(&s_port[uart].tx_queue, data, 0)) {
       queue_reset(&s_port[uart].tx_queue);
       return STATUS_CODE_INTERNAL_ERROR;

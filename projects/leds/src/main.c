@@ -10,7 +10,6 @@
 
 #ifdef x86
 #define MASTER_MS_CYCLE_TIME 100
-int sockfd = 0;
 #endif
 
 static const GpioAddress leds[] = {

@@ -95,8 +95,8 @@ void sim_init(int sock_num) {
               break;
             }
 
-            sscanf(buffer, "%d, %d, %d", &param1, &param2, &param3);
-            if (param1 < 0 || param2 < 0 || param3 < 0 || param1 > 6 || param2 > 16) {
+            sscanf(buffer, "%d, %d", &param1, &param2);
+            if (param1 < 0 || param2 < 0 || param1 > 6 || param2 > 16) {
               LOG_DEBUG("SIMULATION: Invalid param, 1: %d, 2: %d, 3: %d\n", param1, param2, param3);
               continue;
             }

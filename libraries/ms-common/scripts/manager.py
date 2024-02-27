@@ -11,7 +11,7 @@ from random import randint
 # INITIALIZATION
 
 # projects = [ "bms_carrier", "centre_console", "motor_controller", "pedal", "power_distribution", "steering" ]
-projects = [ "centre_console", "leds" ]
+projects = [ "power_distribution", "leds" ]
 PROJECT_DIR = os.path.join(os.getcwd(), 'projects')
 BUILD_DIR = os.path.join(os.getcwd(), 'build/x86/bin/projects')
 bus = can.interface.Bus('vcan0', bustype='virtual') 
@@ -114,25 +114,26 @@ def gpio_toggle_it(project):
   pinNum = input ("Select your GPIO pin number (0-15): ")
   car.operate(str(project), f"2: 2, {pinLetter}, {pinNum}\n")
 
-def gpio_toggle_it(project):
+def adc_set_reading(project):
   pinLetter = input("Select your GPIO pin letter (0-3): ")
   pinNum = input ("Select your GPIO pin number (0-15): ")
-  car.operate(str(project), f"3: 2, {pinLetter}, {pinNum}\n")
+  adcReading = input("Enter your ADC reading (x-y): ")
+  car.operate(str(project), f"3: 3, {pinLetter}, {pinNum}, {adcReading}\n")
   
-def gpio_toggle_it(project):
-  pinLetter = input("Select your GPIO pin letter (0-3): ")
-  pinNum = input ("Select your GPIO pin number (0-15): ")
-  car.operate(str(project), f"4: 2, {pinLetter}, {pinNum}\n")
+def i2c_set_reading(project):
+  i2cPort = input("Select your I2C port (0/1): ")
+  i2cDataSize = input ("Enter the size of your message: ")
+  i2cData = input ("Enter the data to write: ")
+  car.operate(str(project), f"4: 3, {i2cPort}, {i2cDataSize}, {i2cData}\n")
+  
+def spi_set_rx(project):
+  spiPort = input("Select your SPI port (0/1): ")
+  spiDataSize = input("Enter the size of your message")
+  spiData = input ("Enter the data to write: ")
+  car.operate(str(project), f"5: 3, {spiPort}, {spiDataSize}, {spiData}\n")
 
-def gpio_toggle_it(project):
-  pinLetter = input("Select your GPIO pin letter (0-3): ")
-  pinNum = input ("Select your GPIO pin number (0-15): ")
-  car.operate(str(project), f"5: 2, {pinLetter}, {pinNum}\n")
-
-def gpio_toggle_it(project):
-  pinLetter = input("Select your GPIO pin letter (0-3): ")
-  pinNum = input ("Select your GPIO pin number (0-15): ")
-  car.operate(str(project), f"6: 2, {pinLetter}, {pinNum}\n")
+def UART(project):
+  print("x86 sim portion must be made")
 
 def gpio_read(project):
   car.operate(str(project), f"7: 0\n")
