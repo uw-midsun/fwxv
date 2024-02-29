@@ -24,10 +24,10 @@ static const LtcAfeSettings s_afe_settings = {
 
   .adc_mode = LTC_AFE_ADC_MODE_7KHZ,
 
-  .cell_bitset = { 0xFF },
+  .cell_bitset = { 0xFFF, 0xFFF, 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0 },
 
-  .num_devices = 1,
+  .num_devices = 3,
   .num_cells = 12,
   .num_thermistors = 12,
 };
@@ -79,12 +79,13 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   // wait_tasks(1);
 
   status |= ltc_afe_impl_read_cells(&s_ltc_store);
-  for (int cell = 0; cell < 12; cell++) {
+  for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
     LOG_DEBUG("CELL %d: %d\n\r", cell,
               s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]);
     max_voltage = s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > max_voltage
                       ? s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]
                       : max_voltage;
+    LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
     delay_ms(1);
   }
   set_battery_vt_voltage(max_voltage);
