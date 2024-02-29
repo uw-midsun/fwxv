@@ -43,7 +43,8 @@ static Pca9555GpioAddress s_output_leds[NUM_DRIVE_LED] = {
 };
 
 static uint8_t prv_regen_calc(uint16_t batt_current, uint16_t batt_voltage) {
-  return 100 * (MAX_VOLTAGE - (batt_voltage < 4 ? MIN_VOLTAGE : batt_voltage)) / (MAX_VOLTAGE - MIN_VOLTAGE);
+  return 100 * (MAX_VOLTAGE - (batt_voltage < 4 ? MIN_VOLTAGE : batt_voltage)) /
+         (MAX_VOLTAGE - MIN_VOLTAGE);
 }
 
 void update_indicators(uint32_t notif) {

@@ -27,7 +27,7 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0 },
 
-  .num_devices = 3,
+  .num_devices = 2,
   .num_cells = 12,
   .num_thermistors = 12,
 };
@@ -69,8 +69,8 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
 
   status |= ltc_afe_impl_trigger_cell_conv(&s_ltc_store);
   delay_ms(10);
-
   if (status != STATUS_CODE_OK) {
+    LOG_DEBUG("status (cell_conv failed): %d\n", status);
     fsm_transition(fsm, RELAYS_FAULT);
     return;
   }
@@ -85,13 +85,14 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     max_voltage = s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > max_voltage
                       ? s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]
                       : max_voltage;
-    LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
     delay_ms(1);
   }
+  LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   set_battery_vt_voltage(max_voltage);
   status |= ltc_afe_impl_fault_check();
 
   if (status != STATUS_CODE_OK) {
+    LOG_DEBUG("status (fault_check or read_cells failed): %d\n", status);
     fsm_transition(fsm, RELAYS_FAULT);
     return;
   }

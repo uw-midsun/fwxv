@@ -3,8 +3,8 @@
 #include "gpio.h"
 #include "log.h"
 #include "master_task.h"
-#include "tasks.h"
 #include "pwm.h"
+#include "tasks.h"
 
 int main() {
   gpio_init();

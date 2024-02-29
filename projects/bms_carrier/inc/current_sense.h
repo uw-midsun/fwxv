@@ -8,8 +8,8 @@
 
 #include "i2c.h"
 #include "max17261_fuel_gauge.h"
-#include "spi.h"
 #include "pwm.h"
+#include "spi.h"
 #include "status.h"
 #include "tasks.h"
 

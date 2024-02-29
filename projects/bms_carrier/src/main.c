@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "bms.h"
-#include "pwm.h"
 #include "can.h"
 #include "can_board_ids.h"
 #include "current_sense.h"
@@ -16,6 +15,7 @@
 #include "ltc_afe_impl.h"
 #include "master_task.h"
 #include "max17261_fuel_gauge.h"
+#include "pwm.h"
 #include "relays_fsm.h"
 #include "tasks.h"
 
@@ -39,13 +39,13 @@ void pre_loop_init() {
   init_bms_relays();
 }
 
-void run_fast_cycle() {
-  fsm_run_cycle(bms_relays);
-  wait_tasks(1);
-}
+void run_fast_cycle() {}
 
 void run_medium_cycle() {
   run_can_rx_cycle();
+  wait_tasks(1);
+
+  fsm_run_cycle(bms_relays);
   wait_tasks(1);
 
   run_can_tx_cycle();

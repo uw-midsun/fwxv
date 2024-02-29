@@ -62,7 +62,7 @@ static StatusCode prv_fuel_gauge_read() {
   }
 
   if (temperature < 20) {
-    pwm_set_dc(PWM_TIMER_3, (temperature * 100)/BMS_FAN_TEMP_THRESHOLD);
+    pwm_set_dc(PWM_TIMER_3, (temperature * 100) / BMS_FAN_TEMP_THRESHOLD);
   } else {
     pwm_set_dc(PWM_TIMER_3, 100);
   }
