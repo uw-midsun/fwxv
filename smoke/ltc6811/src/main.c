@@ -21,10 +21,10 @@ LtcAfeSettings s_afe_settings = {
 
   .adc_mode = LTC_AFE_ADC_MODE_7KHZ,
 
-  .cell_bitset = { 0xFF },
+  .cell_bitset = { 0xFFF, 0xFFF, 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0 },
 
-  .num_devices = 1,
+  .num_devices = 2,
   .num_cells = 12,
   .num_thermistors = 12,
 };
@@ -43,15 +43,15 @@ TASK(smoke_ltc, TASK_STACK_1024) {
     ltc_afe_impl_read_cells(&s_ltc_store);
 
     // Log cell values
-    for (int cell = 0; cell < 12; cell++) {
+    for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
       LOG_DEBUG("CELL %d: %d\n\r", cell,
                 s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]);
-      delay_ms(1);
+      delay_ms(3);
     }
 
     // Get min cell reading
     uint16_t min_cell = UINT16_MAX;
-    for (int cell = 0; cell < 12; cell++) {
+    for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
       if (s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] < min_cell) {
         min_cell = s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]];
       }
@@ -62,7 +62,7 @@ TASK(smoke_ltc, TASK_STACK_1024) {
     // Every cell that is 10mV or greater above (unbalanced) the minimum voltage cell should be
     // discharged
     min_cell += 100;  // Add 100 to set the min discharge value (units of 100uV)
-    for (int cell = 0; cell < 12; cell++) {
+    for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
       if (s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > min_cell) {
         ltc_afe_impl_toggle_cell_discharge(&s_ltc_store, cell, true);
         LOG_DEBUG("Cell %d unbalanced \n", cell);
@@ -79,7 +79,7 @@ TASK(smoke_ltc, TASK_STACK_1024) {
     ltc_afe_impl_write_config(&s_ltc_store);
 
 
-    for (int i = 0; i < 10; i++) {
+    for (size_t i = 0; i < 10; i++) {
       // Thermistor select cell 0
       ltc_afe_impl_trigger_aux_conv(&s_ltc_store, i);
 
