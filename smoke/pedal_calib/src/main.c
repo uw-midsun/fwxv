@@ -28,7 +28,7 @@ void test_throttle_calibration_run(void) {
   LOG_DEBUG("Beginning sampling\n");
   pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib,
                      THROTTLE_CHANNEL, PEDAL_PRESSED, &throttle);
-  LOG_DEBUG("Completed sampling, %d\n");
+  LOG_DEBUG("Completed sampling\n");
 
   adc_run();
 
@@ -37,7 +37,7 @@ void test_throttle_calibration_run(void) {
   LOG_DEBUG("Beginning sampling\n");
   pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib,
                      THROTTLE_CHANNEL, PEDAL_UNPRESSED, &throttle);
-  LOG_DEBUG("Completed sampling, %d\n");
+  LOG_DEBUG("Completed sampling\n");
 
   calib_commit();
 }
