@@ -42,7 +42,7 @@ StatusCode read_pedal_data(int32_t *reading, MAX11600Channel channel) {
       s_calib_blob->throttle_calib.upper_value - s_calib_blob->throttle_calib.lower_value;
   volatile float calculated_reading =
       (((float)*reading - (float)s_calib_blob->throttle_calib.lower_value) / range_throttle) * 100;
-  *reading = (int32_t)calculated_reading;
+  *reading = 100 - (int32_t)calculated_reading;
 
   if (*reading < 0) {
     *reading = 0;
