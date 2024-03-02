@@ -32,11 +32,11 @@ StatusCode pedal_calib_sample(PedalCalibrationStorage *calib_storage, PedalCalib
     if (status != STATUS_CODE_OK) {
       return STATUS_CODE_INCOMPLETE;
     }
-    uint8_t reading = (uint8_t)adc_reading;
+    uint16_t reading = (uint16_t)adc_reading;
     calib_storage->sample_counter++;
-    average_value += channel;
+    average_value += reading;
     calib_storage->min_reading = MIN(calib_storage->min_reading, reading);
-    calib_storage->max_reading = MAX(calib_storage->min_reading, reading);
+    calib_storage->max_reading = MAX(calib_storage->max_reading, reading);
   }
 
   if (state == PEDAL_PRESSED) {
