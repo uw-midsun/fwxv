@@ -1,7 +1,8 @@
 import json
 import subprocess
 import serial  # pip install pyserial
-
+import glob
+from sys import platform
 
 def parse_config(entry):
     # Default config to empty for fields that don't exist
@@ -27,8 +28,12 @@ def parse_config(entry):
 def flash_run(entry):
     '''flash and run file, return a pyserial object which monitors the device serial output'''
     try:
-        output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
-        device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
+        if platform == 'darwin':
+            output = glob.glob("/dev/tty.usbmodem*")
+            device_path = output[0]
+        else:
+            output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
+            device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
         serialData = serial.Serial(device_path, 115200)
     except:
         print()

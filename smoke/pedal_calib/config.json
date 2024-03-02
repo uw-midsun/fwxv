@@ -4,5 +4,11 @@
         "ms-common",
         "ms-drivers",
         "core"
+    ],
+    "include": [
+        "projects/pedal/inc"
+    ],
+    "sources": [
+        "projects/pedal/src/pedal_data.o"
     ]
 }
