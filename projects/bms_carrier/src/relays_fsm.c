@@ -67,7 +67,13 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     return;
   }
 
-  status |= ltc_afe_impl_trigger_cell_conv(&s_ltc_store);
+  // Retry Mechanism
+  if(ltc_afe_impl_trigger_cell_conv(&s_ltc_store)) {
+    // If this has failed, try once more after a short delay
+    delay_ms(5);
+    status |= ltc_afe_impl_trigger_cell_conv(&s_ltc_store);
+  }
+
   delay_ms(10);
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("status (cell_conv failed): %d\n", status);
