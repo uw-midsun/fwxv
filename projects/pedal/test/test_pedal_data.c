@@ -72,16 +72,16 @@ void setup_test(void) {
 void teardown_test(void) {}
 
 void test_pedal_cycle(void) {
-  uint32_t throttle_reading = 0;
-  uint32_t brake_reading = 0;
+  int32_t throttle_reading = 0;
+  int32_t brake_reading = 0;
 
   // Read throttle and brake values
   read_throttle_data(&throttle_reading);
   read_brake_data(&brake_reading);
 
   // Use CAN setters to set throttle and brake values
-  set_pedal_output_throttle_output(throttle_reading);
-  set_pedal_output_brake_output(brake_reading);
+  set_pedal_output_throttle_output((uint32_t)throttle_reading);
+  set_pedal_output_brake_output((uint32_t)brake_reading);
 
   // Check the correct values for the throttle and brake signals are in the g_tx_struct
   TEST_ASSERT_EQUAL(EXPECTED_THROTTLE_VALUE,
