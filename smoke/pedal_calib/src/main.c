@@ -63,8 +63,8 @@ TASK(smoke_pedal_calib_task, TASK_STACK_512) {
 
   test_throttle_calibration_run();
 
-  while (1)
-    ;
+  while (1) {
+  }
 }
 
 int main() {
