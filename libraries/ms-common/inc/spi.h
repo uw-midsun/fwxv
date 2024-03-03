@@ -45,8 +45,8 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
 
 #ifdef x86
 // Reads data from the tx buffer into data
-StatusCode spi_get_tx(uint8_t *data, uint8_t len);
+StatusCode spi_get_tx(SpiPort spi, uint8_t *data, uint8_t len);
 
 // Writes from data into the rx buffer
-StatusCode spi_set_rx(uint8_t *data, uint8_t len);
+StatusCode spi_set_rx(SpiPort spi, uint8_t *data, uint8_t len);
 #endif

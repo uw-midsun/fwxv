@@ -33,7 +33,7 @@ def flash_run(entry):
     except:
         print()
         print("Flashing requires a controller board to be connected, use --platform=x86 for x86 targets")
-
+        
     OPENOCD = 'openocd'
     OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
     PROBE = 'cmsis-dap'

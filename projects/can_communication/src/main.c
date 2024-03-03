@@ -54,6 +54,7 @@ TASK(testing_task, TASK_STACK_256) {
 
       // Echoing back out same msg
       can_transmit(&msg);
+      LOG_DEBUG("Transmit done.\n");
     }
     vTaskDelay(pdMS_TO_TICKS(1000));
   }
