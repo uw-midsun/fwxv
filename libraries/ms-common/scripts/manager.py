@@ -23,7 +23,7 @@ BUILD_DIR = os.path.join(os.getcwd(), 'build/x86/bin/projects')
 try:
     subprocess.run(['sudo', 'ip', 'link', 'add', 'dev', 'vcan0', 'type', 'vcan'], check=True)
     subprocess.run(['sudo', 'ip', 'link', 'set', 'up', 'vcan0'], check=True)
-except Exception as error:
+except subprocess.CalledProcessError as error:
     print(f"Error: {error}")
 
 ###########################################################
@@ -56,15 +56,19 @@ class ProjectManager:
         try:
             self.socket_num = self.find_available_port()
             subprocess.run(["scons", "--platform=x86", "--project=" + self.project], check=True)
-            subprocess.Popen(
-                [program, str(self.socket_num)],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
+
+            # CHANGE THIS TO THREADING INSTEAD... I hate scons lint.
+            subprocess.Popen([program, str(self.socket_num)],
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
             time.sleep(2)
             self.manager_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.manager_socket.connect(('127.0.0.1', self.socket_num))
             print("ACTIVE ON PORT: ", self.socket_num)
-        except Exception as error:
+        except subprocess.CalledProcessError as error:
+            print(f"ERROR: Subprocess failed. {error}")
+            return 0
+        except socket.error as error:
             print(f"ERROR: Socket failed. {error}")
             return 0
         print("PROJECT STARTED")
@@ -92,7 +96,7 @@ class ProjectManager:
         try:
             for char in operations:
                 self.manager_socket.send(char.encode())
-        except Exception as error:
+        except socket.error as error:
             print(f"ERROR: {error}")
 
     def read_operation(self):
@@ -102,7 +106,7 @@ class ProjectManager:
         try:
             msg = (self.manager_socket.recv(2048)).decode()
             print(msg)
-        except Exception as error:
+        except socket.error as error:
             print(f"ERROR: {error}")
 
     def __del__(self):
@@ -244,6 +248,6 @@ def gpio_read(project):
     '''
     Allows user to view all GPIO pin states/modes
     '''
-    CAR.operate(str(project), f"7: 0\n")
+    CAR.operate(str(project), "7: 0\n")
     time.sleep(1)
     CAR.read(str(project))
