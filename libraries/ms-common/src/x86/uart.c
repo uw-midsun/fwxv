@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+// NOT COMPLETED
+
 typedef struct {
   UartSettings settings;
   uint8_t tx_buf[UART_MAX_BUFFER_LEN];
