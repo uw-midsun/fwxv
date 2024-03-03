@@ -77,7 +77,7 @@ void run_fast_cycle() {
       set_pedal_output_throttle_output(res);
     } else {
       // Brake is pressed - Send brake data with throttle as 0
-      LOG_DEBUG("Pedal Result: %d\n", 0);
+      LOG_DEBUG("Pedal Result: %ld\n", 0);
       set_pedal_output_brake_output(0);
       set_pedal_output_throttle_output(0);
     }
