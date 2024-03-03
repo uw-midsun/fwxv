@@ -72,12 +72,10 @@ void run_fast_cycle() {
     if (brake_position == GPIO_STATE_LOW) {
       // Brake is not pressed - Send both readings, brake will be 0 and ignored by the receiver
       uint32_t res = (uint32_t)throttle_position;
-      LOG_DEBUG("Pedal Result: %ld\n", res);
       set_pedal_output_brake_output(100);
       set_pedal_output_throttle_output(res);
     } else {
       // Brake is pressed - Send brake data with throttle as 0
-      LOG_DEBUG("Pedal Result: %ld\n", 0);
       set_pedal_output_brake_output(0);
       set_pedal_output_throttle_output(0);
     }
