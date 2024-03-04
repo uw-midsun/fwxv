@@ -7,14 +7,12 @@
 #include "interrupt.h"
 #include "log.h"
 #include "tasks.h"
-
 static const GpioAddress leds[] = {
   { .port = GPIO_PORT_B, .pin = 5 },   //
   { .port = GPIO_PORT_B, .pin = 4 },   //
   { .port = GPIO_PORT_B, .pin = 3 },   //
   { .port = GPIO_PORT_A, .pin = 15 },  //
 };
-
 void pre_loop_init() {}
 
 TASK(hw_timer_task, TASK_STACK_512) {
@@ -30,16 +28,20 @@ TASK(hw_timer_task, TASK_STACK_512) {
   }
 }
 
+TASK(interrupt_task, TASK_STACK_512) {
+  while (true) {
+    LOG_DEBUG("INTERRUPTING TASK \n");
+  }
+}
+
 int main() {
   tasks_init();
   interrupt_init();
   gpio_init();
   hw_timer_init();
   log_init();
-
   tasks_init_task(hw_timer_task, TASK_PRIORITY(2), NULL);
-
+  // tasks_init_task(interrupt_task, TASK_PRIORITY(2), NULL);
   tasks_start();
-
   return 0;
 }
