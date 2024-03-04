@@ -30,6 +30,12 @@ TASK(hw_timer_task, TASK_STACK_512) {
   }
 }
 
+TASK(interrupt_task, TASK_STACK_512) {
+  while (true) {
+    LOG_DEBUG("INTERRUPTING TASK\n");
+  }
+}
+
 int main() {
   tasks_init();
   interrupt_init();
@@ -38,6 +44,7 @@ int main() {
   log_init();
 
   tasks_init_task(hw_timer_task, TASK_PRIORITY(2), NULL);
+  tasks_init_task(interrupt_task, TASK_PRIORITY(3), NULL);
 
   tasks_start();
 
