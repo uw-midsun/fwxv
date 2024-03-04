@@ -5,6 +5,7 @@
 #include "can.h"
 #include "can_board_ids.h"
 #include "current_sense.h"
+#include "fan.h"
 #include "fault_bps.h"
 #include "gpio.h"
 #include "gpio_it.h"
@@ -21,9 +22,15 @@
 
 #define FUEL_GAUGE_CYCLE_TIME_MS 100
 
-static CurrentStorage s_currentsense_storage;
-static LtcAfeStorage s_ltc_store;
+const CurrentStorage current_storage;
+const LtcAfeStorage ltc_afe_storage;
+
 static CanStorage s_can_storage = { 0 };
+
+// BmsStorage bms_storage = {
+//   .current_storage = current_storage,
+//   .ltc_afe_storage = ltc_afe_storage,
+// };
 
 static const CanSettings can_settings = {
   .device_id = SYSTEM_CAN_DEVICE_BMS_CARRIER,
@@ -35,8 +42,8 @@ static const CanSettings can_settings = {
 
 void pre_loop_init() {
   LOG_DEBUG("Welcome to BMS \n");
-  pwm_set_pulse(PWM_TIMER_3, BMS_FAN_PERIOD);
-  init_bms_relays();
+  // init_bms_relays();
+  bms_fan_init();
 }
 
 void run_fast_cycle() {}
@@ -45,8 +52,10 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
 
-  fsm_run_cycle(bms_relays);
-  wait_tasks(1);
+  // fsm_run_cycle(bms_relays);
+  // wait_tasks(1);
+
+  bms_run_fan();
 
   run_can_tx_cycle();
   wait_tasks(1);
@@ -59,7 +68,6 @@ int main() {
   log_init();
   interrupt_init();
   gpio_init();
-  pwm_init(PWM_TIMER_3, 40);
   can_init(&s_can_storage, &can_settings);
 
   LOG_DEBUG("Welcome to BMS!\n");

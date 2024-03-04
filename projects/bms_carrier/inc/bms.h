@@ -20,7 +20,6 @@
 #define BMS_FAN_CTRL_1_I2C_ADDR 0x5E
 #define BMS_FAN_CTRL_2_I2C_ADDR 0x5F
 #define NUM_BMS_FAN_CTRLS 2
-#define BMS_FAN_PERIOD 40          // 40 microseconds | 25kHz
 #define BMS_FAN_TEMP_THRESHOLD 20  // threshold before fan goes max speed
 
 // Not dealing with debouncer here
@@ -35,3 +34,15 @@ typedef struct BmsStorage {
   // DebouncerStorage killswitch_storage;
   // BpsStorage bps_storage;
 } BmsStorage;
+
+typedef enum {
+  BMS_FAULT_OVERVOLTAGE,
+  BMS_FAULT_UNBALANCE,
+  BMS_FAULT_OVERTEMP_AMBIENT,
+  BMS_FAULT_COMMS_LOSS_AFE,
+  BMS_FAULT_COMMS_LOSS_CURR_SENSE,
+  BMS_FAULT_OVERTEMP_CELL,
+  BMS_FAULT_OVERCURRENT,
+  BMS_FAULT_UNDERVOLTAGE,
+  BMS_FAULT_KILLSWITCH
+} BmsFault;

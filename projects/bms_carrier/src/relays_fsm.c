@@ -1,11 +1,5 @@
 #include "relays_fsm.h"
 
-#include "gpio.h"
-// check current sense CS_FAULT pin
-// AFE cell conversions, wait 10ms by reading start time
-// Peform current sense read and check DONE
-// Read AFE Cells and do checks
-
 FSM(bms_relays, NUM_RELAY_STATES, TASK_STACK_512);
 static RelaysStateId fsm_prev_state = RELAYS_OPEN;
 
@@ -13,7 +7,6 @@ static CurrentStorage s_currentsense_storage;
 static LtcAfeStorage s_ltc_store;
 
 static const LtcAfeSettings s_afe_settings = {
-  // Settings pending hardware validation
   .mosi = { .port = GPIO_PORT_B, .pin = 15 },
   .miso = { .port = GPIO_PORT_B, .pin = 14 },
   .sclk = { .port = GPIO_PORT_B, .pin = 13 },
@@ -38,9 +31,9 @@ static const I2CSettings i2c_settings = {
   .scl = BMS_PERIPH_I2C_SCL_PIN,
 };
 
-const GpioAddress pos_relay_en = { .port = GPIO_PORT_B, .pin = 8 };
-const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
-const GpioAddress solar_relay_en = { .port = GPIO_PORT_C, .pin = 13 };
+static const GpioAddress pos_relay_en = { .port = GPIO_PORT_B, .pin = 8 };
+static const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
+static const GpioAddress solar_relay_en = { .port = GPIO_PORT_C, .pin = 13 };
 
 void close_relays() {
   // 150 MS GAP BETWEEN EACH RELAY
@@ -67,8 +60,9 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     return;
   }
 
-  // Retry Mechanism
-  if(ltc_afe_impl_trigger_cell_conv(&s_ltc_store)) {
+  // TODO: Figure out why cell_conv cannot happen without spi timing out (Most likely RTOS
+  // implemntation error) Retry Mechanism
+  if (ltc_afe_impl_trigger_cell_conv(&s_ltc_store)) {
     // If this has failed, try once more after a short delay
     delay_ms(5);
     status |= ltc_afe_impl_trigger_cell_conv(&s_ltc_store);

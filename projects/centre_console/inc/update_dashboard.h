@@ -6,8 +6,8 @@
 #include "exported_enums.h"
 #include "status.h"
 
-#define MAX_VOLTAGE 4.2
-#define MIN_VOLTAGE 4.0
+#define MAX_VOLTAGE 42000
+#define MIN_VOLTAGE 40000
 #define MAX_CURRENT 27
 
 typedef enum MainTaskBtnEvents {
