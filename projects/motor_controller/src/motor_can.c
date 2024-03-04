@@ -79,13 +79,15 @@ static void prv_update_target_current_velocity() {
   uint8_t regen = get_drive_output_regen_braking();
   bool cruise = get_drive_output_cruise_control();
 
+  // TODO: Update cruise_throttle_threshold so the driver must demand more current than is already
+  // being supplied
   if (drive_state == DRIVE && cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
     drive_state = CRUISE;
   }
   if (brake_percent > 0 || (throttle_percent == 0 && drive_state != CRUISE)) {
-    drive_state = regen ? BRAKE : NEUTRAL;
+    drive_state = BRAKE;
   }
-  if ((drive_state == DRIVE || drive_state == REVERSE) && regen) {
+  if (drive_state == DRIVE || drive_state == REVERSE) {
     throttle_percent = prv_one_pedal_drive_current(throttle_percent, car_vel, &drive_state);
   }
 
@@ -99,7 +101,6 @@ static void prv_update_target_current_velocity() {
     case NEUTRAL:
       s_target_current = 0;
       s_target_velocity = 0;
-      break;
     case REVERSE:
       s_target_current = throttle_percent;
       s_target_velocity = -TORQUE_CONTROL_VEL;
@@ -108,7 +109,7 @@ static void prv_update_target_current_velocity() {
       s_target_current = ACCERLATION_FORCE;
       s_target_velocity = target_vel;
       break;
-    case BRAKE:
+    case BRAKE:  // When braking and regen is off it should be the same as NEUTRAL. regen = 0
       s_target_current = regen < 100 ? regen / 100.0 : throttle_percent;
       s_target_velocity = 0;
       break;
