@@ -5,6 +5,15 @@
 #include "master_task.h"
 #include "i2c.h"
 #include "max17261_fuel_gauge.h"
+#include "delay.h"
+
+I2CPort i2c_port = I2C_PORT_2;
+I2CSettings i2c_settings = { .scl = { .port = GPIO_PORT_B, .pin = 10 },
+                              .sda = { .port = GPIO_PORT_B, .pin = 11 },
+                              .speed = I2C_SPEED_STANDARD };
+uint8_t i2c_address = 0x36;
+
+static const uint8_t bytes_to_write[] = { 0x10, 0x2f };
 
 void pre_loop_init() 
 {
@@ -12,27 +21,47 @@ void pre_loop_init()
 
 void run_fast_cycle()
 {
-  LOG_DEBUG("fast cycle\n");
+  //LOG_DEBUG("fast cycle\n"); 
 }
 
 void run_medium_cycle()
 {
-  LOG_DEBUG("med cycle\n");
+  // LOG_DEBUG("med cycle\n");
+  // uint8_t reg = MAX17261_DEV_NAME;
+  // StatusCode ret = i2c_write(i2c_port, i2c_address, &reg, sizeof(uint8_t));
+  // if(ret != STATUS_CODE_OK){
+  //   LOG_DEBUG("i2c_write status code (%d) \n", ret);
+  //   return;
+  // }
+  // LOG_DEBUG("i2c_write successful");
 }
 
 void run_slow_cycle()
 {
 }
 
-int main() {
-  log_init();
-  tasks_init();
+TASK(smoke_current_sense_task, TASK_STACK_512){
+  while(1){
+    uint8_t reg = MAX17261_DEV_NAME;
+    uint16_t val;
+    StatusCode ret = i2c_read_reg(i2c_port, i2c_address, reg, (uint8_t*)&val, sizeof(uint16_t));
+    if(ret != STATUS_CODE_OK){
+      LOG_DEBUG("i2c_read_reg status code (%d) \n", ret);
+    }else{
+      LOG_DEBUG("i2c_read_reg successful %#06x\n", val);
+    }
 
-  I2CPort i2c_port = I2C_PORT_2;
-  I2CSettings i2c_settings = { .scl = { .port = GPIO_PORT_B, .pin = 10 },
-                               .sda = { .port = GPIO_PORT_B, .pin = 11 },
-                               .speed = I2C_SPEED_STANDARD };
-  uint8_t i2c_address = 0x36;
+    delay_ms(500);
+  } 
+}
+
+
+int main() {
+  gpio_init();
+  tasks_init();
+  log_init();
+
+  
 
   StatusCode ret = i2c_init(i2c_port, &i2c_settings);
   if(ret != STATUS_CODE_OK){
@@ -40,26 +69,28 @@ int main() {
     return -1;
   }
 
-  Max17261Storage storage;
-  Max17261Settings settings = {
-    .i2c_port = I2C_PORT_2,
-    .i2c_address = 0x36,
-    .design_capacity = 0,      // LSB = 5.0 (micro Volt Hours / R Sense)
-    .empty_voltage = 0,        // Only a 9-bit field, LSB = 78.125 (micro Volts)
-    .charge_term_current = 0,  // LSB = 1.5625 (micro Volts / R Sense)
-    .r_sense_uohms = 500
-  };
-  storage.settings = settings;
+  tasks_init_task(smoke_current_sense_task, TASK_PRIORITY(1), NULL);
 
-  uint16_t dev_name = 0x0;
-  ret = max17261_get_reg(&storage, MAX17261_DEV_NAME, &dev_name);
-  if(ret != STATUS_CODE_OK){
-    LOG_DEBUG("status code (%d) \n", ret);
-    return -1;
-  }
-  LOG_DEBUG("dev_name=%#04x\n", dev_name);
+  // Max17261Storage storage;
+  // Max17261Settings settings = {
+  //   .i2c_port = I2C_PORT_2,
+  //   .i2c_address = 0x36,
+  //   .design_capacity = 0,      // LSB = 5.0 (micro Volt Hours / R Sense)
+  //   .empty_voltage = 0,        // Only a 9-bit field, LSB = 78.125 (micro Volts)
+  //   .charge_term_current = 0,  // LSB = 1.5625 (micro Volts / R Sense)
+  //   .r_sense_uohms = 500
+  // };
+  // storage.settings = settings;
 
-  set_master_cycle_time(1000);
+  // uint16_t dev_name = 0x0;
+  // ret = max17261_get_reg(&storage, MAX17261_DEV_NAME, &dev_name);
+  // if(ret != STATUS_CODE_OK){
+  //   LOG_DEBUG("status code (%d) \n", ret);
+  //   return -1;
+  // }
+  // LOG_DEBUG("dev_name=%#04x\n", dev_name);
+
+  //set_master_cycle_time(500);
   init_master_task();
 
   tasks_start();

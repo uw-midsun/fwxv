@@ -12,7 +12,7 @@
 #define WRITE_I2C_ADDRESS 0x24
 
 // Fill in this array with the bytes to write.
-static const uint8_t bytes_to_write[] = { 0x10, 0x2F };
+static const uint8_t bytes_to_write[] = { 0x10, 0x2f };
 
 // ==== READ PARAMETERS ====
 
