@@ -81,8 +81,7 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     return;
   }
 
-  // status |= run_current_sense_cycle();
-  // wait_tasks(1);
+  prv_fuel_gauge_read();
 
   status |= ltc_afe_impl_read_cells(&s_ltc_store);
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {

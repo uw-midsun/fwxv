@@ -41,7 +41,7 @@ StatusCode current_sense_fault_check() {
 }
 
 // Periodically read and update the SoC of the car & update charging bool
-static StatusCode prv_fuel_gauge_read() {
+StatusCode prv_fuel_gauge_read() {
   StatusCode status = STATUS_CODE_OK;
 
   uint16_t soc = 0;
@@ -53,12 +53,13 @@ static StatusCode prv_fuel_gauge_read() {
   status |= max17261_current(&s_fuel_guage_storage, &current);
   status |= max17261_voltage(&s_fuel_guage_storage, &voltage);
   status |= max17261_temp(&s_fuel_guage_storage, &temperature);
+  LOG_DEBUG("Doing current sense! with code %d\n", status);
 
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault
     // Open Relays
     fault_bitset |= status;
-    return status;
+    // return status;
   }
 
   if (temperature < 20) {
@@ -68,10 +69,18 @@ static StatusCode prv_fuel_gauge_read() {
   }
 
   // Set Battery VT message signals
-  set_battery_vt_batt_perc(soc);
-  set_battery_vt_current(current);
-  set_battery_vt_voltage(voltage);
-  set_battery_vt_temperature(temperature);
+  // set_battery_vt_batt_perc(soc);
+  // set_battery_vt_current(current);
+  // set_battery_vt_voltage(voltage);
+  // set_battery_vt_temperature(temperature);
+  LOG_DEBUG("SOC: %d\n", soc);
+  delay_ms(1);
+  LOG_DEBUG("Current: %d\n", current);
+  delay_ms(1);
+  LOG_DEBUG("Voltage: %d\n", voltage);
+  delay_ms(1);
+  LOG_DEBUG("Temperature: %d\n", temperature);
+  delay_ms(1);
 
   // update s_is_charging
   // note that a negative value indicates the battery is charging
