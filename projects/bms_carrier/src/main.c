@@ -56,6 +56,7 @@ void run_medium_cycle() {
   // wait_tasks(1);
 
   bms_run_fan();
+  bms_fan_sense();
 
   run_can_tx_cycle();
   wait_tasks(1);

@@ -43,7 +43,7 @@
           length: 16
         batt_perc:
           length: 16
-    
+    # DELETE 
     battery_aggregate_vc:
       id: 33
       target:
@@ -54,7 +54,7 @@
           length: 32
         current:
           length: 32
-
+    # FIX 
     battery_fan_state:
       id: 57
       target:
