@@ -68,7 +68,7 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   }
 
   // Retry Mechanism
-  if(ltc_afe_impl_trigger_cell_conv(&s_ltc_store)) {
+  if (ltc_afe_impl_trigger_cell_conv(&s_ltc_store)) {
     // If this has failed, try once more after a short delay
     delay_ms(5);
     status |= ltc_afe_impl_trigger_cell_conv(&s_ltc_store);

@@ -29,7 +29,7 @@
 #define CURRENT_SENSE_MAX_TEMP (60U)
 #define ALRT_PIN_V_RES_MICRO_V (400)
 
-static Max17261Storage s_fuel_guage_storage;
+static Max17261Storage s_fuel_gauge_storage;
 static Max17261Settings s_fuel_gauge_settings;
 static CurrentStorage *s_current_storage;
 static SoftTimer s_timer;
@@ -49,10 +49,10 @@ StatusCode prv_fuel_gauge_read() {
   uint16_t voltage = 0;
   uint16_t temperature = 0;
 
-  status |= max17261_state_of_charge(&s_fuel_guage_storage, &soc);
-  status |= max17261_current(&s_fuel_guage_storage, &current);
-  status |= max17261_voltage(&s_fuel_guage_storage, &voltage);
-  status |= max17261_temp(&s_fuel_guage_storage, &temperature);
+  status |= max17261_state_of_charge(&s_fuel_gauge_storage, &soc);
+  status |= max17261_current(&s_fuel_gauge_storage, &current);
+  status |= max17261_voltage(&s_fuel_gauge_storage, &voltage);
+  status |= max17261_temp(&s_fuel_gauge_storage, &temperature);
   LOG_DEBUG("Doing current sense! with code %d\n", status);
 
   if (status != STATUS_CODE_OK) {
@@ -120,7 +120,7 @@ StatusCode run_current_sense_cycle() {
 }
 
 StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings,
-                              uint32_t fuel_guage_cycle_ms) {
+                              uint32_t fuel_gauge_cycle_ms) {
   interrupt_init();
   gpio_it_init();
   i2c_init(MAX17261_I2C_PORT, i2c_settings);
@@ -157,9 +157,10 @@ StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings
   s_fuel_gauge_settings.r_sense_mohms = CURRENT_SENSE_R_SENSE_MILLI_OHMS;
 
   // Soft timer period for soc & chargin check
-  s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
+  s_current_storage->fuel_gauge_cycle_ms = fuel_gauge_cycle_ms;
+  LOG_DEBUG("MAX17261 INIT\n");
 
-  status_ok_or_return(max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings));
+  status_ok_or_return(max17261_init(&s_fuel_gauge_storage, &s_fuel_gauge_settings));
   // tasks_init_task(current_sense, TASK_PRIORITY(3), NULL);
   return STATUS_CODE_OK;
 }

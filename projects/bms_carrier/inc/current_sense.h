@@ -30,7 +30,7 @@ typedef struct CurrentStorage {
   int16_t readings_ring[NUM_STORED_CURRENT_READINGS];
   uint16_t ring_idx;
   int16_t average;
-  uint32_t fuel_guage_cycle_ms;  // Time in ms between conversions (soft timer kicks)
+  uint32_t fuel_gauge_cycle_ms;  // Time in ms between conversions (soft timer kicks)
 } CurrentStorage;
 
 StatusCode prv_fuel_gauge_read();
@@ -42,4 +42,4 @@ StatusCode run_current_sense_cycle();
 bool current_sense_is_charging();
 
 StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings,
-                              uint32_t fuel_guage_cycle_ms);
+                              uint32_t fuel_gauge_cycle_ms);
