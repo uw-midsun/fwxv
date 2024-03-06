@@ -13,7 +13,7 @@
 #include "soft_timer.h"
 #include "tasks.h"
 
-#define MAX17261_I2C_PORT (I2C_PORT_2)
+#define MAX17261_I2C_PORT I2C_PORT_2
 #define MAX17261_I2C_ADDR (0x36)
 
 // TODO (Adel C): Change these values to their actual values
@@ -123,7 +123,7 @@ StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings
                               uint32_t fuel_guage_cycle_ms) {
   interrupt_init();
   gpio_it_init();
-  i2c_init(I2C_PORT_1, i2c_settings);
+  i2c_init(MAX17261_I2C_PORT, i2c_settings);
 
   GpioAddress alrt_pin = { .port = GPIO_PORT_A, .pin = 7 };
 
@@ -160,6 +160,6 @@ StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
 
   status_ok_or_return(max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings));
-  tasks_init_task(current_sense, TASK_PRIORITY(3), NULL);
+  // tasks_init_task(current_sense, TASK_PRIORITY(3), NULL);
   return STATUS_CODE_OK;
 }

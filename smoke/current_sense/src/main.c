@@ -26,7 +26,7 @@ TASK(current_sense_task, TASK_STACK_256)
 {
   while (true)
   {
-    prv_fuel_gauge_read();
+    // prv_fuel_gauge_read();
     delay_ms(1000);
   }
 }
