@@ -84,7 +84,7 @@ StatusCode max17261_voltage(Max17261Storage *storage, uint16_t *vcell_mv) {
 StatusCode max17261_temp(Max17261Storage *storage, uint16_t *temp_c) {
   uint16_t temp_reg_val = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_TEMP, &temp_reg_val));
-  *temp_c = temp_reg_val * temp_reg_val;
+  *temp_c = temp_reg_val * TEMP_LSB;
   return STATUS_CODE_OK;
 }
 
