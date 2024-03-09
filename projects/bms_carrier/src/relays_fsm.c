@@ -53,7 +53,7 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   StatusCode status = STATUS_CODE_OK;
   uint16_t max_voltage = 0;
 
-  // status |= current_sense_fault_check();
+  status |= current_sense_fault_check();
 
   if (status != STATUS_CODE_OK) {
     fsm_transition(fsm, RELAYS_FAULT);
@@ -75,8 +75,7 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     return;
   }
 
-  // status |= run_current_sense_cycle();
-  // wait_tasks(1);
+  status |= run_current_sense_cycle();
 
   status |= ltc_afe_impl_read_cells(&s_ltc_store);
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {

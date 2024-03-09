@@ -40,8 +40,29 @@ StatusCode current_sense_fault_check() {
   return fault_bitset;
 }
 
+TASK(current_sense, TASK_MIN_STACK_SIZE) {
+  while (true) {
+    uint32_t notification = 0;
+    notify_wait(&notification, BLOCK_INDEFINITELY);
+    LOG_DEBUG("Running Current Sense Cycle!\n");
+
+    // Handle alert from fuel gauge
+    if (notification & (1 << ALRT_GPIO_IT)) {
+      // TODO (Adel): BMS Open Relays
+      fault_bitset |= notification & (1 << ALRT_GPIO_IT);
+    }
+
+    run_current_sense_cycle();
+    send_task_end();
+  }
+}
+
+bool current_sense_is_charging() {
+  return s_is_charging;
+}
+
 // Periodically read and update the SoC of the car & update charging bool
-static StatusCode prv_fuel_gauge_read() {
+StatusCode run_current_sense_cycle() {
   StatusCode status = STATUS_CODE_OK;
 
   uint16_t soc = 0;
@@ -67,41 +88,15 @@ static StatusCode prv_fuel_gauge_read() {
   set_battery_vt_voltage(voltage);
   set_battery_vt_temperature(temperature);
 
+  LOG_DEBUG("SOC: %d\n", soc);
+  LOG_DEBUG("CURRENT: %d\n", current);
+  LOG_DEBUG("VOLTAGE: %d\n", voltage);
+  LOG_DEBUG("TEMP: %d\n", temperature);
   // update s_is_charging
   // note that a negative value indicates the battery is charging
   s_is_charging = s_current_storage->average < 0;
 
   return status;
-}
-
-TASK(current_sense, TASK_MIN_STACK_SIZE) {
-  while (true) {
-    uint32_t notification = 0;
-    notify_wait(&notification, BLOCK_INDEFINITELY);
-    LOG_DEBUG("Running Current Sense Cycle!\n");
-
-    // Handle alert from fuel gauge
-    if (notification & (1 << ALRT_GPIO_IT)) {
-      // TODO (Adel): BMS Open Relays
-      fault_bitset |= notification & (1 << ALRT_GPIO_IT);
-    }
-
-    prv_fuel_gauge_read();
-    send_task_end();
-  }
-}
-
-bool current_sense_is_charging() {
-  return s_is_charging;
-}
-
-StatusCode run_current_sense_cycle() {
-  StatusCode ret = notify(current_sense, CURRENT_SENSE_RUN_CYCLE);
-  if (ret == pdFALSE) {
-    return STATUS_CODE_INTERNAL_ERROR;
-  }
-
-  return STATUS_CODE_OK;
 }
 
 StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings,

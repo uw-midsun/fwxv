@@ -156,7 +156,7 @@ void update_displays(void) {
   // Read data from CAN structs and update displays with those values
   float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
   float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
-  uint16_t batt_perc_val = get_battery_status_batt_perc();
+  uint16_t batt_perc_val = get_battery_vt_batt_perc();
   if (speed_kph >= 100) {
     seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, s_target_velocity);
   } else {
