@@ -50,6 +50,7 @@ TASK(current_sense, TASK_MIN_STACK_SIZE) {
     if (notification & (1 << ALRT_GPIO_IT)) {
       // TODO (Adel): BMS Open Relays
       fault_bitset |= notification & (1 << ALRT_GPIO_IT);
+      set_battery_status_fault();
     }
 
     run_current_sense_cycle();

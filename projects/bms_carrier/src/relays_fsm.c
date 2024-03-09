@@ -52,6 +52,7 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   LOG_DEBUG("Bms fault check \n");
   StatusCode status = STATUS_CODE_OK;
   uint16_t max_voltage = 0;
+  uint16_t min_voltage = UINT_16;
 
   status |= current_sense_fault_check();
 
@@ -84,6 +85,9 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     max_voltage = s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > max_voltage
                       ? s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]
                       : max_voltage;
+    min_voltage = s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] < min_voltage
+                      ? s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]
+                      : min_voltage;
     delay_ms(1);
   }
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
@@ -93,6 +97,8 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("status (fault_check or read_cells failed): %d\n", status);
     fsm_transition(fsm, RELAYS_FAULT);
+    set_battery_status_fault(BMS_FAULT_OVER_VOLTAGE);
+    set_battery_status_status(1);
     return;
   }
 }

@@ -46,7 +46,9 @@ void pre_loop_init() {
   bms_fan_init();
 }
 
-void run_fast_cycle() {}
+void run_fast_cycle() {
+  bms_run_fan();
+}
 
 void run_medium_cycle() {
   run_can_rx_cycle();
@@ -55,7 +57,6 @@ void run_medium_cycle() {
   // fsm_run_cycle(bms_relays);
   // wait_tasks(1);
 
-  bms_run_fan();
 
   run_can_tx_cycle();
   wait_tasks(1);

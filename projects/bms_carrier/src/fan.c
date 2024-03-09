@@ -8,23 +8,26 @@ static void prv_bms_fan_sense(void) {
   TickType_t tick = xTaskGetTickCount() + pdMS_TO_TICKS(5);
   GpioState state = 0;
 
-  while (!state && xTaskGetTickCount() < tick) {
-    gpio_get_state(&bms_fan_sense1, &state);
-    // LOG_DEBUG("STATE FANSENSE_1: %d\n", state);
+  while (xTaskGetTickCount() < tick) {
+    LOG_DEBUG("STATE FANSENSE_1: %d\n", state);
+    state = gpio_get_state(&bms_fan_sense1, &state) == 1? 1 : 0;
   }
+  set_battery_status_fan1(state);
 
   tick = xTaskGetTickCount() + pdMS_TO_TICKS(5);
 
-  while (!state && xTaskGetTickCount() < tick) {
-    gpio_get_state(&bms_fan_sense1, &state);
-    // LOG_DEBUG("STATE FANSENSE_2: %d\n", state);
+  while (xTaskGetTickCount() < tick) {
+    LOG_DEBUG("STATE FANSENSE_2: %d\n", state);
+    state = gpio_get_state(&bms_fan_sense2, &state) == 1? 1 : 0;
   }
-  set_battery_status_fan(state);
-  LOG_DEBUG("%d\n", g_tx_struct.battery_status_fan);
+  set_battery_status_fan2(state);
+  // set_battery_status_fan(state);
+  LOG_DEBUG("FAN1: %d\n", g_tx_struct.battery_status_fan1);
+  LOG_DEBUG("FAN2: %d\n", g_tx_struct.battery_status_fan2);
 }
 
 void bms_run_fan(void) {
-  // g_tx_struct.battery_vt_temperature = 50;
+  g_tx_struct.battery_vt_temperature = 30;
   if (g_tx_struct.battery_vt_temperature >= BMS_FAN_TEMP_UPPER_THRESHOLD) {
     pwm_set_dc(PWM_TIMER_3, 100);
   } else if (g_tx_struct.battery_vt_temperature <= BMS_FAN_TEMP_LOWER_THRESHOLD) {

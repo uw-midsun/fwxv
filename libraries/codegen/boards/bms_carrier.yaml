@@ -23,7 +23,9 @@
           length: 8
         fault:
           length: 8
-        fan:
+        fan1:
+          length: 8
+        fan2:
           length: 8
     
     battery_vt:
