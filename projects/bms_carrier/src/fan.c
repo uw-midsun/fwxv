@@ -10,7 +10,7 @@ static void prv_bms_fan_sense(void) {
 
   while (xTaskGetTickCount() < tick) {
     LOG_DEBUG("STATE FANSENSE_1: %d\n", state);
-    state = gpio_get_state(&bms_fan_sense1, &state) == 1? 1 : 0;
+    state = gpio_get_state(&bms_fan_sense1, &state) == 1 ? 1 : state;
   }
   set_battery_status_fan1(state);
 
@@ -18,7 +18,7 @@ static void prv_bms_fan_sense(void) {
 
   while (xTaskGetTickCount() < tick) {
     LOG_DEBUG("STATE FANSENSE_2: %d\n", state);
-    state = gpio_get_state(&bms_fan_sense2, &state) == 1? 1 : 0;
+    state = gpio_get_state(&bms_fan_sense2, &state) == 1 ? 1 : state;
   }
   set_battery_status_fan2(state);
   // set_battery_status_fan(state);

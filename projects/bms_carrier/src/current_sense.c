@@ -49,8 +49,7 @@ TASK(current_sense, TASK_MIN_STACK_SIZE) {
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
       // TODO (Adel): BMS Open Relays
-      fault_bitset |= notification & (1 << ALRT_GPIO_IT);
-      set_battery_status_fault();
+      set_battery_status_fault(1);
     }
 
     run_current_sense_cycle();
