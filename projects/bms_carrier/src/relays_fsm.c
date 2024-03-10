@@ -52,7 +52,7 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   LOG_DEBUG("Bms fault check \n");
   StatusCode status = STATUS_CODE_OK;
   uint16_t max_voltage = 0;
-  uint16_t min_voltage =  0xFFFF;
+  uint16_t min_voltage = 0xFFFF;
 
   status |= current_sense_fault_check();
 

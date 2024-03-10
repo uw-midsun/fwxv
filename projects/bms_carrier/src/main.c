@@ -46,8 +46,7 @@ void pre_loop_init() {
   bms_fan_init();
 }
 
-void run_fast_cycle() {
-}
+void run_fast_cycle() {}
 
 void run_medium_cycle() {
   run_can_rx_cycle();
