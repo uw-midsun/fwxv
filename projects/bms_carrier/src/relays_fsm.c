@@ -57,6 +57,8 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   status |= current_sense_fault_check();
 
   if (status != STATUS_CODE_OK) {
+    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
+    set_battery_status_status(1);
     fsm_transition(fsm, RELAYS_FAULT);
     return;
   }
@@ -72,11 +74,14 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   delay_ms(10);
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("status (cell_conv failed): %d\n", status);
+    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_AFE);
+    set_battery_status_status(1);
     fsm_transition(fsm, RELAYS_FAULT);
     return;
   }
 
   status |= run_current_sense_cycle();
+  delay_ms(1);
 
   status |= ltc_afe_impl_read_cells(&s_ltc_store);
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
@@ -88,17 +93,31 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     min_voltage = s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] < min_voltage
                       ? s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]
                       : min_voltage;
-    delay_ms(1);
+    delay_ms(2);
   }
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
+  delay_ms(1);
   set_battery_vt_voltage(max_voltage);
+
+  if (max_voltage >= MAX_VOLTAGE) {
+    LOG_DEBUG("OVERVOLTAGE");
+    fsm_transition(fsm, RELAYS_FAULT);
+    set_battery_status_fault(BMS_FAULT_OVERVOLTAGE);
+    set_battery_status_status(2);
+  } else if (min_voltage <= MIN_VOLTAGE) {
+    LOG_DEBUG("UNDERVOLTAGE");
+    fsm_transition(fsm, RELAYS_FAULT);
+    set_battery_status_fault(BMS_FAULT_UNDERVOLTAGE);
+    set_battery_status_status(1);
+  }
+
   status |= ltc_afe_impl_fault_check();
 
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("status (fault_check or read_cells failed): %d\n", status);
     fsm_transition(fsm, RELAYS_FAULT);
-    set_battery_status_fault(BMS_FAULT_OVERVOLTAGE);
+    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_AFE);
     set_battery_status_status(1);
     return;
   }

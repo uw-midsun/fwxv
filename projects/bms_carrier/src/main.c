@@ -22,15 +22,7 @@
 
 #define FUEL_GAUGE_CYCLE_TIME_MS 100
 
-const CurrentStorage current_storage;
-const LtcAfeStorage ltc_afe_storage;
-
 static CanStorage s_can_storage = { 0 };
-
-// BmsStorage bms_storage = {
-//   .current_storage = current_storage,
-//   .ltc_afe_storage = ltc_afe_storage,
-// };
 
 static const CanSettings can_settings = {
   .device_id = SYSTEM_CAN_DEVICE_BMS_CARRIER,
@@ -42,7 +34,7 @@ static const CanSettings can_settings = {
 
 void pre_loop_init() {
   LOG_DEBUG("Welcome to BMS \n");
-  // init_bms_relays();
+  init_bms_relays();
   bms_fan_init();
 }
 
@@ -52,8 +44,8 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
 
-  // fsm_run_cycle(bms_relays);
-  // wait_tasks(1);
+  fsm_run_cycle(bms_relays);
+  wait_tasks(1);
 
   bms_run_fan();
 
