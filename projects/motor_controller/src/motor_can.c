@@ -54,7 +54,7 @@ static float prv_get_float(uint32_t u) {
 static float prv_one_pedal_drive_current(float throttle_percent, float car_velocity,
                                          DriveState *drive_state) {
   float threshold = 0.0;
-  if (car_velocy <= MAX_OPD_SPEED) {
+  if (car_velocity <= MAX_OPD_SPEED) {
     threshold = car_velocity * COASTING_THRESHOLD_SCALE;
   } else {
     threshold = MAX_COASTING_THRESHOLD;
