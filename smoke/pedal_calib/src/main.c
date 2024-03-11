@@ -38,7 +38,8 @@ void test_throttle_calibration_run(void) {
   pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib,
                      THROTTLE_CHANNEL, PEDAL_UNPRESSED, &throttle);
   LOG_DEBUG("Completed sampling\n");
-
+  LOG_DEBUG("UPPER THRESHOLD: %d\n", global_calib_blob.throttle_calib.upper_value);
+  LOG_DEBUG("LOWER THRESHOLD: %d\n", global_calib_blob.throttle_calib.lower_value);
   calib_commit();
 }
 

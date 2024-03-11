@@ -31,7 +31,7 @@ const CanSettings can_settings = {
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
-  .loopback = true,
+  .loopback = false,
 };
 
 // // These variables are passed to the shared resources provider, which then get used by the rest
@@ -74,6 +74,7 @@ void run_fast_cycle() {
       uint32_t res = (uint32_t)throttle_position;
       set_pedal_output_brake_output(100);
       set_pedal_output_throttle_output(res);
+      LOG_DEBUG("RES %ld\n", res);
     } else {
       // Brake is pressed - Send brake data with throttle as 0
       set_pedal_output_brake_output(0);
