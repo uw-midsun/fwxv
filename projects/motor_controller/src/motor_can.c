@@ -101,6 +101,7 @@ static void prv_update_target_current_velocity() {
     case NEUTRAL:
       s_target_current = 0;
       s_target_velocity = 0;
+      break;
     case REVERSE:
       s_target_current = throttle_percent;
       s_target_velocity = -TORQUE_CONTROL_VEL;
