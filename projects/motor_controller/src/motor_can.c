@@ -53,8 +53,13 @@ static float prv_get_float(uint32_t u) {
 
 static float prv_one_pedal_drive_current(float throttle_percent, float car_velocity,
                                          DriveState *drive_state) {
-  float threshold = car_velocity <= MAX_OPD_SPEED ? car_velocity * COASTING_THERSHOLD_SCALE
-                                                  : MAX_COASTING_THRESHOLD;
+  float threshold = 0.0;
+  if (car_velocy <= MAX_OPD_SPEED) {
+    threshold = car_velocity * COASTING_THRESHOLD_SCALE;
+  } else {
+    threshold = MAX_COASTING_THRESHOLD;
+  }
+
   if (throttle_percent <= threshold + 0.05 && throttle_percent >= threshold - 0.05) {
     return 0.0;
   }
@@ -76,7 +81,7 @@ static void prv_update_target_current_velocity() {
   float car_vel = (s_car_velocity_l + s_car_velocity_r) / 2;
 
   DriveState drive_state = get_drive_output_drive_state();
-  uint8_t regen = get_drive_output_regen_braking();
+  float regen = prv_get_float(get_drive_output_regen_braking());
   bool cruise = get_drive_output_cruise_control();
 
   // TODO: Update cruise_throttle_threshold so the driver must demand more current than is already
@@ -111,7 +116,11 @@ static void prv_update_target_current_velocity() {
       s_target_velocity = target_vel;
       break;
     case BRAKE:  // When braking and regen is off it should be the same as NEUTRAL. regen = 0
-      s_target_current = regen < 100 ? regen / 100.0 : throttle_percent;
+      if (throttle_percent > regen) {
+        s_target_current = regen;
+      } else {
+        s_target_current = throttle_percent;
+      }
       s_target_velocity = 0;
       break;
     default:
