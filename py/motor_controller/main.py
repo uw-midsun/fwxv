@@ -7,12 +7,12 @@ import time
 import struct
 import sys
 from collections import defaultdict
-from can import can
-from can.util import set_output, parse_line
+from can_a import can_a
+from can_a.util import set_output, parse_line
 import threading
 
 DRIVE_STATE_STR = ["DRIVE", "NEUTRAL", "REVERSE"]
-CAN = "can1"
+CAN = "can0"
 
 def handle_stdin(state):
     '''handle stdin input, updates velocity, drive state, etc.'''
@@ -66,26 +66,26 @@ def handle_rx(rx):
             line = proc.stdout.readline().decode().strip()
             can_id, data = parse_line(line)
 
-            if can_id == can.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_MOTOR_CONTROLLER_VC:
+            if can_id == can_a.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_MOTOR_CONTROLLER_VC:
                 rx["vol_l"] = struct.unpack("h", data[0:2])[0]
                 rx["cur_l"] = struct.unpack("h", data[2:4])[0]
                 rx["vol_r"] = struct.unpack("h", data[4:6])[0]
                 rx["cur_r"] = struct.unpack("h", data[6:8])[0]
-            elif can_id == can.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_MOTOR_VELOCITY:
+            elif can_id == can_a.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_MOTOR_VELOCITY:
                 rx["vel_l"] = struct.unpack("h", data[0:2])[0]
                 rx["vel_r"] = struct.unpack("h", data[2:4])[0]
             # elif can_id == can.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_MOTOR_STATUS:
             #     rx["mts_l"] = struct.unpack("i", data[0:4])[0]
             #     rx["mts_r"] = struct.unpack("i", data[4:8])[0]
-            elif can_id == can.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_MOTOR_SINK_TEMPS:
+            elif can_id == can_a.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_MOTOR_SINK_TEMPS:
                 rx["mtt_l"] = struct.unpack("h", data[0:2])[0]
                 rx["hst_l"] = struct.unpack("h", data[2:4])[0]
                 rx["mtt_r"] = struct.unpack("h", data[4:6])[0]
                 rx["hst_r"] = struct.unpack("h", data[6:8])[0]
-            elif can_id == can.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_DSP_BOARD_TEMPS:
+            elif can_id == can_a.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_DSP_BOARD_TEMPS:
                 rx["dsp_l"] = struct.unpack("h", data[0:2])[0]
                 rx["dsp_r"] = struct.unpack("h", data[2:4])[0]
-            elif can_id == can.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_MC_STATUS:
+            elif can_id == can_a.SYSTEM_CAN_MESSAGE_MOTOR_CONTROLLER_MC_STATUS:
                 rx["lbs_l"] = int(data[0])
                 rx["ebs_l"] = int(data[1])
                 rx["lbs_r"] = int(data[2])
@@ -114,11 +114,11 @@ def main():
         update_display(state, rx)
 
         # every 200 ms
-        can.send_centre_console_drive_output(
+        can_a.send_centre_console_drive_output(
             state["vel"], state["state"], state["cruise"], state["regen"], state["precharge"])
-        can.send_pedal_pedal_output(state["throttle"], state["brake"])
+        # can_a.send_pedal_pedal_output(state["throttle"], state["brake"])
 
-        wake_time += 0.2
+        wake_time += 0.1
         time.sleep(max(wake_time - time.time(), 0))
 
 

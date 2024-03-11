@@ -15,8 +15,8 @@
 // wheel diameter 557mm
 // 1000 / (557 * pi) = 0.57147
 
-#define DRIVER_CONTROL_BASE 0x0
-#define MOTOR_CONTROLLER_BASE_L 0x40
-#define MOTOR_CONTROLLER_BASE_R 0x80
+#define DRIVER_CONTROL_BASE 0x500
+#define MOTOR_CONTROLLER_BASE_L 0x400
+#define MOTOR_CONTROLLER_BASE_R 0x80  // TODO: set to actual values
 
 void init_motor_controller_can();

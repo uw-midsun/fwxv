@@ -6,7 +6,7 @@ import time
 import struct
 from collections import defaultdict
 import threading
-from can.util import set_output, parse_line
+from can_a.util import set_output, parse_line
 
 DRIVER_CONTROL_BASE = 0x00
 MOTOR_CONTROLLER_BASE_L = 0x40
