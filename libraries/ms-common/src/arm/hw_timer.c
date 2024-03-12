@@ -28,18 +28,26 @@ void hw_timer_init(void) {
 }
 
 void hw_timer_delay_us(uint32_t us) {
-  uint32_t start_count = TIM_GetCounter(TIM2);
-  uint32_t elapsed_time = 0;
+    TIM_SetCounter(TIM2, 0);
 
-  while (elapsed_time < us) {
-    uint32_t current_count = TIM_GetCounter(TIM2);
-    if (current_count <= start_count) {
-      elapsed_time += (UINT16_MAX + 1 - start_count) + current_count;
-    } else {
-      elapsed_time += current_count - start_count;
+    TIM_CCxCmd(TIM2, TIM_Channel_1, TIM_CCx_Enable);
+
+    TIM_SetCompare1(TIM2, us);
+
+    TIM_Cmd(TIM2, ENABLE);
+
+    while (!TIM_GetFlagStatus(TIM2, TIM_FLAG_CC1)) {
+        LOG_DEBUG("DELAYING\n");
     }
-    start_count = current_count;
-  }
+
+    // Clear the capture/compare interrupt flag
+    TIM_ClearFlag(TIM2, TIM_FLAG_CC1);
+
+    // Disable capture/compare channel 1 of Timer 2
+    TIM_CCxCmd(TIM2, TIM_Channel_1, TIM_CCx_Disable);
+
+    // Disable Timer 2
+    TIM_Cmd(TIM2, DISABLE);
 }
 
 void hw_timer_callback_us(uint32_t us, TimerCallback callback_function) {

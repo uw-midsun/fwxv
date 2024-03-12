@@ -23,8 +23,8 @@ TASK(hw_timer_task, TASK_STACK_512) {
   while (true) {
     gpio_toggle_state(&leds[0]);
     gpio_toggle_state(&leds[3]);
-    LOG_DEBUG("HW Delay");
-    hw_timer_delay_us(100);
+    LOG_DEBUG("HW Delay\n");
+    hw_timer_delay_us(5000);
   }
 }
 
