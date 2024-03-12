@@ -81,6 +81,10 @@ static void prv_update_target_current_velocity() {
   float car_vel = (s_car_velocity_l + s_car_velocity_r) / 2;
 
   DriveState drive_state = get_drive_output_drive_state();
+
+  // Regen returns a value btwn 0-100 to represent the max regen we can preform
+  // 0 means our cells max voltage is close to 4.2V or regen is off so we should stop regen braking
+  // 100 means we are below 4.0V so regen braking is allowed
   float regen = prv_get_float(get_drive_output_regen_braking());
   bool cruise = get_drive_output_cruise_control();
 
