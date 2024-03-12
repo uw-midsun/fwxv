@@ -36,10 +36,13 @@ static const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
 static const GpioAddress solar_relay_en = { .port = GPIO_PORT_C, .pin = 13 };
 
 void close_relays() {
-  // 150 MS GAP BETWEEN EACH RELAY
+  // 150 MS GAP BETWEEN EACH RELAY BC OF CURRENT DRAW
   gpio_set_state(&pos_relay_en, GPIO_STATE_HIGH);
+  delay_ms(150);
   gpio_set_state(&neg_relay_en, GPIO_STATE_HIGH);
+  delay_ms(150);
   gpio_set_state(&solar_relay_en, GPIO_STATE_HIGH);
+  delay_ms(150);
 }
 
 void open_relays() {
@@ -81,7 +84,27 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   }
 
   status |= run_current_sense_cycle();
+  if (status != STATUS_CODE_OK) {
+    LOG_DEBUG("status (current sense cycle failed): %d\n", status);
+    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_CURRENT_SENSE);
+    set_battery_status_status(1);
+    fsm_transition(fsm, RELAYS_FAULT);
+  }
   delay_ms(1);
+
+  // Handling temp, current, voltage and SOC faults
+  if (g_tx_struct.battery_vt_current >= MAX_CURRENT) {
+    LOG_DEBUG("OVERCURRENT\n");
+    fsm_transition(fsm, RELAYS_FAULT);
+    set_battery_status_fault(BMS_FAULT_OVERCURRENT);
+    set_battery_status_status(1);
+  }
+  if (g_tx_struct.battery_vt_temperature >= MAX_AMBIENT_TEMP) {
+    LOG_DEBUG("AMBIENT OVER TEMPERATURE\n");
+    fsm_transition(fsm, RELAYS_FAULT);
+    set_battery_status_fault(BMS_FAULT_OVERTEMP_AMBIENT);
+    set_battery_status_status(2);
+  }
 
   status |= ltc_afe_impl_read_cells(&s_ltc_store);
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
@@ -95,22 +118,47 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
                       : min_voltage;
     delay_ms(2);
   }
+  set_battery_vt_voltage(max_voltage);
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
   delay_ms(1);
-  set_battery_vt_voltage(max_voltage);
 
-  if (max_voltage >= MAX_VOLTAGE) {
-    LOG_DEBUG("OVERVOLTAGE");
+  if (max_voltage >= OVERVOLTAGE_THRESHOLD) {
+    LOG_DEBUG("OVERVOLTAGE\n");
     fsm_transition(fsm, RELAYS_FAULT);
     set_battery_status_fault(BMS_FAULT_OVERVOLTAGE);
     set_battery_status_status(2);
-  } else if (min_voltage <= MIN_VOLTAGE) {
-    LOG_DEBUG("UNDERVOLTAGE");
+  }
+  if (min_voltage <= UNDERVOLTAGE_THRESHOLD) {
+    LOG_DEBUG("UNDERVOLTAGE\n");
     fsm_transition(fsm, RELAYS_FAULT);
     set_battery_status_fault(BMS_FAULT_UNDERVOLTAGE);
     set_battery_status_status(1);
   }
+
+  switch (min_voltage) {
+    case min_voltage >= AFE_BALANCING_UPPER_THRESHOLD:
+      min_voltage += 20;
+      break;
+    case min_voltage < AFE_BALANCING_UPPER_THRESHOLD &&min_voltage >= AFE_BALANCING_LOWER_THRESHOLD:
+      min_voltage += 100;
+      break;
+    default:
+      min_voltage += 250;
+      break;
+  }
+  for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
+    if (s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > min_cell) {
+      ltc_afe_impl_toggle_cell_discharge(&s_ltc_store, cell, true);
+      LOG_DEBUG("Cell %d unbalanced \n", cell);
+      delay_ms(1);
+      // TODO: add fault for BMS_FAULT_UNBALANCE
+    } else {
+      ltc_afe_impl_toggle_cell_discharge(&s_ltc_store, cell, false);
+    }
+  }
+
+  // TOOD: add aux conversion for TEMPERATURE check
 
   status |= ltc_afe_impl_fault_check();
 
@@ -160,7 +208,9 @@ static void prv_relays_fault_output(void *context) {
   fsm_prev_state = RELAYS_FAULT;
 }
 
-static void prv_relays_fault_input(Fsm *fsm, void *context) {}
+static void prv_relays_fault_input(Fsm *fsm, void *context) {
+  prv_bms_fault_ok_or_transition(fsm);
+}
 
 // Relays FSM declaration for states and transitions
 static FsmState s_relays_state_list[NUM_RELAY_STATES] = {
@@ -171,7 +221,8 @@ static FsmState s_relays_state_list[NUM_RELAY_STATES] = {
 
 static bool s_relays_transitions[NUM_RELAY_STATES][NUM_RELAY_STATES] = {
   TRANSITION(RELAYS_OPEN, RELAYS_CLOSED), TRANSITION(RELAYS_OPEN, RELAYS_FAULT),
-  TRANSITION(RELAYS_CLOSED, RELAYS_OPEN), TRANSITION(RELAYS_CLOSED, RELAYS_FAULT)
+  TRANSITION(RELAYS_CLOSED, RELAYS_OPEN), TRANSITION(RELAYS_CLOSED, RELAYS_FAULT),
+  TRANSITION(RELAYS_FAULT, RELAYS_FAULT);
 };
 
 StatusCode init_bms_relays(void) {

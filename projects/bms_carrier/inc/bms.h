@@ -22,7 +22,15 @@
 
 #define MAX_VOLTAGE 42000
 #define MIN_VOLTAGE 40000
+
+// Fault thresholds
+#define OVERVOLTAGE_THRESHOLD 42500
+#define UNDERVOLTAGE_THRESHOLD 25000
+#define AFE_BALANCING_UPPER_THRESHOLD 41500
+#define AFE_BALANCING_LOWER_THRESHOLD 40000
 #define MAX_CURRENT 27
+#define MAX_AMBIENT_TEMP 75
+#define MAX_CELL_TEMP 90
 
 // Not dealing with debouncer here
 typedef struct BmsStorage {
