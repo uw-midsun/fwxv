@@ -20,7 +20,7 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0 },
 
-  .num_devices = 2,
+  .num_devices = 3,
   .num_cells = 12,
   .num_thermistors = 12,
 };
@@ -86,7 +86,7 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   status |= run_current_sense_cycle();
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("status (current sense cycle failed): %d\n", status);
-    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_CURRENT_SENSE);
+    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     set_battery_status_status(1);
     fsm_transition(fsm, RELAYS_FAULT);
   }
@@ -136,19 +136,16 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     set_battery_status_status(1);
   }
 
-  switch (min_voltage) {
-    case min_voltage >= AFE_BALANCING_UPPER_THRESHOLD:
-      min_voltage += 20;
-      break;
-    case min_voltage < AFE_BALANCING_UPPER_THRESHOLD &&min_voltage >= AFE_BALANCING_LOWER_THRESHOLD:
+  if (min_voltage >= AFE_BALANCING_UPPER_THRESHOLD) {
+    min_voltage += 20;
+  } else if (min_voltage < AFE_BALANCING_UPPER_THRESHOLD && min_voltage >= AFE_BALANCING_LOWER_THRESHOLD) {
       min_voltage += 100;
-      break;
-    default:
+  } else {
       min_voltage += 250;
-      break;
   }
+
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-    if (s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > min_cell) {
+    if (s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > min_voltage) {
       ltc_afe_impl_toggle_cell_discharge(&s_ltc_store, cell, true);
       LOG_DEBUG("Cell %d unbalanced \n", cell);
       delay_ms(1);
@@ -222,7 +219,7 @@ static FsmState s_relays_state_list[NUM_RELAY_STATES] = {
 static bool s_relays_transitions[NUM_RELAY_STATES][NUM_RELAY_STATES] = {
   TRANSITION(RELAYS_OPEN, RELAYS_CLOSED), TRANSITION(RELAYS_OPEN, RELAYS_FAULT),
   TRANSITION(RELAYS_CLOSED, RELAYS_OPEN), TRANSITION(RELAYS_CLOSED, RELAYS_FAULT),
-  TRANSITION(RELAYS_FAULT, RELAYS_FAULT);
+  TRANSITION(RELAYS_FAULT, RELAYS_FAULT),
 };
 
 StatusCode init_bms_relays(void) {
