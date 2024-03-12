@@ -25,24 +25,16 @@ void hw_timer_init(void) {
 
 void hw_timer_delay_us(uint32_t us) {
     TIM_SetCounter(TIM2, 0);
-
     TIM_CCxCmd(TIM2, TIM_Channel_1, TIM_CCx_Enable);
-
     TIM_SetCompare1(TIM2, us);
-
     TIM_Cmd(TIM2, ENABLE);
 
     while (!TIM_GetFlagStatus(TIM2, TIM_FLAG_CC1)) {
         LOG_DEBUG("DELAYING\n");
     }
 
-    // Clear the capture/compare interrupt flag
     TIM_ClearFlag(TIM2, TIM_FLAG_CC1);
-
-    // Disable capture/compare channel 1 of Timer 2
     TIM_CCxCmd(TIM2, TIM_Channel_1, TIM_CCx_Disable);
-
-    // Disable Timer 2
     TIM_Cmd(TIM2, DISABLE);
 }
 
