@@ -83,15 +83,17 @@ StatusCode cell_sense_run() {
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
     // LOG_DEBUG("CELL %d: %d\n\r", cell,
               ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
-    max_voltage =
-        ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > max_voltage
-            ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
-            : max_voltage;
-    min_voltage =
-        ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] < min_voltage
-            ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
-            : min_voltage;
-    delay_ms(2);
+              max_voltage =
+                  ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] >
+                          max_voltage
+                      ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
+                      : max_voltage;
+              min_voltage =
+                  ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] <
+                          min_voltage
+                      ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
+                      : min_voltage;
+              delay_ms(2);
   }
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);

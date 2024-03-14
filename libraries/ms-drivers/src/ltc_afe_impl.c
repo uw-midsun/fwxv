@@ -12,8 +12,6 @@
 // - 12-bit, 16-bit and 24-bit values are little endian
 // - commands and PEC are big endian
 
-static StatusCode fault_bitset;
-
 static uint16_t s_read_reg_cmd[NUM_LTC_AFE_REGISTERS] = {
   [LTC_AFE_REGISTER_CONFIG] = LTC6811_RDCFG_RESERVED,
   [LTC_AFE_REGISTER_CELL_VOLTAGE_A] = LTC6811_RDCVA_RESERVED,
@@ -48,7 +46,6 @@ static void prv_wakeup_idle(LtcAfeStorage *afe) {
 
 static StatusCode prv_build_cmd(uint16_t command, uint8_t *cmd, size_t len) {
   if (len != LTC6811_CMD_SIZE) {
-    fault_bitset |= STATUS_CODE_INVALID_ARGS;
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
@@ -65,7 +62,6 @@ static StatusCode prv_build_cmd(uint16_t command, uint8_t *cmd, size_t len) {
 static StatusCode prv_read_register(LtcAfeStorage *afe, LtcAfeRegister reg, uint8_t *data,
                                     size_t len) {
   if (reg > NUM_LTC_AFE_REGISTERS) {
-    fault_bitset |= STATUS_CODE_INVALID_ARGS;
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
@@ -82,7 +78,6 @@ static StatusCode prv_read_register(LtcAfeStorage *afe, LtcAfeRegister reg, uint
 static StatusCode prv_read_voltage(LtcAfeStorage *afe, LtcAfeVoltageRegister reg,
                                    LtcAfeVoltageRegisterGroup *data) {
   if (reg > NUM_LTC_AFE_VOLTAGE_REGISTERS) {
-    fault_bitset |= STATUS_CODE_INVALID_ARGS;
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
@@ -120,7 +115,6 @@ static StatusCode prv_trigger_aux_adc_conversion(LtcAfeStorage *afe) {
 
 static StatusCode prv_aux_write_comm_register(LtcAfeStorage *afe, uint8_t device_cell) {
   if (device_cell >= AUX_ADG731_NUM_PINS) {
-    fault_bitset |= STATUS_CODE_OUT_OF_RANGE;
     return STATUS_CODE_OUT_OF_RANGE;
   }
   LtcAfeSettings *settings = &afe->settings;
@@ -233,7 +227,6 @@ StatusCode ltc_afe_impl_init(LtcAfeStorage *afe, const LtcAfeSettings *settings)
       settings->num_thermistors > LTC_AFE_MAX_THERMISTORS) {
     // bad no. devices (needs code change)
     // bad no. of cells (needs verification)
-    fault_bitset |= STATUS_CODE_INVALID_ARGS;
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
   memset(afe, 0, sizeof(*afe));
@@ -256,10 +249,6 @@ StatusCode ltc_afe_impl_init(LtcAfeStorage *afe, const LtcAfeSettings *settings)
   uint8_t gpio_bits =
       LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
   return prv_write_config(afe, gpio_bits);
-}
-
-StatusCode ltc_afe_impl_fault_check() {
-  return fault_bitset;
 }
 
 StatusCode ltc_afe_impl_trigger_cell_conv(LtcAfeStorage *afe) {
@@ -300,7 +289,6 @@ StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
       uint16_t data_pec = crc15_calculate((uint8_t *)&voltage_register[device], 6);
       if (received_pec != data_pec) {
         // return early on failure
-        fault_bitset |= STATUS_CODE_INTERNAL_ERROR;
         return status_code(STATUS_CODE_INTERNAL_ERROR);
       }
     }
@@ -330,7 +318,6 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t device_cell) {
     uint16_t received_pec = SWAP_UINT16(register_data[device].pec);
     uint16_t data_pec = crc15_calculate((uint8_t *)&register_data[device], 6);
     if (received_pec != data_pec) {
-      fault_bitset |= STATUS_CODE_INTERNAL_ERROR;
       return status_code(STATUS_CODE_INTERNAL_ERROR);
     }
   }
@@ -340,7 +327,6 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t device_cell) {
 
 StatusCode ltc_afe_impl_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell, bool discharge) {
   if (cell >= afe->settings.num_cells) {
-    fault_bitset |= STATUS_CODE_INVALID_ARGS;
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
 
