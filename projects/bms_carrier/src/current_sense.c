@@ -101,8 +101,6 @@ StatusCode run_current_sense_cycle() {
 
 StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings,
                               uint32_t fuel_guage_cycle_ms) {
-  interrupt_init();
-  gpio_it_init();
   i2c_init(I2C_PORT_1, i2c_settings);
 
   GpioAddress alrt_pin = { .port = GPIO_PORT_A, .pin = 7 };

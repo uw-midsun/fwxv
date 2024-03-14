@@ -3,37 +3,18 @@
 FSM(bms_relays, NUM_RELAY_STATES, TASK_STACK_512);
 static RelaysStateId fsm_prev_state = RELAYS_OPEN;
 
-static CurrentStorage s_currentsense_storage;
-static LtcAfeStorage s_ltc_store;
+static BmsStorage *s_storage;
 
-static const LtcAfeSettings s_afe_settings = {
-  .mosi = { .port = GPIO_PORT_B, .pin = 15 },
-  .miso = { .port = GPIO_PORT_B, .pin = 14 },
-  .sclk = { .port = GPIO_PORT_B, .pin = 13 },
-  .cs = { .port = GPIO_PORT_B, .pin = 12 },
-
-  .spi_port = SPI_PORT_2,
-  .spi_baudrate = 750000,
-
-  .adc_mode = LTC_AFE_ADC_MODE_7KHZ,
-
-  .cell_bitset = { 0xFFF, 0xFFF, 0xFFF, 0xFFF, 0xFFF },
-  .aux_bitset = { 0 },
-
-  .num_devices = 3,
-  .num_cells = 12,
-  .num_thermistors = 12,
-};
-
-static const I2CSettings i2c_settings = {
-  .speed = I2C_SPEED_STANDARD,
-  .sda = BMS_PERIPH_I2C_SDA_PIN,
-  .scl = BMS_PERIPH_I2C_SCL_PIN,
+static const InterruptSettings it_settings = {
+  .priority = INTERRUPT_PRIORITY_NORMAL,
+  .type = INTERRUPT_TYPE_INTERRUPT,
+  .edge = INTERRUPT_EDGE_FALLING,
 };
 
 static const GpioAddress pos_relay_en = { .port = GPIO_PORT_B, .pin = 8 };
 static const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
 static const GpioAddress solar_relay_en = { .port = GPIO_PORT_C, .pin = 13 };
+static const GpioAddress kill_switch_mntr = { .port = GPIO_PORT_A, .pin = 15 };
 
 void close_relays() {
   // 150 MS GAP BETWEEN EACH RELAY BC OF CURRENT DRAW
@@ -56,28 +37,19 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   StatusCode status = STATUS_CODE_OK;
   uint16_t max_voltage = 0;
   uint16_t min_voltage = 0xFFFF;
+  GpioState state;
+  gpio_get_state(&kill_switch_mntr, &state);
+  if (state == GPIO_STATE_LOW) {
+    LOG_DEBUG("KILLSWITCH PRESSED\n");
+    set_battery_status_fault(BMS_FAULT_KILLSWITCH);
+    set_battery_status_status(1);
+    fsm_transition(fsm, RELAYS_FAULT);
+  }
 
   status |= current_sense_fault_check();
 
   if (status != STATUS_CODE_OK) {
     set_battery_status_fault(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
-    set_battery_status_status(1);
-    fsm_transition(fsm, RELAYS_FAULT);
-    return;
-  }
-
-  // TODO: Figure out why cell_conv cannot happen without spi timing out (Most likely RTOS
-  // implemntation error) Retry Mechanism
-  if (ltc_afe_impl_trigger_cell_conv(&s_ltc_store)) {
-    // If this has failed, try once more after a short delay
-    delay_ms(5);
-    status |= ltc_afe_impl_trigger_cell_conv(&s_ltc_store);
-  }
-
-  delay_ms(10);
-  if (status != STATUS_CODE_OK) {
-    LOG_DEBUG("status (cell_conv failed): %d\n", status);
-    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_AFE);
     set_battery_status_status(1);
     fsm_transition(fsm, RELAYS_FAULT);
     return;
@@ -105,59 +77,6 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
     set_battery_status_fault(BMS_FAULT_OVERTEMP_AMBIENT);
     set_battery_status_status(2);
   }
-
-  status |= ltc_afe_impl_read_cells(&s_ltc_store);
-  for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-    LOG_DEBUG("CELL %d: %d\n\r", cell,
-              s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]);
-    max_voltage = s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > max_voltage
-                      ? s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]
-                      : max_voltage;
-    min_voltage = s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] < min_voltage
-                      ? s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]]
-                      : min_voltage;
-    delay_ms(2);
-  }
-  set_battery_vt_voltage(max_voltage);
-  LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
-  LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
-  delay_ms(1);
-
-  if (max_voltage >= OVERVOLTAGE_THRESHOLD) {
-    LOG_DEBUG("OVERVOLTAGE\n");
-    fsm_transition(fsm, RELAYS_FAULT);
-    set_battery_status_fault(BMS_FAULT_OVERVOLTAGE);
-    set_battery_status_status(2);
-  }
-  if (min_voltage <= UNDERVOLTAGE_THRESHOLD) {
-    LOG_DEBUG("UNDERVOLTAGE\n");
-    fsm_transition(fsm, RELAYS_FAULT);
-    set_battery_status_fault(BMS_FAULT_UNDERVOLTAGE);
-    set_battery_status_status(1);
-  }
-
-  if (min_voltage >= AFE_BALANCING_UPPER_THRESHOLD) {
-    min_voltage += 20;
-  } else if (min_voltage < AFE_BALANCING_UPPER_THRESHOLD && min_voltage >= AFE_BALANCING_LOWER_THRESHOLD) {
-      min_voltage += 100;
-  } else {
-      min_voltage += 250;
-  }
-
-  for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-    if (s_ltc_store.cell_voltages[s_ltc_store.cell_result_lookup[cell]] > min_voltage) {
-      ltc_afe_impl_toggle_cell_discharge(&s_ltc_store, cell, true);
-      LOG_DEBUG("Cell %d unbalanced \n", cell);
-      delay_ms(1);
-      // TODO: add fault for BMS_FAULT_UNBALANCE
-    } else {
-      ltc_afe_impl_toggle_cell_discharge(&s_ltc_store, cell, false);
-    }
-  }
-
-  // TOOD: add aux conversion for TEMPERATURE check
-
-  status |= ltc_afe_impl_fault_check();
 
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("status (fault_check or read_cells failed): %d\n", status);
@@ -222,14 +141,12 @@ static bool s_relays_transitions[NUM_RELAY_STATES][NUM_RELAY_STATES] = {
   TRANSITION(RELAYS_FAULT, RELAYS_FAULT),
 };
 
-StatusCode init_bms_relays(void) {
-  i2c_init(BMS_PERIPH_I2C_PORT, &i2c_settings);
-  ltc_afe_init(&s_ltc_store, &s_afe_settings);
-  delay_ms(10);
-  current_sense_init(&s_currentsense_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
+StatusCode init_bms_relays(BmsStorage *bms_storage) {
+  s_storage = bms_storage;
   gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&solar_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  // gpio_it_register_interrupt(&kill_switch_mntr, &it_settings, ALRT_GPIO_IT, current_sense);
   fsm_init(bms_relays, s_relays_state_list, s_relays_transitions, RELAYS_OPEN, NULL);
   return STATUS_CODE_OK;
 }

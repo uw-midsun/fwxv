@@ -4,19 +4,17 @@
 #include "bms.h"
 #include "can.h"
 #include "can_board_ids.h"
+#include "cell_sense.h"
 #include "current_sense.h"
 #include "fan.h"
 #include "fault_bps.h"
 #include "gpio.h"
 #include "gpio_it.h"
-#include "i2c.h"
 #include "interrupt.h"
 #include "log.h"
 #include "ltc_afe.h"
 #include "ltc_afe_impl.h"
 #include "master_task.h"
-#include "max17261_fuel_gauge.h"
-#include "pwm.h"
 #include "relays_fsm.h"
 #include "tasks.h"
 
@@ -32,9 +30,20 @@ static const CanSettings can_settings = {
   .loopback = false,
 };
 
+static const I2CSettings i2c_settings = {
+  .speed = I2C_SPEED_STANDARD,
+  .sda = BMS_PERIPH_I2C_SDA_PIN,
+  .scl = BMS_PERIPH_I2C_SCL_PIN,
+};
+
+BmsStorage bms_storage;
+
 void pre_loop_init() {
   LOG_DEBUG("Welcome to BMS \n");
-  init_bms_relays();
+
+  current_sense_init(&bms_storage.current_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
+  cell_sense_init(&bms_storage.ltc_afe_storage);
+  init_bms_relays(&bms_storage);
   // bms_fan_init();
 }
 
@@ -59,7 +68,9 @@ int main() {
   tasks_init();
   log_init();
   interrupt_init();
+  gpio_it_init();
   gpio_init();
+  i2c_init(BMS_PERIPH_I2C_PORT, &i2c_settings);
   can_init(&s_can_storage, &can_settings);
 
   LOG_DEBUG("Welcome to BMS!\n");

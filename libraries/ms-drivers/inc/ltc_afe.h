@@ -72,8 +72,6 @@ typedef struct LtcAfeSettings {
 } LtcAfeSettings;
 
 typedef struct LtcAfeStorage {
-  Fsm fsm;
-
   // Only used for storage in the FSM so we store data for the correct cells
   uint16_t aux_index;
   uint16_t retry_count;
