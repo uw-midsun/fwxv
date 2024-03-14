@@ -15,12 +15,11 @@
 #include "task.h"
 
 #define NUM_RELAY_STATES 3
-#define FUEL_GAUGE_CYCLE_TIME_MS 100
+#define KILLSWITCH_IT 1
 
 DECLARE_FSM(bms_relays);
 typedef enum RelaysStateId { RELAYS_OPEN = 0, RELAYS_CLOSED, RELAYS_FAULT } RelaysStateId;
 
 StatusCode init_bms_relays(BmsStorage *bms_storage);
 
-void close_relays();
-void open_relays();
+StatusCode relays_fault();

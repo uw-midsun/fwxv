@@ -13,22 +13,6 @@
 #include "soft_timer.h"
 #include "tasks.h"
 
-#define MAX17261_I2C_PORT (I2C_PORT_2)
-#define MAX17261_I2C_ADDR (0x36)
-
-// TODO (Adel C): Change these values to their actual values
-#define CURRENT_SENSE_R_SENSE_MILLI_OHMS (0.5)
-#define MAIN_PACK_DESIGN_CAPACITY \
-  (1.0f / CURRENT_SENSE_R_SENSE_MILLI_OHMS)      // LSB = 5.0 (micro Volt Hours / R Sense)
-#define MAIN_PACK_EMPTY_VOLTAGE (1.0f / 78.125)  // Only a 9-bit field, LSB = 78.125 (micro Volts)
-#define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_MILLI_OHMS))
-
-// Thresholds for ALRT Pin
-#define CURRENT_SENSE_MAX_CURRENT_A (58.2f)
-#define CURRENT_SENSE_MIN_CURRENT_A (27.0f)  // Actually -27
-#define CURRENT_SENSE_MAX_TEMP (60U)
-#define ALRT_PIN_V_RES_MICRO_V (400)
-
 static Max17261Storage s_fuel_guage_storage;
 static Max17261Settings s_fuel_gauge_settings;
 static CurrentStorage *s_current_storage;
@@ -40,40 +24,14 @@ StatusCode current_sense_fault_check() {
   return fault_bitset;
 }
 
-TASK(current_sense, TASK_MIN_STACK_SIZE) {
-  while (true) {
-    uint32_t notification = 0;
-    notify_wait(&notification, BLOCK_INDEFINITELY);
-    LOG_DEBUG("Running Current Sense Cycle!\n");
-
-    // Handle alert from fuel gauge
-    if (notification & (1 << ALRT_GPIO_IT)) {
-      // TODO (Adel): BMS Open Relays
-      set_battery_status_fault(1);
-    }
-
-    run_current_sense_cycle();
-    send_task_end();
-  }
-}
-
-bool current_sense_is_charging() {
-  return s_is_charging;
-}
-
 // Periodically read and update the SoC of the car & update charging bool
-StatusCode run_current_sense_cycle() {
+StatusCode prv_fuel_gauge_read() {
   StatusCode status = STATUS_CODE_OK;
 
-  uint16_t soc = 0;
-  uint16_t current = 0;
-  uint16_t voltage = 0;
-  uint16_t temperature = 0;
-
-  status |= max17261_state_of_charge(&s_fuel_guage_storage, &soc);
-  status |= max17261_current(&s_fuel_guage_storage, &current);
-  status |= max17261_voltage(&s_fuel_guage_storage, &voltage);
-  status |= max17261_temp(&s_fuel_guage_storage, &temperature);
+  status |= max17261_state_of_charge(&s_fuel_guage_storage, &s_current_storage->soc);
+  status |= max17261_current(&s_fuel_guage_storage, &s_current_storage->current);
+  status |= max17261_voltage(&s_fuel_guage_storage, &s_current_storage->voltage);
+  status |= max17261_temp(&s_fuel_guage_storage, &s_current_storage->temperature);
 
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault
@@ -83,20 +41,62 @@ StatusCode run_current_sense_cycle() {
   }
 
   // Set Battery VT message signals
-  set_battery_vt_batt_perc(soc);
-  set_battery_vt_current(current);
-  set_battery_vt_voltage(voltage);
-  set_battery_vt_temperature(temperature);
+  set_battery_vt_batt_perc(s_current_storage->soc);
+  set_battery_vt_current(s_current_storage->current);
+  set_battery_vt_voltage(s_current_storage->voltage);
+  set_battery_vt_temperature(s_current_storage->temperature);
 
-  LOG_DEBUG("SOC: %d\n", soc);
-  LOG_DEBUG("CURRENT: %d\n", current);
-  LOG_DEBUG("VOLTAGE: %d\n", voltage);
-  LOG_DEBUG("TEMP: %d\n", temperature);
+  // TODO (Aryan): Validate these checks
+  if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A) {
+    fault_bps_set(BMS_FAULT_OVERCURRENT);
+    return STATUS_CODE_INTERNAL_ERROR;
+  } else if (s_current_storage->voltage >= CURRENT_SENSE_MAX_VOLTAGE) {
+    fault_bps_set(BMS_FAULT_OVERVOLTAGE);
+    return STATUS_CODE_INTERNAL_ERROR;
+  } else if (s_current_storage->temperature >= CURRENT_SENSE_MAX_TEMP) {
+    fault_bps_set(BMS_FAULT_OVERTEMP_AMBIENT);
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
+  LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
+  LOG_DEBUG("CURRENT: %d\n", s_current_storage->current);
+  LOG_DEBUG("VOLTAGE: %d\n", s_current_storage->voltage);
+  LOG_DEBUG("TEMP: %d\n", s_current_storage->temperature);
   // update s_is_charging
   // note that a negative value indicates the battery is charging
   s_is_charging = s_current_storage->average < 0;
 
   return status;
+}
+
+TASK(current_sense, TASK_MIN_STACK_SIZE) {
+  while (true) {
+    uint32_t notification = 0;
+    notify_wait(&notification, BLOCK_INDEFINITELY);
+    LOG_DEBUG("Running Current Sense Cycle!\n");
+
+    // Handle alert from fuel gauge
+    if (notification & (1 << ALRT_GPIO_IT)) {
+      // TODO (Adel): BMS Open Relays
+      fault_bitset |= notification & (1 << ALRT_GPIO_IT);
+    }
+
+    prv_fuel_gauge_read();
+    send_task_end();
+  }
+}
+
+bool current_sense_is_charging() {
+  return s_is_charging;
+}
+
+StatusCode current_sense_run() {
+  StatusCode ret = notify(current_sense, CURRENT_SENSE_RUN_CYCLE);
+  if (ret == pdFALSE) {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
+  return STATUS_CODE_OK;
 }
 
 StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings,

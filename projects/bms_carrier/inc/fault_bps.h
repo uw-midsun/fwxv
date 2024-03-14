@@ -1,9 +1,14 @@
 #pragma once
 
-#include "bms.h"
+#include "bms_carrier_getters.h"
+#include "bms_carrier_setters.h"
 #include "status.h"
 
-StatusCode fault_bps_init(BmsStorage *storage);
+typedef struct BpsStorage {
+  uint8_t fault_bitset;
+} BpsStorage;
+
+StatusCode fault_bps_init(BpsStorage *storage);
 
 StatusCode fault_bps_set(uint8_t fault_bitmask);
 

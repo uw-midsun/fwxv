@@ -13,29 +13,38 @@
 #include "status.h"
 #include "tasks.h"
 
-#define NUM_STORED_CURRENT_READINGS 20
-#define CURRENT_SENSE_SPI_PORT SPI_PORT_2
+#define MAX17261_I2C_PORT (I2C_PORT_2)
+#define MAX17261_I2C_ADDR (0x36)
 
-// slightly larger than conversion time of adc
-#define CONVERSION_TIME_MS 18
+// TODO (Adel C): Change these values to their actual values
+#define CURRENT_SENSE_R_SENSE_MILLI_OHMS (0.5)
+#define MAIN_PACK_DESIGN_CAPACITY \
+  (1.0f / CURRENT_SENSE_R_SENSE_MILLI_OHMS)      // LSB = 5.0 (micro Volt Hours / R Sense)
+#define MAIN_PACK_EMPTY_VOLTAGE (1.0f / 78.125)  // Only a 9-bit field, LSB = 78.125 (micro Volts)
+#define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_MILLI_OHMS))
 
-// see current sense on confluence for these values (centiamps)
-#define DISCHARGE_OVERCURRENT_CA (13000)  // 130 Amps
-#define CHARGE_OVERCURRENT_CA (-8160)     // -81.6 Amp
+// Thresholds for ALRT Pin
+#define CURRENT_SENSE_MAX_CURRENT_A (58.2f)
+#define CURRENT_SENSE_MIN_CURRENT_A (27.0f)  // Actually -27
+#define CURRENT_SENSE_MAX_TEMP (60U)
+#define CURRENT_SENSE_MAX_VOLTAGE (150U)
+#define ALRT_PIN_V_RES_MICRO_V (400)
 
 // Enum for GPIO IT alerts (just the one pin)
 typedef enum { CURRENT_SENSE_RUN_CYCLE = 0, ALRT_GPIO_IT } CurrentSenseNotification;
 
 typedef struct CurrentStorage {
-  int16_t readings_ring[NUM_STORED_CURRENT_READINGS];
-  uint16_t ring_idx;
+  uint16_t soc;
+  uint16_t current;
+  uint16_t voltage;
+  uint16_t temperature;
   int16_t average;
   uint32_t fuel_guage_cycle_ms;  // Time in ms between conversions (soft timer kicks)
 } CurrentStorage;
 
 StatusCode current_sense_fault_check();
 
-StatusCode run_current_sense_cycle();
+StatusCode current_sense_run();
 
 bool current_sense_is_charging();
 

@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "current_sense.h"
+#include "fault_bps.h"
 #include "i2c.h"
 #include "ltc_afe.h"
 #include "status.h"
@@ -20,10 +21,7 @@
 typedef struct BmsStorage {
   CurrentStorage current_storage;
   LtcAfeStorage ltc_afe_storage;
-  // FanStorage fan_storage_1;
-  // FanStorage fan_storage_2;
-  // DebouncerStorage killswitch_storage;
-  // BpsStorage bps_storage;
+  BpsStorage bps_storage;
 } BmsStorage;
 
 typedef enum {

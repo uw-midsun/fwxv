@@ -16,12 +16,12 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0 },
 
-  .num_devices = 2,
+  .num_devices = 1,
   .num_cells = 12,
   .num_thermistors = 12,
 };
 
-StatusCode cell_sense_conversions() {
+static StatusCode prv_cell_sense_conversions() {
   StatusCode status = STATUS_CODE_OK;
   // TODO: Figure out why cell_conv cannot happen without spi timing out (Most likely RTOS
   // implemntation error) Retry Mechanism
@@ -43,13 +43,26 @@ StatusCode cell_sense_conversions() {
   for (size_t i = 0; i < 10; i++) {
     ltc_afe_impl_trigger_aux_conv(ltc_afe_storage, i);
     delay_ms(CONV_DELAY_MS);
-    ltc_afe_impl_read_aux(ltc_afe_storage, i);
-
-    // Log thermistor result
-    LOG_DEBUG("Thermistor reading: %d\n",
-              ltc_afe_storage->aux_voltages[ltc_afe_storage->aux_result_lookup[i]]);
   }
+
   return status;
+}
+
+TASK(cell_sense_conversions, TASK_MIN_STACK_SIZE) {
+  while (true) {
+    uint32_t notification = 0;
+    notify_wait(&notification, BLOCK_INDEFINITELY);
+    prv_cell_sense_conversions();
+    send_task_end();
+  }
+}
+
+StatusCode cell_conversions() {
+  StatusCode ret = notify(cell_sense_conversions, CELL_SENSE_CONVERSIONS);
+  if (ret == pdFALSE) {
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+  return STATUS_CODE_OK;
 }
 
 StatusCode cell_sense_run() {
@@ -74,27 +87,20 @@ StatusCode cell_sense_run() {
   set_battery_vt_voltage(max_voltage);
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
-  delay_ms(1);
 
-  if (max_voltage >= OVERVOLTAGE_THRESHOLD) {
+  if (max_voltage >= CELL_OVERVOLTAGE) {
     LOG_DEBUG("OVERVOLTAGE\n");
-    // fsm_transition(fsm, RELAYS_FAULT);
-    set_battery_status_fault(BMS_FAULT_OVERVOLTAGE);
-    set_battery_status_status(2);
+    fault_bps_set(BMS_FAULT_OVERVOLTAGE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
-  if (min_voltage <= UNDERVOLTAGE_THRESHOLD) {
+  if (min_voltage <= CELL_UNDERVOLTAGE) {
     LOG_DEBUG("UNDERVOLTAGE\n");
-    // fsm_transition(fsm, RELAYS_FAULT);
-    set_battery_status_fault(BMS_FAULT_UNDERVOLTAGE);
-    set_battery_status_status(1);
+    fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
-  if (max_voltage - min_voltage >= AFE_UNBALANCE_THRESHOLD) {
+  if (max_voltage - min_voltage >= CELL_UNBALANCED) {
     LOG_DEBUG("UNBALANCED\n");
-    // fsm_transition(fsm, RELAYS_FAULT);
-    set_battery_status_fault(BMS_FAULT_UNBALANCE);
-    set_battery_status_status(1);
+    fault_bps_set(BMS_FAULT_UNBALANCE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
 
@@ -111,11 +117,26 @@ StatusCode cell_sense_run() {
     if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
       ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
       LOG_DEBUG("Cell %d unbalanced \n", cell);
-      // TODO: add fault for BMS_FAULT_UNBALANCE
     } else {
       ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
     }
   }
+
+  for (size_t thermistor = 0;
+       thermistor < (s_afe_settings.num_thermistors * s_afe_settings.num_devices); thermistor++) {
+    ltc_afe_impl_read_aux(ltc_afe_storage, thermistor);
+
+    // Log thermistor result
+    LOG_DEBUG("Thermistor reading: %d\n",
+              ltc_afe_storage->aux_voltages[ltc_afe_storage->aux_result_lookup[thermistor]]);
+
+    if (ltc_afe_storage->aux_voltages[ltc_afe_storage->aux_result_lookup[thermistor]] >=
+        CELL_MAX_TEMPERATURE) {
+      fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
+      return STATUS_CODE_INTERNAL_ERROR;
+    }
+  }
+
   return status;
 }
 
@@ -123,5 +144,6 @@ StatusCode cell_sense_init(LtcAfeStorage *afe_storage) {
   ltc_afe_storage = afe_storage;
   ltc_afe_init(ltc_afe_storage, &s_afe_settings);
   delay_ms(10);
+  tasks_init_task(cell_sense_conversions, TASK_PRIORITY(3), NULL);
   return STATUS_CODE_OK;
 }

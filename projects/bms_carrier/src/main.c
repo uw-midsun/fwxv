@@ -40,11 +40,11 @@ BmsStorage bms_storage;
 
 void pre_loop_init() {
   LOG_DEBUG("Welcome to BMS \n");
-
+  fault_bps_init(&bms_storage.bps_storage);
   current_sense_init(&bms_storage.current_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
   cell_sense_init(&bms_storage.ltc_afe_storage);
   init_bms_relays(&bms_storage);
-  // bms_fan_init();
+  bms_fan_init(&bms_storage);
 }
 
 void run_fast_cycle() {}
@@ -53,16 +53,24 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
 
-  fsm_run_cycle(bms_relays);
+  cell_conversions();
   wait_tasks(1);
 
-  // bms_run_fan();
+  current_sense_run();
+  wait_tasks(1);
+
+  cell_sense_run();
+
+  fsm_run_cycle(bms_relays);
+  wait_tasks(1);
 
   run_can_tx_cycle();
   wait_tasks(1);
 }
 
-void run_slow_cycle() {}
+void run_slow_cycle() {
+  bms_run_fan();
+}
 
 int main() {
   tasks_init();

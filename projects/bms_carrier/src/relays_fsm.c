@@ -16,7 +16,7 @@ static const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
 static const GpioAddress solar_relay_en = { .port = GPIO_PORT_C, .pin = 13 };
 static const GpioAddress kill_switch_mntr = { .port = GPIO_PORT_A, .pin = 15 };
 
-void close_relays() {
+static void close_relays() {
   // 150 MS GAP BETWEEN EACH RELAY BC OF CURRENT DRAW
   gpio_set_state(&pos_relay_en, GPIO_STATE_HIGH);
   delay_ms(150);
@@ -26,64 +26,25 @@ void close_relays() {
   delay_ms(150);
 }
 
-void open_relays() {
+static void open_relays() {
   gpio_set_state(&pos_relay_en, GPIO_STATE_LOW);
   gpio_set_state(&neg_relay_en, GPIO_STATE_LOW);
   gpio_set_state(&solar_relay_en, GPIO_STATE_LOW);
 }
 
+TASK(kill_switch, TASK_MIN_STACK_SIZE) {
+  LOG_DEBUG("KILLSWITCH PRESSED\n");
+  while (true) {
+    fault_bps_set(BMS_FAULT_KILLSWITCH);
+    send_task_end();
+  }
+}
+
 static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
-  LOG_DEBUG("Bms fault check \n");
   StatusCode status = STATUS_CODE_OK;
-  uint16_t max_voltage = 0;
-  uint16_t min_voltage = 0xFFFF;
-  GpioState state;
-  gpio_get_state(&kill_switch_mntr, &state);
-  if (state == GPIO_STATE_LOW) {
-    LOG_DEBUG("KILLSWITCH PRESSED\n");
-    set_battery_status_fault(BMS_FAULT_KILLSWITCH);
-    set_battery_status_status(1);
+  if (s_storage->bps_storage.fault_bitset) {
+    LOG_DEBUG("Fault\n");
     fsm_transition(fsm, RELAYS_FAULT);
-  }
-
-  status |= current_sense_fault_check();
-
-  if (status != STATUS_CODE_OK) {
-    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
-    set_battery_status_status(1);
-    fsm_transition(fsm, RELAYS_FAULT);
-    return;
-  }
-
-  status |= run_current_sense_cycle();
-  if (status != STATUS_CODE_OK) {
-    LOG_DEBUG("status (current sense cycle failed): %d\n", status);
-    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
-    set_battery_status_status(1);
-    fsm_transition(fsm, RELAYS_FAULT);
-  }
-  delay_ms(1);
-
-  // Handling temp, current, voltage and SOC faults
-  if (g_tx_struct.battery_vt_current >= MAX_CURRENT) {
-    LOG_DEBUG("OVERCURRENT\n");
-    fsm_transition(fsm, RELAYS_FAULT);
-    set_battery_status_fault(BMS_FAULT_OVERCURRENT);
-    set_battery_status_status(1);
-  }
-  if (g_tx_struct.battery_vt_temperature >= MAX_AMBIENT_TEMP) {
-    LOG_DEBUG("AMBIENT OVER TEMPERATURE\n");
-    fsm_transition(fsm, RELAYS_FAULT);
-    set_battery_status_fault(BMS_FAULT_OVERTEMP_AMBIENT);
-    set_battery_status_status(2);
-  }
-
-  if (status != STATUS_CODE_OK) {
-    LOG_DEBUG("status (fault_check or read_cells failed): %d\n", status);
-    fsm_transition(fsm, RELAYS_FAULT);
-    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_AFE);
-    set_battery_status_status(1);
-    return;
   }
 }
 
@@ -146,7 +107,7 @@ StatusCode init_bms_relays(BmsStorage *bms_storage) {
   gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&solar_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  // gpio_it_register_interrupt(&kill_switch_mntr, &it_settings, ALRT_GPIO_IT, current_sense);
+  gpio_it_register_interrupt(&kill_switch_mntr, &it_settings, KILLSWITCH_IT, kill_switch);
   fsm_init(bms_relays, s_relays_state_list, s_relays_transitions, RELAYS_OPEN, NULL);
   return STATUS_CODE_OK;
 }
