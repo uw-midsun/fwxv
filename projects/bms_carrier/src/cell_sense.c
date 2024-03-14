@@ -34,20 +34,23 @@ static StatusCode prv_cell_sense_conversions() {
 
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("CELL_SENSE (conv failed): %d\n", status);
-    set_battery_status_fault(BMS_FAULT_COMMS_LOSS_AFE);
-    set_battery_status_status(1);
-    // fsm_transition(fsm, RELAYS_FAULT);
+    fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
     return status;
   }
 
   for (size_t i = 0; i < 10; i++) {
-    ltc_afe_impl_trigger_aux_conv(ltc_afe_storage, i);
+    status |= ltc_afe_impl_trigger_aux_conv(ltc_afe_storage, i);
+    if (status != STATUS_CODE_OK) {
+      fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+      return status;
+    }
     delay_ms(CONV_DELAY_MS);
   }
 
   return status;
 }
 
+// Task bc delays
 TASK(cell_sense_conversions, TASK_MIN_STACK_SIZE) {
   while (true) {
     uint32_t notification = 0;
@@ -60,6 +63,7 @@ TASK(cell_sense_conversions, TASK_MIN_STACK_SIZE) {
 StatusCode cell_conversions() {
   StatusCode ret = notify(cell_sense_conversions, CELL_SENSE_CONVERSIONS);
   if (ret == pdFALSE) {
+    fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
   return STATUS_CODE_OK;
@@ -71,8 +75,13 @@ StatusCode cell_sense_run() {
   uint16_t min_voltage = 0xffff;
 
   status |= ltc_afe_impl_read_cells(ltc_afe_storage);
+
+  if (status != STATUS_CODE_OK) {
+    fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+    return status;
+  }
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-    LOG_DEBUG("CELL %d: %d\n\r", cell,
+    // LOG_DEBUG("CELL %d: %d\n\r", cell,
               ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
     max_voltage =
         ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > max_voltage
@@ -84,7 +93,6 @@ StatusCode cell_sense_run() {
             : min_voltage;
     delay_ms(2);
   }
-  set_battery_vt_voltage(max_voltage);
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
 
@@ -116,7 +124,7 @@ StatusCode cell_sense_run() {
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
     if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
       ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
-      LOG_DEBUG("Cell %d unbalanced \n", cell);
+      // LOG_DEBUG("Cell %d unbalanced \n", cell);
     } else {
       ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
     }
