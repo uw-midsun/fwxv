@@ -62,8 +62,8 @@ void update_indicators(uint32_t notif) {
   }
   // Update regen light
   if (notify_check_event(&notif, REGEN_BUTTON_EVENT)) {
-    uint16_t batt_voltage = get_battery_vt_voltage();  // Gets max voltage out of all cells
-    uint16_t batt_current = get_battery_vt_current();
+    uint16_t batt_voltage = get_battery_status_max_cell_v();  // Gets max voltage out of all cells
+    uint16_t batt_current = get_battery_status_max_cell_v();
     // solar current + regen current <= 27 AMPS
     // regen current shouldnt push cell above 4.2 V
     if (!s_regen_braking && batt_current < MAX_CURRENT && batt_voltage < MAX_VOLTAGE) {

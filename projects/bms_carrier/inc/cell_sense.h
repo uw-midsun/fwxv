@@ -12,7 +12,6 @@
 #include "ltc_afe.h"
 #include "ltc_afe_impl.h"
 #include "spi.h"
-#include "status.h"
 
 #define CONV_DELAY_MS 10
 // Maximum number of retry attempts to read cell/aux data once triggered

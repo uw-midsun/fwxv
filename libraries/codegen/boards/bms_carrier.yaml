@@ -27,6 +27,10 @@
           length: 8
         fan2:
           length: 8
+        aux_batt_v:
+          length: 16
+        max_cell_v:
+          length: 16
     
     battery_vt:
       id: 30

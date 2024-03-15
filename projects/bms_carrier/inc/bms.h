@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 
+#include "aux_sense.h"
 #include "current_sense.h"
 #include "fault_bps.h"
 #include "i2c.h"
@@ -14,11 +15,8 @@
 #define BMS_PERIPH_I2C_SCL_PIN \
   { GPIO_PORT_B, 10 }
 
-#define MAX_CURRENT 27
-#define MAX_AMBIENT_TEMP 75
-#define MAX_CELL_TEMP 90
-
 typedef struct BmsStorage {
+  AuxStorage aux_storage;
   CurrentStorage current_storage;
   LtcAfeStorage ltc_afe_storage;
   BpsStorage bps_storage;
