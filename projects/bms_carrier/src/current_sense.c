@@ -86,7 +86,7 @@ bool current_sense_is_charging() {
 
 StatusCode current_sense_run() {
   StatusCode ret = notify(current_sense, CURRENT_SENSE_RUN_CYCLE);
-  if (ret == pdFALSE) {
+  if (ret != STATUS_CODE_OK) {
     fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     return STATUS_CODE_INTERNAL_ERROR;
   }

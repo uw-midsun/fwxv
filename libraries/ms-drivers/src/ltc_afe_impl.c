@@ -90,8 +90,8 @@ static StatusCode prv_trigger_adc_conversion(LtcAfeStorage *afe) {
   LtcAfeSettings *settings = &afe->settings;
   uint8_t mode = (uint8_t)((settings->adc_mode + 1) % 3);
   // ADCV command
-  uint16_t adcv = LTC6811_ADCV_RESERVED | LTC6811_ADCV_DISCHARGE_NOT_PERMITTED |
-                  LTC6811_CNVT_CELL_ALL | (mode << 7);
+  uint16_t adcv = LTC6811_ADCV_RESERVED | LTC6811_ADCV_DISCHARGE_PERMITTED | LTC6811_CNVT_CELL_ALL |
+                  (mode << 7);
 
   uint8_t cmd[LTC6811_CMD_SIZE] = { 0 };
   prv_build_cmd(adcv, cmd, LTC6811_CMD_SIZE);

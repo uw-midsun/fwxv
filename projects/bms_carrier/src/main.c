@@ -55,24 +55,21 @@ void run_medium_cycle() {
   wait_tasks(1);
 
   cell_conversions();
-  wait_tasks(1);
-
   current_sense_run();
-  wait_tasks(1);
+  wait_tasks(2);
 
   cell_sense_run();
   aux_sense_run();
 
   fsm_run_cycle(bms_relays);
   wait_tasks(1);
+  bms_run_fan();
 
   run_can_tx_cycle();
   wait_tasks(1);
 }
 
-void run_slow_cycle() {
-  bms_run_fan();
-}
+void run_slow_cycle() {}
 
 int main() {
   tasks_init();

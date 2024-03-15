@@ -15,7 +15,7 @@
 
 #define CONV_DELAY_MS 10
 // Maximum number of retry attempts to read cell/aux data once triggered
-#define RETRY_DELAY_MS 5
+#define RETRY_DELAY_MS 3
 #define CELL_SENSE_CONVERSIONS 0
 
 #define NUM_AFES 3
@@ -27,7 +27,7 @@
 // TODO: Verify these values!
 #define CELL_OVERVOLTAGE 42500
 #define CELL_UNDERVOLTAGE 25000
-#define CELL_UNBALANCED 500
+#define CELL_UNBALANCED 5000
 #define CELL_MAX_TEMPERATURE 60
 
 #define AFE_BALANCING_UPPER_THRESHOLD 41500

@@ -43,7 +43,7 @@ TASK(kill_switch, TASK_MIN_STACK_SIZE) {
 static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   StatusCode status = STATUS_CODE_OK;
   if (s_storage->bps_storage.fault_bitset) {
-    LOG_DEBUG("Fault\n");
+    LOG_DEBUG("Fault %d\n", s_storage->bps_storage.fault_bitset);
     fsm_transition(fsm, RELAYS_FAULT);
   }
 }
