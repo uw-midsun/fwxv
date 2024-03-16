@@ -34,21 +34,21 @@ StatusCode read_pedal_data(int32_t *reading, MAX11600Channel channel) {
     adc_read_raw(throttle, &adc_reading);
   }
 
-  memcpy(reading, &adc_reading, sizeof(adc_reading));
   // Convert ADC Reading to readable voltage by normalizing with calibration data and dividing
   // to get percentage press. Brake is now just a GPIO. Negatives and > 100 values will be
   // capped.
   int16_t range_throttle =
       s_calib_blob->throttle_calib.upper_value - s_calib_blob->throttle_calib.lower_value;
   volatile float calculated_reading =
-      (((float)*reading - (float)s_calib_blob->throttle_calib.lower_value) / range_throttle) * 100;
-  *reading = 100 - (int32_t)calculated_reading;
+      (((float)*reading - (float)s_calib_blob->throttle_calib.lower_value) / range_throttle);
+  calculated_reading = 1 - calculated_reading;
 
-  if (*reading < 0) {
-    *reading = 0;
-  } else if (*reading > 100) {
-    *reading = 100;
+  if (calculated_reading < 0) {
+    calculated_reading = 0;
+  } else if (calculated_reading > 1) {
+    calculated_reading = 1;
   }
+  memcpy(reading, &calculated_reading, sizeof(calculated_reading));
 
   return STATUS_CODE_OK;
 }
