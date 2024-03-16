@@ -26,7 +26,7 @@ void pedal_data_init() {
   s_calib_blob = get_shared_pedal_calib_blob();
 }
 
-StatusCode read_pedal_data(int32_t *reading, MAX11600Channel channel) {
+StatusCode read_pedal_data(uint32_t *reading, MAX11600Channel channel) {
   volatile uint16_t adc_reading;
   if (channel == BRAKE_CHANNEL) {
     adc_read_raw(brake, &adc_reading);
@@ -40,7 +40,8 @@ StatusCode read_pedal_data(int32_t *reading, MAX11600Channel channel) {
   int16_t range_throttle =
       s_calib_blob->throttle_calib.upper_value - s_calib_blob->throttle_calib.lower_value;
   volatile float calculated_reading =
-      (((float)*reading - (float)s_calib_blob->throttle_calib.lower_value) / range_throttle);
+      (((float)adc_reading - (float)s_calib_blob->throttle_calib.lower_value) / range_throttle);
+  // Readings are inverted
   calculated_reading = 1 - calculated_reading;
 
   if (calculated_reading < 0) {
@@ -53,10 +54,10 @@ StatusCode read_pedal_data(int32_t *reading, MAX11600Channel channel) {
   return STATUS_CODE_OK;
 }
 
-StatusCode read_throttle_data(int32_t *reading) {
+StatusCode read_throttle_data(uint32_t *reading) {
   return read_pedal_data(reading, THROTTLE_CHANNEL);
 }
 
-StatusCode read_brake_data(int32_t *reading) {
+StatusCode read_brake_data(uint32_t *reading) {
   return read_pedal_data(reading, BRAKE_CHANNEL);
 }
