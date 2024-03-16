@@ -114,9 +114,9 @@ def main():
         update_display(state, rx)
 
         # every 200 ms
-        can_a.send_centre_console_drive_output(
-            state["vel"], state["state"], state["cruise"], state["regen"], state["precharge"])
-        # can_a.send_pedal_pedal_output(state["throttle"], state["brake"])
+        # can_a.send_centre_console_drive_output(
+        #     state["vel"], state["state"], state["cruise"], state["regen"], state["precharge"])
+        can_a.send_pedal_pedal_output(state["throttle"], state["brake"])
 
         wake_time += 0.1
         time.sleep(max(wake_time - time.time(), 0))
