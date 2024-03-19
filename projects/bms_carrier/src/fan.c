@@ -4,9 +4,8 @@ BmsStorage *s_storage;
 
 const GpioAddress bms_fan_sense1 = { .port = GPIO_PORT_B, .pin = 1 };
 const GpioAddress bms_fan_sense2 = { .port = GPIO_PORT_B, .pin = 0 };
+const GpioAddress bms_fan_pwm = { .port = GPIO_PORT_A, .pin = 8 };
 
-// The fan sense pin is high when it is off. Low when it is on
-// Todo: Maybe check for interrupt?
 static void prv_bms_fan_sense(void) {
   LOG_DEBUG("RUN FAN SENSE\n");
   TickType_t tick = xTaskGetTickCount() + pdMS_TO_TICKS(5);
@@ -31,12 +30,12 @@ static void prv_bms_fan_sense(void) {
 
 void bms_run_fan(void) {
   if (s_storage->current_storage.temperature >= BMS_FAN_TEMP_UPPER_THRESHOLD) {
-    pwm_set_dc(PWM_TIMER_3, 100);
+    pwm_set_dc(PWM_TIMER_1, 100);
     LOG_DEBUG("GG MAX TEMP\n");
   } else if (s_storage->current_storage.temperature <= BMS_FAN_TEMP_LOWER_THRESHOLD) {
-    pwm_set_dc(PWM_TIMER_3, 0);
+    pwm_set_dc(PWM_TIMER_1, 0);
   } else {
-    pwm_set_dc(PWM_TIMER_3,
+    pwm_set_dc(PWM_TIMER_1,
                (100 * (s_storage->current_storage.temperature - BMS_FAN_TEMP_LOWER_THRESHOLD)) /
                    (BMS_FAN_TEMP_UPPER_THRESHOLD - BMS_FAN_TEMP_LOWER_THRESHOLD));
   }
@@ -45,9 +44,10 @@ void bms_run_fan(void) {
 
 void bms_fan_init(BmsStorage *bms_storage) {
   s_storage = bms_storage;
+  gpio_init_pin(&bms_fan_pwm, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_LOW);
   pwm_init(PWM_TIMER_1, BMS_FAN_PERIOD);
   pwm_set_pulse(PWM_TIMER_1, BMS_FAN_PERIOD);
-  pwm_set_dc(PWM_TIMER_1, 50);
+  pwm_set_dc(PWM_TIMER_1, 0);
 
   gpio_init_pin(&bms_fan_sense1, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
   gpio_init_pin(&bms_fan_sense2, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);

@@ -27,7 +27,7 @@ typedef struct {
   uint16_t charge_term_current;  // LSB = 1.5625 (micro Volts / R Sense)
 
   uint16_t i_thresh_max;
-  uint16_t i_thresh_min;
+  int16_t i_thresh_min;
   uint16_t temp_thresh_max;
 
   float r_sense_mohms;  // Rsense in micro ohms
@@ -77,7 +77,7 @@ StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms);
  * @param soc_pct - current in amps returned in this var
  * @return STATUS_CODE_OK on success
  */
-StatusCode max17261_current(Max17261Storage *storage, uint16_t *current_a);
+StatusCode max17261_current(Max17261Storage *storage, int16_t *current_a);
 
 /* @brief Gets a single cell's voltage in mV
  * @param storage - a pointer to an already initialized Max17261Storage struct

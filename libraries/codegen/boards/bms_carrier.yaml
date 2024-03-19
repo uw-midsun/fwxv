@@ -19,10 +19,8 @@
           watchdog: 3
       critical: true
       signals:
-        status:
-          length: 8
         fault:
-          length: 8
+          length: 16
         fan1:
           length: 8
         fan2:

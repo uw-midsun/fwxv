@@ -7,13 +7,10 @@
 #include "cell_sense.h"
 #include "current_sense.h"
 #include "fan.h"
-#include "fault_bps.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "interrupt.h"
 #include "log.h"
-#include "ltc_afe.h"
-#include "ltc_afe_impl.h"
 #include "master_task.h"
 #include "relays_fsm.h"
 #include "tasks.h"
@@ -41,7 +38,7 @@ BmsStorage bms_storage;
 void pre_loop_init() {
   LOG_DEBUG("Welcome to BMS \n");
   fault_bps_init(&bms_storage.bps_storage);
-  current_sense_init(&bms_storage.current_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
+  current_sense_init(&bms_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
   cell_sense_init(&bms_storage.ltc_afe_storage);
   aux_sense_init(&bms_storage.aux_storage);
   init_bms_relays(&bms_storage);
@@ -55,8 +52,9 @@ void run_medium_cycle() {
   wait_tasks(1);
 
   cell_conversions();
+  wait_tasks(1);
   current_sense_run();
-  wait_tasks(2);
+  wait_tasks(1);
 
   cell_sense_run();
   aux_sense_run();
@@ -74,10 +72,9 @@ void run_slow_cycle() {}
 int main() {
   tasks_init();
   log_init();
+  gpio_init();
   interrupt_init();
   gpio_it_init();
-  gpio_init();
-  i2c_init(BMS_PERIPH_I2C_PORT, &i2c_settings);
   can_init(&s_can_storage, &can_settings);
 
   LOG_DEBUG("Welcome to BMS!\n");

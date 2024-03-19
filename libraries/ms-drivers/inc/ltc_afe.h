@@ -76,7 +76,7 @@ typedef struct LtcAfeStorage {
   uint16_t aux_index;
   uint16_t retry_count;
   uint16_t device_cell;
-  uint16_t time_elapsed;
+  uint32_t timer_start;
 
   uint16_t cell_voltages[LTC_AFE_MAX_CELLS];
   uint16_t aux_voltages[LTC_AFE_MAX_THERMISTORS];

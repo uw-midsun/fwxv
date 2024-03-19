@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "bms.h"
 #include "i2c.h"
 #include "max17261_fuel_gauge.h"
 #include "pwm.h"
@@ -24,23 +25,14 @@
 #define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_MILLI_OHMS))
 
 // Thresholds for ALRT Pin
-#define CURRENT_SENSE_MAX_CURRENT_A (58.2f)
+#define CURRENT_SENSE_MAX_CURRENT_A (58.2f)  // 58.2 Amps
 #define CURRENT_SENSE_MIN_CURRENT_A (27.0f)  // Actually -27
 #define CURRENT_SENSE_MAX_TEMP (60U)
 #define CURRENT_SENSE_MAX_VOLTAGE (150U)
 #define ALRT_PIN_V_RES_MICRO_V (400)
 
 // Enum for GPIO IT alerts (just the one pin)
-typedef enum { CURRENT_SENSE_RUN_CYCLE = 0, ALRT_GPIO_IT } CurrentSenseNotification;
-
-typedef struct CurrentStorage {
-  uint16_t soc;
-  uint16_t current;
-  uint16_t voltage;
-  uint16_t temperature;
-  int16_t average;
-  uint32_t fuel_guage_cycle_ms;  // Time in ms between conversions (soft timer kicks)
-} CurrentStorage;
+typedef enum { CURRENT_SENSE_RUN_CYCLE = 0, ALRT_GPIO_IT, KILLSWITCH_IT } CurrentSenseNotification;
 
 StatusCode current_sense_fault_check();
 
@@ -48,5 +40,5 @@ StatusCode current_sense_run();
 
 bool current_sense_is_charging();
 
-StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings,
+StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings,
                               uint32_t fuel_guage_cycle_ms);

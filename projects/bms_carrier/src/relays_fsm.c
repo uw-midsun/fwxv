@@ -1,20 +1,13 @@
 #include "relays_fsm.h"
 
-FSM(bms_relays, NUM_RELAY_STATES, TASK_STACK_512);
+FSM(bms_relays, NUM_RELAY_STATES, TASK_STACK_256);
 static RelaysStateId fsm_prev_state = RELAYS_OPEN;
 
 static BmsStorage *s_storage;
 
-static const InterruptSettings it_settings = {
-  .priority = INTERRUPT_PRIORITY_NORMAL,
-  .type = INTERRUPT_TYPE_INTERRUPT,
-  .edge = INTERRUPT_EDGE_FALLING,
-};
-
 static const GpioAddress pos_relay_en = { .port = GPIO_PORT_B, .pin = 8 };
 static const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
 static const GpioAddress solar_relay_en = { .port = GPIO_PORT_C, .pin = 13 };
-static const GpioAddress kill_switch_mntr = { .port = GPIO_PORT_A, .pin = 15 };
 
 static void close_relays() {
   // 150 MS GAP BETWEEN EACH RELAY BC OF CURRENT DRAW
@@ -32,16 +25,8 @@ static void open_relays() {
   gpio_set_state(&solar_relay_en, GPIO_STATE_LOW);
 }
 
-TASK(kill_switch, TASK_MIN_STACK_SIZE) {
-  LOG_DEBUG("KILLSWITCH PRESSED\n");
-  while (true) {
-    fault_bps_set(BMS_FAULT_KILLSWITCH);
-    send_task_end();
-  }
-}
-
 static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
-  StatusCode status = STATUS_CODE_OK;
+  LOG_DEBUG("FSM RUN CYCLE\n");
   if (s_storage->bps_storage.fault_bitset) {
     LOG_DEBUG("Fault %d\n", s_storage->bps_storage.fault_bitset);
     fsm_transition(fsm, RELAYS_FAULT);
@@ -107,7 +92,6 @@ StatusCode init_bms_relays(BmsStorage *bms_storage) {
   gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&solar_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  gpio_it_register_interrupt(&kill_switch_mntr, &it_settings, KILLSWITCH_IT, kill_switch);
   fsm_init(bms_relays, s_relays_state_list, s_relays_transitions, RELAYS_OPEN, NULL);
   return STATUS_CODE_OK;
 }

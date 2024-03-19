@@ -5,7 +5,7 @@
 #include "status.h"
 
 typedef struct BpsStorage {
-  uint8_t fault_bitset;
+  uint16_t fault_bitset;
 } BpsStorage;
 
 StatusCode fault_bps_init(BpsStorage *storage);

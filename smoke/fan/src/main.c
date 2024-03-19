@@ -1,19 +1,15 @@
-#include <stdio.h>
-
 #include "gpio.h"
 #include "log.h"
-#include "master_task.h"
 #include "pwm.h"
-#include "tasks.h"
 
-int main() {
+GpioAddress pin = { .port = GPIO_PORT_A, .pin = 8 };
+int main(void) {
   gpio_init();
-  pwm_init(PWM_TIMER_3, 40);
   log_init();
-  LOG_DEBUG("Welcome to TEST!");
-  pwm_set_pulse(PWM_TIMER_3, 40);
-  pwm_set_dc(PWM_TIMER_3, 100);
-
-  LOG_DEBUG("exiting main?");
-  return 0;
+  gpio_init_pin(&pin, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_HIGH);
+  pwm_init(PWM_TIMER_1, 40);
+  pwm_set_pulse(PWM_TIMER_1, 40);
+  pwm_set_dc(PWM_TIMER_1, 50);
+  while (1) {
+  }
 }
