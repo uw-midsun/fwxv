@@ -52,8 +52,8 @@ void run_medium_cycle() {
   wait_tasks(1);
 
   cell_conversions();
-  current_sense_run();
-  wait_tasks(2);
+  // current_sense_run();
+  wait_tasks(1);
 
   cell_sense_run();
   aux_sense_run();

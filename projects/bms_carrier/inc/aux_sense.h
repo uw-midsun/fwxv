@@ -3,6 +3,7 @@
 #include "adc.h"
 #include "bms_carrier_getters.h"
 #include "bms_carrier_setters.h"
+#include "log.h"
 #include "gpio.h"
 
 #define R2_OHMS 10000
