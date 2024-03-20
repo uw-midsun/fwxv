@@ -60,8 +60,7 @@ static StatusCode prv_cell_sense_conversions() {
 // Task bc delays
 TASK(cell_sense_conversions, TASK_MIN_STACK_SIZE) {
   while (true) {
-    uint32_t notification = 0;
-    notify_wait(&notification, BLOCK_INDEFINITELY);
+    notify_wait(NULL, BLOCK_INDEFINITELY);
 
     // run conversions every 10 seconds
     if (xTaskGetTickCount() - ltc_afe_storage->timer_start >= pdMS_TO_TICKS(10000)) {
@@ -98,7 +97,6 @@ StatusCode cell_sense_run() {
         ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] < min_voltage
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
             : min_voltage;
-    delay_ms(1);
   }
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
@@ -120,7 +118,6 @@ StatusCode cell_sense_run() {
     return STATUS_CODE_INTERNAL_ERROR;
   }
 
-  delay_ms(1);
   if (min_voltage >= AFE_BALANCING_UPPER_THRESHOLD) {
     min_voltage += 20;
   } else if (min_voltage < AFE_BALANCING_UPPER_THRESHOLD &&

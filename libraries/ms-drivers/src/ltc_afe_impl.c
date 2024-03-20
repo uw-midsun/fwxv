@@ -248,6 +248,7 @@ StatusCode ltc_afe_impl_init(LtcAfeStorage *afe, const LtcAfeSettings *settings)
   // Use GPIO1 as analog input, GPIO 3-5 for SPI
   uint8_t gpio_bits =
       LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
+  afe->timer_start = xTaskGetTickCount();
   return prv_write_config(afe, gpio_bits);
 }
 

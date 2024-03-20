@@ -30,7 +30,9 @@ static void prv_bms_fault_ok_or_transition(Fsm *fsm) {
   if (s_storage->bps_storage.fault_bitset) {
     LOG_DEBUG("Fault %d\n", s_storage->bps_storage.fault_bitset);
     fsm_transition(fsm, RELAYS_FAULT);
+    return;
   }
+  set_battery_status_fault(0);
 }
 
 static void prv_relays_open_output(void *context) {
