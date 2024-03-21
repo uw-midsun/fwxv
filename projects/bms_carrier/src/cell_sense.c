@@ -46,6 +46,20 @@ static StatusCode prv_cell_sense_conversions() {
     return status;
   }
 
+    for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
+      if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > ltc_afe_storage->min_voltage) {
+        ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
+        LOG_DEBUG("Cell %d unbalanced %d MIN VOLTAGE: %d\n", cell,
+        ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]], ltc_afe_storage->min_voltage);
+      } else {
+        ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
+      }
+
+    }
+    ltc_afe_impl_write_config(ltc_afe_storage);
+    
+    ltc_afe_storage->timer_start = xTaskGetTickCount();
+
   // for (size_t i = 0; i < 10; i++) {
   //   status |= ltc_afe_impl_trigger_aux_conv(ltc_afe_storage, i);
   //   if (status != STATUS_CODE_OK) {
@@ -58,7 +72,7 @@ static StatusCode prv_cell_sense_conversions() {
 }
 
 // Task bc delays
-TASK(cell_sense_conversions, TASK_MIN_STACK_SIZE) {
+TASK(cell_sense_conversions, TASK_STACK_256) {
   while (true) {
     notify_wait(NULL, BLOCK_INDEFINITELY);
 
@@ -84,65 +98,47 @@ StatusCode cell_conversions() {
 
 StatusCode cell_sense_run() {
   StatusCode status = STATUS_CODE_OK;
-  uint16_t max_voltage = 0;
-  uint16_t min_voltage = 0xffff;
 
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
     // LOG_DEBUG("CELL %d: %d\n\r", cell,
     // ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
-    max_voltage =
-        ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > max_voltage
+    ltc_afe_storage->max_voltage =
+        ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > ltc_afe_storage->max_voltage
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
-            : max_voltage;
-    min_voltage =
-        ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] < min_voltage
+            : ltc_afe_storage->max_voltage;
+    ltc_afe_storage->min_voltage =
+        ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] < ltc_afe_storage->min_voltage
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
-            : min_voltage;
+            : ltc_afe_storage->min_voltage;
   }
-  LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
-  LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
-  set_battery_status_max_cell_v(max_voltage);
+  LOG_DEBUG("MAX VOLTAGE: %d\n", ltc_afe_storage->max_voltage);
+  LOG_DEBUG("MIN VOLTAGE: %d\n", ltc_afe_storage->min_voltage);
+  set_battery_status_max_cell_v(ltc_afe_storage->max_voltage);
 
-  if (max_voltage >= CELL_OVERVOLTAGE) {
+  if (ltc_afe_storage->max_voltage >= CELL_OVERVOLTAGE) {
     LOG_DEBUG("OVERVOLTAGE\n");
     fault_bps_set(BMS_FAULT_OVERVOLTAGE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
-  if (min_voltage <= CELL_UNDERVOLTAGE) {
+  if (ltc_afe_storage->min_voltage <= CELL_UNDERVOLTAGE) {
     LOG_DEBUG("UNDERVOLTAGE\n");
     fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
-  if (max_voltage - min_voltage >= CELL_UNBALANCED) {
+  if (ltc_afe_storage->max_voltage - ltc_afe_storage->min_voltage >= CELL_UNBALANCED) {
     LOG_DEBUG("UNBALANCED\n");
     fault_bps_set(BMS_FAULT_UNBALANCE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
 
-  if (min_voltage >= AFE_BALANCING_UPPER_THRESHOLD) {
-    min_voltage += 20;
-  } else if (min_voltage < AFE_BALANCING_UPPER_THRESHOLD &&
-             min_voltage >= AFE_BALANCING_LOWER_THRESHOLD) {
-    min_voltage += 100;
+  if (ltc_afe_storage->min_voltage >= AFE_BALANCING_UPPER_THRESHOLD) {
+    ltc_afe_storage->min_voltage += 20;
+  } else if (ltc_afe_storage->min_voltage < AFE_BALANCING_UPPER_THRESHOLD &&
+             ltc_afe_storage->min_voltage >= AFE_BALANCING_LOWER_THRESHOLD) {
+    ltc_afe_storage->min_voltage += 100;
   } else {
-    min_voltage += 250;
+    ltc_afe_storage->min_voltage += 250;
   }
-
-  if (xTaskGetTickCount() - ltc_afe_storage->timer_start >= 10000) {
-    ltc_afe_storage->timer_start = xTaskGetTickCount();
-    for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-      if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
-        ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
-        LOG_DEBUG("Cell %d unbalanced %d MIN VOLTAGE: %d\n", cell,
-        ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]], min_voltage);
-      } else {
-        ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
-      }
-
-      ltc_afe_impl_write_config(ltc_afe_storage);
-    }
-  }
-
   // LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
 
   // for (size_t thermistor = 0;
