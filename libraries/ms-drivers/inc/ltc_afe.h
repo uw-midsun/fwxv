@@ -72,10 +72,16 @@ typedef struct LtcAfeSettings {
 } LtcAfeSettings;
 
 typedef struct LtcAfeStorage {
+  Fsm fsm;
+
   // Only used for storage in the FSM so we store data for the correct cells
   uint16_t aux_index;
+  uint16_t retry_count;
   uint16_t device_cell;
   uint32_t timer_start;
+
+  uint16_t max_voltage;
+  uint16_t min_voltage;
 
   uint16_t cell_voltages[LTC_AFE_MAX_CELLS];
   uint16_t aux_voltages[LTC_AFE_MAX_THERMISTORS];
