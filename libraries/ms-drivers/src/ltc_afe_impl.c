@@ -234,9 +234,7 @@ StatusCode ltc_afe_impl_init(LtcAfeStorage *afe, const LtcAfeSettings *settings)
 
   prv_calc_offsets(afe);
   crc15_init_table();
-  afe->timer_start = xTaskGetTickCount();
-  afe->min_voltage = 0xFFFF;
-  afe->max_voltage = 0;
+  afe->timer_start = 0;
 
   SpiSettings spi_config = {
     .baudrate = settings->spi_baudrate,  //
