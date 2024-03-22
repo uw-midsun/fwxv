@@ -15,8 +15,7 @@ StatusCode pedal_calib_init(PedalCalibrationStorage *storage) {
   return STATUS_CODE_OK;
 }
 
-StatusCode pedal_calib_sample(PedalCalibrationStorage *calib_storage, PedalCalibrationData *data,
-                              MAX11600Channel channel, PedalState state, GpioAddress *address) {
+StatusCode pedal_calib_sample(PedalCalibrationStorage *calib_storage, PedalCalibrationData *data, PedalState state, GpioAddress *address) {
   // Reset variables for pedal calibration storage
   int32_t average_value = 0;
   calib_storage->sample_counter = 0;

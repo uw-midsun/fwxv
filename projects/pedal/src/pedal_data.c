@@ -12,27 +12,17 @@
 #include "pedal_shared_resources_provider.h"
 #include "status.h"
 
-#define THROTTLE_CHANNEL MAX11600_CHANNEL_0
-#define BRAKE_CHANNEL MAX11600_CHANNEL_2
-
-static const GpioAddress brake = ADC_POT1_BRAKE;
 static const GpioAddress throttle = ADC_HALL_SENSOR;
 
 static PedalCalibBlob *s_calib_blob;
-static Max11600Storage *s_max11600_storage;
 
 void pedal_data_init() {
-  // Don't call max11600 functions
   s_calib_blob = get_shared_pedal_calib_blob();
 }
 
-StatusCode read_pedal_data(int32_t *reading, MAX11600Channel channel) {
+StatusCode read_throttle_data(int32_t *reading) {
   volatile uint16_t adc_reading;
-  if (channel == BRAKE_CHANNEL) {
-    adc_read_raw(brake, &adc_reading);
-  } else if (channel == THROTTLE_CHANNEL) {
-    adc_read_raw(throttle, &adc_reading);
-  }
+  adc_read_raw(throttle, &adc_reading);
 
   memcpy(reading, &adc_reading, sizeof(adc_reading));
   // Convert ADC Reading to readable voltage by normalizing with calibration data and dividing
@@ -51,12 +41,4 @@ StatusCode read_pedal_data(int32_t *reading, MAX11600Channel channel) {
   }
 
   return STATUS_CODE_OK;
-}
-
-StatusCode read_throttle_data(int32_t *reading) {
-  return read_pedal_data(reading, THROTTLE_CHANNEL);
-}
-
-StatusCode read_brake_data(int32_t *reading) {
-  return read_pedal_data(reading, BRAKE_CHANNEL);
 }

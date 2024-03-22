@@ -1,8 +1,8 @@
 #pragma once
 #include "max11600.h"
 
-#define ADC_POT1_BRAKE \
-  { .port = GPIO_PORT_A, .pin = 0 }
+#define BRAKE_LIMIT_SWITCH \
+  { .port = GPIO_PORT_A, .pin = 7 }
 
 #define ADC_HALL_SENSOR \
   { .port = GPIO_PORT_A, .pin = 1 }

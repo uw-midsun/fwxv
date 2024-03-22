@@ -13,9 +13,8 @@
 #include "unity.h"
 
 #define THROTTLE_CHANNEL MAX11600_CHANNEL_0
-#define BRAKE_CHANNEL MAX11600_CHANNEL_2
 
-static const GpioAddress brake = ADC_POT1_BRAKE;
+static const GpioAddress brake = BRAKE_LIMIT_SWITCH;
 static const GpioAddress throttle = ADC_HALL_SENSOR;
 
 PedalCalibBlob global_calib_blob = { 0 };
@@ -26,8 +25,7 @@ void test_throttle_calibration_run(void) {
   LOG_DEBUG("Please press and hold the throttle\n");
   delay_s(7);
   LOG_DEBUG("Beginning sampling\n");
-  pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib,
-                     THROTTLE_CHANNEL, PEDAL_PRESSED, &throttle);
+  pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib, PEDAL_PRESSED, &throttle);
   LOG_DEBUG("Completed sampling\n");
 
   adc_run();
@@ -35,8 +33,7 @@ void test_throttle_calibration_run(void) {
   LOG_DEBUG("Please ensure the throttle is not being pressed.\n");
   delay_s(7);
   LOG_DEBUG("Beginning sampling\n");
-  pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib,
-                     THROTTLE_CHANNEL, PEDAL_UNPRESSED, &throttle);
+  pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib, PEDAL_UNPRESSED, &throttle);
   LOG_DEBUG("Completed sampling\n");
   LOG_DEBUG("UPPER THRESHOLD: %d\n", global_calib_blob.throttle_calib.upper_value);
   LOG_DEBUG("LOWER THRESHOLD: %d\n", global_calib_blob.throttle_calib.lower_value);

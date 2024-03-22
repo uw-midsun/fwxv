@@ -11,7 +11,6 @@
 #include "interrupt.h"
 #include "log.h"
 #include "master_task.h"
-#include "max11600.h"
 #include "pedal_calib.h"
 #include "pedal_data.h"
 #include "pedal_setters.h"
@@ -19,10 +18,7 @@
 #include "soft_timer.h"
 #include "tasks.h"
 
-#define THROTTLE_CHANNEL MAX11600_CHANNEL_0
-#define BRAKE_CHANNEL MAX11600_CHANNEL_2
-
-static const GpioAddress brake = ADC_POT1_BRAKE;
+static const GpioAddress brake = BRAKE_LIMIT_SWITCH;
 static const GpioAddress throttle = ADC_HALL_SENSOR;
 
 static CanStorage s_can_storage = { 0 };
@@ -38,29 +34,27 @@ const CanSettings can_settings = {
 // of the pedal project
 
 static PedalCalibBlob s_calib_blob = { 0 };
-static Max11600Storage s_max11600_storage = { 0 };
 
 void pedal_init() {
   // Initialize GPIOs needed for the throttle
   interrupt_init();
   calib_init(&s_calib_blob, sizeof(s_calib_blob), false);
-  pedal_resources_init(&s_max11600_storage, calib_blob());
+  pedal_resources_init(calib_blob());
   pedal_data_init();
 }
 
 void pre_loop_init() {
-  gpio_init_pin(&brake, GPIO_ANALOG, GPIO_STATE_LOW);
+  gpio_init_pin(&brake, GPIO_INPUT_PULL_DOWN, GPIO_STATE_LOW);
   gpio_init_pin(&throttle, GPIO_ANALOG, GPIO_STATE_LOW);
-  adc_add_channel(brake);
   adc_add_channel(throttle);
   adc_init();
 }
 
 void run_fast_cycle() {
   adc_run();
-  GpioState brake_position = 0;
-  volatile int32_t throttle_position = 0;
-  StatusCode status = gpio_get_state(&brake, &brake_position);
+  GpioState brake_state = 0;
+  int32_t throttle_position = 0;
+  StatusCode status = gpio_get_state(&brake, &brake_state);
 
   if (status == STATUS_CODE_OK) {
     status = read_throttle_data(&throttle_position);
@@ -69,17 +63,17 @@ void run_fast_cycle() {
   // Only update data on STATUS_CODE_OK
   if (status == STATUS_CODE_OK) {
     // Sending messages
-    if (brake_position == GPIO_STATE_LOW) {
-      // Brake is not pressed - Send both readings, brake will be 0 and ignored by the receiver
-      uint32_t res = (uint32_t)throttle_position;
-      set_pedal_output_brake_output(100);
-      set_pedal_output_throttle_output(res);
-    } else {
-      // Brake is pressed - Send brake data with throttle as 0
-      set_pedal_output_brake_output(0);
-      set_pedal_output_throttle_output(0);
-    }
+    // if (brake_state == GPIO_STATE_LOW) {
+    //   // Brake is pressed - Send brake data with throttle as 1
+    //   set_pedal_output_brake_output(1);
+    //   set_pedal_output_throttle_output(0);
+    // } else {
+    // Brake is not pressed
+    uint32_t res = (uint32_t)throttle_position;
+    set_pedal_output_brake_output(0);
+    set_pedal_output_throttle_output(res);
   }
+  // }
 
   run_can_tx_cycle();
   wait_tasks(1);
