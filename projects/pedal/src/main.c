@@ -53,7 +53,7 @@ void pre_loop_init() {
 void run_fast_cycle() {
   adc_run();
   GpioState brake_state = 0;
-  int32_t throttle_position = 0;
+  uint32_t throttle_position = 0;
   StatusCode status = gpio_get_state(&brake, &brake_state);
 
   if (status == STATUS_CODE_OK) {
@@ -63,17 +63,16 @@ void run_fast_cycle() {
   // Only update data on STATUS_CODE_OK
   if (status == STATUS_CODE_OK) {
     // Sending messages
-    // if (brake_state == GPIO_STATE_LOW) {
-    //   // Brake is pressed - Send brake data with throttle as 1
-    //   set_pedal_output_brake_output(1);
-    //   set_pedal_output_throttle_output(0);
-    // } else {
-    // Brake is not pressed
-    uint32_t res = (uint32_t)throttle_position;
-    set_pedal_output_brake_output(0);
-    set_pedal_output_throttle_output(res);
+    if (brake_state == GPIO_STATE_LOW) {
+      // Brake is pressed - Send brake data with throttle as 1
+      set_pedal_output_brake_output(1);
+      set_pedal_output_throttle_output(0);
+    } else {
+      // Brake is not pressed
+      set_pedal_output_brake_output(0);
+      set_pedal_output_throttle_output(throttle_position);
+    }
   }
-  // }
 
   run_can_tx_cycle();
   wait_tasks(1);

@@ -21,6 +21,6 @@
           watchdog: 0
       signals:
         throttle_output:
-          length: 8
+          length: 32
         brake_output:
           length: 8

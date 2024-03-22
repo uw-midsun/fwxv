@@ -25,7 +25,8 @@ void test_throttle_calibration_run(void) {
   LOG_DEBUG("Please press and hold the throttle\n");
   delay_s(7);
   LOG_DEBUG("Beginning sampling\n");
-  pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib, PEDAL_PRESSED, &throttle);
+  pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib,
+                     PEDAL_PRESSED, &throttle);
   LOG_DEBUG("Completed sampling\n");
 
   adc_run();
@@ -33,7 +34,8 @@ void test_throttle_calibration_run(void) {
   LOG_DEBUG("Please ensure the throttle is not being pressed.\n");
   delay_s(7);
   LOG_DEBUG("Beginning sampling\n");
-  pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib, PEDAL_UNPRESSED, &throttle);
+  pedal_calib_sample(&s_throttle_calibration_storage, &global_calib_blob.throttle_calib,
+                     PEDAL_UNPRESSED, &throttle);
   LOG_DEBUG("Completed sampling\n");
   LOG_DEBUG("UPPER THRESHOLD: %d\n", global_calib_blob.throttle_calib.upper_value);
   LOG_DEBUG("LOWER THRESHOLD: %d\n", global_calib_blob.throttle_calib.lower_value);
