@@ -47,10 +47,11 @@ static void prv_neutral_input(Fsm *fsm, void *context) {
   StateId power_state = get_power_info_power_state();
   uint8_t received_power_state = get_received_power_info();
 
-  if (power_state == EE_POWER_DRIVE_STATE && power_state_main_flag == 0) {
+  if ((power_state == EE_POWER_DRIVE_STATE || power_state == EE_POWER_ON_STATE) &&
+      power_state_main_flag == 0) {
     power_state_main_flag = 1;
     pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_HIGH);
-  } else if (power_state == EE_POWER_ON_STATE) {
+  } else if (power_state == EE_POWER_OFF_STATE) {
     power_state_main_flag = 0;
     pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
   }

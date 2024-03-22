@@ -50,7 +50,7 @@ void run_fast_cycle() {}
 void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
-  
+
   cell_conversions();
   wait_tasks(1);
   // current_sense_run();

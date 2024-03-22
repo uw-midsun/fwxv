@@ -131,16 +131,16 @@ StatusCode cell_sense_run() {
   }
 
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-      if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
-        ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
-        LOG_DEBUG("Cell %d unbalanced %d MIN VOLTAGE: %d\n", cell,
-        ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]], min_voltage);
-      } else {
-        ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
-      }
-
+    if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
+      ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
+      LOG_DEBUG("Cell %d unbalanced %d MIN VOLTAGE: %d\n", cell,
+                ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]],
+                min_voltage);
+    } else {
+      ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
     }
-  
+  }
+
   if (ltc_afe_storage->timer_start == 3) {
     ltc_afe_impl_write_config(ltc_afe_storage);
   }
@@ -163,7 +163,7 @@ StatusCode cell_sense_run() {
   //     return STATUS_CODE_INTERNAL_ERROR;
   //   }
   // }
-   return STATUS_CODE_OK;
+  return STATUS_CODE_OK;
 }
 
 StatusCode cell_sense_init(LtcAfeStorage *afe_storage) {
