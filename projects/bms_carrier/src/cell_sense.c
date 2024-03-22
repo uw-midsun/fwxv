@@ -133,9 +133,9 @@ StatusCode cell_sense_run() {
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
     if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
       ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
-      LOG_DEBUG("Cell %d unbalanced %d MIN VOLTAGE: %d\n", cell,
-                ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]],
-                min_voltage);
+      // LOG_DEBUG("Cell %d unbalanced %d MIN VOLTAGE: %d\n", cell,
+      //           ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]],
+      //           min_voltage);
     } else {
       ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
     }
