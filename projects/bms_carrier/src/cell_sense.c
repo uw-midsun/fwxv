@@ -21,7 +21,7 @@ static const LtcAfeSettings s_afe_settings = {
   .num_thermistors = 12,
 };
 
-static StatusCode prv_cell_sense_conversions() {
+static inline StatusCode prv_cell_sense_conversions() {
   StatusCode status = STATUS_CODE_OK;
   // TODO: Figure out why cell_conv cannot happen without spi timing out (Most likely RTOS
   // implemntation error) Retry Mechanism
@@ -58,15 +58,14 @@ static StatusCode prv_cell_sense_conversions() {
 }
 
 // Task bc delays
-TASK(cell_sense_conversions, TASK_MIN_STACK_SIZE) {
+TASK(cell_sense_conversions, TASK_STACK_256) {
   while (true) {
-    uint32_t notification = 0;
-    notify_wait(&notification, BLOCK_INDEFINITELY);
+    notify_wait(NULL, BLOCK_INDEFINITELY);
 
     // run conversions every 10 seconds
-    if (xTaskGetTickCount() - ltc_afe_storage->timer_start >= pdMS_TO_TICKS(10000)) {
+    // if (xTaskGetTickCount() - ltc_afe_storage->timer_start >= pdMS_TO_TICKS(10000)) {
       prv_cell_sense_conversions();
-    }
+    // }
 
     send_task_end();
   }
@@ -130,7 +129,7 @@ StatusCode cell_sense_run() {
     min_voltage += 250;
   }
 
-  if (xTaskGetTickCount() - ltc_afe_storage->timer_start >= 10000) {
+  // if (xTaskGetTickCount() - ltc_afe_storage->timer_start >= 10000) {
     ltc_afe_storage->timer_start = xTaskGetTickCount();
     for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
       if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
@@ -140,7 +139,7 @@ StatusCode cell_sense_run() {
       } else {
         ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
       }
-    }
+    // }
   }
 
   // LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);

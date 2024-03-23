@@ -26,7 +26,7 @@ LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0 },
 
-  .num_devices = 2,
+  .num_devices = 1,
   .num_cells = 12,
   .num_thermistors = 12,
 };
@@ -80,15 +80,15 @@ TASK(smoke_ltc, TASK_STACK_1024) {
     delay_ms(1);
     // ltc_afe_impl_write_config(&s_ltc_store);
 
-    for (size_t i = 0; i < 10; i++) {
-      // Thermistor select cell 0
-      ltc_afe_impl_trigger_aux_conv(&s_ltc_store, i);
+    // for (size_t i = 0; i < 10; i++) {
+    //   // Thermistor select cell 0
+    //   ltc_afe_impl_trigger_aux_conv(&s_ltc_store, i);
 
-      // Wait
-      delay_ms(10);
+    //   // Wait
+    //   delay_ms(10);
 
-      // Thermistor read cell 0
-      ltc_afe_impl_read_aux(&s_ltc_store, i);
+    //   // Thermistor read cell 0
+    //   ltc_afe_impl_read_aux(&s_ltc_store, i);
 
       // Log thermistor result
       LOG_DEBUG("Thermistor reading: %d\n",
@@ -98,7 +98,7 @@ TASK(smoke_ltc, TASK_STACK_1024) {
     // Delay until next cycle
     // Discharging should happen here
     LOG_DEBUG("\n\n\r");
-    delay_ms(10000);
+    delay_ms(5000);
   }
 }
 
