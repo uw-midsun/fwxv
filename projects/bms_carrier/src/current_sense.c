@@ -29,7 +29,7 @@ StatusCode prv_fuel_gauge_read() {
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault
     // Open Relays
-    fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
+    // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     return status;
   }
 
@@ -69,7 +69,7 @@ TASK(current_sense, TASK_STACK_256) {
 
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
-      fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
+      // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     } else if (notification & 1 << KILLSWITCH_IT) {
       fault_bps_set(BMS_FAULT_KILLSWITCH);
     }
@@ -82,7 +82,7 @@ TASK(current_sense, TASK_STACK_256) {
 StatusCode current_sense_run() {
   StatusCode ret = notify(current_sense, CURRENT_SENSE_RUN_CYCLE);
   if (ret != STATUS_CODE_OK) {
-    fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
+    // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
 
