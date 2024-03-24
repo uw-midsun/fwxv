@@ -94,12 +94,26 @@ static void prv_update_target_current_velocity() {
   }
 }
 
+static inline uint8_t pack_left_shift_u32(uint32_t value, uint8_t shift, uint8_t mask) {
+  return (uint8_t)((uint8_t)(value << shift) & mask);
+}
+
+static inline uint8_t pack_right_shift_u32(uint32_t value, uint8_t shift, uint8_t mask) {
+  return (uint8_t)((uint8_t)(value >> shift) & mask);
+}
+
 static void motor_controller_tx_all() {
   // don't send drive command if didn't get centre console's drive output msg
-  if (!get_received_drive_output()) return;
+  if (!get_received_drive_output()) {
+    LOG_DEBUG("NO drive output\n");
+    return;
+  }
   // if (!get_pedal_output_brake_output()) return;
   // don't send drive command if not precharged
-  if (!g_tx_struct.mc_status_precharge_status) return;
+  if (!g_tx_struct.mc_status_precharge_status) {
+    LOG_DEBUG("no precharge\n");
+    return;
+  }
 
   prv_update_target_current_velocity();
 
@@ -107,8 +121,12 @@ static void motor_controller_tx_all() {
     .id.raw = DRIVER_CONTROL_BASE + 0x01,
     .dlc = 8,
   };
-  memcpy(&message.data_u32[0], &s_target_current, sizeof(uint32_t));
-  memcpy(&message.data_u32[1], &s_target_velocity, sizeof(uint32_t));
+  // s_target_velocity = 160.0;
+  memcpy(&message.data_u32[0], &s_target_velocity, sizeof(uint32_t));
+  memcpy(&message.data_u32[1], &s_target_current, sizeof(uint32_t));
+
+  LOG_DEBUG("s_target_current: %d\n", (int)(s_target_current * 100));
+  LOG_DEBUG("s_target_velocity: %d\n", (int)(s_target_velocity * 100));
 
   mcp2515_transmit(&message);
 }
@@ -118,46 +136,46 @@ static void motor_controller_rx_all() {
   while (mcp2515_receive(&msg) == STATUS_CODE_OK) {
     switch (msg.id.raw) {
       case MOTOR_CONTROLLER_BASE_L + STATUS:
-        set_mc_status_error_bitset_l(msg.data_u16[2] >> 1);
-        set_mc_status_limit_bitset_l(msg.data_u16[3]);
+        set_mc_status_error_bitset_l(msg.data_u16[1] >> 1);
+        set_mc_status_limit_bitset_l(msg.data_u16[0]);
         break;
       case MOTOR_CONTROLLER_BASE_R + STATUS:
-        set_mc_status_error_bitset_r(msg.data_u16[2] >> 1);
-        set_mc_status_limit_bitset_r(msg.data_u16[3]);
+        set_mc_status_error_bitset_r(msg.data_u16[1] >> 1);
+        set_mc_status_limit_bitset_r(msg.data_u16[0]);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + BUS_MEASUREMENT:
-        set_motor_controller_vc_mc_current_l(prv_get_float(msg.data_u32[0]) * CURRENT_SCALE);
-        set_motor_controller_vc_mc_voltage_l(prv_get_float(msg.data_u32[1]) * VOLTAGE_SCALE);
+        set_motor_controller_vc_mc_current_l(prv_get_float(msg.data_u32[1]) * CURRENT_SCALE);
+        set_motor_controller_vc_mc_voltage_l(prv_get_float(msg.data_u32[0]) * VOLTAGE_SCALE);
         break;
       case MOTOR_CONTROLLER_BASE_R + BUS_MEASUREMENT:
-        set_motor_controller_vc_mc_current_r(prv_get_float(msg.data_u32[0]) * CURRENT_SCALE);
-        set_motor_controller_vc_mc_voltage_r(prv_get_float(msg.data_u32[1]) * VOLTAGE_SCALE);
+        set_motor_controller_vc_mc_current_r(prv_get_float(msg.data_u32[1]) * CURRENT_SCALE);
+        set_motor_controller_vc_mc_voltage_r(prv_get_float(msg.data_u32[0]) * VOLTAGE_SCALE);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
         set_motor_velocity_velocity_l(
-            (uint16_t)(int16_t)(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE));
+            (uint16_t)(int16_t)(prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE));
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
         set_motor_velocity_velocity_r(
-            (uint16_t)(int16_t)(prv_get_float(msg.data_u32[0]) * VELOCITY_SCALE));
+            (uint16_t)(int16_t)(prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE));
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:
-        set_motor_sink_temps_heatsink_temp_l(prv_get_float(msg.data_u32[0]) * TEMP_SCALE);
-        set_motor_sink_temps_motor_temp_l(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
+        set_motor_sink_temps_heatsink_temp_l(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
+        set_motor_sink_temps_motor_temp_l(prv_get_float(msg.data_u32[0]) * TEMP_SCALE);
         break;
       case MOTOR_CONTROLLER_BASE_R + HEAT_SINK_MOTOR_TEMP:
-        set_motor_sink_temps_heatsink_temp_r(prv_get_float(msg.data_u32[0]) * TEMP_SCALE);
-        set_motor_sink_temps_motor_temp_r(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
+        set_motor_sink_temps_heatsink_temp_r(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
+        set_motor_sink_temps_motor_temp_r(prv_get_float(msg.data_u32[0]) * TEMP_SCALE);
         break;
 
       case MOTOR_CONTROLLER_BASE_L + DSP_BOARD_TEMP:
-        set_dsp_board_temps_dsp_temp_l(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
+        set_dsp_board_temps_dsp_temp_l(prv_get_float(msg.data_u32[0]) * TEMP_SCALE);
         break;
       case MOTOR_CONTROLLER_BASE_R + DSP_BOARD_TEMP:
-        set_dsp_board_temps_dsp_temp_r(prv_get_float(msg.data_u32[1]) * TEMP_SCALE);
+        set_dsp_board_temps_dsp_temp_r(prv_get_float(msg.data_u32[0]) * TEMP_SCALE);
         break;
     }
   }

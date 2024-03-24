@@ -1,5 +1,5 @@
 # Message Definitions in plaintext are on the wiki at:
-# https://uwmidsun.atlassian.net/l/cp/Pxn8Xhm8
+# https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/50003973/CAN+Message+Definitions
 #
 # If you are making changes to this file please update the corresponding entry
 # on the wiki. If you need to add a new message use a reasonable
@@ -24,3 +24,7 @@ Messages:
         length: 8 # (cc_toggle | cc_increade | cc_decrease)
       input_lights:
         length: 8 
+      digital_input:
+        length: 8
+      analog_input:
+        length: 8
