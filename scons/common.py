@@ -28,12 +28,8 @@ def parse_config(entry):
 def flash_run(entry):
     '''flash and run file, return a pyserial object which monitors the device serial output'''
     try:
-        if platform == 'darwin':
-            output = glob.glob("/dev/tty.usbmodem*")
-            device_path = output[0]
-        else:
-            output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
-            device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
+        output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
+        device_path = f"/dev/serial/by-id/{str(output, 'ASCII').strip()}"
         serialData = serial.Serial(device_path, 115200)
     except:
         print()
