@@ -22,6 +22,7 @@ const CanSettings can_settings = {
 static PedalCalibBlob s_calib_blob = { 0 };
 
 void pre_loop_init() {
+  calib_init(&s_calib_blob, sizeof(s_calib_blob), false);
   pedal_init(&s_calib_blob);
 }
 

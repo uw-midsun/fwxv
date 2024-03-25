@@ -55,8 +55,6 @@ StatusCode pedal_init(PedalCalibBlob *calib_blob) {
   gpio_init_pin(&throttle, GPIO_ANALOG, GPIO_STATE_LOW);
   adc_add_channel(throttle);
   adc_init();
-  calib_init(s_calib_blob, sizeof(s_calib_blob), false);
   s_calib_blob = calib_blob;
-
   return STATUS_CODE_OK;
 }
