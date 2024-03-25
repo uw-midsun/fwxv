@@ -1,7 +1,8 @@
 import json
 import subprocess
 import serial  # pip install pyserial
-
+import glob
+from sys import platform
 
 def parse_config(entry):
     # Default config to empty for fields that don't exist
