@@ -1,5 +1,8 @@
 #pragma once
-#include "max11600.h"
+
+#include <stdbool.h>
+
+#include "gpio.h"
 
 #define NUM_SAMPLES 1000
 
@@ -31,6 +34,5 @@ extern PedalCalibBlob global_calib_blob;
 
 StatusCode pedal_calib_init(PedalCalibrationStorage *storage);
 
-// Re-initializes the MAX11600 to the correct channel
 StatusCode pedal_calib_sample(PedalCalibrationStorage *calib_storage, PedalCalibrationData *data,
                               PedalState state, GpioAddress *address);
