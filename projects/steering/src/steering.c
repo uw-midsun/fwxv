@@ -11,7 +11,7 @@ StatusCode steering_init(Task *task) {
   // Initialize Pins
   gpio_init_pin(&turn_signal_address, GPIO_ANALOG, GPIO_STATE_LOW);
   gpio_init_pin(&cc_address, GPIO_ANALOG, GPIO_STATE_LOW);
-  gpio_init_pin(&cc_toggle_address, GPIO_ANALOG, GPIO_STATE_LOW);
+  gpio_init_pin(&cc_toggle_address, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
   // Set up ADC
   adc_add_channel(turn_signal_address);
   adc_add_channel(cc_address);
@@ -26,8 +26,9 @@ StatusCode steering_init(Task *task) {
   return STATUS_CODE_OK;
 }
 
-void steering_input(uint32_t notification) {
+void steering_input() {
   uint16_t control_stalk_data;
+  uint32_t notification;
   set_steering_info_input_cc(0);
   LOG_DEBUG("RUNNING CYCLE\n");
   // Read ADC of pin set by turn signal lights

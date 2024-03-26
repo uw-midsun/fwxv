@@ -24,7 +24,8 @@ const CanSettings can_settings = {
 
 void pre_loop_init() {
   // Setup analog inputs and initialize adc
-  steering_init();
+  Task *steering_master_task = get_master_task();
+  steering_init(steering_master_task);
   adc_init();
 }
 
