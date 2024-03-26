@@ -60,8 +60,8 @@ void update_indicators(uint32_t notif) {
   }
   // Update regen light
   if (notify_check_event(&notif, REGEN_BUTTON_EVENT)) {
-    uint16_t batt_voltage = get_battery_status_max_cell_v();  // Gets max voltage out of all cells
-    uint16_t batt_current = get_battery_status_max_cell_v();
+    uint16_t batt_voltage = get_battery_info_max_cell_v();  // Gets max voltage out of all cells
+    uint16_t batt_current = get_battery_vt_current();
     // solar current + regen current <= 27 AMPS
     // regen current shouldnt push cell above 4.2 V
     if (!s_regen_braking && batt_current < MAX_CURRENT && batt_voltage < MAX_VOLTAGE) {
@@ -155,7 +155,7 @@ void update_displays(void) {
   float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
   float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
   uint16_t batt_perc_val = get_battery_vt_batt_perc();
-  uint16_t aux_battery_voltage = get_battery_status_aux_batt_v();
+  uint32_t aux_battery_voltage = get_battery_info_aux_batt_v()/100;
   if (speed_kph >= 100) {
     seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, aux_battery_voltage);
   } else {

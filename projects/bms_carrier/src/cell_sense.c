@@ -101,7 +101,7 @@ StatusCode cell_sense_run() {
   }
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
-  set_battery_status_max_cell_v(max_voltage);
+  set_battery_info_max_cell_v(max_voltage);
 
   if (max_voltage >= CELL_OVERVOLTAGE) {
     LOG_DEBUG("OVERVOLTAGE\n");

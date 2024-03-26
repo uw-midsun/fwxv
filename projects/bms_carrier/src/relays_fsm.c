@@ -10,13 +10,13 @@ static const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
 static const GpioAddress solar_relay_en = { .port = GPIO_PORT_C, .pin = 13 };
 
 static void close_relays() {
-  // 150 MS GAP BETWEEN EACH RELAY BC OF CURRENT DRAW
+  // 300 MS GAP BETWEEN EACH RELAY BC OF CURRENT DRAW
   gpio_set_state(&pos_relay_en, GPIO_STATE_HIGH);
-  delay_ms(150);
+  delay_ms(200);
   gpio_set_state(&neg_relay_en, GPIO_STATE_HIGH);
-  delay_ms(150);
+  delay_ms(200);
   gpio_set_state(&solar_relay_en, GPIO_STATE_HIGH);
-  delay_ms(150);
+  delay_ms(200);
 }
 
 static void open_relays() {
