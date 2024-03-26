@@ -35,12 +35,12 @@ void steering_input(uint32_t notification) {
   // Determine if it's a left, right or off signal
   if (control_stalk_data > TURN_LEFT_SIGNAL_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
       control_stalk_data < TURN_LEFT_SIGNAL_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
-    LOG_DEBUG("RIGHT\n");
-    set_steering_info_input_lights(TURN_SIGNAL_RIGHT);
-  } else if (control_stalk_data > TURN_RIGHT_SIGNAL_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
-             control_stalk_data < TURN_RIGHT_SIGNAL_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
     LOG_DEBUG("LEFT\n");
     set_steering_info_input_lights(TURN_SIGNAL_LEFT);
+  } else if (control_stalk_data > TURN_RIGHT_SIGNAL_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
+             control_stalk_data < TURN_RIGHT_SIGNAL_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
+    LOG_DEBUG("RIGHT\n");
+    set_steering_info_input_lights(TURN_SIGNAL_RIGHT);
   } else {
     set_steering_info_input_lights(TURN_SIGNAL_OFF);
   }
