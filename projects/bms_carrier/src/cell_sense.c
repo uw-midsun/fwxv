@@ -64,7 +64,7 @@ TASK(cell_sense_conversions, TASK_STACK_256) {
 
     // run conversions every 10 seconds
     // if (xTaskGetTickCount() - ltc_afe_storage->timer_start >= pdMS_TO_TICKS(10000)) {
-      prv_cell_sense_conversions();
+    prv_cell_sense_conversions();
     // }
 
     send_task_end();
@@ -130,15 +130,15 @@ StatusCode cell_sense_run() {
   }
 
   // if (xTaskGetTickCount() - ltc_afe_storage->timer_start >= 10000) {
-    ltc_afe_storage->timer_start = xTaskGetTickCount();
-    for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-      if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
-        ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
-        // LOG_DEBUG("Cell %d unbalanced %d MIN VOLTAGE: %d\n", cell,
-        // ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]], min_voltage);
-      } else {
-        ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
-      }
+  ltc_afe_storage->timer_start = xTaskGetTickCount();
+  for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
+    if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
+      ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
+      // LOG_DEBUG("Cell %d unbalanced %d MIN VOLTAGE: %d\n", cell,
+      // ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]], min_voltage);
+    } else {
+      ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
+    }
     // }
   }
 

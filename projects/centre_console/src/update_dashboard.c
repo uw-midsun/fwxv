@@ -55,8 +55,8 @@ void update_indicators(uint32_t notif) {
       pca9555_gpio_set_state(&s_output_leds[HAZARD_LED], PCA9555_GPIO_STATE_HIGH);
     }
   } else {
-      s_hazard_state = false;
-      pca9555_gpio_set_state(&s_output_leds[HAZARD_LED], PCA9555_GPIO_STATE_LOW);
+    s_hazard_state = false;
+    pca9555_gpio_set_state(&s_output_leds[HAZARD_LED], PCA9555_GPIO_STATE_LOW);
   }
   // Update regen light
   if (notify_check_event(&notif, REGEN_BUTTON_EVENT)) {

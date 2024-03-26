@@ -27,8 +27,8 @@ typedef enum {
 // Signals for analog inputs received at the steering board
 typedef enum SteeringInfoAnalog {
   EE_STEERING_LIGHTS_OFF_STATE = 0,  // Turn lights off
-  EE_STEERING_LIGHTS_RIGHT_STATE,    // Right Turn Signal
   EE_STEERING_LIGHTS_LEFT_STATE,     // Left Turn Signal
+  EE_STEERING_LIGHTS_RIGHT_STATE,    // Right Turn Signal
   NUM_EE_STEERING_LIGHTS,
 } SteeringInfoAnalog;
 

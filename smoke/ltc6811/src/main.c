@@ -90,16 +90,16 @@ TASK(smoke_ltc, TASK_STACK_1024) {
     //   // Thermistor read cell 0
     //   ltc_afe_impl_read_aux(&s_ltc_store, i);
 
-      // Log thermistor result
-      LOG_DEBUG("Thermistor reading: %d\n",
-                s_ltc_store.aux_voltages[s_ltc_store.aux_result_lookup[i]]);
-    }
-
-    // Delay until next cycle
-    // Discharging should happen here
-    LOG_DEBUG("\n\n\r");
-    delay_ms(5000);
+    // Log thermistor result
+    LOG_DEBUG("Thermistor reading: %d\n",
+              s_ltc_store.aux_voltages[s_ltc_store.aux_result_lookup[i]]);
   }
+
+  // Delay until next cycle
+  // Discharging should happen here
+  LOG_DEBUG("\n\n\r");
+  delay_ms(5000);
+}
 }
 
 int main() {

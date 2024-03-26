@@ -76,7 +76,7 @@ static StatusCode prv_read_register(LtcAfeStorage *afe, LtcAfeRegister reg, uint
 
 // read from a voltage register
 static inline StatusCode prv_read_voltage(LtcAfeStorage *afe, LtcAfeVoltageRegister reg,
-                                   LtcAfeVoltageRegisterGroup *data) {
+                                          LtcAfeVoltageRegisterGroup *data) {
   if (reg > NUM_LTC_AFE_VOLTAGE_REGISTERS) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
