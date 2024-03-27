@@ -1,12 +1,3 @@
-// READ BEFORE WORKING: CURRENT STATUS & REMINDERS
-
-// currently doesn't compile
-// master task doesn't seem to be working, so can't use run_slow_cycle
-// says: undefined reference to 'init_master_task'
-
-// also, I believe the reason why notification doesn't work is because not actually supposed to make
-// variable? prob should ask
-
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -57,7 +48,6 @@ void run_medium_cycle() {}
 
 void run_slow_cycle() {
   gpio_it_trigger_interrupt(&addr_button);
-  LOG_DEBUG("Slow Cycle Test\n");
 }
 
 TASK(task1, TASK_STACK_512) {
