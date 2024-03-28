@@ -6,6 +6,11 @@
 #include "exported_enums.h"
 #include "status.h"
 
+// TODO (Aryan): validate these numbers
+#define MAX_VOLTAGE 42000
+#define MIN_VOLTAGE 40000
+#define MAX_CURRENT 58.2
+
 typedef enum MainTaskBtnEvents {
   POWER_BUTTON_EVENT = 0,
   REGEN_BUTTON_EVENT,

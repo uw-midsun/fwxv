@@ -2,7 +2,7 @@
     "libs": [
         "FreeRTOS",
         "ms-common",
-        "master", 
+        "master",
         "ms-drivers"
     ],
     "can": true

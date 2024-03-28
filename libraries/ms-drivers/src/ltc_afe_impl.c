@@ -75,8 +75,8 @@ static StatusCode prv_read_register(LtcAfeStorage *afe, LtcAfeRegister reg, uint
 }
 
 // read from a voltage register
-static StatusCode prv_read_voltage(LtcAfeStorage *afe, LtcAfeVoltageRegister reg,
-                                   LtcAfeVoltageRegisterGroup *data) {
+static inline StatusCode prv_read_voltage(LtcAfeStorage *afe, LtcAfeVoltageRegister reg,
+                                          LtcAfeVoltageRegisterGroup *data) {
   if (reg > NUM_LTC_AFE_VOLTAGE_REGISTERS) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
@@ -86,7 +86,7 @@ static StatusCode prv_read_voltage(LtcAfeStorage *afe, LtcAfeVoltageRegister reg
 }
 
 // start cell voltage conversion
-static StatusCode prv_trigger_adc_conversion(LtcAfeStorage *afe) {
+static inline StatusCode prv_trigger_adc_conversion(LtcAfeStorage *afe) {
   LtcAfeSettings *settings = &afe->settings;
   uint8_t mode = (uint8_t)((settings->adc_mode + 1) % 3);
   // ADCV command
@@ -264,7 +264,7 @@ StatusCode ltc_afe_impl_trigger_aux_conv(LtcAfeStorage *afe, uint8_t device_cell
   return prv_trigger_aux_adc_conversion(afe);
 }
 
-StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
+inline StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
   // Read all voltage A, then B, ...
   LtcAfeSettings *settings = &afe->settings;
   for (uint8_t cell_reg = 0; cell_reg < NUM_LTC_AFE_VOLTAGE_REGISTERS; ++cell_reg) {
