@@ -65,7 +65,6 @@ TASK(current_sense, TASK_STACK_256) {
     uint32_t notification = 0;
     notify_wait(&notification, BLOCK_INDEFINITELY);
     LOG_DEBUG("Running Current Sense Cycle!\n");
-    LOG_DEBUG("%ld\n", notification);
 
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
