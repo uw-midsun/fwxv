@@ -11,7 +11,7 @@ StatusCode steering_init(Task *task) {
   // Initialize Pins
   gpio_init_pin(&turn_signal_address, GPIO_ANALOG, GPIO_STATE_LOW);
   gpio_init_pin(&cc_address, GPIO_ANALOG, GPIO_STATE_LOW);
-  gpio_init_pin(&cc_toggle_address, GPIO_ANALOG, GPIO_STATE_LOW);
+  gpio_init_pin(&cc_toggle_address, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
   // Set up ADC
   adc_add_channel(turn_signal_address);
   adc_add_channel(cc_address);
@@ -26,17 +26,21 @@ StatusCode steering_init(Task *task) {
   return STATUS_CODE_OK;
 }
 
-void steering_input(uint32_t notification) {
+void steering_input() {
   uint16_t control_stalk_data;
+  uint32_t notification;
   set_steering_info_input_cc(0);
+  LOG_DEBUG("RUNNING CYCLE\n");
   // Read ADC of pin set by turn signal lights
   adc_read_converted(turn_signal_address, &control_stalk_data);
   // Determine if it's a left, right or off signal
   if (control_stalk_data > TURN_LEFT_SIGNAL_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
       control_stalk_data < TURN_LEFT_SIGNAL_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
+    LOG_DEBUG("LEFT\n");
     set_steering_info_input_lights(TURN_SIGNAL_LEFT);
   } else if (control_stalk_data > TURN_RIGHT_SIGNAL_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
              control_stalk_data < TURN_RIGHT_SIGNAL_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
+    LOG_DEBUG("RIGHT\n");
     set_steering_info_input_lights(TURN_SIGNAL_RIGHT);
   } else {
     set_steering_info_input_lights(TURN_SIGNAL_OFF);
@@ -48,17 +52,20 @@ void steering_input(uint32_t notification) {
       control_stalk_data < CRUISE_CONTROl_STALK_SPEED_INCREASE_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
     // toggle second bit to 1
     set_steering_info_input_cc(CC_INCREASE_MASK | CC_INPUT);
+    LOG_DEBUG("CC INCREASE\n");
   } else if (control_stalk_data >
                  CRUISE_CONTROl_STALK_SPEED_DECREASE_VOLTAGE_MV - VOLTAGE_TOLERANCE_MV &&
              control_stalk_data <
                  CRUISE_CONTROl_STALK_SPEED_DECREASE_VOLTAGE_MV + VOLTAGE_TOLERANCE_MV) {
     // toggle first bit to 1
     set_steering_info_input_cc(CC_DECREASE_MASK | CC_INPUT);
+    LOG_DEBUG("CC DECREASE\n");
   }
   if (notify_get(&notification) == STATUS_CODE_OK) {
     while (event_from_notification(&notification, &STEERING_EVENT) == STATUS_CODE_INCOMPLETE) {
       if (STEERING_EVENT == CC_TOGGLE_EVENT) {
         set_steering_info_input_cc(CC_TOGGLE_MASK | CC_INPUT);
+        LOG_DEBUG("CC TOGGLED\n");
       }
     }
   }

@@ -14,7 +14,7 @@
 #include "status.h"
 
 #define BRAKE_LIMIT_SWITCH \
-  { .port = GPIO_PORT_A, .pin = 7 }
+  { .port = GPIO_PORT_B, .pin = 1 }
 
 #define ADC_HALL_SENSOR \
   { .port = GPIO_PORT_A, .pin = 1 }
