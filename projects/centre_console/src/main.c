@@ -13,6 +13,7 @@
 
 #ifdef MS_PLATFORM_X86
 #define MASTER_MS_CYCLE_TIME 100
+int sockfd = 0;
 #else
 #define MASTER_MS_CYCLE_TIME 1000
 #endif
@@ -60,8 +61,14 @@ void run_medium_cycle() {
 }
 
 void run_slow_cycle() {}
+#ifdef x86
+#include "operation_listener.h"
 
+int main(int argc, char *argv[]) {
+  x86_main_init(atoi(argv[1]));
+#else
 int main() {
+#endif
   log_init();
   tasks_init();
   I2CSettings i2c_settings = {

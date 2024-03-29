@@ -94,3 +94,19 @@ StatusCode gpio_get_state(const GpioAddress *address, GpioState *state) {
   taskEXIT_CRITICAL();
   return STATUS_CODE_OK;
 }
+
+StatusCode gpio_get_mode(const GpioAddress *address, GpioMode *mode) {
+  taskENTER_CRITICAL();
+
+  if (address->port >= NUM_GPIO_PORTS || address->pin >= GPIO_PINS_PER_PORT) {
+    taskEXIT_CRITICAL();
+    return status_code(STATUS_CODE_INVALID_ARGS);
+  }
+
+  uint32_t index = prv_get_index(address);
+
+  *mode = s_gpio_pin_modes[index];
+
+  taskEXIT_CRITICAL();
+  return STATUS_CODE_OK;
+}

@@ -9,6 +9,7 @@
 #include "master_task.h"
 #include "new_can_getters.h"
 #include "new_can_setters.h"
+#include "operation_listener.h"
 #include "tasks.h"
 
 static CanStorage s_can_storage = { 0 };
@@ -45,7 +46,12 @@ void run_medium_cycle() {
 
 void run_slow_cycle() {}
 
+#ifdef x86
+int main(int argc, char *argv[]) {
+  x86_main_init(atoi(argv[1]));
+#else
 int main() {
+#endif
   gpio_init();
   tasks_init();
   log_init();

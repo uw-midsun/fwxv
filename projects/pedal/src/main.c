@@ -37,7 +37,14 @@ void run_medium_cycle() {}
 
 void run_slow_cycle() {}
 
+#ifdef x86
+#include "operation_listener.h"
+
+int main(int argc, char *argv[]) {
+  x86_main_init(atoi(argv[1]));
+#else
 int main() {
+#endif
   tasks_init();
   log_init();
   LOG_DEBUG("Welcome to PEDAL!\n");

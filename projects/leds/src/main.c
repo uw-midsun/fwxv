@@ -7,6 +7,10 @@
 #include "notify.h"
 #include "tasks.h"
 
+#ifdef x86
+#define MASTER_MS_CYCLE_TIME 100
+#endif
+
 static const GpioAddress leds[] = {
   { .port = GPIO_PORT_B, .pin = 5 },   //
   { .port = GPIO_PORT_B, .pin = 4 },   //
@@ -33,7 +37,14 @@ TASK(leds_task, TASK_STACK_512) {
   }
 }
 
+#ifdef x86
+#include "operation_listener.h"
+
+int main(int argc, char *argv[]) {
+  x86_main_init(atoi(argv[1]));
+#else
 int main(void) {
+#endif
   tasks_init();
   gpio_init();
   log_init();

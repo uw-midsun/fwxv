@@ -27,7 +27,14 @@ void run_medium_cycle() {
 
 void run_slow_cycle() {}
 
+#ifdef x86
+#include "operation_listener.h"
+
+int main(int argc, char *argv[]) {
+  x86_main_init(atoi(argv[1]));
+#else
 int main() {
+#endif
   I2CSettings i2c_settings = { .sda = I2C2_SDA, .scl = I2C2_SCL, .speed = I2C_SPEED_STANDARD };
 
   tasks_init();
