@@ -104,7 +104,7 @@ static StatusCode prv_trigger_aux_adc_conversion(LtcAfeStorage *afe) {
   LtcAfeSettings *settings = &afe->settings;
   uint8_t mode = (uint8_t)((settings->adc_mode + 1) % 3);
   // ADAX
-  uint16_t adax = LTC6811_ADAX_RESERVED | LTC6811_ADAX_GPIO1 | (mode << 7);
+  uint16_t adax = LTC6811_ADAX_RESERVED | LTC6811_ADAX_GPIO4 | (mode << 7);
 
   uint8_t cmd[LTC6811_CMD_SIZE] = { 0 };
   prv_build_cmd(adax, cmd, LTC6811_CMD_SIZE);
@@ -267,6 +267,15 @@ StatusCode ltc_afe_impl_trigger_aux_conv(LtcAfeStorage *afe, uint8_t device_cell
   return prv_trigger_aux_adc_conversion(afe);
 }
 
+StatusCode ltc_afe_impl_toggle_thermistor(LtcAfeStorage *afe, uint8_t thermistor) {
+  LtcAfeSettings *settings = &afe->settings;
+  uint8_t gpio_bits
+      = (thermistor << 3) | LTC6811_GPIO4_PD_OFF;
+  LOG_DEBUG("Thermistor bitset: %d\n", gpio_bits);
+  prv_write_config(afe, gpio_bits);
+  return prv_trigger_aux_adc_conversion(afe);
+}
+
 StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
   // Read all voltage A, then B, ...
   LtcAfeSettings *settings = &afe->settings;
@@ -305,21 +314,22 @@ StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
   return STATUS_CODE_OK;
 }
 
-StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t device_cell) {
+StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t thermistor) {
   LtcAfeSettings *settings = &afe->settings;
   LtcAfeAuxRegisterGroupPacket register_data[LTC_AFE_MAX_DEVICES] = { 0 };
 
   size_t len = settings->num_devices * sizeof(LtcAfeAuxRegisterGroupPacket);
-  prv_read_register(afe, LTC_AFE_REGISTER_AUX_A, (uint8_t *)register_data, len);
+  prv_read_register(afe, LTC_AFE_REGISTER_AUX_B, (uint8_t *)register_data, len);
 
   for (uint16_t device = 0; device < settings->num_devices; ++device) {
     // data comes in in the form { 1, 1, 2, 2, 3, 3, PEC, PEC }
-    // we only care about GPIO1 and the PEC
+    // we only care about GPIO4 and the PEC
     uint16_t voltage = register_data[device].reg.voltages[0];
+    LOG_DEBUG("THERMISTOR VOLTAGE READ: %d\n", voltage);
 
-    if ((settings->aux_bitset[device] >> device_cell) & 0x1) {
+    if ((settings->aux_bitset[device] >> thermistor) & 0x1) {
       // Input enabled - store result
-      uint16_t index = device * LTC_AFE_MAX_CELLS_PER_DEVICE + device_cell;
+      uint16_t index = device * LTC_AFE_MAX_CELLS_PER_DEVICE + thermistor;
       afe->aux_voltages[afe->aux_result_lookup[index]] = voltage;
     }
 
@@ -329,7 +339,8 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t device_cell) {
       return status_code(STATUS_CODE_INTERNAL_ERROR);
     }
   }
-
+  
+  LOG_DEBUG("RUNNING READ AUX\n");
   return STATUS_CODE_OK;
 }
 

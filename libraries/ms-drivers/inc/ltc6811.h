@@ -220,6 +220,7 @@ static_assert(sizeof(LtcAfeAuxRegisterGroupPacket) == 8,
 #define LTC6811_SWTRD (1 << 1)
 
 #define LTC6811_ADAX_GPIO1 0x01
+#define LTC6811_ADAX_GPIO4 0x04
 #define LTC6811_ADAX_MODE_FAST (0 << 8) | (1 << 7)
 
 #define LTC6811_ICOM_CSBM_LOW (1 << 3)
