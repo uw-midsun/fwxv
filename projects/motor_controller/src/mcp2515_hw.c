@@ -325,10 +325,10 @@ StatusCode mcp2515_hw_transmit(uint32_t id, bool extended, uint8_t *data, size_t
 
   uint8_t data_test[] = { MCP2515_CMD_READ, 0x30 };
   uint8_t receive = 0;
-  spi_exchange(SPI_PORT_2, data_test, 2, &receive, 1);
+  StatusCode ret = spi_exchange(SPI_PORT_2, data_test, 2, &receive, 1);
   // LOG_DEBUG("status: %x\n", receive);  // if 8, then its ok
 
-  return STATUS_CODE_OK;
+  return ret;
 }
 
 // Call with MCP2515 in Config mode to set filters

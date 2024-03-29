@@ -18,6 +18,7 @@ def set_output(output):
 def parse_line(line):
     '''get the can id and data from a candump line'''
     _, can_id, length, data = CANDUMP_PATTERN.match(line).groups()
+    # if (match == N)
     can_id = int(can_id, base=16)
     length = int(length)
     data = bytes.fromhex(data)
