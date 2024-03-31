@@ -1,3 +1,5 @@
+#include "tasks.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -6,7 +8,6 @@
 #include "gpio.h"
 #include "log.h"
 #include "misc.h"
-#include "tasks.h"
 
 TASK(task1, TASK_STACK_512) {
   int counter1 = 0;
