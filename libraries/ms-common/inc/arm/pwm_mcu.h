@@ -6,6 +6,7 @@ typedef enum {
   PWM_TIMER_1 = 0,
   // PWM_TIMER_2,  // Requisitioned to back the soft_timer module.
   PWM_TIMER_3,
+  PWM_TIMER_4,
   PWM_TIMER_14,
   PWM_TIMER_15,
   PWM_TIMER_16,
