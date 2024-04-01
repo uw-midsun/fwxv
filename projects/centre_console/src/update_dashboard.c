@@ -171,6 +171,14 @@ void update_drive_output(uint32_t notif) {
   set_cc_power_control_hazard_enabled(s_hazard_state);
 }
 
+void update_buzzer() {
+  if (get_battery_status_fault() && (1 << 15)) {
+    // set PB7 PMW high
+  } else if ((get_battery_status_fault() && (1 << 14))) {
+    // set PB7 PMW low
+  }
+}
+
 StatusCode dashboard_init(void) {
   Pca9555GpioSettings settings = {
     .direction = PCA9555_GPIO_DIR_OUT,
