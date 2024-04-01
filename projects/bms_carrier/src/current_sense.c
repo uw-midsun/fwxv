@@ -26,6 +26,11 @@ StatusCode prv_fuel_gauge_read() {
   status |= max17261_voltage(&s_fuel_guage_storage, &s_current_storage->voltage);
   status |= max17261_temp(&s_fuel_guage_storage, &s_current_storage->temperature);
 
+  LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
+  LOG_DEBUG("CURRENT: %d\n", s_current_storage->current);
+  LOG_DEBUG("VOLTAGE: %d\n", s_current_storage->voltage);
+  LOG_DEBUG("TEMP: %d\n", s_current_storage->temperature);
+
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault
     // Open Relays
@@ -52,11 +57,6 @@ StatusCode prv_fuel_gauge_read() {
     return STATUS_CODE_INTERNAL_ERROR;
   }
 
-  LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
-  LOG_DEBUG("CURRENT: %d\n", s_current_storage->current);
-  LOG_DEBUG("VOLTAGE: %d\n", s_current_storage->voltage);
-  LOG_DEBUG("TEMP: %d\n", s_current_storage->temperature);
-
   return status;
 }
 
@@ -81,7 +81,7 @@ TASK(current_sense, TASK_STACK_256) {
 StatusCode current_sense_run() {
   StatusCode ret = notify(current_sense, CURRENT_SENSE_RUN_CYCLE);
   if (ret != STATUS_CODE_OK) {
-    // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
+    fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
 
