@@ -11,9 +11,9 @@
 
 #define BMS_PERIPH_I2C_PORT I2C_PORT_2
 #define BMS_PERIPH_I2C_SDA_PIN \
-  { GPIO_PORT_B, 11 }
+  { .port = GPIO_PORT_B, .pin = 11 }
 #define BMS_PERIPH_I2C_SCL_PIN \
-  { GPIO_PORT_B, 10 }
+  { .port = GPIO_PORT_B, .pin = 10 }
 
 typedef struct CurrentStorage {
   uint16_t soc;

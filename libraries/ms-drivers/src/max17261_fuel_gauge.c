@@ -73,7 +73,7 @@ StatusCode max17261_current(Max17261Storage *storage, int *current_ua) {
   uint16_t current_reg_val = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_CURRENT, &current_reg_val));
   if (current_reg_val & (1 << 15)) {
-    *current_ua = -(int)((~current_reg_val) + 1) * CUR_LSB;
+    *current_ua = -(int16_t)((~current_reg_val) + 1) * CUR_LSB;
   } else {
     *current_ua = current_reg_val * CUR_LSB;
   }
@@ -90,7 +90,6 @@ StatusCode max17261_voltage(Max17261Storage *storage, uint16_t *vcell_mv) {
 StatusCode max17261_temp(Max17261Storage *storage, uint16_t *temp_c) {
   uint16_t temp_reg_val = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_TEMP, &temp_reg_val));
-  LOG_DEBUG("%d register val of temp\n", temp_reg_val);
   *temp_c = temp_reg_val * TEMP_LSB;
   return STATUS_CODE_OK;
 }

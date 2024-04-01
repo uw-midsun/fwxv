@@ -34,7 +34,8 @@ StatusCode prv_fuel_gauge_read() {
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault
     // Open Relays
-    // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
+    LOG_DEBUG("Status error: %d\n", status);
+    fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     return status;
   }
 
@@ -46,7 +47,6 @@ StatusCode prv_fuel_gauge_read() {
 
   // TODO (Aryan): Validate these checks
   if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
-    LOG_DEBUG("CURRENT: %d\n", s_current_storage->current);
     fault_bps_set(BMS_FAULT_OVERCURRENT);
     return STATUS_CODE_INTERNAL_ERROR;
   } else if (s_current_storage->voltage >= CURRENT_SENSE_MAX_VOLTAGE) {
@@ -108,7 +108,7 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   it_settings.edge = INTERRUPT_EDGE_FALLING;
   gpio_it_register_interrupt(&kill_switch_mntr, &it_settings, KILLSWITCH_IT, current_sense);
 
-  s_fuel_gauge_settings.i2c_port = MAX17261_I2C_PORT;
+  s_fuel_gauge_settings.i2c_port = I2C_PORT_2;
   s_fuel_gauge_settings.i2c_address = MAX17261_I2C_ADDR;
 
   s_fuel_gauge_settings.charge_term_current = CHARGE_TERMINATION_CURRENT;
@@ -129,7 +129,7 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   // Soft timer period for soc & chargin check
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
 
-  // status_ok_or_return(max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings));
+  status_ok_or_return(max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings));
   tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
   return STATUS_CODE_OK;
 }
