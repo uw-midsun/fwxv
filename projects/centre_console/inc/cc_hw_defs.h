@@ -81,6 +81,10 @@
 #define BATT_DISP8 \
   { .port = GPIO_PORT_A, .pin = 8 }
 
+// Buzzer
+#define FAULT_BUZZ \
+  { .port = GPIO_PORT_B, .pin = 7 }
+
 // All displays
 #define ALL_DISPLAYS                                                                              \
   {                                                                                               \

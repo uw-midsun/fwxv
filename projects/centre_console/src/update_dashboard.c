@@ -4,7 +4,9 @@
 #include "centre_console_getters.h"
 #include "centre_console_setters.h"
 #include "drive_fsm.h"
+#include "gpio.h"
 #include "pca9555_gpio_expander.h"
+#include "pwm.h"
 #include "seg_display.h"
 
 // Multiplication factor to convert CAN drive output velocity (cm/s) to kph
@@ -172,10 +174,12 @@ void update_drive_output(uint32_t notif) {
 }
 
 void update_buzzer() {
-  if (get_battery_status_fault() && (1 << 15)) {
-    // set PB7 PMW high
-  } else if ((get_battery_status_fault() && (1 << 14))) {
-    // set PB7 PMW low
+  if (get_battery_status_fault() & (1 << 15)) {
+    pmw_set_dc(PWM_TIMER_4, 100);
+  } else if ((get_battery_status_fault() & (1 << 14))) {
+    pmw_set_dc(PWM_TIMER_4, 50);
+  } else {
+    pmw_set_dc(PWM_TIMER_4, 0);
   }
 }
 
@@ -189,5 +193,10 @@ StatusCode dashboard_init(void) {
   }
   seg_displays_init(&all_displays);
   pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_HIGH);
+
+  gpio_init_();
+  gpio_init_pin(&FAULT_BUZZ, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_HIGH);
+  pwm_init(PWM_TIMER_4, 40);
+
   return STATUS_CODE_OK;
 }

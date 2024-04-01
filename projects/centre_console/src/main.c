@@ -52,6 +52,7 @@ void run_medium_cycle() {
   update_indicators(notif);
   monitor_cruise_control();
   fsm_run_cycle(drive);
+  update_buzzer();
   wait_tasks(1);
 
   update_drive_output(notif);
