@@ -8,7 +8,6 @@ int main(void) {
   log_init();
   gpio_init_pin(&pin, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_HIGH);
   pwm_init(PWM_TIMER_1, 40);
-  pwm_set_pulse(PWM_TIMER_1, 40);
   pwm_set_dc(PWM_TIMER_1, 50);
   while (1) {
   }
