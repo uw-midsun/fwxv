@@ -51,8 +51,8 @@ void run_medium_cycle() {
   notify_get(&notif);
   update_indicators(notif);
   monitor_cruise_control();
-  fsm_run_cycle(drive);
   update_buzzer();
+  fsm_run_cycle(drive);
   wait_tasks(1);
 
   update_drive_output(notif);
@@ -72,6 +72,7 @@ int main() {
   };
   i2c_init(I2C_PORT_1, &i2c_settings);
   can_init(&s_can_storage, &can_settings);
+  gpio_init();
 
   LOG_DEBUG("Welcome to TEST! \n");
 

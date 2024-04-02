@@ -26,3 +26,6 @@ void update_displays(void);
 
 // Update drive output based
 void update_drive_output(uint32_t notif);
+
+// Update battery fault warning buzzer
+void update_buzzer();

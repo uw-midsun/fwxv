@@ -175,11 +175,11 @@ void update_drive_output(uint32_t notif) {
 
 void update_buzzer() {
   if (get_battery_status_fault() & (1 << 15)) {
-    pmw_set_dc(PWM_TIMER_4, 100);
-  } else if ((get_battery_status_fault() & (1 << 14))) {
-    pmw_set_dc(PWM_TIMER_4, 50);
+    pwm_set_dc(PWM_TIMER_4, 100);
+  } else if (get_battery_status_fault() & (1 << 14)) {
+    pwm_set_dc(PWM_TIMER_4, 50);
   } else {
-    pmw_set_dc(PWM_TIMER_4, 0);
+    pwm_set_dc(PWM_TIMER_4, 0);
   }
 }
 
@@ -194,8 +194,8 @@ StatusCode dashboard_init(void) {
   seg_displays_init(&all_displays);
   pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_HIGH);
 
-  gpio_init_();
-  gpio_init_pin(&FAULT_BUZZ, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_HIGH);
+  GpioAddress BUZZ_ADDR = FAULT_BUZZ;
+  gpio_init_pin(&BUZZ_ADDR, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_HIGH);
   pwm_init(PWM_TIMER_4, 40);
 
   return STATUS_CODE_OK;
