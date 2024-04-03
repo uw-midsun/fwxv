@@ -1,14 +1,28 @@
 '''This client script handles datagram protocol communication between devices on the CAN'''
 
+<<<<<<< HEAD
+=======
+import zlib
+>>>>>>> bootloader datagram setup
 import can
 
 DEFAULT_CHANNEL = 'can0'
 CAN_BITRATE = 500000
 
+<<<<<<< HEAD
 DATA_SIZE_SIZE = 2
 MIN_BYTEARRAY_SIZE = 5
 
 DATAGRAM_TYPE_OFFSET = 0
+=======
+MESSAGE_SIZE = 8
+HEADER_SIZE = 6
+DATA_SIZE_SIZE = 2
+MIN_BYTEARRAY_SIZE = 9
+
+DATAGRAM_TYPE_OFFSET = 0
+CRC_32_OFFSET = 1
+>>>>>>> bootloader datagram setup
 NODE_IDS_OFFSET = 5
 DATA_SIZE_OFFSET = 7
 
@@ -17,14 +31,20 @@ CAN_ARBITRATION_ID = 0b00000000000
 
 
 class DatagramTypeError(Exception):
+<<<<<<< HEAD
     # pylint: disable=unnecessary-pass
+=======
+>>>>>>> bootloader datagram setup
     '''Error wrapper (NEEDS WORK)'''
     pass
 
 
 class Datagram:
     '''Custom CAN-datagram class'''
+<<<<<<< HEAD
 
+=======
+>>>>>>> bootloader datagram setup
     def __init__(self, **kwargs):
         '''Initialize datagram class'''
         self._check_kwargs(**kwargs)
@@ -37,25 +57,53 @@ class Datagram:
         self._data = kwargs["data"]
 
     @classmethod
+<<<<<<< HEAD
     def _unpack(cls, datagram_bytearray):
         '''This function returns an instance fo the class by unpacking a bytearray'''
         assert isinstance(datagram_bytearray, bytearray)
 
+=======
+    def unpack(cls, datagram_bytearray):
+        '''This function returns an instance fo the class by unpacking a bytearray'''
+        assert isinstance(datagram_bytearray, bytearray)
+
+        # "theoretical" lower limit:
+        # 1 (type) + 4 (crc32) + 2 (node ids) + 2 (data size) + 0 (data)
+        #   = 9
+>>>>>>> bootloader datagram setup
         if len(datagram_bytearray) < MIN_BYTEARRAY_SIZE:
             raise DatagramTypeError(
                 "Invalid Datagram format from bytearray: Does not meet minimum size requirement")
 
         datagram_type_id = datagram_bytearray[DATAGRAM_TYPE_OFFSET]
+<<<<<<< HEAD
         node_ids_raw = datagram_bytearray[NODE_IDS_OFFSET:DATA_SIZE_OFFSET]
         node_ids = cls._unpack_nodeids(cls, node_ids_raw)
         data_size = cls._convert_from_bytearray(
             datagram_bytearray[DATA_SIZE_OFFSET:DATA_SIZE_OFFSET + 2], 2)
+=======
+        crc32 = datagram_bytearray[CRC_32_OFFSET:NODE_IDS_OFFSET]
+        node_ids_raw = datagram_bytearray[NODE_IDS_OFFSET:DATA_SIZE_OFFSET]
+        # Gets a list of node ID's from message
+        node_ids = []
+        while node_ids_raw:
+            count = 0
+            byte = node_ids_raw & (~node_ids_raw + 1)
+            node_ids_raw ^= byte
+            while byte:
+                byte = byte >> 1
+                count += 1
+            node_ids.append(count)
+
+        data_size = cls._convert_from_bytearray(datagram_bytearray[DATA_SIZE_OFFSET], 2)
+>>>>>>> bootloader datagram setup
 
         if len(datagram_bytearray) != MIN_BYTEARRAY_SIZE + data_size:
             raise DatagramTypeError("Invalid Datagram format from bytearray: Not enough data bytes")
 
         data = datagram_bytearray[DATA_SIZE_OFFSET + DATA_SIZE_SIZE:]
 
+<<<<<<< HEAD
         return cls(datagram_type_id=datagram_type_id, node_ids=node_ids, data=data)
 
     def pack(self):
@@ -69,6 +117,11 @@ class Datagram:
             (len(self._data) >> 8) & 0xff,
             *(self._data)
         ])
+=======
+    def pack(self):
+        '''This function packs a new bytearray based on set data'''
+        print("INCOMPLETE")
+>>>>>>> bootloader datagram setup
 
     @property
     def datagram_type_id(self):
@@ -117,7 +170,11 @@ class Datagram:
         for arg in args:
             assert arg in kwargs
 
+<<<<<<< HEAD
         assert not isinstance(kwargs["datagram_type_id"], list)
+=======
+        assert not isinstance(kwargs["datagram_type_id", list])
+>>>>>>> bootloader datagram setup
         assert isinstance(kwargs["node_ids"], list)
         assert isinstance(kwargs["data"], bytearray)
 
@@ -130,6 +187,7 @@ class Datagram:
         for i in range(size):
             out_value = out_value | ((in_bytearray[i] & 0xff) << (i * 8))
         return out_value
+<<<<<<< HEAD
 
     @staticmethod
     def _convert_to_bytearray(in_value, size):
@@ -243,3 +301,5 @@ class DatagramListener(can.BufferedReader):
         else:
             # Datagram is complete, call the callback with formed datagram
             self.callback(datagram, board_id)
+=======
+>>>>>>> bootloader datagram setup
