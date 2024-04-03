@@ -2,6 +2,10 @@
     "libs": [
         "FreeRTOS",
         "ms-common"
+<<<<<<< HEAD
     ],
     "can": true
+=======
+    ]
+>>>>>>> bootloader datagram setup
 }
