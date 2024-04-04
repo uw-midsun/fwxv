@@ -10,6 +10,7 @@ DEFAULT_CHANNEL = 'can0'
 CAN_BITRATE = 500000
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 DATA_SIZE_SIZE = 2
 MIN_BYTEARRAY_SIZE = 5
 
@@ -17,6 +18,8 @@ DATAGRAM_TYPE_OFFSET = 0
 =======
 MESSAGE_SIZE = 8
 HEADER_SIZE = 6
+=======
+>>>>>>> datagram class complete with test cases
 DATA_SIZE_SIZE = 2
 MIN_BYTEARRAY_SIZE = 9
 
@@ -42,9 +45,13 @@ class DatagramTypeError(Exception):
 class Datagram:
     '''Custom CAN-datagram class'''
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 >>>>>>> bootloader datagram setup
+=======
+
+>>>>>>> datagram class complete with test cases
     def __init__(self, **kwargs):
         '''Initialize datagram class'''
         self._check_kwargs(**kwargs)
@@ -58,12 +65,16 @@ class Datagram:
 
     @classmethod
 <<<<<<< HEAD
+<<<<<<< HEAD
     def _unpack(cls, datagram_bytearray):
         '''This function returns an instance fo the class by unpacking a bytearray'''
         assert isinstance(datagram_bytearray, bytearray)
 
 =======
     def unpack(cls, datagram_bytearray):
+=======
+    def _unpack(cls, datagram_bytearray):
+>>>>>>> datagram class complete with test cases
         '''This function returns an instance fo the class by unpacking a bytearray'''
         assert isinstance(datagram_bytearray, bytearray)
 
@@ -84,6 +95,7 @@ class Datagram:
 =======
         crc32 = datagram_bytearray[CRC_32_OFFSET:NODE_IDS_OFFSET]
         node_ids_raw = datagram_bytearray[NODE_IDS_OFFSET:DATA_SIZE_OFFSET]
+<<<<<<< HEAD
         # Gets a list of node ID's from message
         node_ids = []
         while node_ids_raw:
@@ -97,12 +109,18 @@ class Datagram:
 
         data_size = cls._convert_from_bytearray(datagram_bytearray[DATA_SIZE_OFFSET], 2)
 >>>>>>> bootloader datagram setup
+=======
+        node_ids = cls._unpack_nodeids(cls, node_ids_raw)
+        data_size = cls._convert_from_bytearray(datagram_bytearray[DATA_SIZE_OFFSET:DATA_SIZE_OFFSET+2], 2)
+>>>>>>> datagram class complete with test cases
 
         if len(datagram_bytearray) != MIN_BYTEARRAY_SIZE + data_size:
             raise DatagramTypeError("Invalid Datagram format from bytearray: Not enough data bytes")
 
         data = datagram_bytearray[DATA_SIZE_OFFSET + DATA_SIZE_SIZE:]
+        exp_crc32 = cls._calculate_crc32(cls, datagram_type_id, node_ids_raw, data)
 
+<<<<<<< HEAD
 <<<<<<< HEAD
         return cls(datagram_type_id=datagram_type_id, node_ids=node_ids, data=data)
 
@@ -122,6 +140,30 @@ class Datagram:
         '''This function packs a new bytearray based on set data'''
         print("INCOMPLETE")
 >>>>>>> bootloader datagram setup
+=======
+        crc32 = cls._convert_from_bytearray(crc32, 4)
+
+        if (exp_crc32 != crc32):
+            raise DatagramTypeError("Invalid crc32")
+
+        return cls(datagram_type_id=datagram_type_id, node_ids=node_ids, data=data)
+
+    def _pack(self):
+        '''This function packs a new bytearray based on set data'''
+        node_ids = self._pack_nodeids(self._node_ids)
+
+        crc32 = self._calculate_crc32(self._datagram_type_id, node_ids, self._data)
+        crc32 = self._convert_to_bytearray(crc32, 4)
+
+        return bytearray([
+            self._datagram_type_id,
+            *crc32,
+            *node_ids,
+            len(self._data) & 0xff,
+            (len(self._data) >> 8) & 0xff,
+            *(self._data)
+        ])
+>>>>>>> datagram class complete with test cases
 
     @property
     def datagram_type_id(self):
@@ -171,10 +213,14 @@ class Datagram:
             assert arg in kwargs
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         assert not isinstance(kwargs["datagram_type_id"], list)
 =======
         assert not isinstance(kwargs["datagram_type_id", list])
 >>>>>>> bootloader datagram setup
+=======
+        assert not isinstance(kwargs["datagram_type_id"], list)
+>>>>>>> datagram class complete with test cases
         assert isinstance(kwargs["node_ids"], list)
         assert isinstance(kwargs["data"], bytearray)
 
@@ -188,7 +234,10 @@ class Datagram:
             out_value = out_value | ((in_bytearray[i] & 0xff) << (i * 8))
         return out_value
 <<<<<<< HEAD
+<<<<<<< HEAD
 
+=======
+>>>>>>> datagram class complete with test cases
     @staticmethod
     def _convert_to_bytearray(in_value, size):
         '''Helper function to get a little endian byte array from a value'''
@@ -221,6 +270,7 @@ class Datagram:
         out_value = self._convert_to_bytearray(out_value, DATA_SIZE_OFFSET - NODE_IDS_OFFSET)
         return out_value
 
+<<<<<<< HEAD
 
 class DatagramSender:
     # pylint: disable=too-few-public-methods
@@ -229,11 +279,34 @@ class DatagramSender:
     def __init__(self, bustype="socketcan", channel=DEFAULT_CHANNEL,
                  bitrate=CAN_BITRATE, receive_own_messages=False):
         # pylint: disable=abstract-class-instantiated
+=======
+    def _calculate_crc32(self, datagram_type_id, node_ids, data):
+        '''This function returns a crc32 calculation'''
+        node_crc32 = zlib.crc32(bytearray(node_ids))
+        node_crc32 = self._convert_to_bytearray(node_crc32, 4)
+        data_crc32 = zlib.crc32(bytearray(data))
+        data_crc32 = self._convert_to_bytearray(data_crc32, 4)
+        
+        crc32_array = bytearray([datagram_type_id,
+                                 len(node_ids),
+                                 * node_crc32,
+                                 len(data) & 0xff,
+                                 (len(data) >> 8) & 0xff,
+                                 *data_crc32
+                                 ])
+        crc32 = zlib.crc32(crc32_array)
+        return crc32
+
+class DatagramSender:
+    '''Class that acts as a distributor for the Datagram class on a CAN bus'''
+    def __init__(self, bustype="socketcan", channel=DEFAULT_CHANNEL, bitrate=CAN_BITRATE, receive_own_messages=False):
+>>>>>>> datagram class complete with test cases
         self.bus = can.interface.Bus(
             bustype=bustype,
             channel=channel,
             bitrate=bitrate,
             receive_own_messages=receive_own_messages)
+<<<<<<< HEAD
 
     def send(self, message, sender_id=0):
         '''Send a Datagram over CAN'''
@@ -303,3 +376,12 @@ class DatagramListener(can.BufferedReader):
             self.callback(datagram, board_id)
 =======
 >>>>>>> bootloader datagram setup
+=======
+    
+    def send(self, message, sender_id=0):
+        '''Send a Datagram over CAN'''
+        assert isinstance(message, Datagram)
+
+class DatagramListener:
+    '''Class that acts as a listener for the Datagram class on a CAN bus'''
+>>>>>>> datagram class complete with test cases
