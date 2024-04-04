@@ -258,6 +258,7 @@ StatusCode ltc_afe_impl_trigger_cell_conv(LtcAfeStorage *afe) {
   return prv_trigger_adc_conversion(afe);
 }
 
+// REMOVE SOON. UNSED?
 StatusCode ltc_afe_impl_trigger_aux_conv(LtcAfeStorage *afe, uint8_t device_cell) {
   uint8_t gpio_bits =
       LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
@@ -269,9 +270,7 @@ StatusCode ltc_afe_impl_trigger_aux_conv(LtcAfeStorage *afe, uint8_t device_cell
 
 StatusCode ltc_afe_impl_toggle_thermistor(LtcAfeStorage *afe, uint8_t thermistor) {
   LtcAfeSettings *settings = &afe->settings;
-  uint8_t gpio_bits
-      = (thermistor << 3) | LTC6811_GPIO4_PD_OFF;
-  LOG_DEBUG("Thermistor bitset: %d\n", gpio_bits);
+  uint8_t gpio_bits = (thermistor << 3) | LTC6811_GPIO4_PD_OFF;
   prv_write_config(afe, gpio_bits);
   return prv_trigger_aux_adc_conversion(afe);
 }
@@ -325,7 +324,6 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t thermistor) {
     // data comes in in the form { 1, 1, 2, 2, 3, 3, PEC, PEC }
     // we only care about GPIO4 and the PEC
     uint16_t voltage = register_data[device].reg.voltages[0];
-    LOG_DEBUG("THERMISTOR VOLTAGE READ: %d\n", voltage);
 
     if ((settings->aux_bitset[device] >> thermistor) & 0x1) {
       // Input enabled - store result
@@ -336,11 +334,12 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t thermistor) {
     uint16_t received_pec = SWAP_UINT16(register_data[device].pec);
     uint16_t data_pec = crc15_calculate((uint8_t *)&register_data[device], 6);
     if (received_pec != data_pec) {
+      // return early on failure
+      LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
+      LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
       return status_code(STATUS_CODE_INTERNAL_ERROR);
     }
   }
-  
-  LOG_DEBUG("RUNNING READ AUX\n");
   return STATUS_CODE_OK;
 }
 
