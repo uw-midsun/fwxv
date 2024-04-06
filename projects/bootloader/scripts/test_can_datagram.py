@@ -2,6 +2,7 @@
 '''This Module Tests methods in can_datagram.py'''
 import unittest
 import random
+import time
 
 from can_datagram import Datagram, DatagramSender, DatagramListener
 import can
@@ -63,12 +64,12 @@ class TestCanDatagram(unittest.TestCase):
         self.assertEqual(message._datagram_type_id, TEST_DATAGRAM_TYPE_ID)
         self.assertEqual(message._node_ids, TEST_NODES)
         self.assertEqual(message._data, TEST_DATA)
-    
+
     def test_packing(self):
         message = Datagram(
-            datagram_type_id = TEST_DATAGRAM_TYPE_ID,
-            node_ids = TEST_NODES,
-            data= TEST_DATA
+            datagram_type_id=TEST_DATAGRAM_TYPE_ID,
+            node_ids=TEST_NODES,
+            data=TEST_DATA
         )
 
         test_bytes = bytearray([1,
@@ -77,17 +78,67 @@ class TestCanDatagram(unittest.TestCase):
                                 TEST_NODES_RAW2,            # Node ID's RAW
                                 26, 0,                      # Data Size, little-endian
                                 *TEST_DATA                  # Data
-        ])
+                                ])
 
-        self.assertEqual(message._pack(), test_bytes)
+        self.assertEqual(message.pack(), test_bytes)
+
 
 class TestCanDatagramSender(unittest.TestCase):
     '''Test CAN Datagram sending functions'''
-    
+
     def test_send_message(self):
-        sender = DatagramSender(channel=TEST_CHANNEL, receive_own_messages=True)
+        sender = DatagramSender(bustype="virtual", channel=TEST_CHANNEL, receive_own_messages=True)
         listener = can.BufferedReader()
         notifier = can.Notifier(sender.bus, [listener])
+
+        message = Datagram(
+            datagram_type_id=TEST_DATAGRAM_TYPE_ID,
+            node_ids=TEST_NODES,
+            data=bytearray(TEST_DATA))
+
+        sender.send(message)
+
+        recv_datagram = []
+        listener_message = listener.get_message()
+
+        while listener_message is not None:
+            for byte in listener_message.data:
+                recv_datagram.append(byte)
+            listener_message = listener.get_message()
+
+        self.assertEqual(message.pack(), bytearray(recv_datagram))
+
+
+class TestCanDatagramListener(unittest.TestCase):
+    '''Test CAN Datagram listening functions'''
+
+    def test_register_callback(self):
+        '''Test the registering of a callback'''
+        self.callback_triggered = False
+        self.message = []
+
+        sender = DatagramSender(bustype="virtual", channel=TEST_CHANNEL, receive_own_messages=True)
+        listener = DatagramListener(self.triggerCallback)
+        notifier = can.Notifier(sender.bus, [listener])
+
+        message = Datagram(
+            datagram_type_id=TEST_DATAGRAM_TYPE_ID,
+            node_ids=TEST_NODES,
+            data=TEST_DATA)
+        sender.send(message)
+
+        timeout = time.time() + 10
+        while not self.callback_triggered:
+            if time.time() > timeout:
+                break
+
+        self.assertEqual(self.message.pack(), message.pack())
+        self.assertEqual(self.callback_triggered, True)
+
+    def triggerCallback(self, msg, board_id):
+        self.message = msg
+        self.callback_triggered = True
+
 
 if __name__ == '__main__':
     unittest.main()

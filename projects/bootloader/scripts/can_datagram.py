@@ -19,6 +19,7 @@ CAN_ARBITRATION_ID = 0b00000000000
 
 
 class DatagramTypeError(Exception):
+    # pylint: disable=unnecessary-pass
     '''Error wrapper (NEEDS WORK)'''
     pass
 
@@ -53,7 +54,8 @@ class Datagram:
         crc32 = datagram_bytearray[CRC_32_OFFSET:NODE_IDS_OFFSET]
         node_ids_raw = datagram_bytearray[NODE_IDS_OFFSET:DATA_SIZE_OFFSET]
         node_ids = cls._unpack_nodeids(cls, node_ids_raw)
-        data_size = cls._convert_from_bytearray(datagram_bytearray[DATA_SIZE_OFFSET:DATA_SIZE_OFFSET+2], 2)
+        data_size = cls._convert_from_bytearray(
+            datagram_bytearray[DATA_SIZE_OFFSET:DATA_SIZE_OFFSET + 2], 2)
 
         if len(datagram_bytearray) != MIN_BYTEARRAY_SIZE + data_size:
             raise DatagramTypeError("Invalid Datagram format from bytearray: Not enough data bytes")
@@ -63,12 +65,12 @@ class Datagram:
 
         crc32 = cls._convert_from_bytearray(crc32, 4)
 
-        if (exp_crc32 != crc32):
+        if exp_crc32 != crc32:
             raise DatagramTypeError("Invalid crc32")
 
         return cls(datagram_type_id=datagram_type_id, node_ids=node_ids, data=data)
 
-    def _pack(self):
+    def pack(self):
         '''This function packs a new bytearray based on set data'''
         node_ids = self._pack_nodeids(self._node_ids)
 
@@ -144,6 +146,7 @@ class Datagram:
         for i in range(size):
             out_value = out_value | ((in_bytearray[i] & 0xff) << (i * 8))
         return out_value
+
     @staticmethod
     def _convert_to_bytearray(in_value, size):
         '''Helper function to get a little endian byte array from a value'''
@@ -182,7 +185,7 @@ class Datagram:
         node_crc32 = self._convert_to_bytearray(node_crc32, 4)
         data_crc32 = zlib.crc32(bytearray(data))
         data_crc32 = self._convert_to_bytearray(data_crc32, 4)
-        
+
         crc32_array = bytearray([datagram_type_id,
                                  len(node_ids),
                                  * node_crc32,
@@ -193,18 +196,83 @@ class Datagram:
         crc32 = zlib.crc32(crc32_array)
         return crc32
 
+
 class DatagramSender:
+    # pylint: disable=too-few-public-methods
     '''Class that acts as a distributor for the Datagram class on a CAN bus'''
-    def __init__(self, bustype="socketcan", channel=DEFAULT_CHANNEL, bitrate=CAN_BITRATE, receive_own_messages=False):
+
+    def __init__(self, bustype="socketcan", channel=DEFAULT_CHANNEL,
+                 bitrate=CAN_BITRATE, receive_own_messages=False):
+        # pylint: disable=abstract-class-instantiated
         self.bus = can.interface.Bus(
             bustype=bustype,
             channel=channel,
             bitrate=bitrate,
             receive_own_messages=receive_own_messages)
-    
+
     def send(self, message, sender_id=0):
         '''Send a Datagram over CAN'''
         assert isinstance(message, Datagram)
+        chunk_messages = self._chunkify(message.pack(), 8)
+        message_extended_arbitration = False
 
-class DatagramListener:
+        start_arbitration_board_id = (CAN_START_ARBITRATION_ID | sender_id << 5)
+        arbitration_board_id = (CAN_ARBITRATION_ID | sender_id << 5)
+
+        can_messages = [
+            can.Message(
+                arbitration_id=start_arbitration_board_id,
+                data=bytearray(),
+                is_extended_id=message_extended_arbitration)]
+
+        # Populate an array with the can message from the library
+        for chunk_message in chunk_messages:
+            can_messages.append(can.Message(arbitration_id=arbitration_board_id,
+                                            data=chunk_message,
+                                            is_extended_id=message_extended_arbitration))
+
+        for msg in can_messages:
+            self.bus.send(msg)
+        print("{} messages were sent on {}".format(len(can_messages), self.bus.channel_info))
+
+    @staticmethod
+    def _chunkify(data, size):
+        '''This chunks up the datagram bytearray for easy iteration'''
+        return (data[pos:pos + size] for pos in range(0, len(data), size))
+
+
+class DatagramListener(can.BufferedReader):
+    # pylint: disable=too-few-public-methods
     '''Class that acts as a listener for the Datagram class on a CAN bus'''
+
+    def __init__(self, callback):
+        '''Registers the callback'''
+        assert callable(callback)
+        self.callback = callback
+        # Messages are stored in a dictionary where key = board ID, value = message
+        self.datagram_messages = {}
+        super().__init__()
+
+    def on_message_received(self, msg: can.Message):
+        '''Handles message sent from boards on the CAN'''
+        super().on_message_received(msg)
+
+        board_id = (msg.arbitration_id & 0b11111100000) >> 5
+        start_message = (msg.arbitration_id & 0x10) >> 4
+
+        if start_message == 1:
+            # Reset the datagram message when receiving a start message
+            self.datagram_messages[board_id] = msg.data
+
+        if start_message == 0:
+            if board_id in self.datagram_messages:
+                self.datagram_messages[board_id] += msg.data
+
+        try:
+            datagram = Datagram._unpack(self.datagram_messages[board_id])
+        except DatagramTypeError:
+            # Datagram is incomplete, continue until complete
+            pass
+        else:
+            # Datagram is complete, call the callback with formed datagram
+            self.callback(datagram, board_id)
