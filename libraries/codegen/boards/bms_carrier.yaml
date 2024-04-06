@@ -19,19 +19,28 @@
           watchdog: 3
       critical: true
       signals:
-        batt_perc:
-          length: 16
-        status:
-          length: 8
         fault:
+          length: 16
+        aux_batt_v:
+          length: 32
+
+    battery_info:
+      id: 33
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        fan1:
           length: 8
-    
+        fan2:
+          length: 8
+        max_cell_v:
+          length: 32
+
     battery_vt:
       id: 30
       target:
         centre_console:
-          watchdog: 0
-        telemetry:
           watchdog: 0
       critical: false
       signals:
@@ -43,41 +52,7 @@
           length: 16
         batt_perc:
           length: 16
-    
-    battery_aggregate_vc:
-      id: 33
-      target:
-        telemetry:
-          watchdog: 0
-      signals:
-        voltage:
-          length: 32
-        current:
-          length: 32
-
-    battery_fan_state:
-      id: 57
-      target:
-        bms_carrier:
-          watchdog: 0
-      signals:
-        fan_1:
-          length: 8
-        fan_2:
-          length: 8
-        fan_3:
-          length: 8
-        fan_4:
-          length: 8
-        fan_5:
-          length: 8
-        fan_6:
-          length: 8
-        fan_7:
-          length: 8
-        fan_8:
-          length: 8
-
+   
     battery_relay_info:
       id: 58
       target:

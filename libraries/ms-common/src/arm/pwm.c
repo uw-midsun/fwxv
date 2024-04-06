@@ -16,6 +16,7 @@ typedef enum APBClk {
 static uint16_t s_period_us[NUM_PWM_TIMERS] = {
   [PWM_TIMER_1] = 0,   //
   [PWM_TIMER_3] = 0,   //
+  [PWM_TIMER_4] = 0,   // This timer is typically used by I2C
   [PWM_TIMER_14] = 0,  //
   [PWM_TIMER_15] = 0,  //
   [PWM_TIMER_16] = 0,  //
@@ -25,6 +26,7 @@ static uint16_t s_period_us[NUM_PWM_TIMERS] = {
 static TIM_TypeDef *s_timer_def[NUM_PWM_TIMERS] = {
   [PWM_TIMER_1] = TIM1,    //
   [PWM_TIMER_3] = TIM3,    //
+  [PWM_TIMER_4] = TIM4,    // Typically used for I2C
   [PWM_TIMER_14] = TIM14,  //
   [PWM_TIMER_15] = TIM15,  //
   [PWM_TIMER_16] = TIM16,  //
@@ -38,6 +40,9 @@ static APBClk prv_enable_periph_clock(PwmTimer timer) {
       return APB2;
     case PWM_TIMER_3:
       RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+      return APB1;
+    case PWM_TIMER_4:
+      RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
       return APB1;
     case PWM_TIMER_14:
       RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM14, ENABLE);

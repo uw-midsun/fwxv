@@ -65,9 +65,11 @@ static void prv_close_relays_state_input(Fsm *fsm, void *context) {
 
 static void prv_on_state_output(void *context) {
   LOG_DEBUG("Transitioned to ON STATE\n");
-  pd_set_active_output_group(OUTPUT_GROUP_POWER_ON);
-  power_context.latest_state = POWER_STATE_ON;
-  set_power_info_power_state(EE_POWER_ON_STATE);
+  if (power_context.target_state != POWER_STATE_DRIVE) {
+    pd_set_active_output_group(OUTPUT_GROUP_POWER_ON);
+    power_context.latest_state = POWER_STATE_ON;
+    set_power_info_power_state(EE_POWER_ON_STATE);
+  }
 }
 
 static void prv_on_state_input(Fsm *fsm, void *context) {
@@ -77,7 +79,8 @@ static void prv_on_state_input(Fsm *fsm, void *context) {
     return;
   }
   CentreConsoleCCPwrEvent cc_power_event = get_cc_power_control_power_event();
-  if (cc_power_event == EE_CC_PWR_CTL_EVENT_BTN_AND_BRAKE) {
+  if (cc_power_event == EE_CC_PWR_CTL_EVENT_BTN_AND_BRAKE ||
+      power_context.target_state == POWER_STATE_DRIVE) {
     power_context.target_state = POWER_STATE_DRIVE;
     fsm_transition(fsm, TURN_ON_DRIVE_OUTPUTS);
   } else if (cc_power_event == EE_CC_PWR_CTL_EVENT_BTN) {
@@ -95,7 +98,8 @@ static void prv_turn_on_drive_outputs_state_output(void *context) {
 
 static void prv_turn_on_drive_outputs_state_input(Fsm *fsm, void *context) {
   uint8_t mci_relay_state = get_mc_status_precharge_status();
-  if (mci_relay_state == EE_RELAY_STATE_CLOSE) {
+  LOG_DEBUG("mci_relay_state %d\n", mci_relay_state);
+  if (mci_relay_state) {
     fsm_transition(fsm, POWER_STATE_DRIVE);
   } else if ((xTaskGetTickCount() - power_context.timer_start_ticks) >
              pdMS_TO_TICKS(MCI_RESPONSE_TIMEOUT_MS)) {
@@ -115,7 +119,9 @@ static void prv_drive_state_input(Fsm *fsm, void *context) {
     return;
   }
   CentreConsoleCCPwrEvent cc_power_event = get_cc_power_control_power_event();
-  if (cc_power_event == EE_CC_PWR_CTL_EVENT_BTN_AND_BRAKE || EE_CC_PWR_CTL_EVENT_BTN) {
+  LOG_DEBUG("cc_power_event %d\n", cc_power_event);
+  if (cc_power_event == EE_CC_PWR_CTL_EVENT_BTN_AND_BRAKE ||
+      cc_power_event == EE_CC_PWR_CTL_EVENT_BTN) {
     power_context.target_state = POWER_STATE_ON;
     fsm_transition(fsm, POWER_STATE_ON);
   }

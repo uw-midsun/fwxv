@@ -2,34 +2,44 @@
 
 #include <stdint.h>
 
-#include "cell_sense.h"
-#include "current_sense.h"
+#include "aux_sense.h"
+#include "fault_bps.h"
 #include "i2c.h"
+#include "ltc_afe.h"
+#include "max17261_fuel_gauge.h"
 #include "status.h"
 
 #define BMS_PERIPH_I2C_PORT I2C_PORT_2
 #define BMS_PERIPH_I2C_SDA_PIN \
-  { GPIO_PORT_B, 11 }
+  { .port = GPIO_PORT_B, .pin = 11 }
 #define BMS_PERIPH_I2C_SCL_PIN \
-  { GPIO_PORT_B, 10 }
-#define BMS_FAN_ALERT_PIN \
-  { GPIO_PORT_A, 9 }
+  { .port = GPIO_PORT_B, .pin = 10 }
 
-#define BMS_IO_EXPANDER_I2C_ADDR 0x40
+typedef struct CurrentStorage {
+  uint16_t soc;
+  int16_t current;
+  uint16_t voltage;
+  uint16_t temperature;
+  uint32_t fuel_guage_cycle_ms;  // Time in ms between conversions (soft timer kicks)
+} CurrentStorage;
 
-#define BMS_FAN_CTRL_1_I2C_ADDR 0x5E
-#define BMS_FAN_CTRL_2_I2C_ADDR 0x5F
-#define NUM_BMS_FAN_CTRLS 2
-
-// Not dealing with debouncer here
 typedef struct BmsStorage {
-  // RelayStorage relay_storage;
+  AuxStorage aux_storage;
   CurrentStorage current_storage;
-  AfeReadings afe_readings;
   LtcAfeStorage ltc_afe_storage;
-  CellSenseStorage cell_storage;
-  // FanStorage fan_storage_1;
-  // FanStorage fan_storage_2;
-  // DebouncerStorage killswitch_storage;
-  // BpsStorage bps_storage;
+  BpsStorage bps_storage;
+  Max17261Settings fuel_guage_settings;
+  Max17261Storage fuel_guage_storage;
 } BmsStorage;
+
+typedef enum {
+  BMS_FAULT_OVERVOLTAGE,
+  BMS_FAULT_UNBALANCE,
+  BMS_FAULT_OVERTEMP_AMBIENT,
+  BMS_FAULT_COMMS_LOSS_AFE,
+  BMS_FAULT_COMMS_LOSS_CURR_SENSE,
+  BMS_FAULT_OVERTEMP_CELL,
+  BMS_FAULT_OVERCURRENT,
+  BMS_FAULT_UNDERVOLTAGE,
+  BMS_FAULT_KILLSWITCH
+} BmsFault;

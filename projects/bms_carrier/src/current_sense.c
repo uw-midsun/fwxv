@@ -9,65 +9,58 @@
 #include "gpio_it.h"
 #include "interrupt.h"
 #include "log.h"
-#include "soft_timer.h"
+#include "relays_fsm.h"
 #include "tasks.h"
-
-#define MAX17261_I2C_PORT (I2C_PORT_2)
-#define MAX17261_I2C_ADDR (0x36)
-
-// TODO (Adel C): Change these values to their actual values
-#define CURRENT_SENSE_R_SENSE_MILLI_OHMS (0.5)
-#define MAIN_PACK_DESIGN_CAPACITY \
-  (1.0f / CURRENT_SENSE_R_SENSE_MILLI_OHMS)      // LSB = 5.0 (micro Volt Hours / R Sense)
-#define MAIN_PACK_EMPTY_VOLTAGE (1.0f / 78.125)  // Only a 9-bit field, LSB = 78.125 (micro Volts)
-#define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_MILLI_OHMS))
-
-// Thresholds for ALRT Pin
-#define CURRENT_SENSE_MAX_CURRENT_A (58.2f)
-#define CURRENT_SENSE_MIN_CURRENT_A (27.0f)  // Actually -27
-#define CURRENT_SENSE_MAX_TEMP (60U)
-#define ALRT_PIN_V_RES_MICRO_V (400)
 
 static Max17261Storage s_fuel_guage_storage;
 static Max17261Settings s_fuel_gauge_settings;
 static CurrentStorage *s_current_storage;
-static SoftTimer s_timer;
 static bool s_is_charging;
 
 // Periodically read and update the SoC of the car & update charging bool
-static StatusCode prv_fuel_gauge_read() {
+StatusCode prv_fuel_gauge_read() {
   StatusCode status = STATUS_CODE_OK;
 
-  uint16_t soc = 0;
-  uint16_t current = 0;
-  uint16_t voltage = 0;
-  uint16_t temperature = 0;
+  status |= max17261_state_of_charge(&s_fuel_guage_storage, &s_current_storage->soc);
+  status |= max17261_current(&s_fuel_guage_storage, &s_current_storage->current);
+  status |= max17261_voltage(&s_fuel_guage_storage, &s_current_storage->voltage);
+  status |= max17261_temp(&s_fuel_guage_storage, &s_current_storage->temperature);
 
-  status |= max17261_state_of_charge(&s_fuel_guage_storage, &soc);
-  status |= max17261_current(&s_fuel_guage_storage, &current);
-  status |= max17261_voltage(&s_fuel_guage_storage, &voltage);
-  status |= max17261_temp(&s_fuel_guage_storage, &temperature);
+  LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
+  LOG_DEBUG("CURRENT: %d\n", s_current_storage->current);
+  LOG_DEBUG("VOLTAGE: %d\n", s_current_storage->voltage);
+  LOG_DEBUG("TEMP: %d\n", s_current_storage->temperature);
 
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault
     // Open Relays
+    LOG_DEBUG("Status error: %d\n", status);
+    fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     return status;
   }
 
   // Set Battery VT message signals
-  set_battery_vt_batt_perc(soc);
-  set_battery_vt_current(current);
-  set_battery_vt_voltage(voltage);
-  set_battery_vt_temperature(temperature);
+  set_battery_vt_batt_perc(s_current_storage->soc);
+  set_battery_vt_current((uint16_t)s_current_storage->current);
+  set_battery_vt_voltage(s_current_storage->voltage);
+  set_battery_vt_temperature(s_current_storage->temperature);
 
-  // update s_is_charging
-  // note that a negative value indicates the battery is charging
-  s_is_charging = s_current_storage->average < 0;
+  // TODO (Aryan): Validate these checks
+  if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
+    fault_bps_set(BMS_FAULT_OVERCURRENT);
+    return STATUS_CODE_INTERNAL_ERROR;
+  } else if (s_current_storage->voltage >= CURRENT_SENSE_MAX_VOLTAGE) {
+    fault_bps_set(BMS_FAULT_OVERVOLTAGE);
+    return STATUS_CODE_INTERNAL_ERROR;
+  } else if (s_current_storage->temperature >= CURRENT_SENSE_MAX_TEMP) {
+    fault_bps_set(BMS_FAULT_OVERTEMP_AMBIENT);
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
 
   return status;
 }
 
-TASK(current_sense, TASK_MIN_STACK_SIZE) {
+TASK(current_sense, TASK_STACK_256) {
   while (true) {
     uint32_t notification = 0;
     notify_wait(&notification, BLOCK_INDEFINITELY);
@@ -75,7 +68,9 @@ TASK(current_sense, TASK_MIN_STACK_SIZE) {
 
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
-      // TODO (Adel): BMS Open Relays
+      // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
+    } else if (notification & 1 << KILLSWITCH_IT) {
+      fault_bps_set(BMS_FAULT_KILLSWITCH);
     }
 
     prv_fuel_gauge_read();
@@ -83,39 +78,37 @@ TASK(current_sense, TASK_MIN_STACK_SIZE) {
   }
 }
 
-bool current_sense_is_charging() {
-  return s_is_charging;
-}
-
-StatusCode run_current_sense_cycle() {
+StatusCode current_sense_run() {
   StatusCode ret = notify(current_sense, CURRENT_SENSE_RUN_CYCLE);
-  if (ret == pdFALSE) {
+  if (ret != STATUS_CODE_OK) {
+    fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
 
   return STATUS_CODE_OK;
 }
 
-StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings,
+StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings,
                               uint32_t fuel_guage_cycle_ms) {
-  interrupt_init();
-  gpio_it_init();
-  i2c_init(I2C_PORT_1, i2c_settings);
+  s_current_storage = &bms_storage->current_storage;
+  s_fuel_gauge_settings = bms_storage->fuel_guage_settings;
+  s_fuel_guage_storage = bms_storage->fuel_guage_storage;
+  i2c_init(I2C_PORT_2, i2c_settings);
 
-  GpioAddress alrt_pin = { .port = GPIO_PORT_B, .pin = 1 };
+  GpioAddress alrt_pin = { .port = GPIO_PORT_A, .pin = 7 };
+  GpioAddress kill_switch_mntr = { .port = GPIO_PORT_A, .pin = 15 };
 
   InterruptSettings it_settings = {
     .priority = INTERRUPT_PRIORITY_NORMAL,
     .type = INTERRUPT_TYPE_INTERRUPT,
     .edge = INTERRUPT_EDGE_RISING,
   };
-
+  gpio_init_pin(&kill_switch_mntr, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
   gpio_it_register_interrupt(&alrt_pin, &it_settings, ALRT_GPIO_IT, current_sense);
+  it_settings.edge = INTERRUPT_EDGE_FALLING;
+  gpio_it_register_interrupt(&kill_switch_mntr, &it_settings, KILLSWITCH_IT, current_sense);
 
-  memset(storage, 0, sizeof(CurrentStorage));
-  s_current_storage = storage;
-
-  s_fuel_gauge_settings.i2c_port = MAX17261_I2C_PORT;
+  s_fuel_gauge_settings.i2c_port = I2C_PORT_2;
   s_fuel_gauge_settings.i2c_address = MAX17261_I2C_ADDR;
 
   s_fuel_gauge_settings.charge_term_current = CHARGE_TERMINATION_CURRENT;
@@ -137,6 +130,6 @@ StatusCode current_sense_init(CurrentStorage *storage, I2CSettings *i2c_settings
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
 
   status_ok_or_return(max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings));
-  tasks_init_task(current_sense, TASK_PRIORITY(3), NULL);
+  tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
   return STATUS_CODE_OK;
 }

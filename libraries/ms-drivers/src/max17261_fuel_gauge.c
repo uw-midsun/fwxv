@@ -1,5 +1,7 @@
 #include "max17261_fuel_gauge.h"
 
+#include "log.h"
+
 // See Table 3 on pg.18 of the datasheet
 #define PCT_LSB (1.0f / 256)                                  // LSBit is 1/256%
 #define CAP_LSB (5.0f / storage->settings->r_sense_mohms)     // LSBit is 5 micro Volt hrs / Rsense
@@ -67,10 +69,10 @@ StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms) {
   return STATUS_CODE_OK;
 }
 
-StatusCode max17261_current(Max17261Storage *storage, uint16_t *current_ua) {
+StatusCode max17261_current(Max17261Storage *storage, int16_t *current_ua) {
   uint16_t current_reg_val = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_CURRENT, &current_reg_val));
-  *current_ua = current_reg_val * CUR_LSB;
+  *current_ua = (int16_t)(current_reg_val)*CUR_LSB;
   return STATUS_CODE_OK;
 }
 
@@ -84,7 +86,7 @@ StatusCode max17261_voltage(Max17261Storage *storage, uint16_t *vcell_mv) {
 StatusCode max17261_temp(Max17261Storage *storage, uint16_t *temp_c) {
   uint16_t temp_reg_val = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_TEMP, &temp_reg_val));
-  *temp_c = temp_reg_val * temp_reg_val;
+  *temp_c = temp_reg_val * TEMP_LSB;
   return STATUS_CODE_OK;
 }
 
@@ -100,6 +102,10 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings) {
   uint16_t config = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_CONFIG, &config));
   config |= (1 << 2);
+  // Enable external temp readings
+  // config |= (1 << 15);
+  // config |= (1 << 8);
+  // config |= (1 << 4);
   status_ok_or_return(max17261_set_reg(storage, MAX17261_CONFIG, config));
   // Upper byte is IMAX and lower byte is IMIN
   uint16_t current_th = (settings->i_thresh_max << 8) & (settings->i_thresh_min & 0x00FF);

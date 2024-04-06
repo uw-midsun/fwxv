@@ -14,7 +14,7 @@ SegDisplay all_displays = ALL_DISPLAYS;
 
 // Centre Console State Variables
 static bool s_cc_enabled;
-static bool s_regen_braking;
+static uint8_t s_regen_braking;
 static bool s_hazard_state;
 static uint32_t s_target_velocity;
 static uint32_t s_last_power_state = EE_POWER_OFF_STATE;
@@ -42,6 +42,11 @@ static Pca9555GpioAddress s_output_leds[NUM_DRIVE_LED] = {
   [AUX_WARNING_LED] = AUX_WARNING_LED_ADDR,
 };
 
+static uint8_t prv_regen_calc(uint16_t batt_current, uint16_t batt_voltage) {
+  return 100 * (MAX_VOLTAGE - (batt_voltage < MIN_VOLTAGE ? MIN_VOLTAGE : batt_voltage)) /
+         (MAX_VOLTAGE - MIN_VOLTAGE);
+}
+
 void update_indicators(uint32_t notif) {
   // Update hazard light
   if (notify_check_event(&notif, HAZARD_BUTTON_EVENT)) {
@@ -50,19 +55,21 @@ void update_indicators(uint32_t notif) {
       pca9555_gpio_set_state(&s_output_leds[HAZARD_LED], PCA9555_GPIO_STATE_HIGH);
     }
   } else {
-    if (s_hazard_state) {
-      s_hazard_state = false;
-      pca9555_gpio_set_state(&s_output_leds[HAZARD_LED], PCA9555_GPIO_STATE_LOW);
-    }
+    s_hazard_state = false;
+    pca9555_gpio_set_state(&s_output_leds[HAZARD_LED], PCA9555_GPIO_STATE_LOW);
   }
   // Update regen light
   if (notify_check_event(&notif, REGEN_BUTTON_EVENT)) {
-    if (s_regen_braking) {
-      s_regen_braking = false;
-      pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_LOW);
-    } else {
-      s_regen_braking = true;
+    uint16_t batt_voltage = get_battery_info_max_cell_v();  // Gets max voltage out of all cells
+    uint16_t batt_current = get_battery_vt_current();
+    // solar current + regen current <= 27 AMPS
+    // regen current shouldnt push cell above 4.2 V
+    if (!s_regen_braking && batt_current < MAX_CURRENT && batt_voltage < MAX_VOLTAGE) {
+      s_regen_braking = prv_regen_calc(batt_current, batt_voltage);
       pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_HIGH);
+    } else {
+      s_regen_braking = 0;
+      pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_LOW);
     }
   }
 
@@ -147,11 +154,12 @@ void update_displays(void) {
   // Read data from CAN structs and update displays with those values
   float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
   float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
-  uint16_t batt_perc_val = get_battery_status_batt_perc();
+  uint16_t batt_perc_val = get_battery_vt_batt_perc();
+  uint32_t aux_battery_voltage = get_battery_status_aux_batt_v();
   if (speed_kph >= 100) {
-    seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, s_target_velocity);
+    seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, aux_battery_voltage);
   } else {
-    seg_displays_set_float(&all_displays, speed_kph, batt_perc_val, s_target_velocity);
+    seg_displays_set_float(&all_displays, speed_kph, batt_perc_val, aux_battery_voltage);
   }
 }
 
