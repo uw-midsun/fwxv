@@ -15,7 +15,7 @@ static void prv_bms_fan_sense(void) {
     // LOG_DEBUG("STATE FANSENSE_1: %d\n", state);
     gpio_get_state(&bms_fan_sense1, &state);
   }
-  set_battery_status_fan1(!state);
+  set_battery_info_fan1(!state);
 
   tick = xTaskGetTickCount() + pdMS_TO_TICKS(5);
 
@@ -23,7 +23,7 @@ static void prv_bms_fan_sense(void) {
     // LOG_DEBUG("STATE FANSENSE_2: %d\n", state);
     gpio_get_state(&bms_fan_sense2, &state);
   }
-  set_battery_status_fan2(!state);
+  set_battery_info_fan2(!state);
   // LOG_DEBUG("FAN1: %d\n", g_tx_struct.battery_status_fan1);
   // LOG_DEBUG("FAN2: %d\n", g_tx_struct.battery_status_fan2);
 }
@@ -31,7 +31,6 @@ static void prv_bms_fan_sense(void) {
 void bms_run_fan(void) {
   if (s_storage->current_storage.temperature >= BMS_FAN_TEMP_UPPER_THRESHOLD) {
     pwm_set_dc(PWM_TIMER_1, 100);
-    LOG_DEBUG("GG MAX TEMP\n");
   } else if (s_storage->current_storage.temperature <= BMS_FAN_TEMP_LOWER_THRESHOLD) {
     pwm_set_dc(PWM_TIMER_1, 0);
   } else {

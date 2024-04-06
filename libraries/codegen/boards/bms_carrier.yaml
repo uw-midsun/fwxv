@@ -21,10 +21,8 @@
       signals:
         fault:
           length: 16
-        fan1:
-          length: 8
-        fan2:
-          length: 8
+        aux_batt_v:
+          length: 32
 
     battery_info:
       id: 33
@@ -32,8 +30,10 @@
         centre_console:
           watchdog: 0
       signals:
-        aux_batt_v:
-          length: 32
+        fan1:
+          length: 8
+        fan2:
+          length: 8
         max_cell_v:
           length: 32
 

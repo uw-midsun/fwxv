@@ -155,7 +155,7 @@ void update_displays(void) {
   float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
   float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
   uint16_t batt_perc_val = get_battery_vt_batt_perc();
-  uint32_t aux_battery_voltage = get_battery_info_aux_batt_v() / 100;
+  uint32_t aux_battery_voltage = get_battery_status_aux_batt_v();
   if (speed_kph >= 100) {
     seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, aux_battery_voltage);
   } else {
