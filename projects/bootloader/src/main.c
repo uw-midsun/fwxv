@@ -4,22 +4,16 @@
 #include "master_task.h"
 #include "tasks.h"
 
-void pre_loop_init() {}
-
-void run_fast_cycle() {}
-
-void run_medium_cycle() {}
-
-void run_slow_cycle() {}
-
 int main() {
-  tasks_init();
   log_init();
   LOG_DEBUG("Welcome to TEST!");
 
-  init_master_task();
-
-  tasks_start();
+  while (true) {
+    // Listen for messages with bootloader+start ID (add to can.c)
+    // Check which node it is for
+    // Capture data
+    // Erase memory and flash
+  }
 
   LOG_DEBUG("exiting main?");
   return 0;
