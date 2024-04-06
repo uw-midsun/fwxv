@@ -312,8 +312,8 @@ static OutputGroupDef s_output_group_hazards = {
 
 static OutputGroupDef s_output_group_brake = { .num_outputs = 1, .outputs = { BRAKE_LIGHT } };
 
-static OutputGroupDef s_output_group_power_off = { .num_outputs = 2,
-                                                   .outputs = { CENTER_CONSOLE, BMS_DCDC } };
+static OutputGroupDef s_output_group_power_off = { .num_outputs = 5,
+                                                   .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, STEERING } };
 
 static OutputGroupDef s_output_group_power_on = {
   .num_outputs = 7,

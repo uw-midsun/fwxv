@@ -141,9 +141,6 @@ static FsmState s_power_seq_state_list[NUM_POWER_STATES] = {
   STATE(POWER_STATE_OFF, prv_off_state_input, prv_off_state_output),
   STATE(TRANSMIT_BMS_CLOSE_RELAYS, prv_close_relays_state_input, prv_close_relays_state_output),
   STATE(POWER_STATE_ON, prv_on_state_input, prv_on_state_output),
-  STATE(TURN_ON_DRIVE_OUTPUTS, prv_turn_on_drive_outputs_state_input,
-        prv_turn_on_drive_outputs_state_output),
-  STATE(POWER_STATE_DRIVE, prv_drive_state_input, prv_drive_state_output),
   STATE(POWER_STATE_FAULT, prv_fault_state_input, prv_fault_state_output),
 };
 
@@ -154,13 +151,7 @@ static bool s_power_seq_transitions[NUM_POWER_STATES][NUM_POWER_STATES] = {
   TRANSITION(TRANSMIT_BMS_CLOSE_RELAYS, POWER_STATE_ON),
   TRANSITION(TRANSMIT_BMS_CLOSE_RELAYS, POWER_STATE_FAULT),
   TRANSITION(POWER_STATE_ON, POWER_STATE_OFF),
-  TRANSITION(POWER_STATE_ON, TURN_ON_DRIVE_OUTPUTS),
-  TRANSITION(POWER_STATE_ON, POWER_STATE_FAULT),
-  TRANSITION(TURN_ON_DRIVE_OUTPUTS, POWER_STATE_ON),
-  TRANSITION(TURN_ON_DRIVE_OUTPUTS, POWER_STATE_DRIVE),
-  TRANSITION(TURN_ON_DRIVE_OUTPUTS, POWER_STATE_FAULT),
-  TRANSITION(POWER_STATE_DRIVE, POWER_STATE_ON),
-  TRANSITION(POWER_STATE_DRIVE, POWER_STATE_FAULT),
+  TRANSITION(POWER_STATE_ON, POWER_STATE_FAULT)
 };
 
 StatusCode init_power_seq(void) {
