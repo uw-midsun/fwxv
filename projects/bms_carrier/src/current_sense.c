@@ -45,7 +45,7 @@ StatusCode prv_fuel_gauge_read() {
   StatusCode status = STATUS_CODE_OK;
 
   uint16_t soc = 0;
-  int current = 0;
+  int16_t current = 0;
   uint16_t voltage = 0;
   uint16_t temperature = 0;
 

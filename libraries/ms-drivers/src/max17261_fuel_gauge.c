@@ -67,14 +67,10 @@ StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms) {
   return STATUS_CODE_OK;
 }
 
-StatusCode max17261_current(Max17261Storage *storage, int *current_ua) {
+StatusCode max17261_current(Max17261Storage *storage, int16_t *current_ua) {
   uint16_t current_reg_val = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_CURRENT, &current_reg_val));
-  if (current_reg_val & (1 << 15)) {
-    *current_ua = -(int16_t)((~current_reg_val) + 1) * CUR_LSB;
-  } else {
-    *current_ua = current_reg_val * CUR_LSB;
-  }
+  *current_ua = (int16_t)(current_reg_val) * CUR_LSB;
   return STATUS_CODE_OK;
 }
 
