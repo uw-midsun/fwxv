@@ -2,10 +2,7 @@
 '''This Module Tests methods in can_datagram.py'''
 import unittest
 import random
-<<<<<<< HEAD
 import time
-=======
->>>>>>> datagram class complete with test cases
 
 from can_datagram import Datagram, DatagramSender, DatagramListener
 import can
@@ -56,12 +53,7 @@ class TestCanDatagram(unittest.TestCase):
 
     def test_unpacking(self):
         '''Tests CAN datagram message unpacking'''
-<<<<<<< HEAD
         test_bytes = bytearray([1,                          # Datagram Type ID 
-=======
-        test_bytes = bytearray([1,                          # Datagram Type ID
-                                0xE8, 0xBC, 0x16, 0x0F,     # CRC32, little-endian
->>>>>>> datagram class complete with test cases
                                 TEST_NODES_RAW1,            # Node ID's RAW
                                 TEST_NODES_RAW2,            # Node ID's RAW
                                 26, 0,                      # Data Size, little-endian
@@ -71,7 +63,6 @@ class TestCanDatagram(unittest.TestCase):
         self.assertEqual(message._datagram_type_id, TEST_DATAGRAM_TYPE_ID)
         self.assertEqual(message._node_ids, TEST_NODES)
         self.assertEqual(message._data, TEST_DATA)
-<<<<<<< HEAD
 
     def test_packing(self):
         message = Datagram(
@@ -81,23 +72,10 @@ class TestCanDatagram(unittest.TestCase):
         )
 
         test_bytes = bytearray([1,
-=======
-    
-    def test_packing(self):
-        message = Datagram(
-            datagram_type_id = TEST_DATAGRAM_TYPE_ID,
-            node_ids = TEST_NODES,
-            data= TEST_DATA
-        )
-
-        test_bytes = bytearray([1,
-                                0xE8, 0xBC, 0x16, 0x0F,     # CRC32, little-endian
->>>>>>> datagram class complete with test cases
                                 TEST_NODES_RAW1,            # Node ID's RAW
                                 TEST_NODES_RAW2,            # Node ID's RAW
                                 26, 0,                      # Data Size, little-endian
                                 *TEST_DATA                  # Data
-<<<<<<< HEAD
                                 ])
 
         self.assertEqual(message.pack(), test_bytes)
@@ -160,19 +138,5 @@ class TestCanDatagramListener(unittest.TestCase):
         self.callback_triggered = True
 
 
-=======
-        ])
-
-        self.assertEqual(message._pack(), test_bytes)
-
-class TestCanDatagramSender(unittest.TestCase):
-    '''Test CAN Datagram sending functions'''
-    
-    def test_send_message(self):
-        sender = DatagramSender(channel=TEST_CHANNEL, receive_own_messages=True)
-        listener = can.BufferedReader()
-        notifier = can.Notifier(sender.bus, [listener])
-
->>>>>>> datagram class complete with test cases
 if __name__ == '__main__':
     unittest.main()
