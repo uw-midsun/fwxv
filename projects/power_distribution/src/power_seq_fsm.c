@@ -32,7 +32,7 @@ static void prv_off_state_input(Fsm *fsm, void *context) {
   CentreConsoleDriveState cc_drive_event = get_cc_info_drive_state();
   if (cc_drive_event == EE_DRIVE_OUTPUT_DRIVE_STATE ||
       cc_drive_event == EE_DRIVE_OUTPUT_REVERSE_STATE) {
-    power_context.target_state = POWER_STATE_DRIVE;
+    power_context.target_state = POWER_STATE_PRECHARGE;
     fsm_transition(fsm, POWER_STATE_PRECHARGE);
   }
 }
@@ -40,6 +40,7 @@ static void prv_off_state_input(Fsm *fsm, void *context) {
 static void prv_precharge_output(void *context) {
   LOG_DEBUG("Transitioned to PRECHARGE STATE\n");
   pd_set_active_output_group(OUTPUT_GROUP_POWER_DRIVE);
+  set_pd_status_power_state(EE_POWER_PRECHARGE_STATE);
   power_context.latest_state = POWER_STATE_OFF;
   power_context.timer_start_ticks = xTaskGetTickCount();
 }
@@ -92,8 +93,10 @@ static FsmState s_power_seq_state_list[NUM_POWER_STATES] = {
 static bool s_power_seq_transitions[NUM_POWER_STATES][NUM_POWER_STATES] = {
   TRANSITION(POWER_STATE_OFF, POWER_STATE_FAULT),
   TRANSITION(POWER_STATE_OFF, POWER_STATE_PRECHARGE),
+  TRANSITION(POWER_STATE_PRECHARGE, POWER_STATE_OFF),
   TRANSITION(POWER_STATE_PRECHARGE, POWER_STATE_DRIVE),
-  TRANSITION(POWER_STATE_DRIVE, POWER_STATE_OFF), TRANSITION(POWER_STATE_DRIVE, POWER_STATE_FAULT)
+  TRANSITION(POWER_STATE_DRIVE, POWER_STATE_OFF),
+  TRANSITION(POWER_STATE_DRIVE, POWER_STATE_FAULT)
 };
 
 StatusCode init_power_seq(void) {

@@ -14,9 +14,9 @@
       id: 9
       target:
         motor_controller:
-          watchdog: 0
+          watchdog: 3
         power_distribution:
-          watchdog: 0
+          watchdog: 3
       critical: true
       signals:
         target_velocity:
