@@ -9,11 +9,8 @@ FSM(drive, NUM_DRIVE_STATES, TASK_STACK_512);
 #define NUM_DRIVE_FSM_BUTTONS 3
 
 static uint32_t notification = 0;
+static CentreConsoleDriveState drive_context = EE_DRIVE_OUTPUT_NEUTRAL_STATE;
 static Event drive_fsm_event;
-
-static uint8_t power_received_counter = 0;
-
-static uint8_t power_state_main_flag = 0;  // Flag for the first turn on of the power state
 
 typedef enum DriveLeds {
   DRIVE_LED = 0,
@@ -42,39 +39,35 @@ static bool prv_speed_is_zero(void) {
  * @return Transitions to DO_PRECHARGE, DRIVE, OR REVERSE
  */
 static void prv_neutral_input(Fsm *fsm, void *context) {
-  StatusCode power_error_state = get_power_info_pd_fault();
+  StatusCode power_error_state = get_pd_status_fault_bitset();
+  PowerDistributionPowerState power_state = get_pd_status_power_state();
 
-  StateId power_state = get_power_info_power_state();
-  uint8_t received_power_state = get_received_power_info();
-
-  if ((power_state == EE_POWER_DRIVE_STATE || power_state == EE_POWER_ON_STATE) &&
-      power_state_main_flag == 0) {
-    power_state_main_flag = 1;
-    pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_HIGH);
-  } else if (power_state == EE_POWER_OFF_STATE) {
-    power_state_main_flag = 0;
-    pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
+  // CHECK POWER STATE
+  if (power_state == EE_POWER_DRIVE_STATE) {
+    if (drive_context == EE_DRIVE_OUTPUT_DRIVE_STATE)
+      fsm_transition(fsm, DRIVE);
+    else if (drive_context == EE_DRIVE_OUTPUT_REVERSE_STATE)
+      fsm_transition(fsm, REVERSE);
   }
 
   if (notify_get(&notification) == STATUS_CODE_OK && power_error_state == STATUS_CODE_OK) {
     while (event_from_notification(&notification, &drive_fsm_event) == STATUS_CODE_INCOMPLETE) {
-      bool can_transition = power_state == EE_POWER_DRIVE_STATE && received_power_state == true &&
-                            prv_speed_is_zero();
+      bool can_transition = !check_pd_status_msg_watchdog() && prv_speed_is_zero();
       if (drive_fsm_event == DRIVE_BUTTON_EVENT && can_transition) {
-        pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
-        fsm_transition(fsm, DRIVE);
+        set_cc_info_drive_state(DRIVE);
+        drive_context = EE_DRIVE_OUTPUT_DRIVE_STATE;
         break;
       } else if (drive_fsm_event == REVERSE_BUTTON_EVENT && can_transition) {
-        pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
-        fsm_transition(fsm, REVERSE);
+        set_cc_info_drive_state(REVERSE);
+        drive_context = EE_DRIVE_OUTPUT_REVERSE_STATE;
         break;
       }
     }
   }
 }
+
 static void prv_neutral_output(void *context) {
   pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_HIGH);
-  set_drive_output_drive_state(NEUTRAL);
 }
 
 /**
@@ -82,29 +75,24 @@ static void prv_neutral_output(void *context) {
  * @return Transitions to NEUTRAL
  */
 static void prv_drive_input(Fsm *fsm, void *context) {
-  uint8_t received_power_state = get_received_power_info();
-  if (received_power_state) {
-    power_received_counter = 0;
-  } else {
-    power_received_counter++;
-  }
-
-  if (power_received_counter > 3) {
+  if (check_pd_status_msg_watchdog()) {
     // Did not receive power state for 3 cycles
-    power_received_counter = 0;
     pca9555_gpio_set_state(&s_drive_btn_leds[DRIVE_LED], PCA9555_GPIO_STATE_LOW);
+    set_cc_info_drive_state(NEUTRAL);
     fsm_transition(fsm, NEUTRAL);
   }
 
-  StatusCode power_error_state = get_power_info_pd_fault();
+  StatusCode power_error_state = get_pd_status_fault_bitset();
   if (power_error_state != STATUS_CODE_OK) {
     pca9555_gpio_set_state(&s_drive_btn_leds[DRIVE_LED], PCA9555_GPIO_STATE_LOW);
+    set_cc_info_drive_state(NEUTRAL);
     fsm_transition(fsm, NEUTRAL);
   }
 
-  StateId power_state = get_power_info_power_state();
+  StateId power_state = get_pd_status_power_state();
   if (power_state != EE_POWER_DRIVE_STATE) {
     pca9555_gpio_set_state(&s_drive_btn_leds[DRIVE_LED], PCA9555_GPIO_STATE_LOW);
+    set_cc_info_drive_state(NEUTRAL);
     fsm_transition(fsm, NEUTRAL);
   }
 
@@ -112,6 +100,7 @@ static void prv_drive_input(Fsm *fsm, void *context) {
     while (event_from_notification(&notification, &drive_fsm_event) == STATUS_CODE_INCOMPLETE) {
       if (drive_fsm_event == NEUTRAL_BUTTON_EVENT && prv_speed_is_zero()) {
         pca9555_gpio_set_state(&s_drive_btn_leds[DRIVE_LED], PCA9555_GPIO_STATE_LOW);
+        set_cc_info_drive_state(NEUTRAL);
         fsm_transition(fsm, NEUTRAL);
       }
     }
@@ -119,8 +108,8 @@ static void prv_drive_input(Fsm *fsm, void *context) {
 }
 
 static void prv_drive_output(void *context) {
+  pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
   pca9555_gpio_set_state(&s_drive_btn_leds[DRIVE_LED], PCA9555_GPIO_STATE_HIGH);
-  set_drive_output_drive_state(DRIVE);
 }
 
 /**
@@ -128,29 +117,24 @@ static void prv_drive_output(void *context) {
  * @return Transitions to NEUTRAL
  */
 static void prv_reverse_input(Fsm *fsm, void *context) {
-  uint8_t received_power_state = get_received_power_info();
-  if (received_power_state) {
-    power_received_counter = 0;
-  } else {
-    power_received_counter++;
-  }
-
-  if (power_received_counter > 3) {
+  if (check_pd_status_msg_watchdog()) {
     // Did not receive power state for 3 cycles
-    power_received_counter = 0;
     pca9555_gpio_set_state(&s_drive_btn_leds[REVERSE_LED], PCA9555_GPIO_STATE_LOW);
+    set_cc_info_drive_state(NEUTRAL);
     fsm_transition(fsm, NEUTRAL);
   }
 
-  StatusCode power_error_state = get_power_info_pd_fault();
+  StatusCode power_error_state = get_pd_status_fault_bitset();
   if (power_error_state != STATUS_CODE_OK) {
     pca9555_gpio_set_state(&s_drive_btn_leds[REVERSE_LED], PCA9555_GPIO_STATE_LOW);
+    set_cc_info_drive_state(NEUTRAL);
     fsm_transition(fsm, NEUTRAL);
   }
 
-  StateId power_state = get_power_info_power_state();
+  StateId power_state = get_pd_status_power_state();
   if (power_state != EE_POWER_DRIVE_STATE) {
     pca9555_gpio_set_state(&s_drive_btn_leds[REVERSE_LED], PCA9555_GPIO_STATE_LOW);
+    set_cc_info_drive_state(NEUTRAL);
     fsm_transition(fsm, NEUTRAL);
   }
 
@@ -164,8 +148,8 @@ static void prv_reverse_input(Fsm *fsm, void *context) {
   }
 }
 static void prv_reverse_output(void *context) {
+  pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_LOW);
   pca9555_gpio_set_state(&s_drive_btn_leds[REVERSE_LED], PCA9555_GPIO_STATE_HIGH);
-  set_drive_output_drive_state(REVERSE);
 }
 
 // Declare states in state list
@@ -203,6 +187,7 @@ StatusCode init_drive_fsm(void) {
   for (int i = 0; i < NUM_DRIVE_FSM_BUTTONS; i++) {
     status_ok_or_return(pca9555_gpio_init_pin(&s_drive_btn_leds[i], &pca_settings));
   }
+  pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_HIGH);
 
   fsm_init(drive, s_drive_state_list, s_drive_transitions, NEUTRAL, NULL);
   return STATUS_CODE_OK;

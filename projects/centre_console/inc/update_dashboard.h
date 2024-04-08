@@ -30,4 +30,4 @@ void monitor_cruise_control(void);
 void update_displays(void);
 
 // Update drive output based
-void update_drive_output(uint32_t notif);
+void update_drive_output();

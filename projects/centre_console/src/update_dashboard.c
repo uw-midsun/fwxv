@@ -74,15 +74,14 @@ void update_indicators(uint32_t notif) {
   }
 
   // Update power btn light if power_state has changed
-  if (get_power_info_power_state() != s_last_power_state) {
-    if (get_power_info_power_state() == EE_POWER_ON_STATE ||
-        get_power_info_power_state() == EE_POWER_DRIVE_STATE) {
-      pca9555_gpio_set_state(&s_output_leds[POWER_LED], PCA9555_GPIO_STATE_HIGH);
-    } else {
-      pca9555_gpio_set_state(&s_output_leds[POWER_LED], PCA9555_GPIO_STATE_LOW);
-    }
-    s_last_power_state = get_power_info_power_state();
-  }
+  // if (get_pd_status_power_state() != s_last_power_state) {
+  //   if (get_pd_status_power_state() == EE_POWER_DRIVE_STATE) {
+  //     pca9555_gpio_set_state(&s_output_leds[POWER_LED], PCA9555_GPIO_STATE_HIGH);
+  //   } else {
+  //     pca9555_gpio_set_state(&s_output_leds[POWER_LED], PCA9555_GPIO_STATE_LOW);
+  //   }
+  //   s_last_power_state = get_pd_status_power_state();
+  // }
 
   // Update left/right LED
   if (get_steering_info_input_lights() != s_last_lights_state) {
@@ -104,7 +103,7 @@ void update_indicators(uint32_t notif) {
   }
 
   // Update Aux warning LED
-  if (get_pd_status_fault_bitset() != 0) {
+  if (get_pd_status_fault_bitset()) {
     pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_HIGH);
   } else {
     pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_LOW);
@@ -163,20 +162,11 @@ void update_displays(void) {
   }
 }
 
-void update_drive_output(uint32_t notif) {
-  if (notify_check_event(&notif, POWER_BUTTON_EVENT)) {
-    if (get_pedal_output_brake_output()) {
-      set_cc_power_control_power_event(EE_CC_PWR_CTL_EVENT_BTN_AND_BRAKE);
-    } else {
-      set_cc_power_control_power_event(EE_CC_PWR_CTL_EVENT_BTN);
-    }
-  } else {
-    set_cc_power_control_power_event(EE_CC_PWR_CTL_EVENT_NONE);
-  }
-  set_drive_output_cruise_control(s_cc_enabled);
-  set_drive_output_target_velocity(s_target_velocity);
-  set_drive_output_regen_braking(s_regen_braking);
-  set_cc_power_control_hazard_enabled(s_hazard_state);
+void update_drive_output() {
+  set_cc_info_cruise_control(s_cc_enabled);
+  set_cc_info_target_velocity(s_target_velocity);
+  set_cc_info_regen_braking(s_regen_braking);
+  set_cc_info_hazard_enabled(s_hazard_state);
 }
 
 StatusCode dashboard_init(void) {

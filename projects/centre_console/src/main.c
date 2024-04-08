@@ -54,7 +54,7 @@ void run_medium_cycle() {
   fsm_run_cycle(drive);
   wait_tasks(1);
 
-  update_drive_output(notif);
+  update_drive_output();
   run_can_tx_cycle();
   wait_tasks(1);
 }

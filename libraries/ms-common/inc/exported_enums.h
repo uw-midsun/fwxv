@@ -17,8 +17,7 @@
 
 // Common Defines
 typedef enum {
-  EE_RELAY_STATE_OPEN = 0,
-  EE_RELAY_STATE_CLOSE,
+  EE_RELAY_STATE_CLOSE = 0,
   EE_RELAY_STATE_FAULT,
   NUM_EE_RELAY_STATES,
 } EERelayState;
@@ -44,14 +43,6 @@ typedef enum SteeringInfoDigitalMask {
 #define EE_STEERING_CC_TOGGLE_MASK (1 << EE_STEERING_CC_TOGGLE_BIT)
 
 // CENTRE CONSOLE SIGNALS
-// Drive Output
-typedef enum {
-  EE_CC_PWR_CTL_EVENT_NONE = 0,
-  EE_CC_PWR_CTL_EVENT_BTN,
-  EE_CC_PWR_CTL_EVENT_BTN_AND_BRAKE,
-  NUM_EE_CC_PWR_CTL_EVENTS,
-} CentreConsoleCCPwrEvent;
-
 typedef enum {
   EE_DRIVE_OUTPUT_CC_OFF_STATE = 0,  // Cruise control enabled,
   EE_DRIVE_OUTPUT_CC_ON_STATE,       // Cruise control disabled
@@ -80,8 +71,9 @@ typedef enum {
 // POWER DISTRIBUTION (TODO)
 typedef enum {
   EE_POWER_OFF_STATE = 0,
-  EE_POWER_ON_STATE,
+  EE_POWER_PRECHARGE_STATE,
   EE_POWER_DRIVE_STATE,
+  EE_POWER_FAULT_STATE
 } PowerDistributionPowerState;
 
 typedef enum {

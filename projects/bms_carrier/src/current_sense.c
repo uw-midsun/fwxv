@@ -9,7 +9,6 @@
 #include "gpio_it.h"
 #include "interrupt.h"
 #include "log.h"
-#include "relays_fsm.h"
 #include "tasks.h"
 
 static Max17261Storage s_fuel_guage_storage;

@@ -12,7 +12,7 @@
 #include "interrupt.h"
 #include "log.h"
 #include "master_task.h"
-#include "relays_fsm.h"
+#include "relays.h"
 #include "tasks.h"
 
 #define FUEL_GAUGE_CYCLE_TIME_MS 100
@@ -57,10 +57,8 @@ void run_medium_cycle() {
   wait_tasks(1);
 
   // cell_sense_run();
+  bms_relay_fault_check();
   aux_sense_run();
-
-  fsm_run_cycle(bms_relays);
-  wait_tasks(1);
   bms_run_fan();
 
   run_can_tx_cycle();

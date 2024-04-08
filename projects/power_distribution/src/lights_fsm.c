@@ -65,7 +65,7 @@ static void prv_init_state_input(Fsm *fsm, void *context) {
   prv_brake_lights();
   // can transition to LEFT, RIGHT, HAZARD
   EELightType light_event = get_steering_info_input_lights();
-  HazardStatus hazard_status = get_cc_power_control_hazard_enabled();
+  HazardStatus hazard_status = get_cc_info_hazard_enabled();
 
   if (hazard_status == HAZARD_ON) {
     fsm_transition(fsm, HAZARD);
@@ -86,7 +86,7 @@ static void prv_left_signal_input(Fsm *fsm, void *context) {
   prv_brake_lights();
   // can transition to INIT, RIGHT, HAZARD
   EELightType light_event = get_steering_info_input_lights();
-  HazardStatus hazard_status = get_cc_power_control_hazard_enabled();
+  HazardStatus hazard_status = get_cc_info_hazard_enabled();
 
   if (hazard_status == HAZARD_ON) {
     fsm_transition(fsm, HAZARD);
@@ -111,7 +111,7 @@ static void prv_right_signal_input(Fsm *fsm, void *context) {
   prv_brake_lights();
   // can transition to INIT, LEFT, HAZARD
   EELightType light_event = get_steering_info_input_lights();
-  HazardStatus hazard_status = get_cc_power_control_hazard_enabled();
+  HazardStatus hazard_status = get_cc_info_hazard_enabled();
 
   if (hazard_status == HAZARD_ON) {
     fsm_transition(fsm, HAZARD);
@@ -136,7 +136,7 @@ static void prv_hazard_input(Fsm *fsm, void *context) {
   prv_brake_lights();
   // can transition to INIT, BPS_FAULT
   EELightType light_event = get_steering_info_input_lights();
-  HazardStatus hazard_status = get_cc_power_control_hazard_enabled();
+  HazardStatus hazard_status = get_cc_info_hazard_enabled();
 
   if (hazard_status == HAZARD_ON) {
     return;
