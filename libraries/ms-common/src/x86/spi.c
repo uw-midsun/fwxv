@@ -6,7 +6,6 @@
 #include "spi_mcu.h"
 
 #define SPI_BUF_SIZE 32
-#define SPI_QUEUE_DELAY_MS 10
 
 typedef struct {
   uint8_t tx_buf[SPI_BUF_SIZE];
