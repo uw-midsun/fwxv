@@ -50,18 +50,18 @@ static float prv_get_float(uint32_t u) {
 }
 
 static void prv_update_target_current_velocity() {
-  float throttle_percent = prv_get_float(get_pedal_output_throttle_output());
-  float brake_percent = prv_get_float(get_pedal_output_brake_output());
-  float target_vel = prv_get_float(get_drive_output_target_velocity()) * VEL_TO_RPM_RATIO;
+  float throttle_percent = prv_get_float(get_cc_pedal_throttle_output());
+  bool brake = get_cc_pedal_brake_output();
+  float target_vel = prv_get_float(get_cc_info_target_velocity()) * VEL_TO_RPM_RATIO;
 
-  DriveState drive_state = get_drive_output_drive_state();
-  bool regen = get_drive_output_regen_braking();
-  bool cruise = get_drive_output_cruise_control();
+  DriveState drive_state = get_cc_info_drive_state();
+  bool regen = get_cc_info_regen_braking();
+  bool cruise = get_cc_info_cruise_control();
 
   if (drive_state == DRIVE && cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
     drive_state = CRUISE;
   }
-  if (brake_percent > 0 || (throttle_percent == 0 && drive_state != CRUISE)) {
+  if (brake || (throttle_percent == 0 && drive_state != CRUISE)) {
     drive_state = regen ? BRAKE : NEUTRAL;
   }
 
@@ -104,7 +104,7 @@ static inline uint8_t pack_right_shift_u32(uint32_t value, uint8_t shift, uint8_
 
 static void motor_controller_tx_all() {
   // don't send drive command if didn't get centre console's drive output msg
-  if (!get_received_drive_output()) {
+  if (!get_received_cc_info()) {
     LOG_DEBUG("NO drive output\n");
     return;
   }

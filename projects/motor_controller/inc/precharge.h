@@ -10,7 +10,7 @@
 // Requires GPIO interrupts to be initialized
 
 typedef struct PrechargeSettings {
-  GpioAddress precharge_control;
+  GpioAddress motor_sw;
   GpioAddress precharge_monitor;
 } PrechargeSettings;
 

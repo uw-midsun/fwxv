@@ -73,16 +73,6 @@ void update_indicators(uint32_t notif) {
     }
   }
 
-  // Update power btn light if power_state has changed
-  // if (get_pd_status_power_state() != s_last_power_state) {
-  //   if (get_pd_status_power_state() == EE_POWER_DRIVE_STATE) {
-  //     pca9555_gpio_set_state(&s_output_leds[POWER_LED], PCA9555_GPIO_STATE_HIGH);
-  //   } else {
-  //     pca9555_gpio_set_state(&s_output_leds[POWER_LED], PCA9555_GPIO_STATE_LOW);
-  //   }
-  //   s_last_power_state = get_pd_status_power_state();
-  // }
-
   // Update left/right LED
   if (g_tx_struct.cc_steering_input_lights != s_last_lights_state) {
     switch (g_tx_struct.cc_steering_input_lights) {
@@ -174,9 +164,9 @@ StatusCode dashboard_init(void) {
     .direction = PCA9555_GPIO_DIR_OUT,
     .state = PCA9555_GPIO_STATE_LOW,
   };
-  // for (int i = 0; i < NUM_DRIVE_LED; i++) {
-  //   status_ok_or_return(pca9555_gpio_init_pin(&s_output_leds[i], &settings));
-  // }
+  for (int i = 0; i < NUM_DRIVE_LED; i++) {
+    status_ok_or_return(pca9555_gpio_init_pin(&s_output_leds[i], &settings));
+  }
   seg_displays_init(&all_displays);
 
   return STATUS_CODE_OK;

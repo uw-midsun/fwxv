@@ -35,7 +35,7 @@ const CanSettings can_settings = {
 
 static PedalCalibBlob s_calib_blob = { 0 };
 
-void pre_loop_init() {
+void pre_loop_init() {;
   pca9555_gpio_init(I2C_PORT_1);
   calib_init(&s_calib_blob, sizeof(s_calib_blob), false);
   pedal_init(&s_calib_blob);

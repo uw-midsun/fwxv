@@ -11,7 +11,7 @@
 #include "status.h"
 
 StatusCode precharge_init(const PrechargeSettings *settings, Event event, const Task *task) {
-  // gpio_init_pin(&settings->precharge_control, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  gpio_init_pin(&settings->motor_sw, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&settings->precharge_monitor, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
 
   InterruptSettings monitor_it_settings = {

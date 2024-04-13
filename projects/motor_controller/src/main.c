@@ -47,7 +47,7 @@ static Mcp2515Settings s_mcp2515_settings = {
   },
 };
 static PrechargeSettings s_precharge_settings = {
-  .precharge_control = { GPIO_PORT_A, 9 },
+  .motor_sw = { GPIO_PORT_A, 9 },
   .precharge_monitor = { GPIO_PORT_B, 0 },
 };
 
@@ -58,6 +58,7 @@ void run_fast_cycle() {
   notify_get(&notification);
   if (notification & (1 << PRECHARGE_EVENT)) {
     LOG_DEBUG("Precharge complete\n");
+    gpio_set_state(&s_precharge_settings.motor_sw, GPIO_STATE_HIGH);
     set_mc_status_precharge_status(true);
   }
 
