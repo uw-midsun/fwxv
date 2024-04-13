@@ -36,17 +36,6 @@
         velocity_r:
           length: 16
 
-    motor_status:
-      id: 37
-      target:
-        centre_console:
-          watchdog: 0
-      signals:
-        motor_status_l:
-          length: 32
-        motor_status_r:
-          length: 32
-
     motor_sink_temps:
       id: 38
       target:
@@ -69,9 +58,9 @@
           watchdog: 0
       signals:
         dsp_temp_l:
-          length: 32
+          length: 16
         dsp_temp_r:
-          length: 32
+          length: 16
 
     mc_status:
       id: 40
@@ -94,13 +83,4 @@
         overtemp_bitset:
           length: 8
         precharge_status:
-          length: 8
-
-    precharge_completed:
-      id: 16
-      target:
-        centre_console:
-          watchdog: 0
-      signals:
-        notification:
           length: 8

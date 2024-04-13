@@ -10,11 +10,11 @@
 // Storage
 static Mcp2515Storage *s_storage;
 
-TASK(MCP2515_RX, TASK_MIN_STACK_SIZE) {
+TASK(MCP2515_RX, TASK_STACK_256) {
   int counter = 0;
   while (true) {
     notify_wait(NULL, BLOCK_INDEFINITELY);
-    LOG_DEBUG("mcp2515_rx called: %d!\n", counter);
+    // LOG_DEBUG("mcp2515_rx called: %d!\n", counter);
     counter++;
 
     mcp2515_rx_all();
@@ -36,11 +36,11 @@ StatusCode mcp2515_receive(const CanMessage *msg) {
   return ret;
 }
 
-TASK(MCP2515_TX, TASK_MIN_STACK_SIZE) {
+TASK(MCP2515_TX, TASK_STACK_256) {
   int counter = 0;
   while (true) {
     notify_wait(NULL, BLOCK_INDEFINITELY);
-    LOG_DEBUG("mcp2515_tx called: %d!\n", counter);
+    // LOG_DEBUG("mcp2515_tx called: %d!\n", counter);
     counter++;
 
     mcp2515_tx_all();
@@ -74,10 +74,12 @@ StatusCode mcp2515_transmit(const CanMessage *msg) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "CAN: Invalid message ID");
   }
 
-  return mcp2515_hw_transmit(msg->id.raw, msg->extended, msg->data, msg->dlc);
+  return mcp2515_hw_transmit(msg->id.raw, msg->extended, msg->data_u8, msg->dlc);
 }
 
-static void no_op() {}
+static void no_op() {
+  LOG_DEBUG("error - no-op\n");
+}
 
 StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings) {
   memset(storage, 0, sizeof(*storage));
@@ -90,15 +92,15 @@ StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings
     mcp2515_tx_all = no_op;
   }
 
-  mcp2515_hw_init(&storage->rx_queue, settings);
+  mcp2515_hw_init(storage, settings);
 
   status_ok_or_return(can_queue_init(&s_storage->rx_queue));
 
   if (settings->can_settings.mode == CAN_CONTINUOUS) {
     // Create RX and TX Tasks
     // ! Ensure the task priority is lower than the interrupt tasks in mcp2515_hw.c
-    status_ok_or_return(tasks_init_task(MCP2515_RX, TASK_PRIORITY(2), NULL));
     status_ok_or_return(tasks_init_task(MCP2515_TX, TASK_PRIORITY(2), NULL));
+    status_ok_or_return(tasks_init_task(MCP2515_RX, TASK_PRIORITY(2), NULL));
   }
 
   return STATUS_CODE_OK;

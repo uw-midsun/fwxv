@@ -26,3 +26,6 @@ __pycache__
 *can_board_ids.h
 *system_can.dbc
 x86_flash
+
+py/can/can.py
+py/can/messages.py

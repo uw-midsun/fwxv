@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "delay.h"
 #include "gpio.h"
@@ -28,10 +29,8 @@ static const uint8_t bytes_to_write[] = { 0xFC };
 // Fill in this variable with the number of bytes to read.
 #define NUM_BYTES_TO_READ 1
 
-// ==== END OF PARAMETERS ====
-
 static SpiSettings spi_settings = {
-  .baudrate = 1000000,  // TO FIND
+  .baudrate = 10000000,  // 10 Mhz
   .mode = SPI_MODE_0,
   .mosi = { .port = GPIO_PORT_B, .pin = 15 },
   .miso = { .port = GPIO_PORT_B, .pin = 14 },
@@ -63,7 +62,6 @@ int main() {
   gpio_init();
   tasks_init();
   log_init();
-  // LOG_DEBUG("Welcome to TEST!");
 
   tasks_init_task(smoke_spi_task, TASK_PRIORITY(1), NULL);
 
