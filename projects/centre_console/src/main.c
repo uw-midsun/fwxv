@@ -9,6 +9,8 @@
 #include "fsm.h"
 #include "log.h"
 #include "master_task.h"
+#include "pedal.h"
+#include "steering.h"
 #include "tasks.h"
 
 #ifdef MS_PLATFORM_X86
@@ -31,9 +33,15 @@ const CanSettings can_settings = {
   .loopback = false,
 };
 
+static PedalCalibBlob s_calib_blob = { 0 };
+
 void pre_loop_init() {
-  Task *cc_buttons_master_task = get_master_task();
-  init_cc_buttons(cc_buttons_master_task);
+  pca9555_gpio_init(I2C_PORT_1);
+  calib_init(&s_calib_blob, sizeof(s_calib_blob), false);
+  pedal_init(&s_calib_blob);
+  steering_init(get_master_task());
+  adc_init();
+  init_cc_buttons(get_master_task());
   init_drive_fsm();
   dashboard_init();
 }
@@ -47,10 +55,15 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
 
+  pedal_run();
+  adc_run();
+  steering_input();
+
   uint32_t notif = 0;
   notify_get(&notif);
   update_indicators(notif);
   monitor_cruise_control();
+
   fsm_run_cycle(drive);
   wait_tasks(1);
 
@@ -62,8 +75,10 @@ void run_medium_cycle() {
 void run_slow_cycle() {}
 
 int main() {
-  log_init();
   tasks_init();
+  log_init();
+  gpio_init();
+  gpio_it_init();
   I2CSettings i2c_settings = {
     .speed = I2C_SPEED_STANDARD,
     .sda = I2C1_SDA,

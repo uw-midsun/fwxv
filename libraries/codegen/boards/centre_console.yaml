@@ -9,23 +9,47 @@
 # - 30-63: Data messages (usually not actionable by an onboard device)
 
 ---
-  Messages:
-    cc_info: 
-      id: 9
-      target:
-        motor_controller:
-          watchdog: 3
-        power_distribution:
-          watchdog: 3
-      critical: true
-      signals:
-        target_velocity:
-          length: 32
-        drive_state:
-          length: 8
-        cruise_control:
-          length: 8
-        regen_braking:
-          length: 8
-        hazard_enabled:
-          length: 8
+Messages:
+  cc_info: 
+    id: 9
+    target:
+      motor_controller:
+        watchdog: 3
+      power_distribution:
+        watchdog: 3
+    critical: true
+    signals:
+      target_velocity:
+        length: 32
+      drive_state:
+        length: 8
+      cruise_control:
+        length: 8
+      regen_braking:
+        length: 8
+      hazard_enabled:
+        length: 8
+  cc_pedal:
+    id: 18
+    target:
+      motor_controller:
+        watchdog: 0
+      power_distribution:
+        watchdog: 0
+    signals:
+      throttle_output:
+        length: 32
+      brake_output:
+        length: 8
+  cc_steering:
+    id: 21
+    target:
+      power_distribution:
+        watchdog: 0
+      motor_controller:
+        watchdog: 0
+    signals:
+      input_cc:
+        length: 8 # (cc_toggle | cc_increse | cc_decrease)
+      input_lights:
+        length: 8 

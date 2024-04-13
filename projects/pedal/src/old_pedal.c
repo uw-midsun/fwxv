@@ -1,4 +1,4 @@
-#include "pedal.h"
+#include "old_pedal.h"
 
 #include "pedal_setters.h"
 

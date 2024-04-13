@@ -42,6 +42,10 @@ static void prv_neutral_input(Fsm *fsm, void *context) {
   StatusCode power_error_state = get_pd_status_fault_bitset();
   PowerDistributionPowerState power_state = get_pd_status_power_state();
 
+  if (power_error_state != STATUS_CODE_OK) {
+    return;
+  }
+
   // CHECK POWER STATE
   if (power_state == EE_POWER_OFF_STATE) {
     set_cc_info_drive_state(NEUTRAL);
@@ -180,12 +184,9 @@ StatusCode init_drive_fsm(void) {
   // Add gpio register interrupts
   Pca9555GpioSettings pca_settings = { .direction = PCA9555_GPIO_DIR_OUT,
                                        .state = PCA9555_GPIO_STATE_LOW };
-  pca9555_gpio_init(I2C_PORT_1);
   for (int i = 0; i < NUM_DRIVE_FSM_BUTTONS; i++) {
     status_ok_or_return(pca9555_gpio_init_pin(&s_drive_btn_leds[i], &pca_settings));
   }
-  pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_HIGH);
-
   fsm_init(drive, s_drive_state_list, s_drive_transitions, NEUTRAL, NULL);
   return STATUS_CODE_OK;
 }

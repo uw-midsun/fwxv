@@ -84,8 +84,8 @@ void update_indicators(uint32_t notif) {
   // }
 
   // Update left/right LED
-  if (get_steering_info_input_lights() != s_last_lights_state) {
-    switch (get_steering_info_input_lights()) {
+  if (g_tx_struct.cc_steering_input_lights != s_last_lights_state) {
+    switch (g_tx_struct.cc_steering_input_lights) {
       case EE_STEERING_LIGHTS_OFF_STATE:
         pca9555_gpio_set_state(&s_output_leds[LEFT_LED], PCA9555_GPIO_STATE_LOW);
         pca9555_gpio_set_state(&s_output_leds[RIGHT_LED], PCA9555_GPIO_STATE_LOW);
@@ -99,7 +99,7 @@ void update_indicators(uint32_t notif) {
       default:
         break;
     }
-    s_last_lights_state = get_steering_info_input_lights();
+    s_last_lights_state = g_tx_struct.cc_steering_input_lights;
   }
 
   // Update Aux warning LED
@@ -113,12 +113,12 @@ void update_indicators(uint32_t notif) {
 void monitor_cruise_control() {
   // Check steering message for cc event (toggle/increase/decrease)
   // Update cc enabled based on brake/cc toggle
-  uint8_t cc_info = get_steering_info_input_cc();
+  uint8_t cc_info = g_tx_struct.cc_steering_input_cc;
   bool new_cc_state = s_cc_enabled;
-  if (get_drive_state() != DRIVE || get_pedal_output_brake_output()) {
+  if (g_tx_struct.cc_info_drive_state != DRIVE || g_tx_struct.cc_pedal_brake_output) {
     new_cc_state = false;
   } else {
-    if (get_received_steering_info() && (cc_info & EE_STEERING_CC_TOGGLE_MASK)) {
+    if (cc_info & EE_STEERING_CC_TOGGLE_MASK) {
       new_cc_state = !s_cc_enabled;
     }
   }
@@ -140,10 +140,10 @@ void monitor_cruise_control() {
 
   // Allow for updates to cruise control value if it is enabled
   if (s_cc_enabled) {
-    if (get_received_steering_info() && (cc_info & EE_STEERING_CC_INCREASE_MASK)) {
+    if (cc_info & EE_STEERING_CC_INCREASE_MASK) {
       s_target_velocity++;
     }
-    if (get_received_steering_info() && (cc_info & EE_STEERING_CC_DECREASE_MASK)) {
+    if (cc_info & EE_STEERING_CC_DECREASE_MASK) {
       s_target_velocity--;
     }
   }
@@ -154,7 +154,7 @@ void update_displays(void) {
   float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
   float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
   uint16_t batt_perc_val = get_battery_vt_batt_perc();
-  uint32_t aux_battery_voltage = get_battery_status_aux_batt_v();
+  uint16_t aux_battery_voltage = get_battery_status_aux_batt_v();
   if (speed_kph >= 100) {
     seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, aux_battery_voltage);
   } else {
@@ -174,10 +174,10 @@ StatusCode dashboard_init(void) {
     .direction = PCA9555_GPIO_DIR_OUT,
     .state = PCA9555_GPIO_STATE_LOW,
   };
-  for (int i = 0; i < NUM_DRIVE_LED; i++) {
-    status_ok_or_return(pca9555_gpio_init_pin(&s_output_leds[i], &settings));
-  }
+  // for (int i = 0; i < NUM_DRIVE_LED; i++) {
+  //   status_ok_or_return(pca9555_gpio_init_pin(&s_output_leds[i], &settings));
+  // }
   seg_displays_init(&all_displays);
-  pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_HIGH);
+
   return STATUS_CODE_OK;
 }
