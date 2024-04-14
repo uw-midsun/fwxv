@@ -75,6 +75,7 @@ static void prv_neutral_input(Fsm *fsm, void *context) {
 
 static void prv_neutral_output(void *context) {
   set_cc_info_drive_state(NEUTRAL);
+  drive_context = EE_DRIVE_OUTPUT_NEUTRAL_STATE;
   pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_HIGH);
 }
 
@@ -187,6 +188,7 @@ StatusCode init_drive_fsm(void) {
   for (int i = 0; i < NUM_DRIVE_FSM_BUTTONS; i++) {
     status_ok_or_return(pca9555_gpio_init_pin(&s_drive_btn_leds[i], &pca_settings));
   }
+  pca9555_gpio_set_state(&s_drive_btn_leds[NEUTRAL_LED], PCA9555_GPIO_STATE_HIGH);
   fsm_init(drive, s_drive_state_list, s_drive_transitions, NEUTRAL, NULL);
   return STATUS_CODE_OK;
 }

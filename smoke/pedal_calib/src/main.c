@@ -12,17 +12,17 @@
 #include "unity.h"
 
 // ORIGINAL PEDAL BOARD:
-// #define BRAKE_LIMIT_SWITCH \
+// #define BRAKE_LIMIT_SWITCH
 //   { .port = GPIO_PORT_B, .pin = 1 }
 
-// #define ADC_HALL_SENSOR \
+// #define ADC_HALL_SENSOR
 //   { .port = GPIO_PORT_A, .pin = 1 }
 
 // CENTRE CONSOLE PEDAL:
-// #define BRAKE_LIMIT_SWITCH \
+// #define BRAKE_LIMIT_SWITCH
 //   { .port = GPIO_PORT_B, .pin = 13 }
 
-// #define ADC_HALL_SENSOR \
+// #define ADC_HALL_SENSOR
 //   { .port = GPIO_PORT_A, .pin = 0 }
 
 static const GpioAddress brake = BRAKE_LIMIT_SWITCH;

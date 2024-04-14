@@ -30,8 +30,8 @@ typedef enum MotorControllerMessageIds {
 
 typedef enum DriveState {
   // drive states defined by center console
-  DRIVE,
   NEUTRAL,
+  DRIVE,
   REVERSE,
   // extra drive state types used only by mci
   CRUISE,
@@ -104,10 +104,10 @@ static inline uint8_t pack_right_shift_u32(uint32_t value, uint8_t shift, uint8_
 
 static void motor_controller_tx_all() {
   // don't send drive command if didn't get centre console's drive output msg
-  if (!get_received_cc_info()) {
-    LOG_DEBUG("NO drive output\n");
-    return;
-  }
+  // if (!get_received_cc_info()) {
+  //   LOG_DEBUG("NO drive output\n");
+  //   return;
+  // }
   // if (!get_pedal_output_brake_output()) return;
   // don't send drive command if not precharged
   if (!g_tx_struct.mc_status_precharge_status) {
@@ -121,12 +121,15 @@ static void motor_controller_tx_all() {
     .id.raw = DRIVER_CONTROL_BASE + 0x01,
     .dlc = 8,
   };
-  // s_target_velocity = 160.0;
+  // Very low reading will be ignored
+  if (s_target_current < 0.05) {
+    s_target_current = 0;
+  }
   memcpy(&message.data_u32[0], &s_target_velocity, sizeof(uint32_t));
   memcpy(&message.data_u32[1], &s_target_current, sizeof(uint32_t));
 
-  LOG_DEBUG("s_target_current: %d\n", (int)(s_target_current * 100));
-  LOG_DEBUG("s_target_velocity: %d\n", (int)(s_target_velocity * 100));
+  // LOG_DEBUG("s_target_current: %d\n", (int)(s_target_current * 100));
+  // LOG_DEBUG("s_target_velocity: %d\n", (int)(s_target_velocity * 100));
 
   mcp2515_transmit(&message);
 }

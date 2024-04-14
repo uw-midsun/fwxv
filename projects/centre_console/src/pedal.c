@@ -30,7 +30,6 @@ static void prv_read_throttle_data(uint32_t *reading) {
 }
 
 void pedal_run() {
-  adc_run();
   GpioState brake_state = 0;
   uint32_t throttle_position = 0;
   gpio_get_state(&brake, &brake_state);
@@ -56,7 +55,6 @@ StatusCode pedal_init(PedalCalibBlob *calib_blob) {
   gpio_init_pin(&brake, GPIO_INPUT_PULL_DOWN, GPIO_STATE_LOW);
   gpio_init_pin(&throttle, GPIO_ANALOG, GPIO_STATE_LOW);
   adc_add_channel(throttle);
-  adc_init();
   s_calib_blob = calib_blob;
   return STATUS_CODE_OK;
 }

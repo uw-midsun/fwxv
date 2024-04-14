@@ -28,9 +28,8 @@ StatusCode steering_init(Task *task) {
   return STATUS_CODE_OK;
 }
 
-void steering_input() {
+void steering_input(uint32_t notif) {
   uint16_t control_stalk_data;
-  uint32_t notification;
   set_cc_steering_input_cc(0);
   // Read ADC of pin set by turn signal lights
   adc_read_converted(turn_signal_address, &control_stalk_data);
@@ -62,12 +61,11 @@ void steering_input() {
     set_cc_steering_input_cc(CC_DECREASE_MASK | CC_INPUT);
     LOG_DEBUG("CC DECREASE\n");
   }
-  if (notify_get(&notification) == STATUS_CODE_OK) {
-    while (event_from_notification(&notification, &STEERING_EVENT) == STATUS_CODE_INCOMPLETE) {
-      if (STEERING_EVENT == CC_TOGGLE_EVENT) {
-        set_cc_steering_input_cc(CC_TOGGLE_MASK | CC_INPUT);
-        LOG_DEBUG("CC TOGGLED\n");
-      }
+
+  while (event_from_notification(&notif, &STEERING_EVENT) == STATUS_CODE_INCOMPLETE) {
+    if (STEERING_EVENT == CC_TOGGLE_EVENT) {
+      set_cc_steering_input_cc(CC_TOGGLE_MASK | CC_INPUT);
+      LOG_DEBUG("CC TOGGLED\n");
     }
   }
 }

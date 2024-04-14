@@ -15,6 +15,7 @@ typedef enum MainTaskBtnEvents {
   POWER_BUTTON_EVENT = 0,
   REGEN_BUTTON_EVENT,
   HAZARD_BUTTON_EVENT,
+  CC_TOGGLE_EVENT,
 } MainTaskBtnEvents;
 
 // Initializes outputs for dashboard. Must be called after scheduler start

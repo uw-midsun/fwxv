@@ -17,8 +17,6 @@
 #include "soft_timer.h"
 #include "tasks.h"
 
-#define PRECHARGE_EVENT 0
-
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
   .device_id = SYSTEM_CAN_DEVICE_MOTOR_CONTROLLER,
@@ -51,7 +49,11 @@ static PrechargeSettings s_precharge_settings = {
   .precharge_monitor = { GPIO_PORT_B, 0 },
 };
 
-void pre_loop_init() {}
+void pre_loop_init() {
+  mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
+  init_motor_controller_can();
+  precharge_init(&s_precharge_settings, PRECHARGE_EVENT, get_master_task());
+}
 
 void run_fast_cycle() {
   uint32_t notification;
@@ -61,17 +63,20 @@ void run_fast_cycle() {
     gpio_set_state(&s_precharge_settings.motor_sw, GPIO_STATE_HIGH);
     set_mc_status_precharge_status(true);
   }
-
-  run_can_rx_cycle();
   run_mcp2515_rx_cycle();
-  wait_tasks(2);
+  wait_tasks(1);
 
   run_mcp2515_tx_cycle();
-  run_can_tx_cycle();
-  wait_tasks(2);
+  wait_tasks(1);
 }
 
-void run_medium_cycle() {}
+void run_medium_cycle() {
+  run_can_rx_cycle();
+  wait_tasks(1);
+
+  run_can_tx_cycle();
+  wait_tasks(1);
+}
 
 void run_slow_cycle() {}
 
@@ -83,9 +88,6 @@ int main() {
   gpio_it_init();
 
   can_init(&s_can_storage, &can_settings);
-  mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
-  init_motor_controller_can();
-  precharge_init(&s_precharge_settings, PRECHARGE_EVENT, get_master_task());
 
   LOG_DEBUG("Motor Controller Task\n");
 

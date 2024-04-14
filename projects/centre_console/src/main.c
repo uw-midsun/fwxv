@@ -35,7 +35,7 @@ const CanSettings can_settings = {
 
 static PedalCalibBlob s_calib_blob = { 0 };
 
-void pre_loop_init() {;
+void pre_loop_init() {
   pca9555_gpio_init(I2C_PORT_1);
   calib_init(&s_calib_blob, sizeof(s_calib_blob), false);
   pedal_init(&s_calib_blob);
@@ -55,12 +55,13 @@ void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
 
-  pedal_run();
-  adc_run();
-  steering_input();
-
   uint32_t notif = 0;
   notify_get(&notif);
+  LOG_DEBUG("NOTIF: %ld\n", notif);
+
+  adc_run();
+  pedal_run();
+  steering_input(notif);
   update_indicators(notif);
   monitor_cruise_control();
 
