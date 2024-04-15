@@ -74,17 +74,17 @@ static_assert(sizeof(LtcAfeConfigRegisterData) == 6, "LtcAfeConfigRegisterData m
 
 // COMM Register, refer to LTC6803 datasheet page 31, Table 15
 typedef struct {
-  uint16_t icom0 : 4;
-  uint16_t d0 : 8;
-  uint16_t fcom0 : 4;
+  uint8_t icom0 : 4;
+  uint8_t d0 : 8;
+  uint8_t fcom0 : 4;
 
-  uint16_t icom1 : 4;
-  uint16_t d1 : 8;
-  uint16_t fcom1 : 4;
+  uint8_t icom1 : 4;
+  uint8_t d1 : 8;
+  uint8_t fcom1 : 4;
 
-  uint16_t icom2 : 4;
-  uint16_t d2 : 8;
-  uint16_t fcom2 : 4;
+  uint8_t icom2 : 4;
+  uint8_t d2 : 8;
+  uint8_t fcom2 : 4;
 } _PACKED LtcAfeCommRegisterData;
 static_assert(sizeof(LtcAfeCommRegisterData) == 6, "LtcAfeCommRegisterData must be 6 bytes");
 
@@ -116,7 +116,7 @@ typedef struct {
   LtcAfeWriteDeviceConfigPacket devices[LTC_AFE_MAX_CELLS_PER_DEVICE];
 } _PACKED LtcAfeWriteConfigPacket;
 #define SIZEOF_LTC_AFE_WRITE_CONFIG_PACKET(devices) \
-  (LTC6811_CMD_SIZE + (devices) * sizeof(LtcAfeWriteConfigPacket))
+  (LTC6811_CMD_SIZE + (devices) * sizeof(LtcAfeWriteDeviceConfigPacket))
 
 typedef union {
   uint16_t voltages[3];
@@ -187,6 +187,10 @@ static_assert(sizeof(LtcAfeAuxRegisterGroupPacket) == 8,
 
 #define LTC6811_STCOMM_RESERVED (1 << 0) | (1 << 1) | (1 << 5) | (1 << 8) | (1 << 9) | (1 << 10)
 
+#define LTC6811_WRPWM_RESERVED (1 << 5)
+
+#define LTC6811_RDPWM_RESERVED (1 << 5) | (1 << 2)
+
 // command bits
 // see Table 40 (p. 62)
 #define LTC6811_GPIO1_PD_ON (0 << 3)
@@ -216,6 +220,7 @@ static_assert(sizeof(LtcAfeAuxRegisterGroupPacket) == 8,
 #define LTC6811_SWTRD (1 << 1)
 
 #define LTC6811_ADAX_GPIO1 0x01
+#define LTC6811_ADAX_GPIO4 0x04
 #define LTC6811_ADAX_MODE_FAST (0 << 8) | (1 << 7)
 
 #define LTC6811_ICOM_CSBM_LOW (1 << 3)
@@ -224,3 +229,6 @@ static_assert(sizeof(LtcAfeAuxRegisterGroupPacket) == 8,
 
 #define LTC6811_FCOM_CSBM_LOW (0 << 0)
 #define LTC6811_FCOM_CSBM_HIGH (1 << 3) | (1 << 0)
+
+// see Table 17 (p. 38)
+#define LTC6811_PWMC_DC_100 (0xF)

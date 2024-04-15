@@ -1,6 +1,5 @@
 #pragma once
 
-#include "bms.h"
 #include "bms_carrier_getters.h"
 #include "bms_carrier_setters.h"
 #include "can.h"
@@ -15,6 +14,6 @@
 #define BMS_CLOSE_RELAYS_DELAY 200
 typedef enum RelayType { NO_RELAYS = 0, POS_RELAY, NEG_RELAY, SOLAR_RELAY } RelayType;
 
-void bms_relay_fault_check(void);
+void bms_relay_fault(void);
 
-StatusCode init_bms_relays(BmsStorage *bms_storage);
+StatusCode init_bms_relays(void);

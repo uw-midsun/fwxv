@@ -2,6 +2,7 @@
 
 #include "bms_carrier_getters.h"
 #include "bms_carrier_setters.h"
+#include "relays.h"
 #include "status.h"
 
 typedef struct BpsStorage {

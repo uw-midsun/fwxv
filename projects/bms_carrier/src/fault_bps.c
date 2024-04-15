@@ -17,6 +17,7 @@ StatusCode fault_bps_set(uint8_t fault_bitmask) {
   } else {
     s_bps_storage->fault_bitset |= (1 << 14);
   }
+  bms_relay_fault();
   set_battery_status_fault(fault_bitmask);
   return STATUS_CODE_OK;
 }

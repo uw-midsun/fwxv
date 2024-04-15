@@ -18,11 +18,6 @@
 #define RETRY_DELAY_MS 3
 #define CELL_SENSE_CONVERSIONS 0
 
-#define NUM_AFES 3
-#define NUM_CELL_MODULES_PER_AFE 12
-#define NUM_TOTAL_CELLS (NUM_AFES * NUM_CELL_MODULES_PER_AFE)
-#define NUM_THERMISTORS (NUM_TOTAL_CELLS * 2)
-
 // Fault thresholds
 // TODO: Verify these values!
 #define CELL_OVERVOLTAGE 42500

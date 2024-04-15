@@ -21,11 +21,12 @@
 #include "status.h"
 
 // This is an arbitrary limitation, can be increased/decreased if needed
-#define LTC_AFE_MAX_DEVICES 5
+#define LTC_AFE_MAX_DEVICES 3
 // This is a device limitation
 #define LTC_AFE_MAX_CELLS_PER_DEVICE 12
+#define LTC_AFE_MAX_THERMISTORS_PER_DEVICE 8
 #define LTC_AFE_MAX_CELLS (LTC_AFE_MAX_DEVICES * LTC_AFE_MAX_CELLS_PER_DEVICE)
-#define LTC_AFE_MAX_THERMISTORS LTC_AFE_MAX_CELLS
+#define LTC_AFE_MAX_THERMISTORS (LTC_AFE_MAX_DEVICES * LTC_AFE_MAX_THERMISTORS_PER_DEVICE)
 
 #if defined(__GNUC__)
 #define _PACKED __attribute__((packed))

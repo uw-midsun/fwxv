@@ -1,8 +1,6 @@
 #include "relays.h"
 
 static RelayType relay_toggle = NO_RELAYS;
-
-static BmsStorage *s_storage;
 static SoftTimer relays_timer;
 
 static const GpioAddress pos_relay_en = { .port = GPIO_PORT_B, .pin = 8 };
@@ -40,24 +38,16 @@ static void prv_close_relays(SoftTimerId id) {
   }
 }
 
-static void prv_open_relays() {
+void bms_relay_fault() {
+  LOG_DEBUG("Transitioned to RELAYS_FAULT\n");
+  // OPEN RELAYS
   gpio_set_state(&pos_relay_en, GPIO_STATE_LOW);
   gpio_set_state(&neg_relay_en, GPIO_STATE_LOW);
   gpio_set_state(&solar_relay_en, GPIO_STATE_LOW);
+  set_battery_relay_info_state(EE_RELAY_STATE_FAULT);
 }
 
-void bms_relay_fault_check() {
-  LOG_DEBUG("FSM RUN CYCLE\n");
-  if (s_storage->bps_storage.fault_bitset) {
-    LOG_DEBUG("Fault %d\n", s_storage->bps_storage.fault_bitset);
-    LOG_DEBUG("Transitioned to RELAYS_FAULT\n");
-    prv_open_relays();
-    set_battery_relay_info_state(EE_RELAY_STATE_FAULT);
-  }
-}
-
-StatusCode init_bms_relays(BmsStorage *bms_storage) {
-  s_storage = bms_storage;
+StatusCode init_bms_relays() {
   gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&solar_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
