@@ -28,7 +28,6 @@ StatusCode ltc_afe_impl_trigger_aux_conv(LtcAfeStorage *afe, uint8_t device_cell
 // Reads converted voltages from the AFE into the storage result arrays.
 StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe);
 StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t device_cell);
-StatusCode ltc_afe_impl_toggle_thermistor(LtcAfeStorage *afe, uint8_t thermistor);
 // Mark cell for discharging (takes effect after config is re-written)
 // |cell| should be [0, LTC_AFE_MAX_CELLS)
 StatusCode ltc_afe_impl_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell, bool discharge);

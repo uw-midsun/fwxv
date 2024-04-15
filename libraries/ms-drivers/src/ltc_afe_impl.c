@@ -113,43 +113,6 @@ static StatusCode prv_trigger_aux_adc_conversion(LtcAfeStorage *afe) {
   return spi_exchange(settings->spi_port, cmd, LTC6811_CMD_SIZE, NULL, 0);
 }
 
-static StatusCode prv_aux_write_comm_register(LtcAfeStorage *afe, uint8_t device_cell) {
-  if (device_cell >= AUX_ADG731_NUM_PINS) {
-    return STATUS_CODE_OUT_OF_RANGE;
-  }
-  LtcAfeSettings *settings = &afe->settings;
-  LtcAfeWriteCommRegPacket packet = { 0 };
-  // Build WRCOMM Command
-  prv_build_cmd(LTC6811_WRCOMM_RESERVED, packet.wrcomm, LTC6811_CMD_SIZE);
-  // Write 3 bytes of data to the COMM registers
-  // We send the a byte and then we send CSBM_HIGH to
-  // release the SPI port
-  packet.reg.icom0 = LTC6811_ICOM_CSBM_LOW;
-  packet.reg.d0 = device_cell;
-  packet.reg.fcom0 = LTC6811_FCOM_CSBM_HIGH;
-  packet.reg.icom1 = LTC6811_ICOM_NO_TRANSMIT;
-  packet.reg.icom2 = LTC6811_ICOM_NO_TRANSMIT;
-  uint16_t comm_pec = crc15_calculate((uint8_t *)&packet.reg, sizeof(LtcAfeCommRegisterData));
-
-  prv_wakeup_idle(afe);
-  return spi_exchange(settings->spi_port, (uint8_t *)&packet, sizeof(LtcAfeWriteCommRegPacket),
-                      NULL, 0);
-}
-
-static StatusCode prv_aux_send_comm_register(LtcAfeStorage *afe) {
-  LtcAfeSettings *settings = &afe->settings;
-  LtcAfeSendCommRegPacket packet = { 0 };
-  // Build STCOMM command
-  prv_build_cmd(LTC6811_STCOMM_RESERVED, packet.stcomm, LTC6811_CMD_SIZE);
-  for (uint8_t i = 0; i < LTC6811_NUM_COMM_REG_BYTES; i++) {
-    // NULL bytes so our SPI drivers will send 24 clock cycles
-    packet.clk[i] = 0;
-  }
-  prv_wakeup_idle(afe);
-  return spi_exchange(settings->spi_port, (uint8_t *)&packet, sizeof(LtcAfeSendCommRegPacket), NULL,
-                      0);
-}
-
 // write config to all devices
 static StatusCode prv_write_config(LtcAfeStorage *afe, uint8_t gpio_enable_pins) {
   LtcAfeSettings *settings = &afe->settings;
@@ -258,17 +221,7 @@ StatusCode ltc_afe_impl_trigger_cell_conv(LtcAfeStorage *afe) {
   return prv_trigger_adc_conversion(afe);
 }
 
-// REMOVE SOON. UNSED?
-StatusCode ltc_afe_impl_trigger_aux_conv(LtcAfeStorage *afe, uint8_t device_cell) {
-  uint8_t gpio_bits =
-      LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
-  prv_write_config(afe, gpio_bits);
-  prv_aux_write_comm_register(afe, device_cell);
-  prv_aux_send_comm_register(afe);
-  return prv_trigger_aux_adc_conversion(afe);
-}
-
-StatusCode ltc_afe_impl_toggle_thermistor(LtcAfeStorage *afe, uint8_t thermistor) {
+StatusCode ltc_afe_impl_trigger_aux_conv(LtcAfeStorage *afe, uint8_t thermistor) {
   LtcAfeSettings *settings = &afe->settings;
   uint8_t gpio_bits = (thermistor << 3) | LTC6811_GPIO4_PD_OFF;
   prv_write_config(afe, gpio_bits);
