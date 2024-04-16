@@ -48,7 +48,6 @@ void pre_loop_init() {
 
 void run_fast_cycle() {
   get_button_press();
-  update_displays();
 }
 
 void run_medium_cycle() {
@@ -57,7 +56,6 @@ void run_medium_cycle() {
 
   uint32_t notif = 0;
   notify_get(&notif);
-  LOG_DEBUG("NOTIF: %ld\n", notif);
 
   adc_run();
   pedal_run();
@@ -91,7 +89,7 @@ int main() {
   LOG_DEBUG("Welcome to TEST! \n");
 
   init_master_task();
-
+  display_init();
   tasks_start();
 
   LOG_DEBUG("exiting main? \n");

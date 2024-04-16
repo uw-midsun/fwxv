@@ -21,14 +21,14 @@ typedef enum MainTaskBtnEvents {
 // Initializes outputs for dashboard. Must be called after scheduler start
 StatusCode dashboard_init();
 
+// Initialized the display. Must be caleld before scheduler start
+StatusCode display_init(void);
+
 // Updates indicators based on notification value and CAN messages
 void update_indicators(uint32_t notif);
 
 // Updates cruise control values based on inputs from steering
 void monitor_cruise_control(void);
-
-// Update 7-seg displays
-void update_displays(void);
 
 // Update drive output based
 void update_drive_output();

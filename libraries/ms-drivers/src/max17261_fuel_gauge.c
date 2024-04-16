@@ -79,7 +79,7 @@ StatusCode max17261_current(Max17261Storage *storage, int16_t *current_ua) {
 StatusCode max17261_voltage(Max17261Storage *storage, uint16_t *vcell_mv) {
   uint16_t vcell_reg_val = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_VCELL, &vcell_reg_val));
-  *vcell_mv = vcell_reg_val * VOLT_LSB;
+  *vcell_mv = vcell_reg_val * VOLT_LSB / 2.5;  // Reports 2.5x the Cell_X voltage
   return STATUS_CODE_OK;
 }
 

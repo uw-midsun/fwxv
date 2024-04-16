@@ -31,6 +31,9 @@
 #define CURRENT_SENSE_MAX_VOLTAGE (150U)
 #define ALRT_PIN_V_RES_MICRO_V (400)
 
+#define CELL_X_R1_KOHMS 1780
+#define CELL_X_R2_KOHMS 20
+
 // Enum for GPIO IT alerts (just the one pin)
 typedef enum { CURRENT_SENSE_RUN_CYCLE = 0, ALRT_GPIO_IT, KILLSWITCH_IT } CurrentSenseNotification;
 

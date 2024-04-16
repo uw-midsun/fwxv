@@ -139,24 +139,25 @@ void monitor_cruise_control() {
   }
 }
 
-void update_displays(void) {
-  // Read data from CAN structs and update displays with those values
-  float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
-  float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
-  uint16_t batt_perc_val = get_battery_vt_batt_perc();
-  uint16_t aux_battery_voltage = get_battery_status_aux_batt_v();
-  if (speed_kph >= 100) {
-    seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, aux_battery_voltage);
-  } else {
-    seg_displays_set_float(&all_displays, speed_kph, batt_perc_val, aux_battery_voltage);
-  }
-}
-
 void update_drive_output() {
   set_cc_info_cruise_control(s_cc_enabled);
   set_cc_info_target_velocity(s_target_velocity);
   set_cc_info_regen_braking(s_regen_braking);
   set_cc_info_hazard_enabled(s_hazard_state);
+}
+
+TASK(update_displays, TASK_MIN_STACK_SIZE) {
+  while (true) {
+    float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
+    float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
+    uint16_t batt_perc_val = get_battery_vt_batt_perc();
+    uint16_t aux_battery_voltage = get_battery_status_aux_batt_v();
+    if (speed_kph >= 100) {
+      seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, aux_battery_voltage);
+    } else {
+      seg_displays_set_float(&all_displays, speed_kph, batt_perc_val, aux_battery_voltage);
+    }
+  }
 }
 
 StatusCode dashboard_init(void) {
@@ -170,4 +171,8 @@ StatusCode dashboard_init(void) {
   seg_displays_init(&all_displays);
 
   return STATUS_CODE_OK;
+}
+
+StatusCode display_init(void) {
+  return tasks_init_task(update_displays, TASK_PRIORITY(2), NULL);
 }

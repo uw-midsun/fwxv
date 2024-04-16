@@ -23,6 +23,8 @@ StatusCode prv_fuel_gauge_read() {
   status |= max17261_state_of_charge(&s_fuel_guage_storage, &s_current_storage->soc);
   status |= max17261_current(&s_fuel_guage_storage, &s_current_storage->current);
   status |= max17261_voltage(&s_fuel_guage_storage, &s_current_storage->voltage);
+  s_current_storage->voltage = (s_current_storage->voltage) * (CELL_X_R2_KOHMS + CELL_X_R1_KOHMS) /
+                               (CELL_X_R2_KOHMS) / 1000;  // Convert to V -> mV
   status |= max17261_temp(&s_fuel_guage_storage, &s_current_storage->temperature);
 
   LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
