@@ -53,6 +53,7 @@ void run_fast_cycle() {
 void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
+  check_can_watchdogs();
 
   uint32_t notif = 0;
   notify_get(&notif);
