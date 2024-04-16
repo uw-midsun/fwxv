@@ -69,7 +69,7 @@ LtcAfeSettings s_afe_settings = {
   .adc_mode = LTC_AFE_ADC_MODE_7KHZ,
 
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
-  .aux_bitset = { 0xFFF, 0xFFF, 0xFFF },
+  .aux_bitset = { 0xFF, 0xFF, 0xFF },
 
   .num_devices = 1,
   .num_cells = 12,
@@ -131,12 +131,12 @@ TASK(smoke_ltc, TASK_STACK_1024) {
       // DELAY NEEDED for adc conv to happen
       delay_ms(1);
       // Thermistor read cell 0
-      ltc_afe_impl_read_aux(&s_ltc_store, s_thermistor_map[i]);
+      ltc_afe_impl_read_aux(&s_ltc_store, i);
 
       // Log thermistor result
-      uint16_t resistance = calculate_temperature(
-          s_ltc_store.aux_voltages[s_ltc_store.aux_result_lookup[s_thermistor_map[i]]]);
-      LOG_DEBUG("Thermistor reading: %d\n", resistance);
+      s_ltc_store.aux_result_lookup[i] =
+          calculate_temperature(s_ltc_store.aux_voltages[s_ltc_store.aux_result_lookup[i]]);
+      LOG_DEBUG("Thermistor reading: %d\n", s_ltc_store.aux_result_lookup[i]);
     }
 
     // Delay until next cycle

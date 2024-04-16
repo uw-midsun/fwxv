@@ -63,7 +63,7 @@ void run_fast_cycle() {
     gpio_set_state(&s_precharge_settings.motor_sw, GPIO_STATE_HIGH);
     set_mc_status_precharge_status(true);
   }
-  run_mcp2515_rx_cycle();
+  run_can_rx_cycle();
   wait_tasks(1);
 
   run_mcp2515_tx_cycle();
@@ -71,7 +71,7 @@ void run_fast_cycle() {
 }
 
 void run_medium_cycle() {
-  run_can_rx_cycle();
+  run_mcp2515_rx_cycle();
   wait_tasks(1);
 
   run_can_tx_cycle();
