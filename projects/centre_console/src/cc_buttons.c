@@ -57,8 +57,8 @@ StatusCode get_button_press(void) {
 StatusCode init_cc_buttons(Task *task) {
   cc_notify_task = task;
   // gpio_init_pin(&buzzer, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_LOW);
-  // pwm_init(PWM_TIMER_4, BUZZER_MICROSECONDS);
-  // pwm_set_dc(PWM_TIMER_4, 5);
+  // pwm_init(PWM_TIMER_1, BUZZER_MICROSECONDS);
+  // pwm_set_dc(PWM_TIMER_1, 5);
   // soft_timer_init(BEEP_MS, prv_buzzer_beep, &s_timer);
   return STATUS_CODE_OK;
 }

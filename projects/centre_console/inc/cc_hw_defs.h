@@ -9,7 +9,7 @@
   { .port = NUM_GPIO_PORTS, .pin = GPIO_PINS_PER_PORT }
 
 #define BUZZER \
-  { .port = GPIO_PORT_B, .pin = 7 }
+  { .port = GPIO_PORT_B, .pin = 15 }
 
 // Centre Console LEDs
 #define HAZARD_LED_ADDR \
@@ -72,9 +72,9 @@
 #define BATT_DISP2 \
   { .port = GPIO_PORT_B, .pin = 0 }
 #define BATT_DISP3 \
-  { .port = GPIO_PORT_A, .pin = 7 }
+  { .port = GPIO_PORT_B, .pin = 6 }
 #define BATT_DISP4 \
-  { .port = GPIO_PORT_A, .pin = 6 }
+  { .port = GPIO_PORT_B, .pin = 7 }
 #define BATT_DISP5 \
   { .port = GPIO_PORT_B, .pin = 5 }
 #define BATT_DISP6 \

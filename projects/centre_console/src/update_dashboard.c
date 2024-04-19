@@ -82,9 +82,11 @@ void update_indicators(uint32_t notif) {
         break;
       case EE_STEERING_LIGHTS_LEFT_STATE:
         pca9555_gpio_set_state(&s_output_leds[LEFT_LED], PCA9555_GPIO_STATE_HIGH);
+        pca9555_gpio_set_state(&s_output_leds[RIGHT_LED], PCA9555_GPIO_STATE_LOW);
         break;
       case EE_STEERING_LIGHTS_RIGHT_STATE:
         pca9555_gpio_set_state(&s_output_leds[RIGHT_LED], PCA9555_GPIO_STATE_HIGH);
+        pca9555_gpio_set_state(&s_output_leds[LEFT_LED], PCA9555_GPIO_STATE_LOW);
         break;
       default:
         break;
@@ -131,10 +133,10 @@ void monitor_cruise_control() {
   // Allow for updates to cruise control value if it is enabled
   if (s_cc_enabled) {
     if (cc_info & EE_STEERING_CC_INCREASE_MASK) {
-      s_target_velocity++;
+      s_target_velocity += 1000;  // 1000 for testing should actually be 1
     }
     if (cc_info & EE_STEERING_CC_DECREASE_MASK) {
-      s_target_velocity--;
+      s_target_velocity -= 1000;
     }
   }
 }
@@ -168,11 +170,11 @@ StatusCode dashboard_init(void) {
   for (int i = 0; i < NUM_DRIVE_LED; i++) {
     status_ok_or_return(pca9555_gpio_init_pin(&s_output_leds[i], &settings));
   }
-  seg_displays_init(&all_displays);
+  // seg_displays_init(&all_displays);
 
   return STATUS_CODE_OK;
 }
 
 StatusCode display_init(void) {
-  return tasks_init_task(update_displays, TASK_PRIORITY(2), NULL);
+  return tasks_init_task(update_displays, TASK_PRIORITY(1), NULL);
 }

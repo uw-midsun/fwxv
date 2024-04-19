@@ -12,7 +12,7 @@ static Event STEERING_EVENT;
 StatusCode steering_init(Task *task) {
   // Initialize Pins
   gpio_init_pin(&turn_signal_address, GPIO_ANALOG, GPIO_STATE_LOW);
-  // gpio_init_pin(&cc_address, GPIO_ANALOG, GPIO_STATE_LOW);
+  gpio_init_pin(&cc_address, GPIO_ANALOG, GPIO_STATE_LOW);
   gpio_init_pin(&cc_toggle_address, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
   // Set up ADC
   adc_add_channel(turn_signal_address);

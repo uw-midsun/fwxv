@@ -53,7 +53,6 @@ void run_fast_cycle() {
 void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
-  check_can_watchdogs();
 
   uint32_t notif = 0;
   notify_get(&notif);
@@ -90,7 +89,7 @@ int main() {
   LOG_DEBUG("Welcome to TEST! \n");
 
   init_master_task();
-  display_init();
+  // display_init();
   tasks_start();
 
   LOG_DEBUG("exiting main? \n");

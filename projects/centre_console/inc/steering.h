@@ -19,10 +19,10 @@
 #define CRUISE_CONTROl_STALK_NEUTRAL_VOLTAGE_MV 3300
 
 #define TURN_SIGNAL_GPIO \
-  { .port = GPIO_PORT_B, .pin = 7 }
+  { .port = GPIO_PORT_A, .pin = 6 }
 
 #define CC_CHANGE_GPIO \
-  { .port = GPIO_PORT_B, .pin = 6 }
+  { .port = GPIO_PORT_A, .pin = 7 }
 
 #define CC_TOGGLE_GPIO \
   { .port = GPIO_PORT_B, .pin = 12 }

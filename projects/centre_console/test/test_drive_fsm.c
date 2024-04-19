@@ -2,9 +2,9 @@
 #include "centre_console_setters.h"
 #include "drive_fsm.h"
 #include "i2c.h"
+#include "pca9555_gpio_expander.h"
 #include "task_test_helpers.h"
 #include "unity.h"
-#include "pca9555_gpio_expander.h"
 
 // run test with command: scons test --platform=x86 --library=centre_console --test=drive_fsm
 

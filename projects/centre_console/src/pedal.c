@@ -20,7 +20,6 @@ static void prv_read_throttle_data(uint32_t *reading) {
       (((float)adc_reading - (float)s_calib_blob->throttle_calib.lower_value) / range_throttle);
   // Readings are inverted
   calculated_reading = 1 - calculated_reading;
-
   if (calculated_reading < 0) {
     calculated_reading = 0;
   } else if (calculated_reading > 1) {
