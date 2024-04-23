@@ -2,8 +2,12 @@
 
 #include "outputs.h"
 #include "pd_fault.h"
+#include "persist.h"
 #include "power_distribution_getters.h"
 #include "power_distribution_setters.h"
+
+static PersistStorage s_persist;
+static BpsStorage s_bps_storage;
 
 #define pd_fault_ok_or_transition(fsm)                                     \
   power_context.fault = check_pd_fault();                                  \
@@ -26,6 +30,7 @@ static void prv_off_state_output(void *context) {
 static void prv_off_state_input(Fsm *fsm, void *context) {
   pd_fault_ok_or_transition(fsm);
   LOG_DEBUG("IN off state - %d\n", get_received_cc_info());
+  LOG_DEBUG("s_bps_storage.fault_bitset %d\n", s_bps_storage.fault_bitset);
   if (!get_received_cc_info()) {
     return;
   }
@@ -46,6 +51,10 @@ static void prv_precharge_output(void *context) {
 }
 
 static void prv_precharge_input(Fsm *fsm, void *context) {
+  LOG_DEBUG("GET_MOTOR_VELOCITY %d\n", (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()));
+  if (get_motor_velocity_velocity_l() && get_motor_velocity_velocity_r()) {
+    fsm_transition(fsm, POWER_STATE_OFF);
+  }
   if (get_mc_status_precharge_status()) {
     fsm_transition(fsm, POWER_STATE_DRIVE);
   } else if ((xTaskGetTickCount() - power_context.timer_start_ticks) >
@@ -58,6 +67,10 @@ static void prv_drive_state_output(void *context) {
   LOG_DEBUG("Transitioned to DRIVE STATE\n");
   pd_set_active_output_group(OUTPUT_GROUP_POWER_DRIVE);
   power_context.latest_state = POWER_STATE_DRIVE;
+  s_bps_storage.fault_bitset = 0;
+  s_bps_storage.vehicle_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
+  persist_commit(&s_persist);
+  set_pd_status_bps_persist(false);
   set_pd_status_power_state(EE_POWER_DRIVE_STATE);
 }
 
@@ -75,7 +88,11 @@ static void prv_drive_state_input(Fsm *fsm, void *context) {
 
 static void prv_fault_state_output(void *context) {
   LOG_DEBUG("Transitioned to FAULT STATE\n");
+  s_bps_storage.fault_bitset = get_battery_status_fault();
+  s_bps_storage.vehicle_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
+  persist_commit(&s_persist);
   pd_set_active_output_group(OUTPUT_GROUP_POWER_FAULT);
+  set_pd_status_bps_persist(true);
   set_pd_status_power_state(EE_POWER_FAULT_STATE);
   // TODO(devAdhiraj): start bps strobe
 }
@@ -100,6 +117,11 @@ static bool s_power_seq_transitions[NUM_POWER_STATES][NUM_POWER_STATES] = {
 };
 
 StatusCode init_power_seq(void) {
+  memset(&s_bps_storage, 0, sizeof(s_bps_storage));
+  persist_init(&s_persist, BPS_FAULT_FLASH_PAGE, &s_bps_storage, sizeof(s_bps_storage), true);
+  persist_ctrl_periodic(&s_persist, false);
+  if (s_bps_storage.fault_bitset) set_pd_status_bps_persist(true);
+
   fsm_init(power_seq, s_power_seq_state_list, s_power_seq_transitions, POWER_STATE_OFF, NULL);
   return STATUS_CODE_OK;
 }

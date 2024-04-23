@@ -11,6 +11,7 @@
 #define CONVERT_VELOCITY_TO_KPH 0.036
 
 SegDisplay all_displays = ALL_DISPLAYS;
+GpioAddress bps_led = BPS_LED_ADDR;
 
 // Centre Console State Variables
 static bool s_cc_enabled;
@@ -100,6 +101,12 @@ void update_indicators(uint32_t notif) {
   } else {
     pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_LOW);
   }
+
+  if (get_battery_status_fault() || get_pd_status_power_state() == EE_POWER_FAULT_STATE || get_pd_status_bps_persist()) {
+    gpio_set_state(&bps_led, GPIO_STATE_LOW);
+  } else {
+    gpio_set_state(&bps_led, GPIO_STATE_HIGH);
+  }
 }
 
 void monitor_cruise_control() {
@@ -149,6 +156,7 @@ void update_drive_output() {
 }
 
 TASK(update_displays, TASK_MIN_STACK_SIZE) {
+  seg_displays_init(&all_displays);
   while (true) {
     float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
     float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
@@ -170,11 +178,11 @@ StatusCode dashboard_init(void) {
   for (int i = 0; i < NUM_DRIVE_LED; i++) {
     status_ok_or_return(pca9555_gpio_init_pin(&s_output_leds[i], &settings));
   }
-  // seg_displays_init(&all_displays);
+  gpio_init_pin(&bps_led, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
 
   return STATUS_CODE_OK;
 }
 
 StatusCode display_init(void) {
-  return tasks_init_task(update_displays, TASK_PRIORITY(1), NULL);
+  return tasks_init_task(update_displays, TASK_PRIORITY(2), NULL);
 }

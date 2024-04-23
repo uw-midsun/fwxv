@@ -11,11 +11,8 @@ SegDisplay all_displays = ALL_DISPLAYS;
 
 TASK(seg_displays, TASK_STACK_512) {
   seg_displays_init(&all_displays);
-  gpio_init_pin(&all_displays.Digit2, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  gpio_init_pin(&all_displays.Digit3, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  gpio_init_pin(&all_displays.Digit1, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   while (true) {
-    seg_displays_set_int(&all_displays, 888, 888, 888);
+    seg_displays_set_int(&all_displays, 56, 123, 78);
   }
 }
 

@@ -3,11 +3,3 @@ if [ "$GIT_AUTHOR_NAME" = "vagrant" ] || [ "$GIT_AUTHOR_EMAIL" = "vagrant@midsun
   echo "https://uwmidsun.atlassian.net/wiki/spaces/ELEC/pages/60260353/Module+1+Setup"
   exit 1
 fi
-
-echo "Automatically formatting and linting"
-scons format lint && git add .
-
-if [ $? -ne 0 ]; then
- echo "Code must be properly formatted before commiting!"
- exit 1
-fi

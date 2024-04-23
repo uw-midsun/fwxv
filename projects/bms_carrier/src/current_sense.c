@@ -118,14 +118,14 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
 
   // Expected MAX current / (uV / uOhmsSense) resolution
   s_fuel_gauge_settings.i_thresh_max =
-      ((CURRENT_SENSE_MAX_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MILLI_OHMS));
+      ((CURRENT_SENSE_MAX_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MOHMS));
   // Expected MIN current / (uV / uOhmsSense) resolution
   s_fuel_gauge_settings.i_thresh_min =
-      ((CURRENT_SENSE_MIN_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MILLI_OHMS));
+      ((CURRENT_SENSE_MIN_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MOHMS));
   // Interrupt threshold limits are stored in 2s-complement format with 1C resolution
   s_fuel_gauge_settings.temp_thresh_max = CURRENT_SENSE_MAX_TEMP;
 
-  s_fuel_gauge_settings.r_sense_mohms = CURRENT_SENSE_R_SENSE_MILLI_OHMS;
+  s_fuel_gauge_settings.r_sense_mohms = CURRENT_SENSE_R_SENSE_MOHMS;
 
   // Soft timer period for soc & chargin check
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;

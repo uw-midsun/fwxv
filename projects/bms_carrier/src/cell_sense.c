@@ -63,9 +63,9 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0xFF, 0xFF, 0xFF },
 
-  .num_devices = 1,
+  .num_devices = 3,
   .num_cells = 12,
-  .num_thermistors = 6,
+  .num_thermistors = 0,
 };
 
 static inline StatusCode prv_cell_sense_conversions() {
@@ -144,8 +144,9 @@ StatusCode cell_sense_run() {
   uint16_t min_voltage = 0xffff;
 
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-    // LOG_DEBUG("CELL %d: %d\n\r", cell,
-    // ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
+    LOG_DEBUG("CELL %d: %d\n\r", cell,
+    ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
+    delay_ms(3);
     max_voltage =
         ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > max_voltage
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
@@ -155,8 +156,8 @@ StatusCode cell_sense_run() {
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
             : min_voltage;
   }
-  LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
-  LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
+  // LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
+  // LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
   set_battery_info_max_cell_v(max_voltage);
 
   if (max_voltage >= CELL_OVERVOLTAGE) {
@@ -192,13 +193,13 @@ StatusCode cell_sense_run() {
     }
   }
 
-  LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
+  // LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
 
   for (size_t thermistor = 0;
        thermistor < s_afe_settings.num_thermistors * s_afe_settings.num_devices; thermistor += 2) {
     // Log thermistor result
-    LOG_DEBUG("Thermistor reading: %d\n",
-              ltc_afe_storage->aux_voltages[ltc_afe_storage->aux_result_lookup[thermistor]]);
+    // LOG_DEBUG("Thermistor reading: %d\n",
+    //           ltc_afe_storage->aux_voltages[ltc_afe_storage->aux_result_lookup[thermistor]]);
 
     if (ltc_afe_storage->aux_result_lookup[thermistor] >= CELL_MAX_TEMPERATURE) {
       LOG_DEBUG("CELL OVERTEMP\n");

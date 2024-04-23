@@ -59,3 +59,5 @@
           length: 8
         fault_bitset:
           length: 8
+        bps_persist:
+          length: 8

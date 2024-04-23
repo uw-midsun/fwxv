@@ -64,8 +64,8 @@ static void assert_drive_command(float current_percent, float velocity_rpm) {
 
 bool initialized = false;
 void setup_test(void) {
-  // set received drive_output and precharge to true, true for most test
-  g_rx_struct.received_drive_output = true;
+  // set received cc_info and precharge to true, true for most test
+  g_rx_struct.received_cc_info = true;
   g_tx_struct.mc_status_precharge_status = true;
 
   if (initialized) {
@@ -91,7 +91,7 @@ void run_motor_controller_cycle() {
 
 TEST_IN_TASK
 void no_drive_command_without_center_console_msg(void) {
-  g_rx_struct.received_drive_output = false;
+  g_rx_struct.received_cc_info = false;
   g_tx_struct.mc_status_precharge_status = true;
 
   run_motor_controller_cycle();
@@ -102,7 +102,7 @@ void no_drive_command_without_center_console_msg(void) {
 
 TEST_IN_TASK
 void no_drive_command_without_precharge(void) {
-  g_rx_struct.received_drive_output = true;
+  g_rx_struct.received_cc_info = true;
   g_tx_struct.mc_status_precharge_status = false;
 
   run_motor_controller_cycle();
@@ -113,12 +113,12 @@ void no_drive_command_without_precharge(void) {
 
 TEST_IN_TASK
 void test_reverse(void) {
-  g_rx_struct.drive_output_drive_state = REVERSE;
-  g_rx_struct.drive_output_cruise_control = false;
-  g_rx_struct.drive_output_regen_braking = false;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(10.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.0f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.3f);
+  g_rx_struct.cc_info_drive_state = REVERSE;
+  g_rx_struct.cc_info_cruise_control = false;
+  g_rx_struct.cc_info_regen_braking = false;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(10.0f);
+  g_rx_struct.cc_pedal_brake_output = 0;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.3f);
 
   run_motor_controller_cycle();
 
@@ -127,12 +127,12 @@ void test_reverse(void) {
 
 TEST_IN_TASK
 void test_neutral(void) {
-  g_rx_struct.drive_output_drive_state = NEUTRAL;
-  g_rx_struct.drive_output_cruise_control = false;
-  g_rx_struct.drive_output_regen_braking = false;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(10.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.0f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.5f);
+  g_rx_struct.cc_info_drive_state = NEUTRAL;
+  g_rx_struct.cc_info_cruise_control = false;
+  g_rx_struct.cc_info_regen_braking = false;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(10.0f);
+  g_rx_struct.cc_pedal_brake_output = 0;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.5f);
 
   run_motor_controller_cycle();
 
@@ -141,12 +141,12 @@ void test_neutral(void) {
 
 TEST_IN_TASK
 void test_neutral_no_pedal(void) {
-  g_rx_struct.drive_output_drive_state = DRIVE;
-  g_rx_struct.drive_output_cruise_control = false;
-  g_rx_struct.drive_output_regen_braking = false;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(10.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.0f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.0f);
+  g_rx_struct.cc_info_drive_state = DRIVE;
+  g_rx_struct.cc_info_cruise_control = false;
+  g_rx_struct.cc_info_regen_braking = false;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(10.0f);
+  g_rx_struct.cc_pedal_brake_output = 0;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.0f);
 
   run_motor_controller_cycle();
 
@@ -155,12 +155,12 @@ void test_neutral_no_pedal(void) {
 
 TEST_IN_TASK
 void test_brake(void) {
-  g_rx_struct.drive_output_drive_state = REVERSE;
-  g_rx_struct.drive_output_cruise_control = false;
-  g_rx_struct.drive_output_regen_braking = false;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(0.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.5f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.2f);
+  g_rx_struct.cc_info_drive_state = REVERSE;
+  g_rx_struct.cc_info_cruise_control = false;
+  g_rx_struct.cc_info_regen_braking = false;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(0.0f);
+  g_rx_struct.cc_pedal_brake_output = 1;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.2f);
 
   run_motor_controller_cycle();
 
@@ -169,12 +169,12 @@ void test_brake(void) {
 
 TEST_IN_TASK
 void test_regen_brake(void) {
-  g_rx_struct.drive_output_drive_state = DRIVE;
-  g_rx_struct.drive_output_cruise_control = false;
-  g_rx_struct.drive_output_regen_braking = true;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(10.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.5f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.9f);
+  g_rx_struct.cc_info_drive_state = DRIVE;
+  g_rx_struct.cc_info_cruise_control = false;
+  g_rx_struct.cc_info_regen_braking = true;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(10.0f);
+  g_rx_struct.cc_pedal_brake_output = 1;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.9f);
 
   run_motor_controller_cycle();
 
@@ -183,11 +183,11 @@ void test_regen_brake(void) {
 
 TEST_IN_TASK
 void test_drive(void) {
-  g_rx_struct.drive_output_cruise_control = false;
-  g_rx_struct.drive_output_regen_braking = true;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(0.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.0f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.3f);
+  g_rx_struct.cc_info_cruise_control = false;
+  g_rx_struct.cc_info_regen_braking = true;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(0.0f);
+  g_rx_struct.cc_pedal_brake_output = 0;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.3f);
 
   run_motor_controller_cycle();
 
@@ -196,11 +196,11 @@ void test_drive(void) {
 
 TEST_IN_TASK
 void test_cruise_drive(void) {
-  g_rx_struct.drive_output_cruise_control = true;
-  g_rx_struct.drive_output_regen_braking = true;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(10.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.0f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.0f);
+  g_rx_struct.cc_info_cruise_control = true;
+  g_rx_struct.cc_info_regen_braking = true;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(10.0f);
+  g_rx_struct.cc_pedal_brake_output = 0;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.0f);
 
   run_motor_controller_cycle();
 
@@ -209,11 +209,11 @@ void test_cruise_drive(void) {
 
 TEST_IN_TASK
 void test_cruise_braking(void) {
-  g_rx_struct.drive_output_cruise_control = true;
-  g_rx_struct.drive_output_regen_braking = false;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(10.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.1f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.0f);
+  g_rx_struct.cc_info_cruise_control = true;
+  g_rx_struct.cc_info_regen_braking = false;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(10.0f);
+  g_rx_struct.cc_pedal_brake_output = 1;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.0f);
 
   run_motor_controller_cycle();
 
@@ -222,11 +222,11 @@ void test_cruise_braking(void) {
 
 TEST_IN_TASK
 void test_cruise_regen_braking(void) {
-  g_rx_struct.drive_output_cruise_control = true;
-  g_rx_struct.drive_output_regen_braking = true;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(10.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.1f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.0f);
+  g_rx_struct.cc_info_cruise_control = true;
+  g_rx_struct.cc_info_regen_braking = true;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(10.0f);
+  g_rx_struct.cc_pedal_brake_output = 1;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.0f);
 
   run_motor_controller_cycle();
 
@@ -235,11 +235,11 @@ void test_cruise_regen_braking(void) {
 
 TEST_IN_TASK
 void test_cruise_throttle(void) {
-  g_rx_struct.drive_output_cruise_control = true;
-  g_rx_struct.drive_output_regen_braking = true;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(10.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.0f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.3f);
+  g_rx_struct.cc_info_cruise_control = true;
+  g_rx_struct.cc_info_regen_braking = true;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(10.0f);
+  g_rx_struct.cc_pedal_brake_output = 0;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.3f);
 
   run_motor_controller_cycle();
 
@@ -248,11 +248,11 @@ void test_cruise_throttle(void) {
 
 TEST_IN_TASK
 void test_cruise_throttle_and_brake(void) {
-  g_rx_struct.drive_output_cruise_control = true;
-  g_rx_struct.drive_output_regen_braking = true;
-  g_rx_struct.drive_output_target_velocity = prv_get_uint32(10.0f);
-  g_rx_struct.pedal_output_brake_output = prv_get_uint32(0.3f);
-  g_rx_struct.pedal_output_throttle_output = prv_get_uint32(0.3f);
+  g_rx_struct.cc_info_cruise_control = true;
+  g_rx_struct.cc_info_regen_braking = true;
+  g_rx_struct.cc_info_target_velocity = prv_get_uint32(10.0f);
+  g_rx_struct.cc_pedal_brake_output = 1;
+  g_rx_struct.cc_pedal_throttle_output = prv_get_uint32(0.3f);
 
   run_motor_controller_cycle();
 

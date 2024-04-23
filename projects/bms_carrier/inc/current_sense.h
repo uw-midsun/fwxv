@@ -17,12 +17,26 @@
 #define MAX17261_I2C_PORT (I2C_PORT_2)
 #define MAX17261_I2C_ADDR (0x36)
 
-// TODO (Adel C): Change these values to their actual values
-#define CURRENT_SENSE_R_SENSE_MILLI_OHMS (0.5)
+#define CURRENT_SENSE_R_SENSE_MOHMS (0.5)
+#define PACK_CAPACITY_MAH 3000
+
+// Capacity in units of 5.0uVh/Rsense
 #define MAIN_PACK_DESIGN_CAPACITY \
-  (1.0f / CURRENT_SENSE_R_SENSE_MILLI_OHMS)      // LSB = 5.0 (micro Volt Hours / R Sense)
-#define MAIN_PACK_EMPTY_VOLTAGE (1.0f / 78.125)  // Only a 9-bit field, LSB = 78.125 (micro Volts)
-#define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_MILLI_OHMS))
+  (PACK_CAPACITY_MAH * CURRENT_SENSE_R_SENSE_MOHMS / 5)
+
+// LSB = 78.125 (micro Volts)
+#define MAIN_PACK_EMPTY_VOLTAGE_MV 2500
+#define MAIN_PACK_EMPTY_VOLTAGE (MAIN_PACK_EMPTY_VOLTAGE_MV / 78.125)  
+
+
+#define CHARGE_TERMINATION_CURRENT 0
+
+// // TODO (Adel C): Change these values to their actual values
+// #define CURRENT_SENSE_R_SENSE_MILLI_OHMS (0.5)
+// #define MAIN_PACK_DESIGN_CAPACITY 
+//   (1.0f / CURRENT_SENSE_R_SENSE_MILLI_OHMS)      // LSB = 5.0 (micro Volt Hours / R Sense)
+// #define MAIN_PACK_EMPTY_VOLTAGE (1.0f / 78.125)  // Only a 9-bit field, LSB = 78.125 (micro Volts)
+// #define CHARGE_TERMINATION_CURRENT (1.0f / (1.5625f / CURRENT_SENSE_R_SENSE_MILLI_OHMS))
 
 // Thresholds for ALRT Pin
 #define CURRENT_SENSE_MAX_CURRENT_A (58.2f)  // 58.2 Amps

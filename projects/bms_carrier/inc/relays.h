@@ -11,7 +11,7 @@
 #include "status.h"
 #include "task.h"
 
-#define BMS_CLOSE_RELAYS_DELAY 200
+#define BMS_CLOSE_RELAYS_DELAY 300
 typedef enum RelayType { NO_RELAYS = 0, POS_RELAY, NEG_RELAY, SOLAR_RELAY } RelayType;
 
 void bms_relay_fault(void);

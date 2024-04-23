@@ -148,4 +148,4 @@ extern uint32_t SystemCoreClock;
 // Section where parameter definitions can be added (for instance, to override
 // default ones in FreeRTOS.h)
 
-#define PortCPUClockFreqHz 48000000
+#define PortCPUClockFreqHz configCPU_CLOCK_HZ

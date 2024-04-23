@@ -25,6 +25,7 @@ static void prv_read_throttle_data(uint32_t *reading) {
   } else if (calculated_reading > 1) {
     calculated_reading = 1;
   }
+  LOG_DEBUG("READING %d\n", (int)(calculated_reading * 100));
   memcpy(reading, &calculated_reading, sizeof(calculated_reading));
 }
 

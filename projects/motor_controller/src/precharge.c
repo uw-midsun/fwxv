@@ -12,21 +12,22 @@
 
 StatusCode precharge_init(const PrechargeSettings *settings, Event event, const Task *task) {
   gpio_init_pin(&settings->motor_sw, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  gpio_init_pin(&settings->precharge_monitor, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
+  gpio_init_pin(&settings->precharge_monitor, GPIO_INPUT_FLOATING, GPIO_STATE_HIGH);
 
   GpioState state;
   gpio_get_state(&settings->precharge_monitor, &state);
-  if (state) {
+  if (state == GPIO_STATE_HIGH) {
     InterruptSettings monitor_it_settings = {
       .type = INTERRUPT_TYPE_INTERRUPT,
       .priority = INTERRUPT_PRIORITY_NORMAL,
       .edge = INTERRUPT_EDGE_FALLING,
     };
+    set_mc_status_precharge_status(false);
     return gpio_it_register_interrupt(&settings->precharge_monitor, &monitor_it_settings, event,
                                       task);
   } else {
-    gpio_set_state(&settings->motor_sw, GPIO_STATE_HIGH);
     set_mc_status_precharge_status(true);
+    gpio_set_state(&settings->motor_sw, GPIO_STATE_HIGH);
     return STATUS_CODE_OK;
   }
 }

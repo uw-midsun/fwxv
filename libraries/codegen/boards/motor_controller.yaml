@@ -30,6 +30,8 @@
       target:
         centre_console:
           watchdog: 0
+        power_distribution:
+          watchdog: 0
       signals:
         velocity_l:
           length: 16

@@ -26,8 +26,9 @@
   { .i2c_address = CC_IO_EXP_ADDR, .pin = PCA9555_PIN_IO1_7 }
 #define POWER_LED_ADDR \
   { .i2c_address = CC_IO_EXP_ADDR, .pin = PCA9555_PIN_IO0_2 }
+
 #define BPS_LED_ADDR \
-  { .i2c_address = CC_IO_EXP_ADDR, .pin = PCA9555_PIN_IO0_2 }
+  { .port = GPIO_PORT_A, .pin = 10 }
 
 // Seven Segment display GPIO Addresses
 // Aux Batt

@@ -17,7 +17,7 @@ StatusCode seg_displays_init(SegDisplay *display) {
   gpio_init_pin(&display->A2, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&display->B2, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&display->C2, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
-  gpio_init_pin(&display->D2, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
+  // gpio_init_pin(&display->D2, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
   gpio_init_pin(&display->A3, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&display->B3, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&display->C3, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
@@ -38,7 +38,7 @@ void seg_displays_reset(SegDisplay *display) {
   gpio_set_state(&display->A2, GPIO_STATE_LOW);
   gpio_set_state(&display->B2, GPIO_STATE_LOW);
   gpio_set_state(&display->C2, GPIO_STATE_LOW);
-  gpio_set_state(&display->D2, GPIO_STATE_LOW);
+  // gpio_set_state(&display->D2, GPIO_STATE_LOW);
   gpio_set_state(&display->A3, GPIO_STATE_LOW);
   gpio_set_state(&display->B3, GPIO_STATE_LOW);
   gpio_set_state(&display->C3, GPIO_STATE_LOW);
@@ -65,8 +65,8 @@ static void prv_set_seg_displays(SegDisplay *display, uint16_t val1, uint16_t va
   state = ((val1 & 1) != 0) ? GPIO_STATE_HIGH : GPIO_STATE_LOW;
   gpio_set_state(&display->A1, state);
 
-  state = ((val2 & 8) != 0) ? GPIO_STATE_HIGH : GPIO_STATE_LOW;
-  gpio_set_state(&display->D2, state);
+  // state = ((val2 & 8) != 0) ? GPIO_STATE_HIGH : GPIO_STATE_LOW;
+  // gpio_set_state(&display->D2, state);
 
   state = ((val2 & 4) != 0) ? GPIO_STATE_HIGH : GPIO_STATE_LOW;
   gpio_set_state(&display->C2, state);
