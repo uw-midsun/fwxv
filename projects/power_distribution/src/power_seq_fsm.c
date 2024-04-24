@@ -51,7 +51,8 @@ static void prv_precharge_output(void *context) {
 }
 
 static void prv_precharge_input(Fsm *fsm, void *context) {
-  LOG_DEBUG("GET_MOTOR_VELOCITY %d\n", (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()));
+  LOG_DEBUG("GET_MOTOR_VELOCITY %d\n",
+            (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()));
   if (get_motor_velocity_velocity_l() && get_motor_velocity_velocity_r()) {
     fsm_transition(fsm, POWER_STATE_OFF);
   }
@@ -68,7 +69,8 @@ static void prv_drive_state_output(void *context) {
   pd_set_active_output_group(OUTPUT_GROUP_POWER_DRIVE);
   power_context.latest_state = POWER_STATE_DRIVE;
   s_bps_storage.fault_bitset = 0;
-  s_bps_storage.vehicle_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
+  s_bps_storage.vehicle_speed =
+      (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
   persist_commit(&s_persist);
   set_pd_status_bps_persist(false);
   set_pd_status_power_state(EE_POWER_DRIVE_STATE);
@@ -89,7 +91,8 @@ static void prv_drive_state_input(Fsm *fsm, void *context) {
 static void prv_fault_state_output(void *context) {
   LOG_DEBUG("Transitioned to FAULT STATE\n");
   s_bps_storage.fault_bitset = get_battery_status_fault();
-  s_bps_storage.vehicle_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
+  s_bps_storage.vehicle_speed =
+      (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
   persist_commit(&s_persist);
   pd_set_active_output_group(OUTPUT_GROUP_POWER_FAULT);
   set_pd_status_bps_persist(true);

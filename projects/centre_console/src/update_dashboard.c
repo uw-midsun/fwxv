@@ -102,7 +102,8 @@ void update_indicators(uint32_t notif) {
     pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_LOW);
   }
 
-  if (get_battery_status_fault() || get_pd_status_power_state() == EE_POWER_FAULT_STATE || get_pd_status_bps_persist()) {
+  if (get_battery_status_fault() || get_pd_status_power_state() == EE_POWER_FAULT_STATE ||
+      get_pd_status_bps_persist()) {
     gpio_set_state(&bps_led, GPIO_STATE_LOW);
   } else {
     gpio_set_state(&bps_led, GPIO_STATE_HIGH);
