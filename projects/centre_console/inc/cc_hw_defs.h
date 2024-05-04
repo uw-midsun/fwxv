@@ -26,9 +26,22 @@
   { .i2c_address = CC_IO_EXP_ADDR, .pin = PCA9555_PIN_IO1_7 }
 #define POWER_LED_ADDR \
   { .i2c_address = CC_IO_EXP_ADDR, .pin = PCA9555_PIN_IO0_2 }
-
 #define BPS_LED_ADDR \
   { .port = GPIO_PORT_A, .pin = 10 }
+
+// Steering GPIOs
+#define TURN_SIGNAL_GPIO \
+  { .port = GPIO_PORT_A, .pin = 6 }
+#define CC_CHANGE_GPIO \
+  { .port = GPIO_PORT_A, .pin = 7 }
+#define CC_TOGGLE_GPIO \
+  { .port = GPIO_PORT_B, .pin = 12 }
+
+// Pedal GPIOs
+#define BRAKE_LIMIT_SWITCH \
+  { .port = GPIO_PORT_B, .pin = 13 }
+#define ADC_HALL_SENSOR \
+  { .port = GPIO_PORT_A, .pin = 0 }
 
 // Seven Segment display GPIO Addresses
 // Aux Batt

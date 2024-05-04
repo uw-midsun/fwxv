@@ -88,8 +88,8 @@ int main() {
   LOG_DEBUG("Welcome to TEST! \n");
 
   init_master_task();
-  // display_init();
   tasks_start();
+  // display_init();
 
   LOG_DEBUG("exiting main? \n");
   return 0;

@@ -66,6 +66,10 @@ void run_medium_cycle() {
 
 void run_slow_cycle() {
   cell_discharge(&bms_storage.ltc_afe_storage);
+
+  if (fault_bps_get()) {
+    LOG_DEBUG("FAULT_BITMASK: %d\n", fault_bps_get());
+  }
 }
 
 int main() {

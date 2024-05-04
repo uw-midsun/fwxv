@@ -11,9 +11,19 @@
 #include "status.h"
 #include "task.h"
 
-#define BMS_CLOSE_RELAYS_DELAY 300
-typedef enum RelayType { NO_RELAYS = 0, POS_RELAY, NEG_RELAY, SOLAR_RELAY } RelayType;
+#define BMS_CLOSE_RELAYS_DELAY_MS 300
 
-void bms_relay_fault(void);
+// Enumerated set of relays to be closed
+typedef enum RelayType {
+  NO_RELAYS = 0,
+  POS_RELAY,
+  NEG_RELAY,
+  SOLAR_RELAY,
+  RELAY_CHECK,
+} RelayType;
 
+// Closes relays in sequence
 StatusCode init_bms_relays(void);
+
+// Turns off GPIOs to open relays
+void bms_relay_fault(void);
