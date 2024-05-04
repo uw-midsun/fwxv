@@ -21,11 +21,12 @@
 #include "status.h"
 
 // This is an arbitrary limitation, can be increased/decreased if needed
-#define LTC_AFE_MAX_DEVICES 5
+#define LTC_AFE_MAX_DEVICES 3
 // This is a device limitation
 #define LTC_AFE_MAX_CELLS_PER_DEVICE 12
+#define LTC_AFE_MAX_THERMISTORS_PER_DEVICE 8
 #define LTC_AFE_MAX_CELLS (LTC_AFE_MAX_DEVICES * LTC_AFE_MAX_CELLS_PER_DEVICE)
-#define LTC_AFE_MAX_THERMISTORS LTC_AFE_MAX_CELLS
+#define LTC_AFE_MAX_THERMISTORS (LTC_AFE_MAX_DEVICES * LTC_AFE_MAX_THERMISTORS_PER_DEVICE)
 
 #if defined(__GNUC__)
 #define _PACKED __attribute__((packed))
@@ -76,7 +77,6 @@ typedef struct LtcAfeStorage {
   uint16_t aux_index;
   uint16_t retry_count;
   uint16_t device_cell;
-  uint32_t timer_start;
 
   uint16_t cell_voltages[LTC_AFE_MAX_CELLS];
   uint16_t aux_voltages[LTC_AFE_MAX_THERMISTORS];

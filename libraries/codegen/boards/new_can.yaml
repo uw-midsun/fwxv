@@ -13,8 +13,6 @@
     transmit_msg1:
       id: 0
       target:
-        centre_console:
-          watchdog: 3
         new_can:
           watchdog: 3
       critical: true
@@ -25,8 +23,6 @@
     transmit_msg2:
       id: 1
       target:
-        centre_console:
-          watchdog: 0
         new_can:
           watchdog: 0
       critical: true

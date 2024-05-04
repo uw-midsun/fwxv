@@ -9,7 +9,6 @@
 #include "gpio_it.h"
 #include "interrupt.h"
 #include "log.h"
-#include "relays_fsm.h"
 #include "tasks.h"
 
 static Max17261Storage s_fuel_guage_storage;
@@ -24,6 +23,8 @@ StatusCode prv_fuel_gauge_read() {
   status |= max17261_state_of_charge(&s_fuel_guage_storage, &s_current_storage->soc);
   status |= max17261_current(&s_fuel_guage_storage, &s_current_storage->current);
   status |= max17261_voltage(&s_fuel_guage_storage, &s_current_storage->voltage);
+  s_current_storage->voltage = (s_current_storage->voltage) * (CELL_X_R2_KOHMS + CELL_X_R1_KOHMS) /
+                               (CELL_X_R2_KOHMS) / 10;  // Convert to V -> mV
   status |= max17261_temp(&s_fuel_guage_storage, &s_current_storage->temperature);
 
   LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
@@ -117,14 +118,14 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
 
   // Expected MAX current / (uV / uOhmsSense) resolution
   s_fuel_gauge_settings.i_thresh_max =
-      ((CURRENT_SENSE_MAX_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MILLI_OHMS));
+      ((CURRENT_SENSE_MAX_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MOHMS));
   // Expected MIN current / (uV / uOhmsSense) resolution
   s_fuel_gauge_settings.i_thresh_min =
-      ((CURRENT_SENSE_MIN_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MILLI_OHMS));
+      ((CURRENT_SENSE_MIN_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MOHMS));
   // Interrupt threshold limits are stored in 2s-complement format with 1C resolution
   s_fuel_gauge_settings.temp_thresh_max = CURRENT_SENSE_MAX_TEMP;
 
-  s_fuel_gauge_settings.r_sense_mohms = CURRENT_SENSE_R_SENSE_MILLI_OHMS;
+  s_fuel_gauge_settings.r_sense_mohms = CURRENT_SENSE_R_SENSE_MOHMS;
 
   // Soft timer period for soc & chargin check
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;

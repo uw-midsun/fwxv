@@ -9,8 +9,10 @@
 // Requires GPIO to be initialized
 // Requires GPIO interrupts to be initialized
 
+#define PRECHARGE_EVENT 0
+
 typedef struct PrechargeSettings {
-  GpioAddress precharge_control;
+  GpioAddress motor_sw;
   GpioAddress precharge_monitor;
 } PrechargeSettings;
 

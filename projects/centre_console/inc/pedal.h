@@ -8,17 +8,15 @@
 
 #include "adc.h"
 #include "calib.h"
+#include "cc_hw_defs.h"
 #include "interrupt.h"
 #include "log.h"
 #include "pedal_calib.h"
 #include "status.h"
 
-#define BRAKE_LIMIT_SWITCH \
-  { .port = GPIO_PORT_B, .pin = 1 }
-
-#define ADC_HALL_SENSOR \
-  { .port = GPIO_PORT_A, .pin = 1 }
-
+// Runs a pedal cycle to update throttle and brake values
 void pedal_run();
 
+// Initializes pedal peripherals
+// Must be called before adc_init
 StatusCode pedal_init(PedalCalibBlob *calib_blob);

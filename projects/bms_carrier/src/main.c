@@ -12,7 +12,7 @@
 #include "interrupt.h"
 #include "log.h"
 #include "master_task.h"
-#include "relays_fsm.h"
+#include "relays.h"
 #include "tasks.h"
 
 #define FUEL_GAUGE_CYCLE_TIME_MS 100
@@ -41,7 +41,7 @@ void pre_loop_init() {
   current_sense_init(&bms_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
   // cell_sense_init(&bms_storage.ltc_afe_storage);
   aux_sense_init(&bms_storage.aux_storage);
-  init_bms_relays(&bms_storage);
+  init_bms_relays();
   bms_fan_init(&bms_storage);
 }
 
@@ -58,16 +58,19 @@ void run_medium_cycle() {
 
   // cell_sense_run();
   aux_sense_run();
-
-  fsm_run_cycle(bms_relays);
-  wait_tasks(1);
   bms_run_fan();
 
   run_can_tx_cycle();
   wait_tasks(1);
 }
 
-void run_slow_cycle() {}
+void run_slow_cycle() {
+  cell_discharge(&bms_storage.ltc_afe_storage);
+
+  if (fault_bps_get()) {
+    LOG_DEBUG("FAULT_BITMASK: %d\n", fault_bps_get());
+  }
+}
 
 int main() {
   tasks_init();

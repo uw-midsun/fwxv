@@ -2,8 +2,7 @@
     "libs": [
         "FreeRTOS",
         "ms-common",
-        "ms-drivers",
-        "core"
+        "ms-drivers"
     ],
     "include": [
         "projects/centre_console/inc"

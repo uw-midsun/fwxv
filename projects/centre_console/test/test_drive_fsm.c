@@ -2,6 +2,7 @@
 #include "centre_console_setters.h"
 #include "drive_fsm.h"
 #include "i2c.h"
+#include "pca9555_gpio_expander.h"
 #include "task_test_helpers.h"
 #include "unity.h"
 
@@ -20,30 +21,38 @@ void setup_test(void) {
 void teardown_test(void) {}
 
 void prepare_test() {
+  pca9555_gpio_init(I2C_PORT_1);
+
   init_drive_fsm();
 
   // test starting neutral state
   fsm_run_cycle(drive);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
+  TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.cc_info_drive_state);
   TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
 
-  g_rx_struct.power_info_pd_fault = STATUS_CODE_OK;
-  g_rx_struct.power_info_power_state = EE_POWER_DRIVE_STATE;
-  g_rx_struct.received_power_info = true;
+  g_rx_struct.pd_status_fault_bitset = STATUS_CODE_OK;
+  g_rx_struct.pd_status_power_state = EE_POWER_DRIVE_STATE;
+  g_rx_struct.received_pd_status = true;
 }
 
 void neutral_to_drive() {
   fsm_run_cycle(drive);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(DRIVE, g_tx_struct.drive_output_drive_state);
+  g_rx_struct.pd_status_power_state = EE_POWER_DRIVE_STATE;
+  fsm_run_cycle(drive);
+  wait_tasks(1);
+  TEST_ASSERT_EQUAL(DRIVE, g_tx_struct.cc_info_drive_state);
   TEST_ASSERT_EQUAL(DRIVE, drive_fsm->curr_state);
 }
 
 void neutral_to_reverse() {
   fsm_run_cycle(drive);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(REVERSE, g_tx_struct.drive_output_drive_state);
+  g_rx_struct.pd_status_power_state = EE_POWER_DRIVE_STATE;
+  fsm_run_cycle(drive);
+  wait_tasks(1);
+  TEST_ASSERT_EQUAL(REVERSE, g_tx_struct.cc_info_drive_state);
   TEST_ASSERT_EQUAL(REVERSE, drive_fsm->curr_state);
 }
 
@@ -51,7 +60,7 @@ void neutral_to_reverse() {
 void drive_to_neutral() {
   fsm_run_cycle(drive);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
+  TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.cc_info_drive_state);
   TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
 }
 
@@ -59,7 +68,7 @@ void drive_to_neutral() {
 void reverse_to_neutral() {
   fsm_run_cycle(drive);
   wait_tasks(1);
-  TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
+  TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.cc_info_drive_state);
   TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
 }
 
@@ -68,7 +77,7 @@ void idle_neutral() {
   for (int i = 0; i < 3; i++) {
     fsm_run_cycle(drive);
     wait_tasks(1);
-    TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.drive_output_drive_state);
+    TEST_ASSERT_EQUAL(NEUTRAL, g_tx_struct.cc_info_drive_state);
     TEST_ASSERT_EQUAL(NEUTRAL, drive_fsm->curr_state);
   }
 }
@@ -76,7 +85,7 @@ void idle_drive() {
   for (int i = 0; i < 3; i++) {
     fsm_run_cycle(drive);
     wait_tasks(1);
-    TEST_ASSERT_EQUAL(DRIVE, g_tx_struct.drive_output_drive_state);
+    TEST_ASSERT_EQUAL(DRIVE, g_tx_struct.cc_info_drive_state);
     TEST_ASSERT_EQUAL(DRIVE, drive_fsm->curr_state);
   }
 }
@@ -84,7 +93,7 @@ void idle_reverse() {
   for (int i = 0; i < 3; i++) {
     fsm_run_cycle(drive);
     wait_tasks(1);
-    TEST_ASSERT_EQUAL(REVERSE, g_tx_struct.drive_output_drive_state);
+    TEST_ASSERT_EQUAL(REVERSE, g_tx_struct.cc_info_drive_state);
     TEST_ASSERT_EQUAL(REVERSE, drive_fsm->curr_state);
   }
 }
@@ -117,33 +126,33 @@ void test_neutral_to_drive(void) {
   LOG_DEBUG("T1.5: (Drive->Neutral) (fault when power error state is not STATUS_CODE_OK)\n");
   notify(drive, DRIVE_BUTTON_EVENT);
   neutral_to_drive();
-  g_rx_struct.power_info_pd_fault = STATUS_CODE_UNKNOWN;  // set test value
+  g_rx_struct.pd_status_fault_bitset = STATUS_CODE_UNKNOWN;  // set test value
   drive_to_neutral();
-  g_rx_struct.power_info_pd_fault = STATUS_CODE_OK;  // reset test value for next test
+  g_rx_struct.pd_status_fault_bitset = STATUS_CODE_OK;  // reset test value for next test
 
   // Starting sub test 6 drive to neutral: (Drive->Neutral) (fault when power state is
   // not main)
   LOG_DEBUG("T1.6: (Drive->Neutral) (fault when power state is not main)\n");
   notify(drive, DRIVE_BUTTON_EVENT);
   neutral_to_drive();
-  g_rx_struct.power_info_power_state = EE_POWER_OFF_STATE;  // set test value
+  g_rx_struct.pd_status_power_state = EE_POWER_OFF_STATE;  // set test value
   drive_to_neutral();
-  g_rx_struct.power_info_power_state = EE_POWER_DRIVE_STATE;  // reset test value for next test
+  g_rx_struct.pd_status_power_state = EE_POWER_DRIVE_STATE;  // reset test value for next test
 
   // Starting sub test 7 drive to neutral: (Drive->Neutral) (fault when we don't
   // receive power state message)
   LOG_DEBUG("T1.7: (Drive->Neutral) (fault when we don't receive power state message)\n");
   notify(drive, DRIVE_BUTTON_EVENT);
   neutral_to_drive();
-  g_rx_struct.received_power_info = false;  // set test value
-  fsm_run_cycle(drive);
-  wait_tasks(1);
-  fsm_run_cycle(drive);
-  wait_tasks(1);
+  g_rx_struct.received_pd_status = false;  // set test value
+  check_can_watchdogs();
+  check_can_watchdogs();
+  check_can_watchdogs();
   fsm_run_cycle(drive);
   wait_tasks(1);
   drive_to_neutral();
-  g_rx_struct.received_power_info = true;  // reset test value for next test
+  g_rx_struct.received_pd_status = true;  // reset test value for next test
+  check_can_watchdogs();
 }
 
 TEST_IN_TASK
@@ -170,31 +179,30 @@ void test_neutral_to_reverse() {
   LOG_DEBUG("T2.4: (Reverse->Neutral) (fault when power error state is not STATUS_CODE_OK)\n");
   notify(drive, REVERSE_BUTTON_EVENT);
   neutral_to_reverse();
-  g_rx_struct.power_info_pd_fault = STATUS_CODE_UNKNOWN;  // set test value
+  g_rx_struct.pd_status_fault_bitset = STATUS_CODE_UNKNOWN;  // set test value
   reverse_to_neutral();
-  g_rx_struct.power_info_pd_fault = STATUS_CODE_OK;  // reset test value for next test
+  g_rx_struct.pd_status_fault_bitset = STATUS_CODE_OK;  // reset test value for next test
 
   // Starting sub test 5 reverse to neutral: (Reverse->Neutral) (fault when power state is
   // not main)
   LOG_DEBUG("T2.5: (Reverse->Neutral) (fault when power state is not main)\n");
   notify(drive, REVERSE_BUTTON_EVENT);
   neutral_to_reverse();
-  g_rx_struct.power_info_power_state = EE_POWER_OFF_STATE;  // set test value
+  g_rx_struct.pd_status_power_state = EE_POWER_OFF_STATE;  // set test value
   reverse_to_neutral();
-  g_rx_struct.power_info_power_state = EE_POWER_DRIVE_STATE;  // reset test value for next test
+  g_rx_struct.pd_status_power_state = EE_POWER_DRIVE_STATE;  // reset test value for next test
 
   // Starting sub test 6 reverse to neutral: (Reverse->Neutral) (fault when we don't
   // receive power state message)
   LOG_DEBUG("T2.6: (Reverse->Neutral) (fault when we don't receive power state message)\n");
   notify(drive, REVERSE_BUTTON_EVENT);
   neutral_to_reverse();
-  g_rx_struct.received_power_info = false;  // set test value
-  fsm_run_cycle(drive);
-  wait_tasks(1);
-  fsm_run_cycle(drive);
-  wait_tasks(1);
+  g_rx_struct.received_pd_status = false;  // set test value
+  check_can_watchdogs();
+  check_can_watchdogs();
+  check_can_watchdogs();
   fsm_run_cycle(drive);
   wait_tasks(1);
   reverse_to_neutral();
-  g_rx_struct.received_power_info = true;  // reset test value for next test
+  g_rx_struct.received_pd_status = true;  // reset test value for next test
 }

@@ -1,6 +1,6 @@
 #include "pedal.h"
 
-#include "pedal_setters.h"
+#include "centre_console_setters.h"
 
 static const GpioAddress brake = BRAKE_LIMIT_SWITCH;
 static const GpioAddress throttle = ADC_HALL_SENSOR;
@@ -20,17 +20,16 @@ static void prv_read_throttle_data(uint32_t *reading) {
       (((float)adc_reading - (float)s_calib_blob->throttle_calib.lower_value) / range_throttle);
   // Readings are inverted
   calculated_reading = 1 - calculated_reading;
-
   if (calculated_reading < 0) {
     calculated_reading = 0;
   } else if (calculated_reading > 1) {
     calculated_reading = 1;
   }
+  LOG_DEBUG("READING %d\n", (int)(calculated_reading * 100));
   memcpy(reading, &calculated_reading, sizeof(calculated_reading));
 }
 
 void pedal_run() {
-  adc_run();
   GpioState brake_state = 0;
   uint32_t throttle_position = 0;
   gpio_get_state(&brake, &brake_state);
@@ -39,12 +38,14 @@ void pedal_run() {
   // Sending messages
   if (brake_state == GPIO_STATE_LOW) {
     // Brake is pressed - Send brake data with throttle as 1
-    set_pedal_output_brake_output(1);
-    set_pedal_output_throttle_output(0);
+    LOG_DEBUG("BRAKES PRESSED\n");
+    set_cc_pedal_brake_output(1);
+    set_cc_pedal_throttle_output(0);
   } else {
     // Brake is not pressed
-    set_pedal_output_brake_output(0);
-    set_pedal_output_throttle_output(throttle_position);
+    LOG_DEBUG("BRAKES NOT PRESSED\n");
+    set_cc_pedal_brake_output(0);
+    set_cc_pedal_throttle_output(throttle_position);
   }
 }
 
@@ -54,7 +55,6 @@ StatusCode pedal_init(PedalCalibBlob *calib_blob) {
   gpio_init_pin(&brake, GPIO_INPUT_PULL_DOWN, GPIO_STATE_LOW);
   gpio_init_pin(&throttle, GPIO_ANALOG, GPIO_STATE_LOW);
   adc_add_channel(throttle);
-  adc_init();
   s_calib_blob = calib_blob;
   return STATUS_CODE_OK;
 }

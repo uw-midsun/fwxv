@@ -23,7 +23,7 @@ static uint16_t s_read_reg_cmd[NUM_LTC_AFE_REGISTERS] = {
   [LTC_AFE_REGISTER_STATUS_A] = LTC6811_RDSTATA_RESERVED,
   [LTC_AFE_REGISTER_STATUS_B] = LTC6811_RDSTATB_RESERVED,
   [LTC_AFE_REGISTER_READ_COMM] = LTC6811_RDCOMM_RESERVED,
-  [LTC_AFE_REGISTER_START_COMM] = LTC6811_STCOMM_RESERVED
+  [LTC_AFE_REGISTER_START_COMM] = LTC6811_STCOMM_RESERVED,
 };
 
 static uint8_t s_voltage_reg[NUM_LTC_AFE_VOLTAGE_REGISTERS] = {
@@ -39,8 +39,8 @@ static void prv_wakeup_idle(LtcAfeStorage *afe) {
   for (size_t i = 0; i < settings->num_devices; i++) {
     gpio_set_state(&settings->cs, GPIO_STATE_LOW);
     gpio_set_state(&settings->cs, GPIO_STATE_HIGH);
-    // Wait for 300us - greater than tWAKE, less than tIDLE
-    delay_ms(0.3);
+    // Wait for 1ms (should be 300us) - greater than tWAKE, less than tIDLE
+    delay_ms(1);
   }
 }
 
@@ -75,8 +75,8 @@ static StatusCode prv_read_register(LtcAfeStorage *afe, LtcAfeRegister reg, uint
 }
 
 // read from a voltage register
-static inline StatusCode prv_read_voltage(LtcAfeStorage *afe, LtcAfeVoltageRegister reg,
-                                          LtcAfeVoltageRegisterGroup *data) {
+static StatusCode prv_read_voltage(LtcAfeStorage *afe, LtcAfeVoltageRegister reg,
+                                   LtcAfeVoltageRegisterGroup *data) {
   if (reg > NUM_LTC_AFE_VOLTAGE_REGISTERS) {
     return status_code(STATUS_CODE_INVALID_ARGS);
   }
@@ -86,7 +86,7 @@ static inline StatusCode prv_read_voltage(LtcAfeStorage *afe, LtcAfeVoltageRegis
 }
 
 // start cell voltage conversion
-static inline StatusCode prv_trigger_adc_conversion(LtcAfeStorage *afe) {
+static StatusCode prv_trigger_adc_conversion(LtcAfeStorage *afe) {
   LtcAfeSettings *settings = &afe->settings;
   uint8_t mode = (uint8_t)((settings->adc_mode + 1) % 3);
   // ADCV command
@@ -104,50 +104,13 @@ static StatusCode prv_trigger_aux_adc_conversion(LtcAfeStorage *afe) {
   LtcAfeSettings *settings = &afe->settings;
   uint8_t mode = (uint8_t)((settings->adc_mode + 1) % 3);
   // ADAX
-  uint16_t adax = LTC6811_ADAX_RESERVED | LTC6811_ADAX_GPIO1 | (mode << 7);
+  uint16_t adax = LTC6811_ADAX_RESERVED | LTC6811_ADAX_GPIO4 | (mode << 7);
 
   uint8_t cmd[LTC6811_CMD_SIZE] = { 0 };
   prv_build_cmd(adax, cmd, LTC6811_CMD_SIZE);
 
   prv_wakeup_idle(afe);
   return spi_exchange(settings->spi_port, cmd, LTC6811_CMD_SIZE, NULL, 0);
-}
-
-static StatusCode prv_aux_write_comm_register(LtcAfeStorage *afe, uint8_t device_cell) {
-  if (device_cell >= AUX_ADG731_NUM_PINS) {
-    return STATUS_CODE_OUT_OF_RANGE;
-  }
-  LtcAfeSettings *settings = &afe->settings;
-  LtcAfeWriteCommRegPacket packet = { 0 };
-  // Build WRCOMM Command
-  prv_build_cmd(LTC6811_WRCOMM_RESERVED, packet.wrcomm, LTC6811_CMD_SIZE);
-  // Write 3 bytes of data to the COMM registers
-  // We send the a byte and then we send CSBM_HIGH to
-  // release the SPI port
-  packet.reg.icom0 = LTC6811_ICOM_CSBM_LOW;
-  packet.reg.d0 = device_cell;
-  packet.reg.fcom0 = LTC6811_FCOM_CSBM_HIGH;
-  packet.reg.icom1 = LTC6811_ICOM_NO_TRANSMIT;
-  packet.reg.icom2 = LTC6811_ICOM_NO_TRANSMIT;
-  uint16_t comm_pec = crc15_calculate((uint8_t *)&packet.reg, sizeof(LtcAfeCommRegisterData));
-
-  prv_wakeup_idle(afe);
-  return spi_exchange(settings->spi_port, (uint8_t *)&packet, sizeof(LtcAfeWriteCommRegPacket),
-                      NULL, 0);
-}
-
-static StatusCode prv_aux_send_comm_register(LtcAfeStorage *afe) {
-  LtcAfeSettings *settings = &afe->settings;
-  LtcAfeSendCommRegPacket packet = { 0 };
-  // Build STCOMM command
-  prv_build_cmd(LTC6811_STCOMM_RESERVED, packet.stcomm, LTC6811_CMD_SIZE);
-  for (uint8_t i = 0; i < LTC6811_NUM_COMM_REG_BYTES; i++) {
-    // NULL bytes so our SPI drivers will send 24 clock cycles
-    packet.clk[i] = 0;
-  }
-  prv_wakeup_idle(afe);
-  return spi_exchange(settings->spi_port, (uint8_t *)&packet, sizeof(LtcAfeSendCommRegPacket), NULL,
-                      0);
 }
 
 // write config to all devices
@@ -248,6 +211,9 @@ StatusCode ltc_afe_impl_init(LtcAfeStorage *afe, const LtcAfeSettings *settings)
   // Use GPIO1 as analog input, GPIO 3-5 for SPI
   uint8_t gpio_bits =
       LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
+
+  status_ok_or_return(ltc_afe_impl_set_discharge_pwm_cycle(afe, LTC6811_PWMC_DC_100));
+
   return prv_write_config(afe, gpio_bits);
 }
 
@@ -255,16 +221,14 @@ StatusCode ltc_afe_impl_trigger_cell_conv(LtcAfeStorage *afe) {
   return prv_trigger_adc_conversion(afe);
 }
 
-StatusCode ltc_afe_impl_trigger_aux_conv(LtcAfeStorage *afe, uint8_t device_cell) {
-  uint8_t gpio_bits =
-      LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
+StatusCode ltc_afe_impl_trigger_aux_conv(LtcAfeStorage *afe, uint8_t thermistor) {
+  LtcAfeSettings *settings = &afe->settings;
+  uint8_t gpio_bits = (thermistor << 3) | LTC6811_GPIO4_PD_OFF;
   prv_write_config(afe, gpio_bits);
-  prv_aux_write_comm_register(afe, device_cell);
-  prv_aux_send_comm_register(afe);
   return prv_trigger_aux_adc_conversion(afe);
 }
 
-inline StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
+StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
   // Read all voltage A, then B, ...
   LtcAfeSettings *settings = &afe->settings;
   for (uint8_t cell_reg = 0; cell_reg < NUM_LTC_AFE_VOLTAGE_REGISTERS; ++cell_reg) {
@@ -289,6 +253,11 @@ inline StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
       uint16_t data_pec = crc15_calculate((uint8_t *)&voltage_register[device], 6);
       if (received_pec != data_pec) {
         // return early on failure
+        LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
+        LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
+        LOG_DEBUG("Voltage: %d %d %d\n\r", voltage_register[device].reg.voltages[0],
+                  voltage_register[device].reg.voltages[1],
+                  voltage_register[device].reg.voltages[2]);
         return status_code(STATUS_CODE_INTERNAL_ERROR);
       }
     }
@@ -297,31 +266,33 @@ inline StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
   return STATUS_CODE_OK;
 }
 
-StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t device_cell) {
+StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t thermistor) {
   LtcAfeSettings *settings = &afe->settings;
   LtcAfeAuxRegisterGroupPacket register_data[LTC_AFE_MAX_DEVICES] = { 0 };
 
   size_t len = settings->num_devices * sizeof(LtcAfeAuxRegisterGroupPacket);
-  prv_read_register(afe, LTC_AFE_REGISTER_AUX_A, (uint8_t *)register_data, len);
+  prv_read_register(afe, LTC_AFE_REGISTER_AUX_B, (uint8_t *)register_data, len);
 
   for (uint16_t device = 0; device < settings->num_devices; ++device) {
     // data comes in in the form { 1, 1, 2, 2, 3, 3, PEC, PEC }
-    // we only care about GPIO1 and the PEC
+    // we only care about GPIO4 and the PEC
     uint16_t voltage = register_data[device].reg.voltages[0];
 
-    if ((settings->aux_bitset[device] >> device_cell) & 0x1) {
+    if ((settings->aux_bitset[device] >> thermistor) & 0x1) {
       // Input enabled - store result
-      uint16_t index = device * LTC_AFE_MAX_CELLS_PER_DEVICE + device_cell;
+      uint16_t index = device * LTC_AFE_MAX_CELLS_PER_DEVICE + thermistor;
       afe->aux_voltages[afe->aux_result_lookup[index]] = voltage;
     }
 
     uint16_t received_pec = SWAP_UINT16(register_data[device].pec);
     uint16_t data_pec = crc15_calculate((uint8_t *)&register_data[device], 6);
     if (received_pec != data_pec) {
+      // return early on failure
+      LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
+      LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
       return status_code(STATUS_CODE_INTERNAL_ERROR);
     }
   }
-
   return STATUS_CODE_OK;
 }
 
@@ -341,4 +312,30 @@ StatusCode ltc_afe_impl_toggle_cell_discharge(LtcAfeStorage *afe, uint16_t cell,
   }
 
   return STATUS_CODE_OK;
+}
+
+// Just a wrapper setting the correct gpio bits
+StatusCode ltc_afe_impl_write_config(LtcAfeStorage *afe) {
+  uint8_t gpio_bits =
+      LTC6811_GPIO1_PD_OFF | LTC6811_GPIO3_PD_OFF | LTC6811_GPIO4_PD_OFF | LTC6811_GPIO5_PD_OFF;
+  return prv_write_config(afe, gpio_bits);
+}
+
+// Sets the duty cycle to the same value for all cells on all afes
+StatusCode ltc_afe_impl_set_discharge_pwm_cycle(LtcAfeStorage *afe, uint8_t duty_cycle) {
+  LtcAfeSettings *settings = &afe->settings;
+
+  uint8_t cmd[4 + (6 * 3)] = { 0 };
+  prv_build_cmd(LTC6811_WRPWM_RESERVED, cmd, 4);
+
+  // For every device, set all 6 PWM bytes to the same config
+  for (uint8_t curr_device = 0; curr_device < settings->num_devices; curr_device++) {
+    for (int cell_pwm = 0; cell_pwm < 6; cell_pwm++) {
+      cmd[(curr_device * 6) + cell_pwm] = duty_cycle;
+    }
+  }
+
+  size_t len = 4 + (6 * settings->num_devices);
+  prv_wakeup_idle(afe);
+  return spi_exchange(settings->spi_port, cmd, len, NULL, 0);
 }

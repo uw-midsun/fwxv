@@ -15,13 +15,8 @@
 
 #define CONV_DELAY_MS 10
 // Maximum number of retry attempts to read cell/aux data once triggered
-#define RETRY_DELAY_MS 3
+#define RETRY_DELAY_MS 1
 #define CELL_SENSE_CONVERSIONS 0
-
-#define NUM_AFES 3
-#define NUM_CELL_MODULES_PER_AFE 12
-#define NUM_TOTAL_CELLS (NUM_AFES * NUM_CELL_MODULES_PER_AFE)
-#define NUM_THERMISTORS (NUM_TOTAL_CELLS * 2)
 
 // Fault thresholds
 // TODO: Verify these values!
@@ -49,5 +44,7 @@ StatusCode cell_sense_init(LtcAfeStorage *afe_storage);
 // |cell| should be [0, settings.num_cells)
 
 StatusCode cell_conversions(void);
+
+StatusCode cell_discharge(LtcAfeStorage *afe_storage);
 
 StatusCode cell_sense_run(void);

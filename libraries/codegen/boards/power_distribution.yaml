@@ -10,14 +10,6 @@
 
 ---
   Messages:
-    uv_cutoff_notification:
-      id: 45
-      target:
-        telemetry:
-          watchdog: 0
-      signals:
-        signal1:
-          length: 8
     current_measurement:
       id: 54
       target:
@@ -56,30 +48,16 @@
       signals:
         signal1:
           length: 8
-    power_info:
-      id: 3
-      target:
-        centre_console:
-          watchdog: 0
-      critical: true
-      signals:
-        power_state:
-          length: 8
-        pd_fault:
-          length: 8
     pd_status:
       id: 1
       target:
         centre_console:
-          watchdog: 0
+          watchdog: 3
+      critical: true
       signals:
+        power_state:
+          length: 8
         fault_bitset:
           length: 8
-    bms_relays:
-      id: 10
-      target:
-        bms_carrier:
-          watchdog: 0
-      signals:
-        relays_state:
+        bps_persist:
           length: 8

@@ -27,15 +27,6 @@ typedef enum driveEvents {
   NUM_DRIVE_FSM_EVENTS,
 } driveEvents;
 
-#define NEUTRAL_GPIO_ADDR \
-  { .port = GPIO_PORT_A, .pin = 6 }
-
-#define DRIVE_GPIO_ADDR \
-  { .port = GPIO_PORT_A, .pin = 9 }
-
-#define REVERSE_GPIO_ADDR \
-  { .port = GPIO_PORT_A, .pin = 7 }
-
 StateId get_drive_state(void);
 
 StatusCode init_drive_fsm(void);

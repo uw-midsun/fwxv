@@ -22,7 +22,7 @@
 #define PRECHARGE_EVENT 0
 
 static PrechargeSettings precharge_settings = {
-  .precharge_control = { GPIO_PORT_A, 9 },
+  .motor_sw = { GPIO_PORT_A, 9 },
   .precharge_monitor = { GPIO_PORT_B, 0 },
 };
 
@@ -36,6 +36,14 @@ void setup_test(void) {
   gpio_it_init();
   tasks_init();
   log_init();
+
+  GpioState state;
+  gpio_get_state(&precharge_settings.precharge_monitor, &state);
+  if (state == GPIO_STATE_LOW) {
+    gpio_toggle_state(&precharge_settings.precharge_monitor);
+  }
+
+  gpio_get_state(&precharge_settings.precharge_monitor, &state);
   precharge_init(&precharge_settings, PRECHARGE_EVENT, test_task);
 }
 

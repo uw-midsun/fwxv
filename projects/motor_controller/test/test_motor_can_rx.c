@@ -52,6 +52,7 @@ void setup_test(void) {
   log_init();
   mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
   init_motor_controller_can();
+  g_tx_struct.mc_status_precharge_status = 1;
 }
 
 void teardown_test(void) {}
@@ -66,8 +67,8 @@ void run_motor_controller_cycle() {
 void push_mc_message(uint32_t id, float data_1, float data_2) {
   CanMessage message = {
     .id.raw = id,
-    .data_u32[0] = prv_get_uint32(data_1),
-    .data_u32[1] = prv_get_uint32(data_2),
+    .data_u32[1] = prv_get_uint32(data_1),
+    .data_u32[0] = prv_get_uint32(data_2),
     .dlc = 8,
   };
   TEST_ASSERT_OK(can_queue_push(&s_mcp2515_storage.rx_queue, &message));
@@ -77,26 +78,27 @@ TEST_IN_TASK
 void test_status(void) {
   CanMessage status_l = {
     .id.raw = MOTOR_CONTROLLER_BASE_L + 0x01,
-    .data_u8[0] = 1,             // Receive error count
-    .data_u8[1] = 2,             // Transmit error count
-    .data_u16[1] = 3,            // Active motor
-    .data_u16[2] = 0b011001101,  // Error Flags
-    .data_u16[3] = 0b110011010,  // Limit Flags
+    .data_u8[4] = 1,             // Receive error count
+    .data_u8[3] = 2,             // Transmit error count
+    .data_u16[2] = 3,            // Active motor
+    .data_u16[1] = 0b011001101,  // Error Flags
+    .data_u16[0] = 0b110011010,  // Limit Flags
     .dlc = 8,
   };
   can_queue_push(&s_mcp2515_storage.rx_queue, &status_l);
   CanMessage status_r = {
     .id.raw = MOTOR_CONTROLLER_BASE_R + 0x01,
-    .data_u8[0] = 1,             // Receive error count
-    .data_u8[1] = 2,             // Transmit error count
-    .data_u16[1] = 3,            // Active motor
-    .data_u16[2] = 0b100110010,  // Error Flags
-    .data_u16[3] = 0b001100101,  // Limit Flags
+    .data_u8[4] = 1,             // Receive error count
+    .data_u8[3] = 2,             // Transmit error count
+    .data_u16[2] = 3,            // Active motor
+    .data_u16[1] = 0b100110010,  // Error Flags
+    .data_u16[0] = 0b001100101,  // Limit Flags
     .dlc = 8,
   };
   can_queue_push(&s_mcp2515_storage.rx_queue, &status_r);
 
   run_motor_controller_cycle();
+  LOG_DEBUG("error bitset: %d\n", g_tx_struct.mc_status_error_bitset_l);
 
   TEST_ASSERT_EQUAL(0b01100110, g_tx_struct.mc_status_error_bitset_l);
   TEST_ASSERT_EQUAL(0b10011010, g_tx_struct.mc_status_limit_bitset_l);

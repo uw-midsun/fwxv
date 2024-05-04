@@ -1,12 +1,17 @@
 #pragma once
 
+#include "cc_hw_defs.h"
 #include "drive_fsm.h"
 #include "i2c.h"
 #include "pca9555_gpio_expander.h"
 #include "pca9555_gpio_expander_defs.h"
+#include "pwm.h"
+#include "soft_timer.h"
 #include "update_dashboard.h"
 
 #define PCA9555_REG_DEFAULT 0xFF
+#define BUZZER_MICROSECONDS 250
+#define BEEP_MS 100
 
 // Masks for button inputs based on a 16-bit pca9555 register value
 typedef enum ConsoleButtonMask {
