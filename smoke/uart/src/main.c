@@ -10,29 +10,31 @@ static const char test[] = "test uart\n";
 
 // This might cause issues because logs are initialized on the same port at a different baudrate,
 // check this if there are issues
-static UartSettings uart_settings = { .tx = { .port = GPIO_PORT_A, .pin = 10 },
-                                      .rx = { .port = GPIO_PORT_A, .pin = 11 },
+static UartSettings uart_settings = { .tx = { .port = GPIO_PORT_B, .pin = 6 },
+                                      .rx = { .port = GPIO_PORT_B, .pin = 7 },
                                       .baudrate = 9600 };
 
-TASK(master_task, TASK_MIN_STACK_SIZE) {
-  uart_init(UART_PORT_1, &uart_settings);
-
-  size_t len = sizeof(test);
+TASK(master_task, TASK_STACK_512) {
+  const size_t len = 15;
+  uint8_t data_buffer[50];
 
   while (true) {
     StatusCode status;
-    status = uart_tx(UART_PORT_1, test, &len);
+
+    delay_ms(5000);
+
+    status = uart_rx(UART_PORT_1, data_buffer, &len);
     if (status == STATUS_CODE_OK) {
-      LOG_DEBUG("Successfully transmitted %s\n", test);
+      uart_tx(UART_PORT_1, data_buffer, &len);
     } else {
-      LOG_DEBUG("Write failed: status code %d\n", status);
+      LOG_DEBUG("Read failed: status code %d\n", status);
     }
     delay_ms(1000);
   }
 }
 
 int main() {
-  log_init();
+  uart_init(UART_PORT_1, &uart_settings);
   gpio_init();
   interrupt_init();
 
