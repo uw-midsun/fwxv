@@ -75,7 +75,9 @@ void run_slow_cycle() {}
 
 int main() {
   tasks_init();
-  log_init();
+  //log_init();
+  gpio_init();
+  USART_DeInit(USART1);
   gpio_it_init();
   I2CSettings i2c_settings = {
     .speed = I2C_SPEED_STANDARD,
@@ -87,9 +89,9 @@ int main() {
 
   LOG_DEBUG("Welcome to TEST! \n");
 
+  display_init();
   init_master_task();
   tasks_start();
-  // display_init();
 
   LOG_DEBUG("exiting main? \n");
   return 0;

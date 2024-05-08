@@ -6,8 +6,7 @@ static RelayType relay_toggle = NO_RELAYS;
 static SoftTimer relays_timer;
 
 static const GpioAddress pos_relay_en = { .port = GPIO_PORT_B, .pin = 8 };
-// TODO(mitch) below address does not match schematic but is set when pos relay is on
-static const GpioAddress pos_relay_sense = { .port = GPIO_PORT_B, .pin = 7 };
+static const GpioAddress pos_relay_sense = { .port = GPIO_PORT_B, .pin = 5 };
 
 static const GpioAddress neg_relay_en = { .port = GPIO_PORT_B, .pin = 4 };
 static const GpioAddress neg_relay_sense = { .port = GPIO_PORT_B, .pin = 3 };
