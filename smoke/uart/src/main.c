@@ -5,36 +5,44 @@
 #include "log.h"
 #include "tasks.h"
 #include "uart.h"
+#include "string.h"
 
-static const char test[] = "test uart\n";
+#define MAX_CMD_LEN 50
+
+static const char newline[] = "\n";
 
 // This might cause issues because logs are initialized on the same port at a different baudrate,
 // check this if there are issues
 static UartSettings uart_settings = { .tx = { .port = GPIO_PORT_B, .pin = 6 },
                                       .rx = { .port = GPIO_PORT_B, .pin = 7 },
-                                      .baudrate = 9600 };
+                                      .baudrate = 115200 };
 
 TASK(master_task, TASK_STACK_512) {
-  const size_t len = 15;
-  uint8_t data_buffer[50];
+  uint8_t data_buffer[MAX_CMD_LEN + 1] = {0};
+  size_t idx = 0;
 
   while (true) {
-    StatusCode status;
-
-    delay_ms(5000);
-
-    status = uart_rx(UART_PORT_1, data_buffer, &len);
-    if (status == STATUS_CODE_OK) {
-      uart_tx(UART_PORT_1, data_buffer, &len);
-    } else {
-      LOG_DEBUG("Read failed: status code %d\n", status);
+    size_t len = 1;
+    uint8_t data = 0;
+    StatusCode status = STATUS_CODE_EMPTY;
+    while (status != STATUS_CODE_OK) {
+      len = 1;
+      status = uart_rx(UART_PORT_1, &data, &len);
     }
-    delay_ms(1000);
+    data_buffer[idx % MAX_CMD_LEN] = data;
+    ++idx;  
+
+    if (data == '\r') {
+      uart_tx(UART_PORT_1, data_buffer, &idx);
+      uart_tx(UART_PORT_1, newline, &len); 
+      memset(data_buffer, 0, sizeof(data_buffer));
+      idx = 0;
+    } 
   }
 }
 
 int main() {
-  uart_init(UART_PORT_1, &uart_settings);
+  log_init();
   gpio_init();
   interrupt_init();
 
