@@ -14,7 +14,7 @@ int main(void) {
     in = increment_input(&in);
 
     LOG_DEBUG("Hello World %d\n", in);
-    delay_s(1);
+    delay_ms(1000);
   }
 
   return 0;
