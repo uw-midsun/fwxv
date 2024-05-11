@@ -4,10 +4,10 @@
 #include "FreeRTOS.h"
 #include "delay.h"
 #include "gpio.h"
+#include "gpio_it.h"
+#include "interrupt.h"
 #include "log.h"
 #include "tasks.h"
-#include "interrupt.h"
-#include "gpio_it.h"
 
 #define BTN_INT_EVENT 5
 
@@ -31,19 +31,14 @@ GpioAddress addr4 = {
   .pin = 15,
 };
 
-GpioAddress buttonAddress = {
-  .port = GPIO_PORT_A,
-  .pin = 7
-};
+GpioAddress buttonAddress = { .port = GPIO_PORT_A, .pin = 7 };
 
-InterruptSettings led_interrupt = {
-  .priority = INTERRUPT_PRIORITY_NORMAL,
-  .type = INTERRUPT_TYPE_INTERRUPT,
-  .edge = INTERRUPT_EDGE_RISING
-};
+InterruptSettings led_interrupt = { .priority = INTERRUPT_PRIORITY_NORMAL,
+                                    .type = INTERRUPT_TYPE_INTERRUPT,
+                                    .edge = INTERRUPT_EDGE_RISING };
 
 TASK(GPIO_LED, TASK_STACK_512) {
-  gpio_init_pin(&buttonAddress, GPIO_INPUT_PULL_DOWN , GPIO_STATE_LOW);
+  gpio_init_pin(&buttonAddress, GPIO_INPUT_PULL_DOWN, GPIO_STATE_LOW);
   gpio_init_pin(&addr1, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&addr2, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&addr3, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
