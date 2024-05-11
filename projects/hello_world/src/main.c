@@ -1,10 +1,11 @@
 #include <stdio.h>
-#include "log.h"
-#include "delay.h"
 
-static int increment_input(int *input) { 
+#include "delay.h"
+#include "log.h"
+
+static int increment_input(int *input) {
   (*input)++;
-  return (*input); 
+  return (*input);
 }
 
 int main(void) {
