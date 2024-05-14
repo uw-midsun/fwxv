@@ -1,24 +1,23 @@
 #include "cli.h"
 
 #include <stdio.h>
-#include "string.h"
+
+#include "interrupt.h"
 #include "log.h"
+#include "string.h"
 #include "tasks.h"
 #include "uart.h"
-#include "interrupt.h"
 
-const char cli_help[] = "MSXV Controller Board CLI. Usage: \n\r"
-                        "<peripheral> <action> <parameters> \n\r\n"
-                        "Enter \"help\" after any argument for detailed reference. \n\r\n"
-                        "List of Peripherals: gpio \n\r";
+const char cli_help[] =
+    "MSXV Controller Board CLI. Usage: \n\r"
+    "<peripheral> <action> <parameters> \n\r\n"
+    "Enter \"help\" after any argument for detailed reference. \n\r\n"
+    "List of Peripherals: gpio \n\r";
 
 char cmd_buffer[MAX_CMD_LEN + 1];
 // Add additional peripherals to lookup array
-static const CmdStruct cmd_lookup[] = {
-  {.cmd_name = "gpio", .cmd_func = &gpio_cmd},
-  {.cmd_name = "GPIO", .cmd_func = &gpio_cmd}
-};  
-
+static const CmdStruct cmd_lookup[] = { { .cmd_name = "gpio", .cmd_func = &gpio_cmd },
+                                        { .cmd_name = "GPIO", .cmd_func = &gpio_cmd } };
 
 TASK(cli_task, TASK_STACK_512) {
   cli_init();
@@ -53,7 +52,7 @@ char *get_cmd() {
       len = 1;
       status = uart_rx(UART_PORT_1, &data, &len);
     }
-    
+
     if (data == '\r') {
       if (idx == 0) {
         return NULL;
@@ -79,12 +78,13 @@ char *get_cmd() {
 }
 
 void cmd_parse(char *cmd) {
-  char peripheral[MAX_CMD_LEN + 1] = {0};
+  char peripheral[MAX_CMD_LEN + 1] = { 0 };
   strip_ws(cmd);
   tok_cmd(cmd, peripheral);
 
-  if (strcmp(peripheral, "help") == 0 || strcmp(peripheral, "h") == 0 || strcmp(peripheral, "HELP") == 0) {
-    printf("\r%s\n", cli_help); 
+  if (strcmp(peripheral, "help") == 0 || strcmp(peripheral, "h") == 0 ||
+      strcmp(peripheral, "HELP") == 0) {
+    printf("\r%s\n", cli_help);
     return;
   }
 
@@ -100,11 +100,10 @@ void cmd_parse(char *cmd) {
   printf("\r%s\n", cli_help);
 }
 
-
 int main() {
   tasks_init();
   log_init();
-  
+
   tasks_init_task(cli_task, TASK_PRIORITY(2), NULL);
   tasks_start();
 
