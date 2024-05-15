@@ -68,6 +68,7 @@ StatusCode max17261_full_capacity(Max17261Storage *storage, uint32_t *full_cap_m
   
   uint16_t design = 0;
   max17261_get_reg(storage, MAX17261_DESIGN_CAP, &design);
+  LOG_DEBUG("DES CAP: %d\n", design);
 
   return STATUS_CODE_OK;
 }
@@ -108,7 +109,25 @@ StatusCode max17261_temp(Max17261Storage *storage, uint16_t *temp_c) {
   return STATUS_CODE_OK;
 }
 
-StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings) {
+StatusCode max17261_get_learned_params(Max17261Storage *storage, Max27261Params *params) {
+  status_ok_or_return(max17261_get_reg(storage, MAX17261_R_COMP0, &params->rcomp0));
+  status_ok_or_return(max17261_get_reg(storage, MAX17261_TEMP_CO, &params->tempco));
+  status_ok_or_return(max17261_get_reg(storage, MAX17261_FULL_CAP_REP, &params->fullcaprep));
+  status_ok_or_return(max17261_get_reg(storage, MAX17261_CYCLES, &params->cycles));
+  status_ok_or_return(max17261_get_reg(storage, MAX17261_FULL_CAP_NOM, &params->fullcapnom));
+  return STATUS_CODE_OK;
+}
+
+StatusCode max17261_set_learned_params(Max17261Storage *storage, Max27261Params *params) {
+  status_ok_or_return(max17261_set_reg(storage, MAX17261_R_COMP0, params->rcomp0));
+  status_ok_or_return(max17261_set_reg(storage, MAX17261_TEMP_CO, params->tempco));
+  //status_ok_or_return(max17261_set_reg(storage, MAX17261_FULL_CAP_REP, params->fullcaprep));
+  status_ok_or_return(max17261_set_reg(storage, MAX17261_CYCLES, params->cycles));
+  status_ok_or_return(max17261_set_reg(storage, MAX17261_FULL_CAP_NOM, params->fullcapnom));
+  return STATUS_CODE_OK;
+}
+
+StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings, Max27261Params *params) {
   if (settings->i2c_port >= NUM_I2C_PORTS) {
     return STATUS_CODE_INVALID_ARGS;
   }
@@ -165,7 +184,7 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings) {
     config |= (1 << 2); // enable alerts
     config |= (1 << 4); // thermal alerts
     // config |= (1 << 8); // external temp measurement TODO: hardware / uncomment
-    status_ok_or_return(max17261_set_reg(storage, MAX17261_CONFIG, &config));
+    status_ok_or_return(max17261_set_reg(storage, MAX17261_CONFIG, config));
 
     uint16_t current_th = (settings->i_thresh_max_a << 8) & (settings->i_thresh_min_a & 0x00FF);
     status_ok_or_return(max17261_set_reg(storage, MAX17261_I_ALRT_TH, current_th));
@@ -184,6 +203,10 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings) {
   // Step 3
   status_ok_or_return(max17261_get_reg(storage, MAX17261_STATUS, &status));
   status_ok_or_return(max17261_set_reg(storage, MAX17261_STATUS, status & (uint16_t)~(1 << 1))); // clear status POR bit
+
+  if (params) {
+    status_ok_or_return(max17261_set_learned_params(storage, params));
+  }
 
   return STATUS_CODE_OK;
 }

@@ -32,6 +32,8 @@
 #define CELL_X_R1_KOHMS 1780
 #define CELL_X_R2_KOHMS 195
 
+#define CURRENT_SENSE_STORE_FLASH NUM_FLASH_PAGES - 1
+
 // Enum for GPIO IT alerts (just the one pin)
 typedef enum { CURRENT_SENSE_RUN_CYCLE = 0, ALRT_GPIO_IT, KILLSWITCH_IT } CurrentSenseNotification;
 

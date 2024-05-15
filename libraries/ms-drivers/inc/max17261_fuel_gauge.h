@@ -37,8 +37,15 @@ typedef struct {
   Max17261Settings *settings;
 } Max17261Storage;
 
-// StatusCode max17261_get_reg(Max17261Storage *storage, Max17261Registers reg, uint16_t *value); // TODO TEMP REMOVE
-// StatusCode max17261_set_reg(Max17261Storage *storage, Max17261Registers reg, uint16_t value);  // TODO TEMP REMOVE
+// Storage for parameters learned by fuel guage
+// Must be stored in flash to keep up to date after power cycle
+typedef struct Max27261Params {
+  uint16_t rcomp0;
+  uint16_t tempco;
+  uint16_t fullcaprep;
+  uint16_t cycles;
+  uint16_t fullcapnom;
+} Max27261Params;
 
 /* @brief Gets the current state of charge given by the max17261 in percentage
  * @param storage - a pointer to an already initialized Max17261Storage struct
@@ -101,4 +108,7 @@ StatusCode max17261_temp(Max17261Storage *storage, uint16_t *temp_c);
  * @param settings - populated settings struct
  * @return STATUS_CODE_OK on success
  */
-StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings);
+StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings, Max27261Params *params);
+
+StatusCode max17261_set_learned_params(Max17261Storage *storage, Max27261Params *params);
+StatusCode max17261_get_learned_params(Max17261Storage *storage, Max27261Params *params);

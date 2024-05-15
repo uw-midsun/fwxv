@@ -48,8 +48,8 @@ void pre_loop_init() {
 void run_fast_cycle() {}
 
 void run_medium_cycle() {
-  run_can_rx_cycle();
-  wait_tasks(1);
+  //run_can_rx_cycle();
+  //wait_tasks(1);
 
   // cell_conversions();
   // wait_tasks(1);
@@ -60,8 +60,8 @@ void run_medium_cycle() {
   //aux_sense_run();
   //bms_run_fan();
 
-  run_can_tx_cycle();
-  wait_tasks(1);
+  //run_can_tx_cycle();
+  //wait_tasks(1);
 }
 
 void run_slow_cycle() {

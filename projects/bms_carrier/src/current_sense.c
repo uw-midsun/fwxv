@@ -8,14 +8,22 @@
 #include "exported_enums.h"
 #include "fault_bps.h"
 #include "gpio_it.h"
+#include "persist.h" 
 #include "interrupt.h"
 #include "log.h"
 #include "tasks.h"
+
+// Update stored learned params every 30 sec
+#define UPDATE_FLASH_PARAMS_PERIOD_MS 10000
 
 static Max17261Storage s_fuel_guage_storage;
 static Max17261Settings s_fuel_gauge_settings;
 static CurrentStorage *s_current_storage;
 static bool s_is_charging;
+
+static PersistStorage s_persist;
+static Max27261Params s_fuel_params;
+static TickType_t s_last_params_update;
 
 // Periodically read and update the SoC of the car & update charging bool
 StatusCode prv_fuel_gauge_read() {
@@ -61,6 +69,13 @@ StatusCode prv_fuel_gauge_read() {
   //   return STATUS_CODE_INTERNAL_ERROR;
   // }
 
+  // Commit params info periodically
+  if (xTaskGetTickCount() > s_last_params_update + pdMS_TO_TICKS(UPDATE_FLASH_PARAMS_PERIOD_MS)) {
+    LOG_DEBUG("Updating params\n");
+      s_last_params_update = xTaskGetTickCount();
+      max17261_get_learned_params(&s_fuel_guage_storage, &s_fuel_params);
+      persist_commit(&s_persist);
+  }
   return status;
 }
 
@@ -75,8 +90,7 @@ TASK(current_sense, TASK_STACK_256) {
       // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     } else if (notification & 1 << KILLSWITCH_IT) {
       fault_bps_set(BMS_FAULT_KILLSWITCH);
-    }
-
+    } 
     prv_fuel_gauge_read();
     send_task_end();
   }
@@ -134,7 +148,9 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   // Soft timer period for soc & chargin check
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
 
-  status_ok_or_return(max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings));
+  persist_init(&s_persist, CURRENT_SENSE_STORE_FLASH, &s_fuel_params, sizeof(s_fuel_params), false);
+  status_ok_or_return(max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings, &s_fuel_params));
+  
   tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
   return STATUS_CODE_OK;
 }
