@@ -3,9 +3,9 @@
 #include "delay.h"
 #include "interrupt.h"
 #include "log.h"
+#include "string.h"
 #include "tasks.h"
 #include "uart.h"
-#include "string.h"
 
 #define MAX_CMD_LEN 50
 
@@ -18,7 +18,7 @@ static UartSettings uart_settings = { .tx = { .port = GPIO_PORT_B, .pin = 6 },
                                       .baudrate = 115200 };
 
 TASK(master_task, TASK_STACK_512) {
-  uint8_t data_buffer[MAX_CMD_LEN + 1] = {0};
+  uint8_t data_buffer[MAX_CMD_LEN + 1] = { 0 };
   size_t idx = 0;
 
   while (true) {
@@ -30,14 +30,14 @@ TASK(master_task, TASK_STACK_512) {
       status = uart_rx(UART_PORT_1, &data, &len);
     }
     data_buffer[idx % MAX_CMD_LEN] = data;
-    ++idx;  
+    ++idx;
 
     if (data == '\r') {
       uart_tx(UART_PORT_1, data_buffer, &idx);
-      uart_tx(UART_PORT_1, newline, &len); 
+      uart_tx(UART_PORT_1, newline, &len);
       memset(data_buffer, 0, sizeof(data_buffer));
       idx = 0;
-    } 
+    }
   }
 }
 
