@@ -53,8 +53,7 @@ class TestCanDatagram(unittest.TestCase):
 
     def test_unpacking(self):
         '''Tests CAN datagram message unpacking'''
-        test_bytes = bytearray([1,                          # Datagram Type ID
-                                0xE8, 0xBC, 0x16, 0x0F,     # CRC32, little-endian
+        test_bytes = bytearray([1,                          # Datagram Type ID 
                                 TEST_NODES_RAW1,            # Node ID's RAW
                                 TEST_NODES_RAW2,            # Node ID's RAW
                                 26, 0,                      # Data Size, little-endian
@@ -73,7 +72,6 @@ class TestCanDatagram(unittest.TestCase):
         )
 
         test_bytes = bytearray([1,
-                                0xE8, 0xBC, 0x16, 0x0F,     # CRC32, little-endian
                                 TEST_NODES_RAW1,            # Node ID's RAW
                                 TEST_NODES_RAW2,            # Node ID's RAW
                                 26, 0,                      # Data Size, little-endian

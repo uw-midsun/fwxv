@@ -1,16 +1,14 @@
 '''This client script handles datagram protocol communication between devices on the CAN'''
 
-import zlib
 import can
 
 DEFAULT_CHANNEL = 'can0'
 CAN_BITRATE = 500000
 
 DATA_SIZE_SIZE = 2
-MIN_BYTEARRAY_SIZE = 9
+MIN_BYTEARRAY_SIZE = 5
 
 DATAGRAM_TYPE_OFFSET = 0
-CRC_32_OFFSET = 1
 NODE_IDS_OFFSET = 5
 DATA_SIZE_OFFSET = 7
 
@@ -43,15 +41,11 @@ class Datagram:
         '''This function returns an instance fo the class by unpacking a bytearray'''
         assert isinstance(datagram_bytearray, bytearray)
 
-        # "theoretical" lower limit:
-        # 1 (type) + 4 (crc32) + 2 (node ids) + 2 (data size) + 0 (data)
-        #   = 9
         if len(datagram_bytearray) < MIN_BYTEARRAY_SIZE:
             raise DatagramTypeError(
                 "Invalid Datagram format from bytearray: Does not meet minimum size requirement")
 
         datagram_type_id = datagram_bytearray[DATAGRAM_TYPE_OFFSET]
-        crc32 = datagram_bytearray[CRC_32_OFFSET:NODE_IDS_OFFSET]
         node_ids_raw = datagram_bytearray[NODE_IDS_OFFSET:DATA_SIZE_OFFSET]
         node_ids = cls._unpack_nodeids(cls, node_ids_raw)
         data_size = cls._convert_from_bytearray(
@@ -61,12 +55,6 @@ class Datagram:
             raise DatagramTypeError("Invalid Datagram format from bytearray: Not enough data bytes")
 
         data = datagram_bytearray[DATA_SIZE_OFFSET + DATA_SIZE_SIZE:]
-        exp_crc32 = cls._calculate_crc32(cls, datagram_type_id, node_ids_raw, data)
-
-        crc32 = cls._convert_from_bytearray(crc32, 4)
-
-        if exp_crc32 != crc32:
-            raise DatagramTypeError("Invalid crc32")
 
         return cls(datagram_type_id=datagram_type_id, node_ids=node_ids, data=data)
 
@@ -74,12 +62,8 @@ class Datagram:
         '''This function packs a new bytearray based on set data'''
         node_ids = self._pack_nodeids(self._node_ids)
 
-        crc32 = self._calculate_crc32(self._datagram_type_id, node_ids, self._data)
-        crc32 = self._convert_to_bytearray(crc32, 4)
-
         return bytearray([
             self._datagram_type_id,
-            *crc32,
             *node_ids,
             len(self._data) & 0xff,
             (len(self._data) >> 8) & 0xff,
@@ -178,23 +162,6 @@ class Datagram:
             out_value = (out_value) | (1 << (node - 1))
         out_value = self._convert_to_bytearray(out_value, DATA_SIZE_OFFSET - NODE_IDS_OFFSET)
         return out_value
-
-    def _calculate_crc32(self, datagram_type_id, node_ids, data):
-        '''This function returns a crc32 calculation'''
-        node_crc32 = zlib.crc32(bytearray(node_ids))
-        node_crc32 = self._convert_to_bytearray(node_crc32, 4)
-        data_crc32 = zlib.crc32(bytearray(data))
-        data_crc32 = self._convert_to_bytearray(data_crc32, 4)
-
-        crc32_array = bytearray([datagram_type_id,
-                                 len(node_ids),
-                                 * node_crc32,
-                                 len(data) & 0xff,
-                                 (len(data) >> 8) & 0xff,
-                                 *data_crc32
-                                 ])
-        crc32 = zlib.crc32(crc32_array)
-        return crc32
 
 
 class DatagramSender:

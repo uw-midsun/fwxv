@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-message FlashApplicationCode {
-  string name = 1;
-  uint32 application_crc = 2;
-  uint32 size = 3;
-}
-
-// The application code is to be transmitted in 2048-byte chunks in separate datagrams as raw data
