@@ -202,7 +202,7 @@ bool valid_addr(char *addr) {
   char *end_ptr = NULL;
   const uint8_t pin = strtol(addr + 1, &end_ptr, 10);
 
-  if (pin < 0 || pin > 15 || *end_ptr != '\0') {
+  if (pin > 15 || *end_ptr != '\0') {
     printf("Invalid pin - must be a value from 0 to 15\n\r");
     return false;
   }

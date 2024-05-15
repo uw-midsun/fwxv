@@ -1,6 +1,7 @@
 #ifndef PROJECTS_UART_CLI_INC_CLI_BASE_H_
 #define PROJECTS_UART_CLI_INC_CLI_BASE_H_
 
+#define _POSIX_C_SOURCE 200112L
 #define MAX_CMD_LEN 50
 
 typedef struct CmdStruct {
