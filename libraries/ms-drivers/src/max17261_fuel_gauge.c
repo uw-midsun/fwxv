@@ -137,7 +137,7 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings) {
     status_ok_or_return(max17261_set_reg(storage, MAX17261_SOFT_WAKEUP, 0x90)); // wakup ic
     status_ok_or_return(max17261_set_reg(storage, MAX17261_HIB_CFG, 0x0));  // disable hibernation
     status_ok_or_return(max17261_set_reg(storage, MAX17261_SOFT_WAKEUP, 0x0));  // clear wakeup command
-
+    
     delay_ms(10); // delay that seems to make it work, TODO ????
 
     // Step 2.1 -- configure
@@ -146,6 +146,8 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings) {
     status_ok_or_return(max17261_set_reg(storage, MAX17261_V_EMPTY, settings->cell_empty_voltage_v / VOLT_LSB));
 
     status_ok_or_return(max17261_set_reg(storage, MAX17261_SOC_HOLD, 0x0)); // disable SOCHold, not relevant to us
+
+
 
     uint16_t modelcfg = /*refresh*/ (1 << 15) | /*R100*/ (0 << 13) | /*RChg*/ (0 << 10) | (1 << 3);
     status_ok_or_return(max17261_set_reg(storage, MAX17261_MODEL_I_CFG, modelcfg));
@@ -156,6 +158,24 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings) {
       status_ok_or_return(max17261_get_reg(storage, MAX17261_MODEL_I_CFG, &modelcfg));
       delay_ms(10);
     }
+
+    // Configure alerts
+    uint16_t config = 0;
+    status_ok_or_return(max17261_get_reg(storage, MAX17261_CONFIG, &config));
+    config |= (1 << 2); // enable alerts
+    config |= (1 << 4); // thermal alerts
+    // config |= (1 << 8); // external temp measurement TODO: hardware / uncomment
+    status_ok_or_return(max17261_set_reg(storage, MAX17261_CONFIG, &config));
+
+    uint16_t current_th = (settings->i_thresh_max_a << 8) & (settings->i_thresh_min_a & 0x00FF);
+    status_ok_or_return(max17261_set_reg(storage, MAX17261_I_ALRT_TH, current_th));
+
+    status_ok_or_return(max17261_set_reg(storage, MAX17261_TEMP_ALRT_THRSH, (settings->temp_thresh_max_c < 8)));
+    
+    // Disable voltage alert (handled by AFE)
+    status_ok_or_return(max17261_set_reg(storage, MAX17261_VOLT_ALRT_THRSH, 0xFF00));
+    // Disable state of charge alerting
+    status_ok_or_return(max17261_set_reg(storage, MAX17261_SOC_ALRT_THRSH, 0xFF00));
 
     // enable hibernation
     status_ok_or_return(max17261_set_reg(storage, MAX17261_HIB_CFG, hibcfg));    
