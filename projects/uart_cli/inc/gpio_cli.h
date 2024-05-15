@@ -1,3 +1,5 @@
+#ifndef PROJECTS_UART_CLI_INC_GPIO_CLI_H_
+#define PROJECTS_UART_CLI_INC_GPIO_CLI_H_
 #include <stdbool.h>
 
 #include "cli_base.h"
@@ -12,3 +14,4 @@ bool valid_addr(char *port);
 bool valid_state(char *state);
 int valid_pin_mode(char *pin_mode);
 bool state_to_int(char *state);
+#endif  // PROJECTS_UART_CLI_INC_GPIO_CLI_H_

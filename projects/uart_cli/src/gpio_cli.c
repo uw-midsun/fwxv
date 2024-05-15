@@ -164,7 +164,7 @@ void prv_toggle(char *args) {
     printf("SUCCESS\n\r");
   } else {
     printf("FAILED\n\r");
-  };
+  }
 }
 
 void prv_get(char *args) {
@@ -200,7 +200,7 @@ bool valid_addr(char *addr) {
   }
 
   char *end_ptr = NULL;
-  const long pin = strtol(addr + 1, &end_ptr, 10);
+  const uint8_t pin = strtol(addr + 1, &end_ptr, 10);
 
   if (pin < 0 || pin > 15 || *end_ptr != '\0') {
     printf("Invalid pin - must be a value from 0 to 15\n\r");
