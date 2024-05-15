@@ -21,6 +21,8 @@ typedef struct CurrentStorage {
   uint16_t voltage;
   uint16_t temperature;
   uint32_t fuel_guage_cycle_ms;  // Time in ms between conversions (soft timer kicks)
+  uint32_t mah;
+  uint32_t full;
 } CurrentStorage;
 
 typedef struct BmsStorage {

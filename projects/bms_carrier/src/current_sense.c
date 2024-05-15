@@ -1,6 +1,7 @@
 #include "current_sense.h"
 
 #include <string.h>
+#include <inttypes.h>
 
 #include "bms.h"
 #include "bms_carrier_setters.h"
@@ -23,14 +24,16 @@ StatusCode prv_fuel_gauge_read() {
   status |= max17261_state_of_charge(&s_fuel_guage_storage, &s_current_storage->soc);
   status |= max17261_current(&s_fuel_guage_storage, &s_current_storage->current);
   status |= max17261_voltage(&s_fuel_guage_storage, &s_current_storage->voltage);
-  s_current_storage->voltage = (s_current_storage->voltage) * (CELL_X_R2_KOHMS + CELL_X_R1_KOHMS) /
-                               (CELL_X_R2_KOHMS) / 10;  // Convert to V -> mV
   status |= max17261_temp(&s_fuel_guage_storage, &s_current_storage->temperature);
+  status |= max17261_remaining_capacity(&s_fuel_guage_storage, &s_current_storage->mah);
+  status |= max17261_full_capacity(&s_fuel_guage_storage, &s_current_storage->full);
 
   LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
   LOG_DEBUG("CURRENT: %d\n", s_current_storage->current);
   LOG_DEBUG("VOLTAGE: %d\n", s_current_storage->voltage);
   LOG_DEBUG("TEMP: %d\n", s_current_storage->temperature);
+  LOG_DEBUG("mah: %" PRIu32 "\n", s_current_storage->mah);
+  LOG_DEBUG("Full: %" PRIu32 "\n", s_current_storage->full);
 
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault
@@ -47,16 +50,16 @@ StatusCode prv_fuel_gauge_read() {
   set_battery_vt_temperature(s_current_storage->temperature);
 
   // TODO (Aryan): Validate these checks
-  if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
-    fault_bps_set(BMS_FAULT_OVERCURRENT);
-    return STATUS_CODE_INTERNAL_ERROR;
-  } else if (s_current_storage->voltage >= CURRENT_SENSE_MAX_VOLTAGE) {
-    fault_bps_set(BMS_FAULT_OVERVOLTAGE);
-    return STATUS_CODE_INTERNAL_ERROR;
-  } else if (s_current_storage->temperature >= CURRENT_SENSE_MAX_TEMP) {
-    fault_bps_set(BMS_FAULT_OVERTEMP_AMBIENT);
-    return STATUS_CODE_INTERNAL_ERROR;
-  }
+  // if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
+  //   fault_bps_set(BMS_FAULT_OVERCURRENT);
+  //   return STATUS_CODE_INTERNAL_ERROR;
+  // } else if (s_current_storage->voltage >= CURRENT_SENSE_MAX_VOLTAGE) {
+  //   fault_bps_set(BMS_FAULT_OVERVOLTAGE);
+  //   return STATUS_CODE_INTERNAL_ERROR;
+  // } else if (s_current_storage->temperature >= CURRENT_SENSE_MAX_TEMP) {
+  //   fault_bps_set(BMS_FAULT_OVERTEMP_AMBIENT);
+  //   return STATUS_CODE_INTERNAL_ERROR;
+  // }
 
   return status;
 }
@@ -112,20 +115,21 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   s_fuel_gauge_settings.i2c_port = I2C_PORT_2;
   s_fuel_gauge_settings.i2c_address = MAX17261_I2C_ADDR;
 
-  s_fuel_gauge_settings.charge_term_current = CHARGE_TERMINATION_CURRENT;
-  s_fuel_gauge_settings.design_capacity = MAIN_PACK_DESIGN_CAPACITY;
-  s_fuel_gauge_settings.empty_voltage = MAIN_PACK_EMPTY_VOLTAGE;
+  s_fuel_gauge_settings.charge_term_current_ma = CHARGE_TERMINATION_CURRENT_MA;
+  s_fuel_gauge_settings.pack_design_cap_mah = PACK_CAPACITY_MAH;
+  s_fuel_gauge_settings.cell_empty_voltage_v = CELL_EMPTY_VOLTAGE_MV;
 
   // Expected MAX current / (uV / uOhmsSense) resolution
-  s_fuel_gauge_settings.i_thresh_max =
-      ((CURRENT_SENSE_MAX_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MOHMS));
-  // Expected MIN current / (uV / uOhmsSense) resolution
-  s_fuel_gauge_settings.i_thresh_min =
-      ((CURRENT_SENSE_MIN_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MOHMS));
-  // Interrupt threshold limits are stored in 2s-complement format with 1C resolution
-  s_fuel_gauge_settings.temp_thresh_max = CURRENT_SENSE_MAX_TEMP;
+  // TODO impl alert
+  // s_fuel_gauge_settings.i_thresh_max =
+  //     ((CURRENT_SENSE_MAX_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MOHMS));
+  // // Expected MIN current / (uV / uOhmsSense) resolution
+  // s_fuel_gauge_settings.i_thresh_min =
+  //     ((CURRENT_SENSE_MIN_CURRENT_A) / (ALRT_PIN_V_RES_MICRO_V / CURRENT_SENSE_R_SENSE_MOHMS));
+  // // Interrupt threshold limits are stored in 2s-complement format with 1C resolution
+  // s_fuel_gauge_settings.temp_thresh_max = CURRENT_SENSE_MAX_TEMP;
 
-  s_fuel_gauge_settings.r_sense_mohms = CURRENT_SENSE_R_SENSE_MOHMS;
+  s_fuel_gauge_settings.sense_resistor_mohms = SENSE_RESISTOR_MOHM;
 
   // Soft timer period for soc & chargin check
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;

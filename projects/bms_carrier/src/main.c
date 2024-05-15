@@ -40,9 +40,9 @@ void pre_loop_init() {
   fault_bps_init(&bms_storage.bps_storage);
   current_sense_init(&bms_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
   // cell_sense_init(&bms_storage.ltc_afe_storage);
-  aux_sense_init(&bms_storage.aux_storage);
-  init_bms_relays();
-  bms_fan_init(&bms_storage);
+  //aux_sense_init(&bms_storage.aux_storage);
+  //init_bms_relays();
+  //bms_fan_init(&bms_storage);
 }
 
 void run_fast_cycle() {}
@@ -57,15 +57,15 @@ void run_medium_cycle() {
   wait_tasks(1);
 
   // cell_sense_run();
-  aux_sense_run();
-  bms_run_fan();
+  //aux_sense_run();
+  //bms_run_fan();
 
   run_can_tx_cycle();
   wait_tasks(1);
 }
 
 void run_slow_cycle() {
-  cell_discharge(&bms_storage.ltc_afe_storage);
+  //cell_discharge(&bms_storage.ltc_afe_storage);
 
   if (fault_bps_get()) {
     LOG_DEBUG("FAULT_BITMASK: %d\n", fault_bps_get());
