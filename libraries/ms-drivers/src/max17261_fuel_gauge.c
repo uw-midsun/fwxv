@@ -68,7 +68,6 @@ StatusCode max17261_full_capacity(Max17261Storage *storage, uint32_t *full_cap_m
   
   uint16_t design = 0;
   max17261_get_reg(storage, MAX17261_DESIGN_CAP, &design);
-  LOG_DEBUG("DESIGNCAP: %" PRIu32 "mAh\n", (uint32_t)((uint32_t)design * CAP_LSB));
 
   return STATUS_CODE_OK;
 }
@@ -99,9 +98,6 @@ StatusCode max17261_voltage(Max17261Storage *storage, uint16_t *vcell_mv) {
   status_ok_or_return(max17261_get_reg(storage, MAX17261_VCELL, &vcell_reg_val));
   *vcell_mv = (uint16_t)((float)(vcell_reg_val) * VOLT_LSB);
 
-  uint16_t vempty = 0; // TODO remove
-  max17261_get_reg(storage, MAX17261_V_EMPTY, &vempty);
-  LOG_DEBUG("VEMPTY: %dmV\n", (int) ((float)vempty * VOLT_LSB));
   return STATUS_CODE_OK;
 }
 
@@ -142,6 +138,8 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings) {
     status_ok_or_return(max17261_set_reg(storage, MAX17261_HIB_CFG, 0x0));  // disable hibernation
     status_ok_or_return(max17261_set_reg(storage, MAX17261_SOFT_WAKEUP, 0x0));  // clear wakeup command
 
+    delay_ms(10); // delay that seems to make it work, TODO ????
+
     // Step 2.1 -- configure
     status_ok_or_return(max17261_set_reg(storage, MAX17261_DESIGN_CAP, settings->pack_design_cap_mah / (uint32_t) CAP_LSB));
     status_ok_or_return(max17261_set_reg(storage, MAX17261_I_CHG_TERM, settings->charge_term_current_ma / CUR_LSB));
@@ -160,19 +158,12 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings) {
     }
 
     // enable hibernation
-    //status_ok_or_return(max17261_set_reg(storage, MAX17261_HIB_CFG, hibcfg));    
+    status_ok_or_return(max17261_set_reg(storage, MAX17261_HIB_CFG, hibcfg));    
   }
 
   // Step 3
   status_ok_or_return(max17261_get_reg(storage, MAX17261_STATUS, &status));
   status_ok_or_return(max17261_set_reg(storage, MAX17261_STATUS, status & (uint16_t)~(1 << 1))); // clear status POR bit
 
-  LOG_DEBUG("ok\n");
-  uint16_t cap = 0;
-
-  max17261_get_reg(storage, MAX17261_DESIGN_CAP, &cap);
-  LOG_DEBUG("design cap: %d - %d - %d - %d\n", cap, (int) ((float)((float)cap * (float) CAP_LSB)), (uint16_t) settings->pack_design_cap_mah, (int) (settings->pack_design_cap_mah / CAP_LSB));
-
-  delay_ms(5000);
   return STATUS_CODE_OK;
 }
