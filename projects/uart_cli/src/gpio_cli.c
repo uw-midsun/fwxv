@@ -84,7 +84,7 @@ void gpio_cmd(char *cmd) {
   printf("\r%s\n", gpio_help);
 }
 
-void prv_set(char *args) {
+static void prv_set(char *args) {
   char addr[MAX_CMD_LEN + 1] = { 0 };
   tok_cmd(args, addr);
 
@@ -108,7 +108,7 @@ void prv_set(char *args) {
   }
 }
 
-void prv_init_pin(char *args) {
+static void prv_init_pin(char *args) {
   char addr[MAX_CMD_LEN + 1] = { 0 };
   tok_cmd(args, addr);
   char pin_mode[MAX_CMD_LEN + 1] = { 0 };
@@ -137,7 +137,7 @@ void prv_init_pin(char *args) {
   }
 }
 
-void prv_toggle(char *args) {
+static void prv_toggle(char *args) {
   char *addr = args;
   if (strcmp(addr, "help") == 0 || strcmp(addr, "h") == 0) {
     printf("\r%s\n", gpio_toggle_help);
@@ -156,7 +156,7 @@ void prv_toggle(char *args) {
   }
 }
 
-void prv_get(char *args) {
+static void prv_get(char *args) {
   char addr[MAX_CMD_LEN + 1] = { 0 };
   tok_cmd(args, addr);
 

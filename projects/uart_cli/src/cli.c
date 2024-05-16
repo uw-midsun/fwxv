@@ -19,13 +19,6 @@ char cmd_buffer[MAX_CMD_LEN + 1];
 // Add additional peripherals to lookup array
 static const CmdStruct cmd_lookup[] = { { .cmd_name = "gpio", .cmd_func = &gpio_cmd } };
 
-TASK(cli_task, TASK_STACK_512) {
-  cli_init();
-  while (true) {
-    cli_run();
-  }
-}
-
 void cli_init() {
   gpio_init();
   setbuf(stdout, NULL);
@@ -107,14 +100,4 @@ void print_help() {
     printf(", %s", cmd_lookup[i].cmd_name);
   }
   printf("\n\r");
-}
-
-int main() {
-  tasks_init();
-  log_init();
-
-  tasks_init_task(cli_task, TASK_PRIORITY(2), NULL);
-  tasks_start();
-
-  return 0;
 }
