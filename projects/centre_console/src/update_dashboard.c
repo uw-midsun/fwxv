@@ -5,6 +5,7 @@
 #include "centre_console_setters.h"
 #include "drive_fsm.h"
 #include "pca9555_gpio_expander.h"
+#include "pwm.h"
 #include "seg_display.h"
 
 // Multiplication factor to convert CAN drive output velocity (cm/s) to kph
@@ -97,15 +98,22 @@ void update_indicators(uint32_t notif) {
 
   // Update Aux warning LED
   if (get_pd_status_fault_bitset()) {
+    pwm_set_dc(PWM_TIMER_1, 50);
     pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_HIGH);
   } else {
+    // PWM will not stop, driver will pull over and diagnose issue
     pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_LOW);
   }
 
-  if (get_battery_status_fault() || get_pd_status_power_state() == EE_POWER_FAULT_STATE ||
-      get_pd_status_bps_persist()) {
+  if (get_battery_status_fault() & get_pd_status_bps_persist() & (1 << 15)) {
+    pwm_set_dc(PWM_TIMER_1, 100);
+    gpio_set_state(&bps_led, GPIO_STATE_LOW);
+  } else if ((get_battery_status_fault() & get_pd_status_bps_persist() & (1 << 14)) ||
+             get_pd_status_power_state() == EE_POWER_FAULT_STATE) {
+    pwm_set_dc(PWM_TIMER_1, 10);
     gpio_set_state(&bps_led, GPIO_STATE_LOW);
   } else {
+    // PWM will not stop, driver will pull over and diagnose issue
     gpio_set_state(&bps_led, GPIO_STATE_HIGH);
   }
 }

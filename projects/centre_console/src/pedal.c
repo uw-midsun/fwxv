@@ -25,7 +25,7 @@ static void prv_read_throttle_data(uint32_t *reading) {
   } else if (calculated_reading > 1) {
     calculated_reading = 1;
   }
-  LOG_DEBUG("READING %d\n", (int)(calculated_reading * 100));
+  // LOG_DEBUG("READING %d\n", (int)(calculated_reading * 100));
   memcpy(reading, &calculated_reading, sizeof(calculated_reading));
 }
 
@@ -38,12 +38,10 @@ void pedal_run() {
   // Sending messages
   if (brake_state == GPIO_STATE_LOW) {
     // Brake is pressed - Send brake data with throttle as 1
-    LOG_DEBUG("BRAKES PRESSED\n");
     set_cc_pedal_brake_output(1);
     set_cc_pedal_throttle_output(0);
   } else {
     // Brake is not pressed
-    LOG_DEBUG("BRAKES NOT PRESSED\n");
     set_cc_pedal_brake_output(0);
     set_cc_pedal_throttle_output(throttle_position);
   }

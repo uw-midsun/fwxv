@@ -1,7 +1,6 @@
 #include "gpio.h"
 #include "log.h"
 #include "pwm.h"
-
 #include "stm32f10x.h"
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_tim.h"
@@ -63,7 +62,9 @@ int main(void) {
   for (uint8_t i = 0; i < SIZEOF_ARRAY(pwm_tim_4); i++) {
     gpio_init_pin(&pwm_tim_4[i], GPIO_ALTFN_PUSH_PULL, GPIO_STATE_LOW);
   }
-  
+  pwm_init(PWM_TIMER_4, 250);
+  pwm_set_dc(PWM_TIMER_4, 50);
+
   while (1) {
     // Main loop
   }
