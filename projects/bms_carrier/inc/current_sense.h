@@ -16,15 +16,15 @@
 
 #define SENSE_RESISTOR_MOHM (0.5)
 
-#define PACK_CAPACITY_MAH (160000) // 14V test module, TODO change to reflect pack
+#define PACK_CAPACITY_MAH (160000)  // 14V test module, TODO change to reflect pack
 
-#define CELL_EMPTY_VOLTAGE_MV 2500 // LG M50T datasheet
+#define CELL_EMPTY_VOLTAGE_MV 2500  // LG M50T datasheet
 
-#define CHARGE_TERMINATION_CURRENT_MA 150 // just a guess, TODO verify
+#define CHARGE_TERMINATION_CURRENT_MA 150  // just a guess, TODO verify
 
 // Thresholds for ALRT Pin
 #define CURRENT_SENSE_MAX_CURRENT_A (58.2f)
-#define CURRENT_SENSE_MIN_CURRENT_A (27.0f) // Actually -27
+#define CURRENT_SENSE_MIN_CURRENT_A (27.0f)  // Actually -27
 #define CURRENT_SENSE_MAX_TEMP_C (60U)
 #define CURRENT_SENSE_MAX_VOLTAGE_V (150U)
 #define ALRT_PIN_V_RES_MICRO_V (400)

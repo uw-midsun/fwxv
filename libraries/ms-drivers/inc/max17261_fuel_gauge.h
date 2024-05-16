@@ -24,7 +24,9 @@ typedef struct {
 
   uint32_t pack_design_cap_mah;
   uint16_t cell_empty_voltage_v;
-  uint16_t charge_term_current_ma; // ref end-of-charge detection https://web.archive.org/web/20220121025712mp_/https://pdfserv.maximintegrated.com/en/an/user-guide-6597-max1726x-m5-ez-rev3-p4.pdf
+  uint16_t
+      charge_term_current_ma;  // ref end-of-charge detection
+                               // https://web.archive.org/web/20220121025712mp_/https://pdfserv.maximintegrated.com/en/an/user-guide-6597-max1726x-m5-ez-rev3-p4.pdf
 
   uint16_t i_thresh_max_a;
   int16_t i_thresh_min_a;
@@ -108,7 +110,8 @@ StatusCode max17261_temp(Max17261Storage *storage, uint16_t *temp_c);
  * @param settings - populated settings struct
  * @return STATUS_CODE_OK on success
  */
-StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings, Max27261Params *params);
+StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings,
+                         Max27261Params *params);
 
 StatusCode max17261_set_learned_params(Max17261Storage *storage, Max27261Params *params);
 StatusCode max17261_get_learned_params(Max17261Storage *storage, Max27261Params *params);
