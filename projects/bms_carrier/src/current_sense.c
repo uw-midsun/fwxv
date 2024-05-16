@@ -33,15 +33,16 @@ StatusCode prv_fuel_gauge_read() {
   status |= max17261_current(&s_fuel_guage_storage, &s_current_storage->current);
   status |= max17261_voltage(&s_fuel_guage_storage, &s_current_storage->voltage);
   status |= max17261_temp(&s_fuel_guage_storage, &s_current_storage->temperature);
-  status |= max17261_remaining_capacity(&s_fuel_guage_storage, &s_current_storage->mah);
+  status |=
+      max17261_remaining_capacity(&s_fuel_guage_storage, &s_current_storage->remaining_capacity);
   status |= max17261_full_capacity(&s_fuel_guage_storage, &s_current_storage->full);
 
   LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
   LOG_DEBUG("CURRENT: %d\n", s_current_storage->current);
   LOG_DEBUG("VOLTAGE: %d\n", s_current_storage->voltage);
   LOG_DEBUG("TEMP: %d\n", s_current_storage->temperature);
-  LOG_DEBUG("mah: %" PRIu32 "\n", s_current_storage->mah);
-  LOG_DEBUG("Full: %" PRIu32 "\n", s_current_storage->full);
+  LOG_DEBUG("REMCAP: %" PRIu32 "\n", s_current_storage->remaining_capacity);
+  LOG_DEBUG("FULLCAP: %" PRIu32 "\n", s_current_storage->full);
 
   if (status != STATUS_CODE_OK) {
     // TODO (Adel): Handle a fuel gauge fault

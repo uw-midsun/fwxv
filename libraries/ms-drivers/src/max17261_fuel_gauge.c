@@ -68,10 +68,6 @@ StatusCode max17261_full_capacity(Max17261Storage *storage, uint32_t *full_cap_m
   status_ok_or_return(max17261_get_reg(storage, MAX17261_FULL_CAP_REP, &full_cap_reg_val));
   *full_cap_mAh = full_cap_reg_val * CAP_LSB;
 
-  uint16_t design = 0;
-  max17261_get_reg(storage, MAX17261_DESIGN_CAP, &design);
-  LOG_DEBUG("DES CAP: %d\n", design);
-
   return STATUS_CODE_OK;
 }
 
@@ -123,6 +119,8 @@ StatusCode max17261_get_learned_params(Max17261Storage *storage, Max27261Params 
 StatusCode max17261_set_learned_params(Max17261Storage *storage, Max27261Params *params) {
   status_ok_or_return(max17261_set_reg(storage, MAX17261_R_COMP0, params->rcomp0));
   status_ok_or_return(max17261_set_reg(storage, MAX17261_TEMP_CO, params->tempco));
+  // somehow replaces fullcap with repcap, throws off all calculations. Battery degredation
+  // shouldn't be a huge factor for our time scale
   // status_ok_or_return(max17261_set_reg(storage, MAX17261_FULL_CAP_REP, params->fullcaprep));
   status_ok_or_return(max17261_set_reg(storage, MAX17261_CYCLES, params->cycles));
   status_ok_or_return(max17261_set_reg(storage, MAX17261_FULL_CAP_NOM, params->fullcapnom));
@@ -161,11 +159,12 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings,
     status_ok_or_return(
         max17261_set_reg(storage, MAX17261_SOFT_WAKEUP, 0x0));  // clear wakeup command
 
-    delay_ms(10);  // delay that seems to make it work, TODO ????
+    delay_ms(
+        25);  // unsure why this works, not mentioned in any documentation. Seems reliable enough.
 
     // Step 2.1 -- configure
-    status_ok_or_return(max17261_set_reg(storage, MAX17261_DESIGN_CAP,
-                                         settings->pack_design_cap_mah / (uint32_t)CAP_LSB));
+    status_ok_or_return(
+        max17261_set_reg(storage, MAX17261_DESIGN_CAP, settings->pack_design_cap_mah / CAP_LSB));
     status_ok_or_return(
         max17261_set_reg(storage, MAX17261_I_CHG_TERM, settings->charge_term_current_ma / CUR_LSB));
     status_ok_or_return(
@@ -174,7 +173,11 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings,
     status_ok_or_return(
         max17261_set_reg(storage, MAX17261_SOC_HOLD, 0x0));  // disable SOCHold, not relevant to us
 
-    uint16_t modelcfg = /*refresh*/ (1 << 15) | /*R100*/ (0 << 13) | /*RChg*/ (0 << 10) | (1 << 3);
+    uint16_t modelcfg = 0;
+    modelcfg |= (1 << 15);  // refresh
+    modelcfg |= (0 << 13);  // R100
+    modelcfg |= (0 << 10);  // RChg
+    modelcfg |= (1 << 3);   // mandatory 1
     status_ok_or_return(max17261_set_reg(storage, MAX17261_MODEL_I_CFG, modelcfg));
 
     // wait for modelcfg refresh to complete
@@ -189,7 +192,7 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings,
     status_ok_or_return(max17261_get_reg(storage, MAX17261_CONFIG, &config));
     config |= (1 << 2);  // enable alerts
     config |= (1 << 4);  // thermal alerts
-    // config |= (1 << 8); // external temp measurement TODO: hardware / uncomment
+    config |= (1 << 8);  // external temp measurement
     status_ok_or_return(max17261_set_reg(storage, MAX17261_CONFIG, config));
 
     uint16_t current_th = (settings->i_thresh_max_a << 8) & (settings->i_thresh_min_a & 0x00FF);
@@ -200,7 +203,7 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings,
 
     // Disable voltage alert (handled by AFE)
     status_ok_or_return(max17261_set_reg(storage, MAX17261_VOLT_ALRT_THRSH, 0xFF00));
-    // Disable state of charge alerting
+    // Disable state of charge alerting (no need to fault on SOC)
     status_ok_or_return(max17261_set_reg(storage, MAX17261_SOC_ALRT_THRSH, 0xFF00));
 
     // enable hibernation
