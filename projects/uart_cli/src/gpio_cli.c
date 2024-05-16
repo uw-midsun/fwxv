@@ -59,7 +59,6 @@ static const char gpio_get_help[] =
 
     "State: \"high\" or \"low\"\n\r";
 
-
 static void prv_set(char *args) {
   char addr[MAX_CMD_LEN + 1] = { 0 };
   tok_cmd(args, addr);

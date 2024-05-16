@@ -20,6 +20,7 @@ static char cmd_buffer[MAX_CMD_LEN + 1];
 static const CmdStruct cmd_lookup[] = { { .cmd_name = "gpio", .cmd_func = &gpio_cmd } };
 
 void cli_init() {
+  // Add peripheral init calls here
   gpio_init();
   setbuf(stdout, NULL);
   printf("\n\rCLI Launched\n\r");

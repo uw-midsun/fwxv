@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-// Helper function to separate first argument from rest of string
 void tok_cmd(char *cmd_in, char *tok_out) {
   char tmp[MAX_CMD_LEN + 1] = { 0 };
   const char delim[2] = " ";
