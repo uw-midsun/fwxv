@@ -9,13 +9,13 @@
 #include "tasks.h"
 #include "uart.h"
 
-const char cli_help[] =
+static const char cli_help[] =
     "MSXV Controller Board CLI. Usage: \n\r"
     "<peripheral> <action> <parameters> \n\r\n"
     "Enter \"help\" after any argument for detailed reference. \n\r\n"
     "List of Peripherals: gpio";
 
-char cmd_buffer[MAX_CMD_LEN + 1];
+static char cmd_buffer[MAX_CMD_LEN + 1];
 // Add additional peripherals to lookup array
 static const CmdStruct cmd_lookup[] = { { .cmd_name = "gpio", .cmd_func = &gpio_cmd } };
 
@@ -46,6 +46,10 @@ char *get_cmd() {
       status = uart_rx(UART_PORT_1, &data, &len);
     }
 
+    if (idx == MAX_CMD_LEN && (data != '\r' && data != '\b')) {
+      continue;
+    }
+
     if (data == '\r') {
       if (idx == 0) {
         return NULL;
@@ -54,7 +58,7 @@ char *get_cmd() {
       return cmd_buffer;
     } else if (data == '\b') {
       if (idx == 0) {
-        return NULL;
+        continue;
       }
       --idx;
       cmd_buffer[idx % MAX_CMD_LEN] = 0;
@@ -63,21 +67,18 @@ char *get_cmd() {
       cmd_buffer[idx % MAX_CMD_LEN] = data;
       ++idx;
       printf("%c", data);
-      if (idx == MAX_CMD_LEN) {
-        printf("WARNING: Character limit reached\n");
-      }
     }
   }
 }
 
 void cmd_parse(char *cmd) {
-  for (int i = 0; i < MAX_CMD_LEN; ++i) {
+  for (size_t i = 0; i < MAX_CMD_LEN; ++i) {
     cmd[i] = tolower(cmd[i]);
   }
   char peripheral[MAX_CMD_LEN + 1] = { 0 };
   tok_cmd(cmd, peripheral);
 
-  if (strcmp(peripheral, "help") == 0 || strcmp(peripheral, "h")) {
+  if (strcmp(peripheral, "help") == 0 || strcmp(peripheral, "h") == 0) {
     printf("\r%s\n", cli_help);
     return;
   }
@@ -96,7 +97,7 @@ void cmd_parse(char *cmd) {
 
 void print_help() {
   printf("\r%s\n", cli_help);
-  for (int i = 1; i < SIZEOF_ARRAY(cmd_lookup); ++i) {
+  for (size_t i = 1; i < SIZEOF_ARRAY(cmd_lookup); ++i) {
     printf(", %s", cmd_lookup[i].cmd_name);
   }
   printf("\n\r");

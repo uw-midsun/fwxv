@@ -8,7 +8,7 @@
 #include "log.h"
 #include "string.h"
 
-const char gpio_help[] =
+static const char gpio_help[] =
     "CLI Reference for GPIO Pins. Usage: \n\r"
     "gpio <set/init_pin/toggle/get> <parameters> \n\r\n"
 
@@ -18,7 +18,7 @@ const char gpio_help[] =
 
     "Type \"help\" after any action for detailed reference.\n\r";
 
-const char gpio_set_help[] =
+static const char gpio_set_help[] =
     "Usage: Set the pin state by address.\n\r"
     "gpio set <address> <state> \n\r\n"
 
@@ -27,7 +27,7 @@ const char gpio_set_help[] =
 
     "State: \"high\" or \"low\"\n\r";
 
-const char gpio_init_pin_help[] =
+static const char gpio_init_pin_help[] =
     "Usage: Initializes a GPIO pin by address. GPIOs are configured \n\r"
     "to a specified mode, at the max refresh speed \n\r"
     "The init_state only matters if the pin is configured as an output \n\r"
@@ -42,14 +42,14 @@ const char gpio_init_pin_help[] =
 
     "State: \"high\" or \"low\"\n\r";
 
-const char gpio_toggle_help[] =
+static const char gpio_toggle_help[] =
     "Usage: Toggles the output state of the pin. \n\r"
     "gpio toggle <address> \n\r\n"
 
     "Address: <Port (a-g)><Pin (0-15)> \n\r"
     "Examples: A0, D5, E11, G15\n\r";
 
-const char gpio_get_help[] =
+static const char gpio_get_help[] =
     "Usage: Gets the value of the input register for a pin and assigns it to the state \n\r"
     "that is passed in. \n\r"
     "gpio get <address> <input_state> \n\r\n"
@@ -59,30 +59,6 @@ const char gpio_get_help[] =
 
     "State: \"high\" or \"low\"\n\r";
 
-static const CmdStruct gpio_lookup[] = { { .cmd_name = "set", .cmd_func = &prv_set },
-                                         { .cmd_name = "init_pin", .cmd_func = &prv_init_pin },
-                                         { .cmd_name = "toggle", .cmd_func = &prv_toggle },
-                                         { .cmd_name = "get", .cmd_func = &prv_get } };
-
-void gpio_cmd(char *cmd) {
-  char action[MAX_CMD_LEN + 1] = { 0 };
-  tok_cmd(cmd, action);
-
-  if (strcmp(action, "help") == 0 || strcmp(action, "h") == 0) {
-    printf("\r%s\n", gpio_help);
-    return;
-  }
-
-  for (size_t i = 0; i < SIZEOF_ARRAY(gpio_lookup); ++i) {
-    if (strcmp(action, gpio_lookup[i].cmd_name) == 0) {
-      gpio_lookup[i].cmd_func(cmd);
-      return;
-    }
-  }
-  // ERROR: Invalid action
-  printf("Invalid action\n\r");
-  printf("\r%s\n", gpio_help);
-}
 
 static void prv_set(char *args) {
   char addr[MAX_CMD_LEN + 1] = { 0 };
@@ -98,7 +74,7 @@ static void prv_set(char *args) {
     return;
   }
 
-  GpioAddress address = { .port = addr[0] - 65, .pin = strtol(addr + 1, NULL, 10) };
+  GpioAddress address = { .port = addr[0] - 97, .pin = strtol(addr + 1, NULL, 10) };
   GpioState state = state_to_int(state_str);
 
   if (gpio_set_state(&address, state) == STATUS_CODE_OK) {
@@ -126,7 +102,7 @@ static void prv_init_pin(char *args) {
     return;
   }
 
-  GpioAddress address = { .port = addr[0] - 65, .pin = strtol(addr + 1, NULL, 10) };
+  GpioAddress address = { .port = addr[0] - 97, .pin = strtol(addr + 1, NULL, 10) };
   GpioMode mode = pin_mode_enum;
   GpioState init_state = state_to_int(state_str);
 
@@ -147,7 +123,7 @@ static void prv_toggle(char *args) {
     return;
   }
 
-  GpioAddress address = { .port = addr[0] - 65, .pin = strtol(addr + 1, NULL, 10) };
+  GpioAddress address = { .port = addr[0] - 97, .pin = strtol(addr + 1, NULL, 10) };
 
   if (gpio_toggle_state(&address) == STATUS_CODE_OK) {
     printf("SUCCESS\n\r");
@@ -170,7 +146,7 @@ static void prv_get(char *args) {
     return;
   }
 
-  GpioAddress address = { .port = addr[0] - 65, .pin = strtol(addr + 1, NULL, 10) };
+  GpioAddress address = { .port = addr[0] - 97, .pin = strtol(addr + 1, NULL, 10) };
   GpioState input_state = state_to_int(state_str);
 
   if (gpio_get_state(&address, &input_state) == STATUS_CODE_OK) {
@@ -199,7 +175,7 @@ bool valid_addr(char *addr) {
 
 bool valid_state(char *state) {
   if (strcmp(state, "high") != 0 && strcmp(state, "low") != 0) {
-    printf("Invalid state - must be HIGH or LOW (case sensitive)\n\r");
+    printf("Invalid state - must be high or low\n\r");
     return false;
   } else {
     return true;
@@ -222,4 +198,29 @@ int valid_pin_mode(char *pin_mode) {
 
 bool state_to_int(char *state) {
   return strcmp(state, "low");
+}
+
+static const CmdStruct gpio_lookup[] = { { .cmd_name = "set", .cmd_func = &prv_set },
+                                         { .cmd_name = "init_pin", .cmd_func = &prv_init_pin },
+                                         { .cmd_name = "toggle", .cmd_func = &prv_toggle },
+                                         { .cmd_name = "get", .cmd_func = &prv_get } };
+
+void gpio_cmd(char *cmd) {
+  char action[MAX_CMD_LEN + 1] = { 0 };
+  tok_cmd(cmd, action);
+
+  if (strcmp(action, "help") == 0 || strcmp(action, "h") == 0) {
+    printf("\r%s\n", gpio_help);
+    return;
+  }
+
+  for (size_t i = 0; i < SIZEOF_ARRAY(gpio_lookup); ++i) {
+    if (strcmp(action, gpio_lookup[i].cmd_name) == 0) {
+      gpio_lookup[i].cmd_func(cmd);
+      return;
+    }
+  }
+  // ERROR: Invalid action
+  printf("Invalid action\n\r");
+  printf("\r%s\n", gpio_help);
 }
