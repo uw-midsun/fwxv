@@ -7,3 +7,4 @@ void cli_init();
 void cli_run();
 char *get_cmd();
 void cmd_parse(char *cmd);
+void print_help();

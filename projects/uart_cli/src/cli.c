@@ -13,7 +13,7 @@ const char cli_help[] =
     "MSXV Controller Board CLI. Usage: \n\r"
     "<peripheral> <action> <parameters> \n\r\n"
     "Enter \"help\" after any argument for detailed reference. \n\r\n"
-    "List of Peripherals: gpio \n\r";
+    "List of Peripherals: gpio";
 
 char cmd_buffer[MAX_CMD_LEN + 1];
 // Add additional peripherals to lookup array
@@ -99,6 +99,14 @@ void cmd_parse(char *cmd) {
   // ERROR: Invalid peripheral
   printf("Invalid peripheral\n\r");
   printf("\r%s\n", cli_help);
+}
+
+void print_help() {
+  printf("\r%s\n", cli_help);
+  for (int i = 1; i < SIZEOF_ARRAY(cmd_lookup); ++i) {
+    printf(", %s", cmd_lookup[i].cmd_name);
+  }
+  printf("\n\r");
 }
 
 int main() {
