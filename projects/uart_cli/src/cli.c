@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 
+#include "ctype.h"
 #include "interrupt.h"
 #include "log.h"
 #include "string.h"
@@ -16,8 +17,7 @@ const char cli_help[] =
 
 char cmd_buffer[MAX_CMD_LEN + 1];
 // Add additional peripherals to lookup array
-static const CmdStruct cmd_lookup[] = { { .cmd_name = "gpio", .cmd_func = &gpio_cmd },
-                                        { .cmd_name = "GPIO", .cmd_func = &gpio_cmd } };
+static const CmdStruct cmd_lookup[] = { { .cmd_name = "gpio", .cmd_func = &gpio_cmd } };
 
 TASK(cli_task, TASK_STACK_512) {
   cli_init();
@@ -78,12 +78,13 @@ char *get_cmd() {
 }
 
 void cmd_parse(char *cmd) {
+  for (int i = 0; i < MAX_CMD_LEN; ++i) {
+    cmd[i] = tolower(cmd[i]);
+  }
   char peripheral[MAX_CMD_LEN + 1] = { 0 };
-  strip_ws(cmd);
   tok_cmd(cmd, peripheral);
 
-  if (strcmp(peripheral, "help") == 0 || strcmp(peripheral, "h") == 0 ||
-      strcmp(peripheral, "HELP") == 0) {
+  if (strcmp(peripheral, "help") == 0 || strcmp(peripheral, "h")) {
     printf("\r%s\n", cli_help);
     return;
   }
