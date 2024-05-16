@@ -95,7 +95,7 @@ static void prv_fault_state_output(void *context) {
       (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
   persist_commit(&s_persist);
   pd_set_active_output_group(OUTPUT_GROUP_POWER_FAULT);
-  set_pd_status_bps_persist(true);
+  set_pd_status_bps_persist(s_bps_storage.fault_bitset);
   set_pd_status_power_state(EE_POWER_FAULT_STATE);
   // TODO(devAdhiraj): start bps strobe
 }
@@ -124,7 +124,7 @@ StatusCode init_power_seq(void) {
   memset(&s_bps_storage, 0, sizeof(s_bps_storage));
   persist_init(&s_persist, BPS_FAULT_FLASH_PAGE, &s_bps_storage, sizeof(s_bps_storage), true);
   persist_ctrl_periodic(&s_persist, false);
-  if (s_bps_storage.fault_bitset) set_pd_status_bps_persist(true);
+  if (s_bps_storage.fault_bitset) set_pd_status_bps_persist(s_bps_storage.fault_bitset);
 
   fsm_init(power_seq, s_power_seq_state_list, s_power_seq_transitions, POWER_STATE_OFF, NULL);
   return STATUS_CODE_OK;
