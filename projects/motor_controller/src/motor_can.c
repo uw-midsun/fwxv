@@ -36,7 +36,6 @@ typedef enum DriveState {
   // extra drive state types used only by mci
   CRUISE,
   BRAKE,
-  OPD_BRAKE
 } DriveState;
 
 static float s_target_current;
@@ -52,15 +51,18 @@ static float prv_get_float(uint32_t u) {
   return fu.f;
 }
 
-static float prv_one_pedal_drive_current(float throttle_percent, float car_velocity,
-                                         DriveState *drive_state) {
+static float prv_one_pedal_threshold(float car_velocity) {
   float threshold = 0.0;
   if (car_velocity <= MAX_OPD_SPEED) {
     threshold = car_velocity * COASTING_THRESHOLD_SCALE;
   } else {
     threshold = MAX_COASTING_THRESHOLD;
   }
+  return threshold;
+}
 
+static float prv_one_pedal_drive_current(float throttle_percent, float threshold,
+                                         DriveState *drive_state) {
   if (throttle_percent <= threshold + 0.05 && throttle_percent >= threshold - 0.05) {
     return 0.0;
   }
@@ -80,22 +82,23 @@ static void prv_update_target_current_velocity() {
   bool brake = get_cc_pedal_brake_output();
   float target_vel = (int)(get_cc_info_target_velocity()) * VEL_TO_RPM_RATIO;
   float car_vel = (s_car_velocity_l + s_car_velocity_r) / 2;
+  float opd_threshold = prv_one_pedal_threshold(car_vel);
 
   DriveState drive_state = get_cc_info_drive_state();
   // Regen returns a value btwn 0-100 to represent the max regen we can preform
   // 0 means our cells max voltage is close to 4.2V or regen is off so we should stop regen braking
   // 100 means we are below 4.0V so regen braking is allowed
-  float regen = get_drive_output_regen_braking();
+  float regen = prv_get_float(get_drive_output_regen_braking());
   bool cruise = get_cc_info_cruise_control();
 
-   if (drive_state == DRIVE && cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
+  if (drive_state == DRIVE && cruise && throttle_percent <= opd_threshold) {
     drive_state = CRUISE;
   }
   if (brake || (throttle_percent == 0 && drive_state != CRUISE)) {
     drive_state = regen ? BRAKE : NEUTRAL;
   }
   if (drive_state == DRIVE || drive_state == REVERSE) {
-    throttle_percent = prv_one_pedal_drive_current(throttle_percent, car_vel, &drive_state);
+    throttle_percent = prv_one_pedal_drive_current(throttle_percent, opd_threshold, &drive_state);
   }
 
   // set target current and velocity based on drive state
@@ -105,6 +108,10 @@ static void prv_update_target_current_velocity() {
       s_target_current = throttle_percent;
       s_target_velocity = TORQUE_CONTROL_VEL;
       break;
+    case NEUTRAL:
+      s_target_current = 0;
+      s_target_velocity = 0;
+      break;
     case REVERSE:
       s_target_current = throttle_percent;
       s_target_velocity = -TORQUE_CONTROL_VEL;
@@ -113,12 +120,12 @@ static void prv_update_target_current_velocity() {
       s_target_current = ACCERLATION_FORCE;
       s_target_velocity = target_vel;
       break;
-    case BRAKE:
-      s_target_current = ACCERLATION_FORCE;
-      s_target_velocity = 0;
-      break;
-    case NEUTRAL:
-      s_target_current = 0;
+    case BRAKE:  // When braking and regen is off it should be the same as NEUTRAL. regen = 0
+      if (throttle_percent > regen) {
+        s_target_current = regen;
+      } else {
+        s_target_current = throttle_percent;
+      }
       s_target_velocity = 0;
       break;
     default:
@@ -137,10 +144,11 @@ static inline uint8_t pack_right_shift_u32(uint32_t value, uint8_t shift, uint8_
 
 static void motor_controller_tx_all() {
   // don't send drive command if didn't get centre console's drive output msg
-  // if (!get_received_cc_info()) {
-  //   LOG_DEBUG("NO drive output\n");
-  //   return;
-  // }
+  if (!get_received_cc_info()) {
+    LOG_DEBUG("NO drive output\n");
+    return;
+  }
+  if (!get_received_cc_pedal()) return;
   // if (!get_pedal_output_brake_output()) return;
   // don't send drive command if not precharged
   if (!g_tx_struct.mc_status_precharge_status) {
@@ -192,12 +200,12 @@ static void motor_controller_rx_all() {
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
         set_motor_velocity_velocity_l(
             (uint16_t)(int16_t)(prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE));
-            s_car_velocity_l = prv_get_float(msg.data_u32[1]) * CONVERT_VELOCITY_TO_KPH;
+        s_car_velocity_l = prv_get_float(msg.data_u32[0]) * CONVERT_VELOCITY_TO_KPH;
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
         set_motor_velocity_velocity_r(
             (uint16_t)(int16_t)(prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE));
-            s_car_velocity_r = prv_get_float(msg.data_u32[1]) * CONVERT_VELOCITY_TO_KPH;
+        s_car_velocity_r = prv_get_float(msg.data_u32[0]) * CONVERT_VELOCITY_TO_KPH;
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:
