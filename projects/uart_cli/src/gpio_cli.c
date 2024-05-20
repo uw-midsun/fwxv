@@ -183,7 +183,7 @@ bool valid_state(char *state) {
 
 int valid_pin_mode(char *pin_mode) {
   const char *pin_modes[NUM_GPIO_MODES] = {
-    "analog", "input_floating", "input_pull_down", "input_pull_up", "output_open_drain",
+    "analog",           "input_floating",   "input_pull_down", "input_pull_up", "output_open_drain",
     "output_push_pull", "alftn_open_drain", "altfn_push_pull"
   };
 
