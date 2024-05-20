@@ -80,7 +80,7 @@ void cmd_parse(char *cmd) {
   tok_cmd(cmd, peripheral);
 
   if (strcmp(peripheral, "help") == 0 || strcmp(peripheral, "h") == 0) {
-    printf("\r%s\n", cli_help);
+    print_help();
     return;
   }
 
@@ -93,11 +93,11 @@ void cmd_parse(char *cmd) {
 
   // ERROR: Invalid peripheral
   printf("Invalid peripheral\n\r");
-  printf("\r%s\n", cli_help);
+  print_help();
 }
 
 void print_help() {
-  printf("\r%s\n", cli_help);
+  printf("\r%s", cli_help);
   for (size_t i = 1; i < SIZEOF_ARRAY(cmd_lookup); ++i) {
     printf(", %s", cmd_lookup[i].cmd_name);
   }
