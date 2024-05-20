@@ -9,7 +9,8 @@
 #define R1_OHMS 47000
 
 typedef struct AuxStorage {
-  uint16_t aux_battery_voltage;
+  // Aux battery voltage in mV
+  uint16_t aux_battery_mv;
 } AuxStorage;
 
 StatusCode aux_sense_init(AuxStorage *aux_storage);

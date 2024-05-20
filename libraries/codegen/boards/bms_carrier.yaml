@@ -21,7 +21,7 @@
       signals:
         fault:
           length: 16
-        aux_batt_v:
+        aux_batt_mv:
           length: 32
 
     battery_info:

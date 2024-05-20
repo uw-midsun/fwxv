@@ -165,17 +165,20 @@ void monitor_cruise_control() {
 void update_drive_output() {
   set_cc_info_cruise_control(s_cc_enabled);
   set_cc_info_target_velocity(s_target_velocity);
-  memcpy(g_tx_struct.cc_info_regen_braking, &s_regen_braking, sizeof(s_regen_braking));
+  memcpy(&g_tx_struct.cc_info_regen_braking, &s_regen_braking, sizeof(s_regen_braking));
   set_cc_info_hazard_enabled(s_hazard_state);
 }
 
 TASK(update_displays, TASK_MIN_STACK_SIZE) {
   seg_displays_init(&all_displays);
   while (true) {
-    float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
+    float avg_speed = (abs((int16_t)get_motor_velocity_velocity_l()) +
+                       abs((int16_t)get_motor_velocity_velocity_r())) /
+                      2.0f;
     float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
     uint16_t batt_perc_val = get_battery_vt_batt_perc();
-    uint16_t aux_battery_voltage = get_battery_status_aux_batt_v();
+    // Received in mV so converted to 100 * mV for displays
+    uint16_t aux_battery_voltage = get_battery_status_aux_batt_mv() / 100;
     if (speed_kph >= 100) {
       seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, aux_battery_voltage);
     } else {

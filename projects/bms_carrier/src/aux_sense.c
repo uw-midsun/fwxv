@@ -14,10 +14,9 @@ StatusCode aux_sense_init(AuxStorage *aux_storage) {
 
 StatusCode aux_sense_run() {
   adc_run();
-  adc_read_converted(aux_sense_pin, &s_aux_storage->aux_battery_voltage);
-  s_aux_storage->aux_battery_voltage = (s_aux_storage->aux_battery_voltage) * (R2_OHMS + R1_OHMS) /
-                                       (R2_OHMS * 100);  // CONV VOLTAGE;
-  LOG_DEBUG("AUX READING: %d\n", s_aux_storage->aux_battery_voltage);
-  set_battery_status_aux_batt_v(s_aux_storage->aux_battery_voltage);
+  adc_read_converted(aux_sense_pin, &s_aux_storage->aux_battery_mv);
+  s_aux_storage->aux_battery_mv = (s_aux_storage->aux_battery_mv) * (R2_OHMS + R1_OHMS) / (R2_OHMS);
+  LOG_DEBUG("AUX READING: %d\n", s_aux_storage->aux_battery_mv);
+  set_battery_status_aux_batt_mv(s_aux_storage->aux_battery_mv);
   return STATUS_CODE_OK;
 }
