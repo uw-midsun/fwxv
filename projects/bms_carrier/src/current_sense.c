@@ -37,6 +37,8 @@ StatusCode prv_fuel_gauge_read() {
       max17261_remaining_capacity(&s_fuel_guage_storage, &s_current_storage->remaining_capacity);
   status |= max17261_full_capacity(&s_fuel_guage_storage, &s_current_storage->full);
 
+  // Measured voltage corresponds to one cell. Multiply it by the number of cells in series
+  s_current_storage->voltage = s_current_storage->voltage * NUM_SERIES_CELLS / 10;
   LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
   LOG_DEBUG("CURRENT: %d\n", s_current_storage->current);
   LOG_DEBUG("VOLTAGE: %d\n", s_current_storage->voltage);
@@ -59,16 +61,19 @@ StatusCode prv_fuel_gauge_read() {
   set_battery_vt_temperature(s_current_storage->temperature);
 
   // TODO (Aryan): Validate these checks
-  // if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
-  //   fault_bps_set(BMS_FAULT_OVERCURRENT);
-  //   return STATUS_CODE_INTERNAL_ERROR;
-  // } else if (s_current_storage->voltage >= CURRENT_SENSE_MAX_VOLTAGE) {
-  //   fault_bps_set(BMS_FAULT_OVERVOLTAGE);
-  //   return STATUS_CODE_INTERNAL_ERROR;
-  // } else if (s_current_storage->temperature >= CURRENT_SENSE_MAX_TEMP) {
-  //   fault_bps_set(BMS_FAULT_OVERTEMP_AMBIENT);
-  //   return STATUS_CODE_INTERNAL_ERROR;
-  // }
+  if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
+    fault_bps_set(BMS_FAULT_OVERCURRENT);
+    return STATUS_CODE_INTERNAL_ERROR;
+  } else if (s_current_storage->current <= CURRENT_SENSE_MIN_CURRENT_A * 1000) {
+    fault_bps_set(BMS_FAULT_OVERCURRENT);
+    return STATUS_CODE_INTERNAL_ERROR;
+  } else if (s_current_storage->voltage >= CURRENT_SENSE_MAX_VOLTAGE_V) {
+    fault_bps_set(BMS_FAULT_OVERVOLTAGE);
+    return STATUS_CODE_INTERNAL_ERROR;
+  } else if (s_current_storage->temperature >= CURRENT_SENSE_MAX_TEMP_C) {
+    fault_bps_set(BMS_FAULT_OVERTEMP_AMBIENT);
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
 
   // Commit params info periodically
   if (xTaskGetTickCount() > s_last_params_update + pdMS_TO_TICKS(UPDATE_FLASH_PARAMS_PERIOD_MS)) {

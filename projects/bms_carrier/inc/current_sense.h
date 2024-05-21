@@ -22,15 +22,17 @@
 
 #define CHARGE_TERMINATION_CURRENT_MA (400)  // 50 mA * 8 (one module)
 
+#define NUM_SERIES_CELLS 36  // Number of cells in series to multiply average cell voltage
+
 // Thresholds for ALRT Pin
 #define CURRENT_SENSE_MAX_CURRENT_A (58.2f)
-#define CURRENT_SENSE_MIN_CURRENT_A (27.0f)  // Actually -27
+#define CURRENT_SENSE_MIN_CURRENT_A (-27.0f)  // Actually -27
 #define CURRENT_SENSE_MAX_TEMP_C (60U)
-#define CURRENT_SENSE_MAX_VOLTAGE_V (150U)
+#define CURRENT_SENSE_MAX_VOLTAGE_V (15000)
 #define ALRT_PIN_V_RES_MICRO_V (400)
 
 #define CELL_X_R1_KOHMS 1780
-#define CELL_X_R2_KOHMS 195
+#define CELL_X_R2_KOHMS 20
 
 #define CURRENT_SENSE_STORE_FLASH NUM_FLASH_PAGES - 1
 
