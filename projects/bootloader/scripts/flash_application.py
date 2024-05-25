@@ -16,20 +16,26 @@ class Flash_Application():
     def get_binary_size(self):
         return self._bin_size
     
-    @classmethod
-    def validate_bin(cls):
-        if os.path.isfile(cls.get_binary_path()):
+    def validate_bin(self):
+        if os.path.isfile(self.get_binary_path()):
             return True
         
         print(f"Could not find the binary file for flashing...")
         return False
     
-    def start_initial_process(self, datagram: Datagram, board_id: int) -> None:
+    def validate_board_id(self, board_int: int):
+        if isinstance(board_int, int) and board_int >= 0:
+            return True
+        
+        print(f'Invalid Board ID: {board_int}')
+        return False
+    
+    def start_initial_process(self, board_id: int) -> None:
         print(f"Starting the initial flash process")
 
         print(f'Sending binary data with size of {self.get_binary_size()}...')
 
-        if self.validate_bin():
+        if self.validate_bin() and self.validate_board_id(board_id):
             # Create a datagram with the initial flash message
             initial_datagram = Datagram(
                 datagram_type_id=CAN_ARBITRATION_FLASH_ID | (board_id << 5),
@@ -44,7 +50,7 @@ class Flash_Application():
     def stream_flash_data(self, board_id: int):
         print(f"Streaming flash data to board {board_id}...")
 
-        if self.validate_bin:
+        if self.validate_bin and self.validate_board_id(board_id):
             with open(self.get_binary_path(), 'rb') as bin_data:
                 flash_datagram = Datagram(
                     datagram_type_id=CAN_ARBITRATION_FLASH_ID | (board_id << 5),
