@@ -162,7 +162,6 @@ class Datagram:
         out_value = self._convert_to_bytearray(out_value, DATA_SIZE_OFFSET - NODE_IDS_OFFSET)
         return out_value
 
-
 class DatagramSender:
     # pylint: disable=too-few-public-methods
     '''Class that acts as a distributor for the Datagram class on a CAN bus'''
