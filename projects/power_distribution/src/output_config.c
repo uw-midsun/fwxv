@@ -322,8 +322,10 @@ static OutputGroupDef s_output_group_power_drive = { .num_outputs = 9,
                                                                   DRIVER_FAN, REAR_CAM_LCD } };
 
 static OutputGroupDef s_output_group_power_fault = {
-  .num_outputs = 5, .outputs = { CENTER_CONSOLE, BMS_DCDC, PEDAL, STEERING, BPS_LIGHT }
+  .num_outputs = 4, .outputs = { CENTER_CONSOLE, BMS_DCDC, PEDAL, STEERING }
 };
+
+static OutputGroupDef s_output_group_bps = { .num_outputs = 1, .outputs = { BPS_LIGHT } };
 
 static OutputGroupDef s_output_group_test = { .num_outputs = 2, .outputs = { STEERING, PEDAL } };
 
@@ -336,4 +338,5 @@ const OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS] = {
   [OUTPUT_GROUP_POWER_OFF] = &s_output_group_power_off,
   [OUTPUT_GROUP_POWER_DRIVE] = &s_output_group_power_drive,
   [OUTPUT_GROUP_POWER_FAULT] = &s_output_group_power_fault,
+  [OUTPUT_GROUP_BPS] = &s_output_group_bps,
 };
