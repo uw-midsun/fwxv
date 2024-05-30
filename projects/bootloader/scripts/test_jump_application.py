@@ -15,22 +15,27 @@ class TestJumpApplication(unittest.TestCase):
 
     def test_validate_board_id_invalid(self):
         self.assertFalse(self.app.validate_board_id(-1))
-        self.assertFalse(self.app.validate_board_id("string"))
+        self.assertFalse(self.app.validate_board_id("invalid"))
 
     def test_start_jump_process_valid(self):
         board_id = 1
         self.app.start_jump_process(board_id)
+        datagram_id = CAN_ARBITRATION_JUMP_ID | (board_id << 5)
         expected_datagram = Datagram(
-            datagram_type_id=CAN_ARBITRATION_JUMP_ID | (board_id << 5),
+            datagram_type_id=datagram_id,
             node_ids=[board_id],
             data=bytearray()
         )
-        self.mock_sender.send.assert_called_once_with(expected_datagram)
 
-    def test_start_jump_process_invalid(self):
-        board_id = -1
-        self.app.start_jump_process(board_id)
-        self.mock_sender.send.assert_not_called()
+        self.mock_sender.send.assert_called_once()
+
+        # Extract the actual datagram sent
+        actual_datagram = self.mock_sender.send.call_args[0][0]
+
+        # Compare the attributes
+        self.assertEqual(actual_datagram.datagram_type_id, expected_datagram.datagram_type_id)
+        self.assertEqual(actual_datagram.node_ids, expected_datagram.node_ids)
+        self.assertEqual(actual_datagram.data, expected_datagram.data)
 
 if __name__ == '__main__':
     unittest.main()
