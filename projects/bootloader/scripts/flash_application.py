@@ -4,8 +4,12 @@ import os
 CAN_ARBITRATION_FLASH_ID = 0b00000000001
 
 class Flash_Application():
-    def __init__(self, binary_path, sender=DatagramSender()) -> None:
-        self._sender = sender
+    def __init__(self, binary_path, sender=None) -> None:
+        if sender:
+            self._sender = sender
+        else:
+            self._sender = DatagramSender()
+        
         self._bin_path = binary_path
         self._bin_size = os.path.getsize(self._bin_path)
 
@@ -40,7 +44,7 @@ class Flash_Application():
             initial_datagram = Datagram(
                 datagram_type_id=CAN_ARBITRATION_FLASH_ID | (board_id << 5),
                 node_ids=[board_id],
-                data=bytearray([self.get_binary_size() & 0xff, (self.get_binary_path() >> 8) & 0xff]) 
+                data=bytearray([self.get_binary_size() & 0xff, (self.get_binary_size() >> 8) & 0xff]) 
             )
 
             self._sender.send(initial_datagram)

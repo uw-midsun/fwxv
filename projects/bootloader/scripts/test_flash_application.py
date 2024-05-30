@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import patch, mock_open
 from flash_application import Flash_Application, CAN_ARBITRATION_FLASH_ID
 from can_datagram import Datagram
 
@@ -37,7 +37,10 @@ class TestFlashApplication(unittest.TestCase):
             node_ids=[board_id],
             data=bytearray([1024 & 0xff, (1024 >> 8) & 0xff])
         )
-        self.mock_sender.send.assert_called_once_with(expected_datagram)
+        # Comparing attributes instead of objects
+        self.assertEqual(self.mock_sender.send.call_args[0][0].datagram_type_id, expected_datagram.datagram_type_id)
+        self.assertEqual(self.mock_sender.send.call_args[0][0].node_ids, expected_datagram.node_ids)
+        self.assertEqual(self.mock_sender.send.call_args[0][0].data, expected_datagram.data)
 
     @patch('os.path.isfile', return_value=True)
     @patch('builtins.open', new_callable=mock_open, read_data=b'\x01\x02\x03\x04\x05\x06\x07\x08\x09')
@@ -50,7 +53,10 @@ class TestFlashApplication(unittest.TestCase):
             node_ids=[board_id],
             data=expected_data
         )
-        self.mock_sender.send.assert_called_once_with(expected_datagram)
+        # Comparing attributes instead of objects
+        self.assertEqual(self.mock_sender.send.call_args[0][0].datagram_type_id, expected_datagram.datagram_type_id)
+        self.assertEqual(self.mock_sender.send.call_args[0][0].node_ids, expected_datagram.node_ids)
+        self.assertEqual(self.mock_sender.send.call_args[0][0].data, expected_datagram.data)
 
 if __name__ == '__main__':
     unittest.main()
