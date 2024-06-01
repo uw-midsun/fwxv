@@ -38,7 +38,7 @@ void run_medium_cycle() {
   LOG_DEBUG("ACCEL X: %d, %d, %d\n", imu_storage.accel.x, imu_storage.accel.y, imu_storage.accel.z);
 
   icm20948_getGyroData();
-  LOG_DEBUG("GYRO X: %d, %d, %d\n", imu_storage.gyro.x, imu_storage.gyro.y, imu_storage.gyro.z);
+  LOG_DEBUG("GYRO X: %d, %d, %d\n\n", imu_storage.gyro.x, imu_storage.gyro.y, imu_storage.gyro.z);
 
   if (!icm20948_getMagData()) {
     LOG_DEBUG("MAG X: %d, %d, %d\n", imu_storage.mag.x, imu_storage.mag.y, imu_storage.mag.z);

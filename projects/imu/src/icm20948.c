@@ -267,6 +267,7 @@ static StatusCode icm20948_gyro_calibration() {
     gyro_bias[0] += calib.x;
     gyro_bias[1] += calib.y;
     gyro_bias[2] += calib.z;
+    delay_ms(10);
   }
   gyro_bias[0] /= 200;
   gyro_bias[1] /= 200;
