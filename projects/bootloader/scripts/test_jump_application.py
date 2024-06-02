@@ -10,21 +10,17 @@ class TestJumpApplication(unittest.TestCase):
         self.mock_sender = MockSender.return_value
         self.app = Jump_Application(sender=self.mock_sender)
 
-    def test_validate_board_id_valid(self):
-        self.assertTrue(self.app.validate_board_id(1))
-
-    def test_validate_board_id_invalid(self):
-        self.assertFalse(self.app.validate_board_id(-1))
-        self.assertFalse(self.app.validate_board_id("invalid"))
+    #DO YOU NEED TO SAY IF YOU'RE GOING TO JUMP?
 
     def test_start_jump_process_valid(self):
         board_id = 1
-        self.app.start_jump_process(board_id)
+        jump_id = 1
+        self.app.start_jump_process(board_id, jump_id)
         datagram_id = CAN_ARBITRATION_JUMP_ID | (board_id << 5)
         expected_datagram = Datagram(
             datagram_type_id=datagram_id,
-            node_ids=[board_id],
-            data=bytearray()
+            node_ids=[0, 1],
+            data=bytearray(jump_id)
         )
 
         self.mock_sender.send.assert_called_once()

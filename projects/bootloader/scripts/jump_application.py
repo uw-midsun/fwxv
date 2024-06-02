@@ -1,37 +1,25 @@
 from can_datagram import Datagram, DatagramSender
 
-CAN_ARBITRATION_JUMP_ID = 0b00000000011
+CAN_ARBITRATION_JUMP_ID = 0b00000000001
 
 class Jump_Application:
     def __init__(self, sender: DatagramSender) -> None:
-        self._sender = sender
+        self.sender = sender
 
-    def validate_board_id(self, board_int: int):
-        if isinstance(board_int, int) and board_int >= 0:
-            return True
+    def jump_application_process(self, datagram: Datagram, board_id: int, flash_data):
+        print(f"Starting jump application process for board {board_id}...")
         
-        print(f'Invalid Board ID: {board_int}')
-        return False
+        #TODO Perform actual flash application logic here
+        message_id = CAN_ARBITRATION_JUMP_ID | board_id << 5
 
-    def start_jump_process(self, board_id: int) -> None:
-        if not self.validate_board_id(board_id):
-            return
+        datagram.datagram_type_id = message_id
+        datagram.node_ids = [board_id]
 
-        print(f"Starting jump process for board {board_id}...")
+        self.sender.send(bytearray(flash_data))
 
-        datagram_id = CAN_ARBITRATION_JUMP_ID | (board_id << 5)
+        print(f"Jump application completed for board {board_id}")
 
-        # Create a datagram with the jump message
-        jump_datagram = Datagram(
-            datagram_type_id=datagram_id,
-            node_ids=[board_id],
-            data=bytearray()
-        )
+    def start_jump_process(self):
+        datagram = Datagram()
 
-<<<<<<< HEAD
         # self.jump_application_process(datagram, )
-=======
-        self._sender.send(jump_datagram)
-        
-        print(f"Jump process initiated for board {board_id}...")
->>>>>>> add jump application, both flash and jump app needs testing
