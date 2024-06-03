@@ -98,7 +98,7 @@ void update_indicators(uint32_t notif) {
 
   // Update Aux warning LED
   if (get_pd_status_fault_bitset()) {
-    pwm_set_dc(PWM_TIMER_1, 50);
+    pwm_set_dc(PWM_TIMER_1, 50, 3);
     pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_HIGH);
   } else {
     // PWM will not stop, driver will pull over and diagnose issue
@@ -106,11 +106,11 @@ void update_indicators(uint32_t notif) {
   }
 
   if (get_battery_status_fault() & get_pd_status_bps_persist() & (1 << 15)) {
-    pwm_set_dc(PWM_TIMER_1, 100);
+    pwm_set_dc(PWM_TIMER_1, 100, 3);
     gpio_set_state(&bps_led, GPIO_STATE_LOW);
   } else if ((get_battery_status_fault() & get_pd_status_bps_persist() & (1 << 14)) ||
              get_pd_status_power_state() == EE_POWER_FAULT_STATE) {
-    pwm_set_dc(PWM_TIMER_1, 10);
+    pwm_set_dc(PWM_TIMER_1, 10, 3);
     gpio_set_state(&bps_led, GPIO_STATE_LOW);
   } else {
     // PWM will not stop, driver will pull over and diagnose issue
