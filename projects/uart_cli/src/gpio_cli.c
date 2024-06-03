@@ -155,7 +155,7 @@ static void prv_get(char *args) {
 }
 
 bool valid_addr(char *addr) {
-  if (addr[0] < 97 || addr[0] > 122) {
+  if (addr[0] < 97 || addr[0] > 103) {
     printf("Invalid port - must be a value from a to g\n\r");
     return false;
   }
