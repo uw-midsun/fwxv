@@ -74,6 +74,7 @@ static inline StatusCode prv_cell_sense_conversions() {
   // implemntation error) Retry Mechanism
   if (ltc_afe_impl_trigger_cell_conv(ltc_afe_storage)) {
     // If this has failed, try once more after a short delay
+    delay_ms(10);
     status |= ltc_afe_impl_trigger_cell_conv(ltc_afe_storage);
   }
   delay_ms(CONV_DELAY_MS);

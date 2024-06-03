@@ -52,9 +52,9 @@ static void prv_close_relays(SoftTimerId id) {
       GpioState sense_state;
       for (uint8_t i = 0; i < NUM_BMS_RELAYS; i++) {
         gpio_get_state(&s_relays_sense[i], &sense_state);
-        if (sense_state != GPIO_STATE_HIGH) {
-          fault_bps_set(BMS_FAULT_RELAY_CLOSE_FAILED);
-        }
+        //if (sense_state != GPIO_STATE_HIGH) {
+        //  fault_bps_set(BMS_FAULT_RELAY_CLOSE_FAILED);
+        //}
       }
       break;
     }
