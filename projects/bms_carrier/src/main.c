@@ -60,8 +60,8 @@ void run_medium_cycle() {
   wait_tasks(1);
   cell_sense_run();
 
-  aux_sense_run();
-  bms_run_fan();
+  //aux_sense_run();
+  //bms_run_fan();
 
   //run_can_tx_cycle();
   //wait_tasks(1);

@@ -233,7 +233,7 @@ StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
   LtcAfeSettings *settings = &afe->settings;
   for (uint8_t cell_reg = 0; cell_reg < NUM_LTC_AFE_VOLTAGE_REGISTERS; ++cell_reg) {
     LtcAfeVoltageRegisterGroup voltage_register[LTC_AFE_MAX_DEVICES] = { 0 };
-    prv_read_voltage(afe, cell_reg, voltage_register);
+    status_ok_or_return(prv_read_voltage(afe, cell_reg, voltage_register));
 
     for (uint8_t device = 0; device < settings->num_devices; ++device) {
       for (uint16_t cell = 0; cell < LTC6811_CELLS_IN_REG; ++cell) {
@@ -253,6 +253,7 @@ StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
       uint16_t data_pec = crc15_calculate((uint8_t *)&voltage_register[device], 6);
       if (received_pec != data_pec) {
         // return early on failure
+        LOG_DEBUG("Communication Failed with device: %d\n\r", device);
         LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
         LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
         LOG_DEBUG("Voltage: %d %d %d\n\r", voltage_register[device].reg.voltages[0],
