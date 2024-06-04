@@ -12,7 +12,7 @@ class Validation:
     
     @staticmethod
     def validate_board_id(board_int: int):
-        if isinstance(board_int, int) and board_int > 0 and board_int < 16:
+        if isinstance(board_int, int) and board_int >= 0 and board_int < 16:
             return True
         
         print(f'Invalid Board ID: {board_int}')
@@ -20,7 +20,7 @@ class Validation:
     
     @staticmethod
     def validate_jump_size(application_int: int):
-        if isinstance(application_int, int) and application_int >= 0 and application_int <= pow(2, 16):
+        if isinstance(application_int, int) and application_int >= 0 and application_int < pow(2, 16):
             return True
         
         print(f'Jump Application command is not valid for {application_int}')

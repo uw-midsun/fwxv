@@ -10,11 +10,12 @@ class TestJumpApplication(unittest.TestCase):
         self.mock_sender = MockSender.return_value
         self.app = Jump_Application(sender=self.mock_sender)
 
-    #DO YOU NEED TO SAY IF YOU'RE GOING TO JUMP?
-
     def test_start_jump_process_valid(self):
         board_id = 1
         jump_id = 1
+        
+        self.app.start_jump_process(16, pow(2, 16))
+        self.app.start_jump_process(-1, -1)
         self.app.start_jump_process(board_id, jump_id)
         datagram_id = CAN_ARBITRATION_JUMP_ID | (board_id << 5)
         expected_datagram = Datagram(
