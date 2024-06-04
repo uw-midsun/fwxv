@@ -7,13 +7,13 @@ import time
 import threading
 
 {% for message in messages -%}
-SYSTEM_CAN_MESSAGE_{{  message["sender"] | upper }}_{{ message.name | upper }} = {{ message.id * 0x20 +  + boards.index(message.sender)}}
+SYSTEM_CAN_MESSAGE_{{  message["sender"] | upper }}_{{ message.name | upper }} = {{ message.id * 0x20 }}
 {% endfor -%}
 
 # Send single message
 def send_message(id, data):
     # id: int -> hex, data: str
-    cmd = f"cansend vcan0 {hex(id)[2:].zfill(3)}#{data}"
+    cmd = f"cansend can0 {hex(id)[2:].zfill(3)}#{data}"
     subprocess.run(cmd, shell=True)
 
 def pack(num, size):

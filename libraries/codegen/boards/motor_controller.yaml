@@ -65,7 +65,7 @@
           length: 16
 
     mc_status:
-      id: 40
+      id: 3
       target:
         centre_console:
           watchdog: 0

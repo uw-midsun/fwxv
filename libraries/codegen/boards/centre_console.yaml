@@ -11,7 +11,7 @@
 ---
 Messages:
   cc_info: 
-    id: 9
+    id: 4
     target:
       motor_controller:
         watchdog: 3
@@ -30,7 +30,7 @@ Messages:
       hazard_enabled:
         length: 8
   cc_pedal:
-    id: 18
+    id: 2
     target:
       motor_controller:
         watchdog: 0
@@ -42,7 +42,7 @@ Messages:
       brake_output:
         length: 8
   cc_steering:
-    id: 21
+    id: 5
     target:
       power_distribution:
         watchdog: 0

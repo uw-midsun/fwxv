@@ -25,7 +25,7 @@
           length: 32
 
     battery_info:
-      id: 33
+      id: 14
       target:
         centre_console:
           watchdog: 0
@@ -35,10 +35,12 @@
         fan2:
           length: 8
         max_cell_v:
-          length: 32
+          length: 16
+        min_cell_v:
+          length: 16
 
     battery_vt:
-      id: 30
+      id: 15
       target:
         centre_console:
           watchdog: 0
@@ -54,10 +56,70 @@
           length: 16
    
     battery_relay_info:
-      id: 58
+      id: 16
       target:
         power_distribution:
           watchdog: 0
       signals:
         state:
           length: 8
+
+    AFE1_status:
+          id: 60
+          target:
+            centre_console:
+              watchdog: 0
+            power_distribution:
+              watchdog: 3
+          critical: true
+          signals:
+            id:
+              length: 8
+            temp:
+              length: 8
+            v1:
+              length: 16
+            v2:
+              length: 16
+            v3:
+              length: 16
+
+    AFE2_status:
+      id: 61
+      target:
+        centre_console:
+          watchdog: 0
+        power_distribution:
+          watchdog: 3
+      critical: true
+      signals:
+        id:
+          length: 8
+        temp:
+          length: 8
+        v1:
+          length: 16
+        v2:
+          length: 16
+        v3:
+          length: 16
+
+    AFE3_status:
+      id: 62
+      target:
+        centre_console:
+          watchdog: 0
+        power_distribution:
+          watchdog: 3
+      critical: true
+      signals:
+        id:
+          length: 8
+        temp:
+          length: 8
+        v1:
+          length: 16
+        v2:
+          length: 16
+        v3:
+          length: 16

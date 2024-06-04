@@ -11,7 +11,7 @@
 ---
   Messages:
     one_shot_msg:
-      id: 0
+      id: 34
       target:
        can_communication:
         watchdog: 0
