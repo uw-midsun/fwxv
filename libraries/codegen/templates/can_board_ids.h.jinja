@@ -13,5 +13,5 @@ typedef enum {
 } SystemCanDevice;
 
 {% for message in messages %}
-#define SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} ({{ message.id }} << 5)
+{% if message.critical %} #define SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} ({{ message.id }}) {% else %} #define SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} (({{ message.id }} << 5) + SYSTEM_CAN_DEVICE_{{ message.sender | upper }}) {% endif %}
 {% endfor %}

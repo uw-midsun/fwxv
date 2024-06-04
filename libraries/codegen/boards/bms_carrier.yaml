@@ -12,12 +12,12 @@
   Messages:
     battery_status:
       id: 0
+      critical: true
       target:
         centre_console:
           watchdog: 0
         power_distribution:
           watchdog: 3
-      critical: true
       signals:
         fault:
           length: 16
@@ -26,6 +26,7 @@
 
     battery_info:
       id: 14
+      critical: true
       target:
         centre_console:
           watchdog: 0
@@ -41,10 +42,10 @@
 
     battery_vt:
       id: 15
+      critical: true
       target:
         centre_console:
           watchdog: 0
-      critical: false
       signals:
         voltage:
           length: 16
@@ -57,6 +58,7 @@
    
     battery_relay_info:
       id: 16
+      critical: false
       target:
         power_distribution:
           watchdog: 0
@@ -66,12 +68,12 @@
 
     AFE1_status:
           id: 60
+          critical: false
           target:
             centre_console:
               watchdog: 0
             power_distribution:
               watchdog: 3
-          critical: true
           signals:
             id:
               length: 8
@@ -86,12 +88,12 @@
 
     AFE2_status:
       id: 61
+      critical: false
       target:
         centre_console:
           watchdog: 0
         power_distribution:
           watchdog: 3
-      critical: true
       signals:
         id:
           length: 8
@@ -106,12 +108,12 @@
 
     AFE3_status:
       id: 62
+      critical: false
       target:
         centre_console:
           watchdog: 0
         power_distribution:
           watchdog: 3
-      critical: true
       signals:
         id:
           length: 8

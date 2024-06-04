@@ -12,20 +12,20 @@
   Messages:
     transmit_msg1:
       id: 31
+      critical: false
       target:
         new_can:
           watchdog: 3
-      critical: true
       signals:
         status:
           length: 8
     
     transmit_msg2:
       id: 32
+      critical: false
       target:
         new_can:
           watchdog: 0
-      critical: true
       signals:
         signal:
           length: 8
@@ -34,10 +34,10 @@
 
     transmit_msg3:
       id: 33
+      critical: false
       target:
         centre_console:
           watchdog: 0
-      critical: true
       signals:
         help:
           length: 8

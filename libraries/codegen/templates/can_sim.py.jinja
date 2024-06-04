@@ -7,7 +7,7 @@ import time
 import threading
 
 {% for message in messages -%}
-SYSTEM_CAN_MESSAGE_{{  message["sender"] | upper }}_{{ message.name | upper }} = {{ message.id * 0x20 }}
+{% if message.critical %}SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} = ({{ message.id }}) {% else %}SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} = (({{ message.id }} << 5) + SYSTEM_CAN_DEVICE_{{ message.sender | upper }}) {% endif %}
 {% endfor -%}
 
 # Send single message

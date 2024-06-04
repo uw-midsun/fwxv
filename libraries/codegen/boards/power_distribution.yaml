@@ -12,6 +12,7 @@
   Messages:
     current_measurement:
       id: 54
+      critical: false
       target:
         centre_console:
           watchdog: 0
@@ -22,10 +23,10 @@
           length: 16
     pd_status:
       id: 1
+      critical: true
       target:
         centre_console:
           watchdog: 3
-      critical: true
       signals:
         power_state:
           length: 8

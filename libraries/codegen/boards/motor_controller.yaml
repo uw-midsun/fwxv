@@ -12,6 +12,7 @@
   Messages:
     motor_controller_vc:
       id: 35
+      critical: false
       target:
         centre_console:
           watchdog: 0
@@ -27,6 +28,7 @@
 
     motor_velocity:
       id: 36
+      critical: true
       target:
         centre_console:
           watchdog: 0
@@ -40,6 +42,7 @@
 
     motor_sink_temps:
       id: 38
+      critical: false
       target:
         centre_console:
           watchdog: 0
@@ -55,6 +58,7 @@
 
     dsp_board_temps:
       id: 39
+      critical: false
       target:
         centre_console:
           watchdog: 0
@@ -66,6 +70,7 @@
 
     mc_status:
       id: 3
+      critical: true
       target:
         centre_console:
           watchdog: 0
