@@ -27,12 +27,15 @@ class Flash_Application():
         
         print(f"Could not find the binary file for flashing...")
         return False
-    
+
+
+    '''Send over the protocol to flash + how large the binary file will be'''
     def start_initial_process(self, board_nums: int) -> None:
         print(f"Starting the initial flash process")
 
         print(f'Sending binary data with size of {self.get_binary_size()}...')
         
+        #assign all boards to a number
         board_ids = list(range(board_nums + 1))
 
         if self.validate_bin() and Validation.validate_board_id(board_nums):
@@ -50,6 +53,7 @@ class Flash_Application():
             
             print(f'Finished initial flash requirements to board {board_ids}...')
 
+    '''Send over the content for the binary file to flash, in chunks '''
     def stream_flash_data(self, board_nums: int):
         board_ids = list(range(board_nums + 1))
         
