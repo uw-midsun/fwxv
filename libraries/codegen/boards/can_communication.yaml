@@ -11,11 +11,11 @@
 ---
   Messages:
     one_shot_msg:
-      id: 0
+      id: 34
+      critical: true
       target:
        can_communication:
         watchdog: 0
-      critical: true
       signals:
         sig1:
           length: 16
