@@ -30,3 +30,5 @@ x86_flash
 
 py/can/can.py
 py/can/messages.py
+
+can/can_to_json/.env
