@@ -17,7 +17,7 @@
         centre_console:
           watchdog: 0
         power_distribution:
-          watchdog: 3
+          watchdog: 5
       signals:
         fault:
           length: 16
