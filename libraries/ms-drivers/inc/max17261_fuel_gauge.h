@@ -22,20 +22,32 @@ typedef struct {
   I2CPort i2c_port;
   I2CAddress i2c_address;
 
-  uint16_t design_capacity;      // LSB = 5.0 (micro Volt Hours / R Sense)
-  uint16_t empty_voltage;        // Only a 9-bit field, LSB = 78.125 (micro Volts)
-  uint16_t charge_term_current;  // LSB = 1.5625 (micro Volts / R Sense)
+  uint32_t pack_design_cap_mah;
+  uint16_t cell_empty_voltage_v;
+  uint16_t
+      charge_term_current_ma;  // ref end-of-charge detection
+                               // https://web.archive.org/web/20220121025712mp_/https://pdfserv.maximintegrated.com/en/an/user-guide-6597-max1726x-m5-ez-rev3-p4.pdf
 
-  uint16_t i_thresh_max;
-  int16_t i_thresh_min;
-  uint16_t temp_thresh_max;
+  uint16_t i_thresh_max_a;
+  int16_t i_thresh_min_a;
+  uint16_t temp_thresh_max_c;
 
-  float r_sense_mohms;  // Rsense in micro ohms
+  float sense_resistor_mohms;
 } Max17261Settings;
 
 typedef struct {
   Max17261Settings *settings;
 } Max17261Storage;
+
+// Storage for parameters learned by fuel guage
+// Must be stored in flash to keep up to date after power cycle
+typedef struct Max27261Params {
+  uint16_t rcomp0;
+  uint16_t tempco;
+  uint16_t fullcaprep;
+  uint16_t cycles;
+  uint16_t fullcapnom;
+} Max27261Params;
 
 /* @brief Gets the current state of charge given by the max17261 in percentage
  * @param storage - a pointer to an already initialized Max17261Storage struct
@@ -49,14 +61,14 @@ StatusCode max17261_state_of_charge(Max17261Storage *storage, uint16_t *soc_pct)
  * @param soc_pct - remaining capactity in micro amp hours returned in this var
  * @return STATUS_CODE_OK on success
  */
-StatusCode max17261_remaining_capacity(Max17261Storage *storage, uint32_t *rem_cap_uAhr);
+StatusCode max17261_remaining_capacity(Max17261Storage *storage, uint32_t *rem_cap_mAh);
 
 /* @brief Gets the full charge capacity of the battery in micro amp hours
  * @param storage - a pointer to an already initialized Max17261Storage struct
  * @param soc_pct - full charge capacitry in micro amp hours returned in this var
  * @return STATUS_CODE_OK on success
  */
-StatusCode max17261_full_capacity(Max17261Storage *storage, uint16_t *full_cap_uAhr);
+StatusCode max17261_full_capacity(Max17261Storage *storage, uint32_t *full_cap_mAh);
 
 /* @brief Gets the time to empty in milliseconds
  * @param storage - a pointer to an already initialized Max17261Storage struct
@@ -98,4 +110,8 @@ StatusCode max17261_temp(Max17261Storage *storage, uint16_t *temp_c);
  * @param settings - populated settings struct
  * @return STATUS_CODE_OK on success
  */
-StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings);
+StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings,
+                         Max27261Params *params);
+
+StatusCode max17261_set_learned_params(Max17261Storage *storage, Max27261Params *params);
+StatusCode max17261_get_learned_params(Max17261Storage *storage, Max27261Params *params);
