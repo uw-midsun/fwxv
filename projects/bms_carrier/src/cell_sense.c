@@ -63,7 +63,7 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0xFF, 0xFF, 0xFF },
 
-  .num_devices = 1,
+  .num_devices = 3,
   .num_cells = 12,
   .num_thermistors = 0,
 };

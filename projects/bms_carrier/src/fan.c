@@ -29,6 +29,7 @@ static void prv_bms_fan_sense(void) {
 }
 
 void bms_run_fan(void) {
+  pwm_set_dc(PWM_TIMER_1, 100, 1);
   if (s_storage->current_storage.temperature >= BMS_FAN_TEMP_UPPER_THRESHOLD) {
     pwm_set_dc(PWM_TIMER_1, 100, 1);
   } else if (s_storage->current_storage.temperature <= BMS_FAN_TEMP_LOWER_THRESHOLD) {

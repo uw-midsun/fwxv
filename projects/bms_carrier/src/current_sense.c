@@ -114,6 +114,7 @@ StatusCode current_sense_run() {
 
 StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings,
                               uint32_t fuel_guage_cycle_ms) {
+  StatusCode status = STATUS_CODE_OK;
   s_current_storage = &bms_storage->current_storage;
   s_fuel_gauge_settings = bms_storage->fuel_guage_settings;
   s_fuel_guage_storage = bms_storage->fuel_guage_storage;
@@ -155,8 +156,7 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
 
   persist_init(&s_persist, CURRENT_SENSE_STORE_FLASH, &s_fuel_params, sizeof(s_fuel_params), false);
-  status_ok_or_return(max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings, &s_fuel_params));
-
+  status = max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings, &s_fuel_params);
   tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
-  return STATUS_CODE_OK;
+  return status;
 }
