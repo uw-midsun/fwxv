@@ -1,6 +1,6 @@
 #include "master_task.h"
 
-static uint32_t MASTER_MS_CYCLE_TIME = 100;
+static uint32_t MASTER_MS_CYCLE_TIME = 150;
 
 #define MASTER_TASK_PRIORITY (configMAX_PRIORITIES - 2)
 #define MAX_CYCLES_OVER 5
