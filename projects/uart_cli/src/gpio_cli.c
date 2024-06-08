@@ -132,31 +132,30 @@ static void prv_toggle(char *args) {
 }
 
 static void prv_get(char *args) {
-  char addr[MAX_CMD_LEN + 1] = { 0 };
-  tok_cmd(args, addr);
-
-  char *state_str = args;
-
-  if (strcmp(addr, "help") == 0 || strcmp(addr, "h") == 0) {
+  if (strcmp(args, "help") == 0 || strcmp(args, "h") == 0) {
     printf("\r%s\n", gpio_get_help);
     return;
-  } else if (!(valid_addr(addr) && valid_state(state_str))) {
+  } else if (!(valid_addr(args))) {
     printf("\r%s\n", gpio_get_help);
     return;
   }
 
-  GpioAddress address = { .port = addr[0] - 97, .pin = strtol(addr + 1, NULL, 10) };
-  GpioState input_state = state_to_int(state_str);
+  GpioAddress address = { .port = args[0] - 97, .pin = strtol(args + 1, NULL, 10) };
+  GpioState input_state;
 
   if (gpio_get_state(&address, &input_state) == STATUS_CODE_OK) {
-    printf("SUCCESS\n\r");
+    if (input_state) {
+      printf("GPIO_STATE_HIGH\n\r");
+    } else {
+      printf("GPIO_STATE_LOW\n\r");
+    }
   } else {
     printf("FAILED\n\r");
   }
 }
 
 bool valid_addr(char *addr) {
-  if (addr[0] < 97 || addr[0] > 122) {
+  if (addr[0] < 97 || addr[0] > 103) {
     printf("Invalid port - must be a value from a to g\n\r");
     return false;
   }
