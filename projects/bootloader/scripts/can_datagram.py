@@ -9,8 +9,8 @@ DATA_SIZE_SIZE = 2
 MIN_BYTEARRAY_SIZE = 5
 
 DATAGRAM_TYPE_OFFSET = 0
-NODE_IDS_OFFSET = 5
-DATA_SIZE_OFFSET = 7
+NODE_IDS_OFFSET = 1 
+DATA_SIZE_OFFSET = 3  
 
 CAN_START_ARBITRATION_ID = 0b00000010000
 CAN_ARBITRATION_ID = 0b00000000000
@@ -39,8 +39,8 @@ class Datagram:
     def _unpack(cls, datagram_bytearray):
         '''This function returns an instance fo the class by unpacking a bytearray'''
         assert isinstance(datagram_bytearray, bytearray)
-
         if len(datagram_bytearray) < MIN_BYTEARRAY_SIZE:
+            
             raise DatagramTypeError(
                 "Invalid Datagram format from bytearray: Does not meet minimum size requirement")
 
