@@ -39,33 +39,33 @@ void pre_loop_init() {
   LOG_DEBUG("Welcome to BMS \n");
   fault_bps_init(&bms_storage.bps_storage);
   init_bms_relays();
-  //current_sense_init(&bms_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
-  //cell_sense_init(&bms_storage.ltc_afe_storage);
+  current_sense_init(&bms_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
+  cell_sense_init(&bms_storage.ltc_afe_storage);
   aux_sense_init(&bms_storage.aux_storage);
   bms_fan_init(&bms_storage);
 }
 
 void run_fast_cycle() {
+  run_can_rx_cycle();
+  wait_tasks(1);
   // Current sense readings + checks
   //current_sense_run();
   //wait_tasks(1);
-  delay_ms(10);
+  //delay_ms(10);
+  run_can_tx_cycle();
+  wait_tasks(1);
 }
 
 void run_medium_cycle() {
-  run_can_rx_cycle();
-  wait_tasks(1);
 
   // Afe Voltage Conversions
-  //cell_conversions();
-  //wait_tasks(1);
-  //cell_sense_run();
+  cell_conversions();
+  wait_tasks(1);
+  cell_sense_run();
 
   aux_sense_run();
   bms_run_fan();
 
-  run_can_tx_cycle();
-  wait_tasks(1);
 }
 
 void run_slow_cycle() {
@@ -77,6 +77,7 @@ void run_slow_cycle() {
 }
 
 int main() {
+  set_master_cycle_time(150);
   tasks_init();
   log_init();
   gpio_init();

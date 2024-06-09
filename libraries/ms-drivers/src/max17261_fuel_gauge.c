@@ -147,11 +147,12 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings,
     // Checks that initializaton has occurred, must happen before configuration
     // Should not take longer than 250 ms
     TickType_t start_time = xTaskGetTickCount();
-    while ((fstat & 1) != 0) {
+    while ((fstat & 1) != 0 ) {
       LOG_DEBUG("data not ready, fstat: %d (%d)\n", fstat, fstat & 1);
       status_ok_or_return(max17261_get_reg(storage, MAX17261_FSTAT, &fstat));
       if (xTaskGetTickCount() >= start_time + pdMS_TO_TICKS(250)) {
         LOG_DEBUG("fstat failed: %d (%d)\n", fstat, fstat & 1);
+        break;
       }
       delay_ms(10);
     }
@@ -193,6 +194,7 @@ StatusCode max17261_init(Max17261Storage *storage, Max17261Settings *settings,
       status_ok_or_return(max17261_get_reg(storage, MAX17261_MODEL_I_CFG, &modelcfg));
       if (xTaskGetTickCount() >= start_time + pdMS_TO_TICKS(1000)) {
         LOG_DEBUG("modelcfg failed: %d (%d)\n", fstat, fstat & 1);
+        break;
       }
       delay_ms(10);
     }

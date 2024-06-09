@@ -22,7 +22,7 @@
         current:
           length: 16
     pd_status:
-      id: 1
+      id: 2
       critical: true
       target:
         centre_console:

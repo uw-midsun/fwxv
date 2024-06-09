@@ -11,7 +11,7 @@
 ---
 Messages:
   cc_info: 
-    id: 4
+    id: 5
     critical: true
     target:
       motor_controller:
@@ -30,7 +30,7 @@ Messages:
       hazard_enabled:
         length: 8
   cc_pedal:
-    id: 2
+    id: 3
     critical: true
     target:
       motor_controller:
@@ -43,7 +43,7 @@ Messages:
       brake_output:
         length: 8
   cc_steering:
-    id: 5
+    id: 6
     critical: true
     target:
       power_distribution:

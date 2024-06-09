@@ -10,7 +10,7 @@
 
 // TODO: figure out actual values for timeout
 #define BMS_RESPONSE_TIMEOUT_MS 3000
-#define MCI_RESPONSE_TIMEOUT_MS 300
+#define MCI_RESPONSE_TIMEOUT_MS 5000
 #define BPS_FAULT_FLASH_PAGE NUM_FLASH_PAGES - 1
 
 #define NUM_POWER_STATES 4

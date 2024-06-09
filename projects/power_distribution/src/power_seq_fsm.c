@@ -29,7 +29,7 @@ static void prv_off_state_output(void *context) {
 
 static void prv_off_state_input(Fsm *fsm, void *context) {
   // On initialization, DCDC is not on, so only check aux
-  if (check_battery_status_msg_watchdog() || check_aux_fault()) {
+  if (check_battery_status_msg_watchdog() || get_battery_status_fault()) {
     fsm_transition(fsm, POWER_STATE_FAULT);
     return;
   }
@@ -63,8 +63,8 @@ static void prv_precharge_input(Fsm *fsm, void *context) {
   if (get_mc_status_precharge_status()) {
     fsm_transition(fsm, POWER_STATE_DRIVE);
   } else if ((xTaskGetTickCount() - power_context.timer_start_ticks) >
-             pdMS_TO_TICKS(MCI_RESPONSE_TIMEOUT_MS)) {
-    fsm_transition(fsm, POWER_STATE_OFF);
+              pdMS_TO_TICKS(MCI_RESPONSE_TIMEOUT_MS)) {
+     fsm_transition(fsm, POWER_STATE_OFF);
   }
 }
 
@@ -81,7 +81,7 @@ static void prv_drive_state_output(void *context) {
 }
 
 static void prv_drive_state_input(Fsm *fsm, void *context) {
-  pd_fault_ok_or_transition(fsm);
+  //pd_fault_ok_or_transition(fsm);
   if (!get_received_cc_info()) {
     return;
   }
