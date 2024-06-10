@@ -5,6 +5,7 @@ LtcAfeStorage *ltc_afe_storage;
 #define TEMP_RESISTANCE 10000
 #define VREF2 30000
 #define TABLE_SIZE 125
+#define LTC_RETRIES 3
 
 uint8_t afe_message_index = 0;
 
@@ -65,68 +66,94 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0x15, 0x15, 0x15 },
 
-  .num_devices = 3,
+  .num_devices = 2,
   .num_cells = 12,
-  .num_thermistors = 0, //NUM_THERMISTORS,
+  .num_thermistors = NUM_THERMISTORS,
 };
 
 static inline StatusCode prv_cell_sense_conversions() {
   StatusCode status = STATUS_CODE_OK;
   // TODO: Figure out why cell_conv cannot happen without spi timing out (Most likely RTOS
   // implemntation error) Retry Mechanism
-  status = ltc_afe_impl_trigger_cell_conv(ltc_afe_storage);
+  for (uint8_t retries = LTC_RETRIES; retries > 0; retries--) {
+    status = ltc_afe_impl_trigger_cell_conv(ltc_afe_storage);
+    if (status == STATUS_CODE_OK) {
+      break;
+    }
+    LOG_DEBUG("Cell trigger conv failed, retrying %d\n", status);
+    delay_ms(RETRY_DELAY_MS);
+  }
   if (status) {
     // If this has failed, try once more after a short delay
     LOG_DEBUG("Cell trigger conv failed, retrying): %d\n", status);
     delay_ms(RETRY_DELAY_MS);
     status = ltc_afe_impl_trigger_cell_conv(ltc_afe_storage);
   }
-  delay_ms(CONV_DELAY_MS);
-
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("Cell conv failed): %d\n", status);
     fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
     return status;
   }
+  delay_ms(CONV_DELAY_MS);
 
-  status = ltc_afe_impl_read_cells(ltc_afe_storage);
+  for (uint8_t retries = LTC_RETRIES; retries > 0; retries--) {
+    status = ltc_afe_impl_read_cells(ltc_afe_storage);
+    if (status == STATUS_CODE_OK) {
+      break;
+    }
+    LOG_DEBUG("Cell read failed, retrying %d\n", status);
+    delay_ms(RETRY_DELAY_MS);
+  }
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("Cell read failed %d\n", status);
     fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
     return status;
   }
 
-  for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-    LOG_DEBUG("CELL %d: %d\n\r", cell,
-        ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
-    delay_ms(3);
-  } 
 
-  for (size_t i = 0; i < s_afe_settings.num_thermistors * s_afe_settings.num_devices; i += 1) {
-    // Thermistor select cell 0
-    status = ltc_afe_impl_trigger_aux_conv(ltc_afe_storage, s_thermistor_map[i]);
-    if (status != STATUS_CODE_OK) {
-      LOG_DEBUG("Thermistor read trigger failed %d\n", status);
-      fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
-      return status;
+  for (size_t thermistor = 0; thermistor < s_afe_settings.num_thermistors;
+      thermistor += 1) {
+    // Thermistor indexes are read for each daisy chained dev at the same time
+    // Check therm bitset to determine if we need to read any at this index
+    bool check_therm = false;
+    for (uint8_t dev = 0; dev < s_afe_settings.num_devices; dev++) {
+      if ((s_afe_settings.aux_bitset[dev] >> thermistor) & 0x1) {
+        check_therm = true;
+      }
     }
 
-    // DELAY NEEDED for adc conv to happen
-    delay_ms(1);
+    if (check_therm) {
+      // Trigger and read thermistor value
+      for (uint8_t retries = LTC_RETRIES; retries > 0; retries--) {
+        status = ltc_afe_impl_trigger_aux_conv(ltc_afe_storage, s_thermistor_map[thermistor]);
+        if (status == STATUS_CODE_OK) {
+          break;
+        }
+        LOG_DEBUG("Aux trigger conv failed, retrying: %d\n", status);
+        delay_ms(RETRY_DELAY_MS);
+      }
+      if (status) {
+        LOG_DEBUG("Thermistor conv failed for therm %d: Status %d\n", thermistor, status);
+        fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+        return status;
+      }
+      delay_ms(AUX_CONV_DELAY_MS);
 
-    // Thermistor read cell 0
-    status = ltc_afe_impl_read_aux(ltc_afe_storage, i);
-    if (status != STATUS_CODE_OK) {
-      LOG_DEBUG("Thermistor read/conv failed\n %d", status);
-      fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
-      return status;
+      for (uint8_t retries = LTC_RETRIES; retries > 0; retries--) {
+        status = ltc_afe_impl_read_aux(ltc_afe_storage, thermistor);
+        if (status == STATUS_CODE_OK) {
+          break;
+        }
+        LOG_DEBUG("Thermistor read failed, retrying %d\n", status);
+        delay_ms(RETRY_DELAY_MS);
+      }
+      if (status) {
+        LOG_DEBUG("Thermistor read trigger failed for thermistor %d,  %d\n", thermistor, status);
+        fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+        return status;
+      }
     }
-
-    // Log thermistor result
-    ltc_afe_storage->aux_voltages[ltc_afe_storage->aux_result_lookup[i]] =
-        calculate_temperature(ltc_afe_storage->aux_voltages[ltc_afe_storage->aux_result_lookup[i]]);
   }
-
   return status;
 }
 
@@ -153,11 +180,10 @@ StatusCode cell_sense_run() {
   StatusCode status = STATUS_CODE_OK;
   uint16_t max_voltage = 0;
   uint16_t min_voltage = 0xffff;
-
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-    //LOG_DEBUG("CELL %zu: %d\n\r", cell,
-    //          ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
-    // delay_ms(3);
+    LOG_DEBUG("CELL %d: %d\n\r", cell,
+              ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
+    delay_ms(3);
     max_voltage =
         ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > max_voltage
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
@@ -167,10 +193,10 @@ StatusCode cell_sense_run() {
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
             : min_voltage;
   }
+
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
   set_battery_info_max_cell_v(max_voltage);
-
   if (max_voltage >= CELL_OVERVOLTAGE) {
     LOG_DEBUG("OVERVOLTAGE\n");
     fault_bps_set(BMS_FAULT_OVERVOLTAGE);
@@ -195,6 +221,8 @@ StatusCode cell_sense_run() {
   } else {
     min_voltage += 250;
   }
+
+  // Balancing
   // ltc_afe_storage->timer_start = xTaskGetTickCount();
   //for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
   //  if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
@@ -206,33 +234,20 @@ StatusCode cell_sense_run() {
 
   // LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
   
-  for (size_t thermistor = 0; thermistor < s_afe_settings.num_thermistors;
-      thermistor += 1) {
-    // Thermistor indexes are read for each daisy chained dev at the same time
-    // Check therm bitset to determine if we need to read any at this index
-    bool check_therm = false;
-    for (uint8_t dev = 0; dev < s_afe_settings.num_devices; dev++) {
+  // Log and check all thermistor values based on settings bitset
+  for (uint8_t dev = 0; dev < s_afe_settings.num_devices; dev++) {
+    for (uint8_t thermistor = 0; thermistor < LTC_AFE_MAX_THERMISTORS_PER_DEVICE; thermistor += 1) { 
       if ((s_afe_settings.aux_bitset[dev] >> thermistor) & 0x1) {
-        check_therm = true;
+        uint8_t index = dev*LTC_AFE_MAX_THERMISTORS_PER_DEVICE + thermistor;
+        ltc_afe_storage->aux_voltages[index] = calculate_temperature(ltc_afe_storage->aux_voltages[index]);
+        LOG_DEBUG("Thermistor reading dev %d, %d: %d\n", dev, thermistor, ltc_afe_storage->aux_voltages[index]);
+        delay_ms(3);
+        if (ltc_afe_storage->aux_result_lookup[index] >= CELL_MAX_TEMPERATURE) {
+          LOG_DEBUG("CELL OVERTEMP\n");
+          fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
+          status = STATUS_CODE_INTERNAL_ERROR;
+        }
       }
-    }
-    
-    if (check_therm) {
-      ltc_afe_impl_trigger_aux_conv(ltc_afe_storage, s_thermistor_map[thermistor]);
-      delay_ms(1);
-      ltc_afe_impl_read_aux(ltc_afe_storage, thermistor);
-      ltc_afe_storage->aux_voltages[ltc_afe_storage->aux_result_lookup[thermistor]] =
-            calculate_temperature(ltc_afe_storage->aux_voltages[ltc_afe_storage->aux_result_lookup[thermistor]]);
-      for (uint8_t dev = 0; dev < s_afe_settings.num_devices; dev++) {
-        LOG_DEBUG("Thermistor reading dev %d, %d: %d\n", dev, thermistor,
-            ltc_afe_storage->aux_voltages[ltc_afe_storage->aux_result_lookup[thermistor]]);
-      }
-    }
-
-    if (ltc_afe_storage->aux_result_lookup[thermistor] >= CELL_MAX_TEMPERATURE) {
-      LOG_DEBUG("CELL OVERTEMP\n");
-      fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
-      status = STATUS_CODE_INTERNAL_ERROR;
     }
   }
 
@@ -261,9 +276,9 @@ StatusCode cell_sense_run() {
 
   // Thermistors to send are at index 0, 2, 4 for each device
   if (afe_message_index < NUM_MSG-1) { // Only 3 thermistors per device, so 4th message will be ignored
-    set_AFE1_status_temp(ltc_afe_storage->aux_voltages[afe_message_index]);
-    set_AFE2_status_temp(ltc_afe_storage->aux_voltages[LTC_AFE_MAX_THERMISTORS_PER_DEVICE+afe_message_index]);
-    set_AFE3_status_temp(ltc_afe_storage->aux_voltages[LTC_AFE_MAX_THERMISTORS_PER_DEVICE*2+afe_message_index]);
+    set_AFE1_status_temp(ltc_afe_storage->aux_voltages[afe_message_index*2]);
+    set_AFE2_status_temp(ltc_afe_storage->aux_voltages[LTC_AFE_MAX_THERMISTORS_PER_DEVICE+afe_message_index*2]);
+    set_AFE3_status_temp(ltc_afe_storage->aux_voltages[LTC_AFE_MAX_THERMISTORS_PER_DEVICE*2+afe_message_index*2]);
   }
 
   afe_message_index = (afe_message_index + 1) % NUM_MSG;

@@ -14,6 +14,7 @@
 #include "spi.h"
 
 #define CONV_DELAY_MS 10
+#define AUX_CONV_DELAY_MS 3
 // Maximum number of retry attempts to read cell/aux data once triggered
 #define RETRY_DELAY_MS 1
 #define CELL_SENSE_CONVERSIONS 0

@@ -77,7 +77,7 @@ void run_slow_cycle() {
 }
 
 int main() {
-  set_master_cycle_time(150);
+  set_master_cycle_time(200);
   tasks_init();
   log_init();
   gpio_init();
