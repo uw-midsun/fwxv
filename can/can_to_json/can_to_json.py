@@ -1,22 +1,32 @@
 import can
 import cantools
 from datetime import datetime
-from mongodb_api import *
+import GPS
+import mongodb_api
 from multiprocessing.connection import Listener
 import os
+import serial
 
 # Load DBC file
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 db = cantools.database.load_file(SCRIPT_DIR + '/../tools/system_can.dbc')
 
 # Set up connection to MongoDB
-client = init_mongodb()
+client = mongodb_api.init_mongodb()
 database = client["systemcan"]
 
 # Create a new MongoDB collection
 now = datetime.now()
 collection_name = now.strftime("%m/%d/%y %H:%M:%S")
 collection = database[collection_name]
+
+# Initialize SIM7600X GPS Module
+ser = serial.Serial('/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0',115200)
+ser.reset_input_buffer()
+power_key = 6
+rec_buff = ''
+time_count = 0
+GPS.power_on(ser, power_key)
 
 # Dictionary initialization
 can_messages_dict = {}
@@ -33,12 +43,15 @@ for message in db.messages:
 
     can_messages_dict[str(message.frame_id)] = message_dict
 
-# can_messages_dict['GPS'] = {}  # TODO: Get GPS data 
+# Get GPS data using AT+CGPSINFO
+rec_buff = GPS.get_gps_position(ser)
+can_messages_dict['GPS'] = rec_buff
 
+# Get current date and time
 dt_string = now.strftime("%m/%d/%y %H:%M:%S")
 can_messages_dict['timestamp'] = dt_string
 
-upload_mongodb(can_messages_dict, collection)
+mongodb_api.upload_mongodb(can_messages_dict, collection)
 
 # Multiprocess listener
 # address = ('localhost', 6000)
@@ -55,13 +68,13 @@ upload_mongodb(can_messages_dict, collection)
 #             for signal in data_dict.keys():
 #                 can_messages_dict[id]['signals'][signal] = data_dict[signal]
 
-#         # Update dict and upload to MongoDB
-#         can_messages_dict['GPS'] = {}  # TODO: Get GPS data 
+#         rec_buff = GPS.get_gps_position(ser)
+#         can_messages_dict['GPS'] = rec_buff
 
 #         now = datetime.now()
 #         dt_string = now.strftime("%m/%d/%y %H:%M:%S")
 #         can_messages_dict['timestamp'] = dt_string
-#         upload_mongodb(can_messages_dict, collection)
+#         mongodb_api.upload_mongodb(can_messages_dict, collection)
         
 #         conn.close()
 #         conn = listener.accept()
@@ -84,11 +97,14 @@ def listener(msg):
         for signal in decoded_message.keys():
             can_messages_dict[str(msg.arbitration_id)]['signals'][signal] = decoded_message[signal]
         
+        rec_buff = GPS.get_gps_position(ser)
+        can_messages_dict['GPS'] = rec_buff
+
         now = datetime.now()
         dt_string = now.strftime("%m/%d/%y %H:%M:%S")
         can_messages_dict['timestamp'] = dt_string
 
-        upload_mongodb(can_messages_dict, collection)
+        mongodb_api.upload_mongodb(can_messages_dict, collection)
 
     except KeyError:
         print("Unknown message: ", msg)
@@ -98,5 +114,10 @@ notifier = can.Notifier(can_bus, [listener])
 print("Setup Complete")
 
 while True: 
-    continue
+    try: 
+        continue
+    except:
+        if ser != None:
+            ser.close()
+        GPS.power_down(power_key)
 # End of sniffer
