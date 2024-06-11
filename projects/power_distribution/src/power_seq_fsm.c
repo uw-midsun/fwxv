@@ -93,6 +93,9 @@ static void prv_fault_state_output(void *context) {
   s_bps_storage.fault_bitset = get_battery_status_fault();
   s_bps_storage.vehicle_speed =
       (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
+  if (s_bps_storage.fault_bitset == 0) {
+    s_bps_storage.fault_bitset = (1 << 10);  // BMS NOT CONNECTED
+  }
   persist_commit(&s_persist);
   pd_set_active_output_group(OUTPUT_GROUP_POWER_FAULT);
   set_pd_status_bps_persist(s_bps_storage.fault_bitset);
