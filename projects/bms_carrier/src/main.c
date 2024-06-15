@@ -49,15 +49,14 @@ void run_fast_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
   // Current sense readings + checks
-  //current_sense_run();
-  //wait_tasks(1);
-  //delay_ms(10);
+  // current_sense_run();
+  // wait_tasks(1);
+  // delay_ms(10);
   run_can_tx_cycle();
   wait_tasks(1);
 }
 
 void run_medium_cycle() {
-
   // Afe Voltage Conversions
   cell_conversions();
   wait_tasks(1);
@@ -65,11 +64,10 @@ void run_medium_cycle() {
 
   aux_sense_run();
   bms_run_fan();
-
 }
 
 void run_slow_cycle() {
-  //cell_discharge(&bms_storage.ltc_afe_storage);
+  // cell_discharge(&bms_storage.ltc_afe_storage);
 
   if (fault_bps_get()) {
     LOG_DEBUG("FAULT_BITMASK: %d\n", fault_bps_get());

@@ -37,7 +37,8 @@ void bms_run_fan(void) {
   } else {
     pwm_set_dc(PWM_TIMER_1,
                (100 * (s_storage->current_storage.temperature - BMS_FAN_TEMP_LOWER_THRESHOLD)) /
-                   (BMS_FAN_TEMP_UPPER_THRESHOLD - BMS_FAN_TEMP_LOWER_THRESHOLD), 1);
+                   (BMS_FAN_TEMP_UPPER_THRESHOLD - BMS_FAN_TEMP_LOWER_THRESHOLD),
+               1);
   }
   prv_bms_fan_sense();
 }

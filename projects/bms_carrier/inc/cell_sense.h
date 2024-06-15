@@ -19,8 +19,7 @@
 #define RETRY_DELAY_MS 1
 #define CELL_SENSE_CONVERSIONS 0
 
-// Fault thresholds
-// TODO: Verify these values!
+// Fault thresholds - units of mV*10
 #define CELL_OVERVOLTAGE 42500
 #define CELL_UNDERVOLTAGE 25000
 #define CELL_UNBALANCED 5000

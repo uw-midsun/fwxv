@@ -173,7 +173,6 @@ static void prv_calc_offsets(LtcAfeStorage *afe) {
         afe->discharge_cell_lookup[cell_index] = cell;
         afe->cell_result_lookup[cell] = cell_index++;
       }
-
     }
   }
 }
@@ -266,7 +265,8 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t thermistor) {
   LtcAfeAuxRegisterGroupPacket register_data[LTC_AFE_MAX_DEVICES] = { 0 };
 
   size_t len = settings->num_devices * sizeof(LtcAfeAuxRegisterGroupPacket);
-  status_ok_or_return(prv_read_register(afe, LTC_AFE_REGISTER_AUX_B, (uint8_t *)register_data, len));
+  status_ok_or_return(
+      prv_read_register(afe, LTC_AFE_REGISTER_AUX_B, (uint8_t *)register_data, len));
 
   for (uint16_t device = 0; device < settings->num_devices; ++device) {
     uint16_t received_pec = SWAP_UINT16(register_data[device].pec);
@@ -286,7 +286,6 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t thermistor) {
       uint16_t index = device * LTC_AFE_MAX_THERMISTORS_PER_DEVICE + thermistor;
       afe->aux_voltages[index] = voltage;
     }
-
   }
   return STATUS_CODE_OK;
 }

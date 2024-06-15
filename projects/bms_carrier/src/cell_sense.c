@@ -66,7 +66,7 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0x15, 0x15, 0x15 },
 
-  .num_devices = 2,
+  .num_devices = 3,
   .num_cells = 12,
   .num_thermistors = NUM_THERMISTORS,
 };
@@ -110,9 +110,7 @@ static inline StatusCode prv_cell_sense_conversions() {
     return status;
   }
 
-
-  for (size_t thermistor = 0; thermistor < s_afe_settings.num_thermistors;
-      thermistor += 1) {
+  for (size_t thermistor = 0; thermistor < s_afe_settings.num_thermistors; thermistor += 1) {
     // Thermistor indexes are read for each daisy chained dev at the same time
     // Check therm bitset to determine if we need to read any at this index
     bool check_therm = false;
@@ -193,9 +191,11 @@ StatusCode cell_sense_run() {
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
             : min_voltage;
   }
+  delay_ms(10);
 
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
+  LOG_DEBUG("UNBALANCE: %d\n", max_voltage - min_voltage);
   set_battery_info_max_cell_v(max_voltage);
   if (max_voltage >= CELL_OVERVOLTAGE) {
     LOG_DEBUG("OVERVOLTAGE\n");
@@ -223,24 +223,25 @@ StatusCode cell_sense_run() {
   }
 
   // Balancing
-  // ltc_afe_storage->timer_start = xTaskGetTickCount();
-  //for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-  //  if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
-  //    ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
-  //  } else {
-  //    ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
-  //  }
-  //}
+  for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
+    if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
+      ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
+    } else {
+      ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
+    }
+  }
 
   // LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
-  
+
   // Log and check all thermistor values based on settings bitset
   for (uint8_t dev = 0; dev < s_afe_settings.num_devices; dev++) {
-    for (uint8_t thermistor = 0; thermistor < LTC_AFE_MAX_THERMISTORS_PER_DEVICE; thermistor += 1) { 
+    for (uint8_t thermistor = 0; thermistor < LTC_AFE_MAX_THERMISTORS_PER_DEVICE; thermistor += 1) {
       if ((s_afe_settings.aux_bitset[dev] >> thermistor) & 0x1) {
-        uint8_t index = dev*LTC_AFE_MAX_THERMISTORS_PER_DEVICE + thermistor;
-        ltc_afe_storage->aux_voltages[index] = calculate_temperature(ltc_afe_storage->aux_voltages[index]);
-        LOG_DEBUG("Thermistor reading dev %d, %d: %d\n", dev, thermistor, ltc_afe_storage->aux_voltages[index]);
+        uint8_t index = dev * LTC_AFE_MAX_THERMISTORS_PER_DEVICE + thermistor;
+        ltc_afe_storage->aux_voltages[index] =
+            calculate_temperature(ltc_afe_storage->aux_voltages[index]);
+        LOG_DEBUG("Thermistor reading dev %d, %d: %d\n", dev, thermistor,
+                  ltc_afe_storage->aux_voltages[index]);
         delay_ms(3);
         if (ltc_afe_storage->aux_result_lookup[index] >= CELL_MAX_TEMPERATURE) {
           LOG_DEBUG("CELL OVERTEMP\n");
@@ -255,30 +256,33 @@ StatusCode cell_sense_run() {
   // AFE messages are logged with 3 voltages at a time, and an index 0-3 to encompass all voltages
   const uint8_t NUM_MSG = 4;
   const uint8_t READINGS_PER_MSG = 3;
-  
-  uint8_t read_index = afe_message_index*READINGS_PER_MSG;
+
+  uint8_t read_index = afe_message_index * READINGS_PER_MSG;
   set_AFE1_status_id(afe_message_index);
   set_AFE1_status_v1(ltc_afe_storage->cell_voltages[read_index]);
   set_AFE1_status_v2(ltc_afe_storage->cell_voltages[read_index + 1]);
   set_AFE1_status_v3(ltc_afe_storage->cell_voltages[read_index + 2]);
 
-  read_index = (uint8_t)s_afe_settings.num_cells + afe_message_index*READINGS_PER_MSG;
+  read_index = (uint8_t)s_afe_settings.num_cells + afe_message_index * READINGS_PER_MSG;
   set_AFE2_status_id(afe_message_index);
   set_AFE2_status_v1(ltc_afe_storage->cell_voltages[read_index]);
   set_AFE2_status_v2(ltc_afe_storage->cell_voltages[read_index + 1]);
   set_AFE2_status_v3(ltc_afe_storage->cell_voltages[read_index + 2]);
 
-  read_index = (uint8_t)s_afe_settings.num_cells*2 + afe_message_index*READINGS_PER_MSG;
+  read_index = (uint8_t)s_afe_settings.num_cells * 2 + afe_message_index * READINGS_PER_MSG;
   set_AFE3_status_id(afe_message_index);
   set_AFE3_status_v1(ltc_afe_storage->cell_voltages[read_index]);
   set_AFE3_status_v2(ltc_afe_storage->cell_voltages[read_index + 1]);
   set_AFE3_status_v3(ltc_afe_storage->cell_voltages[read_index + 2]);
 
   // Thermistors to send are at index 0, 2, 4 for each device
-  if (afe_message_index < NUM_MSG-1) { // Only 3 thermistors per device, so 4th message will be ignored
-    set_AFE1_status_temp(ltc_afe_storage->aux_voltages[afe_message_index*2]);
-    set_AFE2_status_temp(ltc_afe_storage->aux_voltages[LTC_AFE_MAX_THERMISTORS_PER_DEVICE+afe_message_index*2]);
-    set_AFE3_status_temp(ltc_afe_storage->aux_voltages[LTC_AFE_MAX_THERMISTORS_PER_DEVICE*2+afe_message_index*2]);
+  if (afe_message_index <
+      NUM_MSG - 1) {  // Only 3 thermistors per device, so 4th message will be ignored
+    set_AFE1_status_temp(ltc_afe_storage->aux_voltages[afe_message_index * 2]);
+    set_AFE2_status_temp(
+        ltc_afe_storage->aux_voltages[LTC_AFE_MAX_THERMISTORS_PER_DEVICE + afe_message_index * 2]);
+    set_AFE3_status_temp(ltc_afe_storage->aux_voltages[LTC_AFE_MAX_THERMISTORS_PER_DEVICE * 2 +
+                                                       afe_message_index * 2]);
   }
 
   afe_message_index = (afe_message_index + 1) % NUM_MSG;

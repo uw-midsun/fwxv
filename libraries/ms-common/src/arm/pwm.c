@@ -122,7 +122,7 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channe
   };
 
   // Enable PWM on all channels.
-  switch(channel) {
+  switch (channel) {
     case 1:
       TIM_OC1Init(s_timer_def[timer], &oc_init);
       TIM_OC1PreloadConfig(s_timer_def[timer], TIM_OCPreload_Enable);
@@ -141,7 +141,7 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channe
       break;
     default:
       break;
-   }
+  }
 
   return STATUS_CODE_OK;
 }
