@@ -131,7 +131,7 @@ static inline StatusCode prv_cell_sense_conversions() {
         delay_ms(RETRY_DELAY_MS);
       }
       if (status) {
-        LOG_DEBUG("Thermistor conv failed for therm %d: Status %d\n", thermistor, status);
+        LOG_DEBUG("Thermistor conv failed for therm %d: Status %d\n", (uint8_t)thermistor, status);
         fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
         return status;
       }
@@ -146,7 +146,7 @@ static inline StatusCode prv_cell_sense_conversions() {
         delay_ms(RETRY_DELAY_MS);
       }
       if (status) {
-        LOG_DEBUG("Thermistor read trigger failed for thermistor %d,  %d\n", thermistor, status);
+        LOG_DEBUG("Thermistor read trigger failed for thermistor %d,  %d\n", (uint8_t)thermistor, status);
         fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
         return status;
       }
@@ -179,7 +179,7 @@ StatusCode cell_sense_run() {
   uint16_t max_voltage = 0;
   uint16_t min_voltage = 0xffff;
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-    LOG_DEBUG("CELL %d: %d\n\r", cell,
+    LOG_DEBUG("CELL %d: %d\n\r", (uint8_t)cell,
               ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
     delay_ms(3);
     max_voltage =
