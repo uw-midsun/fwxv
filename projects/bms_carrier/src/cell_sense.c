@@ -146,7 +146,8 @@ static inline StatusCode prv_cell_sense_conversions() {
         delay_ms(RETRY_DELAY_MS);
       }
       if (status) {
-        LOG_DEBUG("Thermistor read trigger failed for thermistor %d,  %d\n", (uint8_t)thermistor, status);
+        LOG_DEBUG("Thermistor read trigger failed for thermistor %d,  %d\n", (uint8_t)thermistor,
+                  status);
         fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
         return status;
       }
