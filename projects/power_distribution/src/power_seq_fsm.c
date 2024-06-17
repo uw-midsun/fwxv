@@ -28,7 +28,11 @@ static void prv_off_state_output(void *context) {
 }
 
 static void prv_off_state_input(Fsm *fsm, void *context) {
-  pd_fault_ok_or_transition(fsm);
+  // On initialization, DCDC is not on, so only check aux
+  if (check_battery_status_msg_watchdog() || get_battery_status_fault()) {
+    fsm_transition(fsm, POWER_STATE_FAULT);
+    return;
+  }
   LOG_DEBUG("IN off state - %d\n", get_received_cc_info());
   LOG_DEBUG("s_bps_storage.fault_bitset %d\n", s_bps_storage.fault_bitset);
   if (!get_received_cc_info()) {

@@ -155,10 +155,11 @@
 // Fault pin addresses
 // GPIO
 #define AUX_VALID1 \
-  { .port = GPIO_PORT_B, .pin = 10 }
-#define AUX_VALID2 \
-  { .port = GPIO_PORT_B, .pin = 2 }
-#define DCDC_VALID1 \
   { .port = GPIO_PORT_B, .pin = 1 }
-#define DCDC_VALID2 \
+#define AUX_VALID2 \
   { .port = GPIO_PORT_B, .pin = 0 }
+
+#define DCDC_VALID1 \
+  { .port = GPIO_PORT_B, .pin = 10 }
+#define DCDC_VALID2 \
+  { .port = GPIO_PORT_B, .pin = 2 }

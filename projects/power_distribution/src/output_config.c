@@ -313,16 +313,19 @@ static OutputGroupDef s_output_group_hazards = {
 static OutputGroupDef s_output_group_brake = { .num_outputs = 1, .outputs = { BRAKE_LIGHT } };
 
 static OutputGroupDef s_output_group_power_off = {
-  .num_outputs = 5, .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, STEERING }
+  .num_outputs = 7,
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, STEERING, REAR_CAM_LCD, SPARE_5V_AUX }
 };
 
-static OutputGroupDef s_output_group_power_drive = { .num_outputs = 9,
-                                                     .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX,
-                                                                  PEDAL, STEERING, MCI, DRL_LIGHT,
-                                                                  DRIVER_FAN, REAR_CAM_LCD } };
+static OutputGroupDef s_output_group_power_drive = {
+  .num_outputs = 10,
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, STEERING, MCI, DRL_LIGHT, DRIVER_FAN,
+               REAR_CAM_LCD, SPARE_5V_AUX }
+};
 
 static OutputGroupDef s_output_group_power_fault = {
-  .num_outputs = 5, .outputs = { CENTER_CONSOLE, BMS_DCDC, PEDAL, STEERING, BPS_LIGHT }
+  .num_outputs = 7,
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, PEDAL, STEERING, BPS_LIGHT, REAR_CAM_LCD, SPARE_5V_AUX }
 };
 
 static OutputGroupDef s_output_group_test = { .num_outputs = 2, .outputs = { STEERING, PEDAL } };

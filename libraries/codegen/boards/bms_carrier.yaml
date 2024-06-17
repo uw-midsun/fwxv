@@ -11,13 +11,13 @@
 ---
   Messages:
     battery_status:
-      id: 0
+      id: 1
       critical: true
       target:
         centre_console:
-          watchdog: 0
-        power_distribution:
           watchdog: 3
+        power_distribution:
+          watchdog: 5
       signals:
         fault:
           length: 16

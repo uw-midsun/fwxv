@@ -69,7 +69,7 @@
           length: 16
 
     mc_status:
-      id: 3
+      id: 4
       critical: true
       target:
         centre_console:

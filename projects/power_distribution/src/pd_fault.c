@@ -23,7 +23,7 @@ static void prv_set_fault_bit(uint8_t mask, bool condition) {
   }
 }
 
-static bool prv_check_aux_fault(void) {
+bool check_aux_fault(void) {
   GpioState aux_valid1_state;
   GpioState aux_valid2_state;
   if (!status_ok(gpio_get_state(&aux_valid1, &aux_valid1_state)) ||
@@ -44,7 +44,7 @@ static bool prv_check_dcdc_fault(void) {
 }
 
 uint8_t check_pd_fault(void) {
-  prv_set_fault_bit(EE_PD_STATUS_FAULT_BITSET_AUX_FAULT_MASK, prv_check_aux_fault());
+  prv_set_fault_bit(EE_PD_STATUS_FAULT_BITSET_AUX_FAULT_MASK, check_aux_fault());
   prv_set_fault_bit(EE_PD_STATUS_FAULT_BITSET_DCDC_FAULT_MASK, prv_check_dcdc_fault());
   set_pd_status_fault_bitset(s_fault_bitset);
   return s_fault_bitset;

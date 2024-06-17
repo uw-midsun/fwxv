@@ -29,21 +29,20 @@ uint16_t pwm_get_period(PwmTimer timer) {
   }
   return pwm[timer].period;
 }
-
-StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_ms) {
+StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channel) {
   if (timer >= NUM_PWM_TIMERS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid timer id");
   } else if (pwm[timer].period == 0) {
     return status_msg(STATUS_CODE_UNINITIALIZED, "Pwm must be initialized.");
-  } else if (pulse_width_ms > pwm[timer].period) {
+  } else if (pulse_width_us > pwm[timer].period) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Pulse width must be leq period.");
   }
   // Store pulse width as a duty cycle
-  pwm[timer].duty = (pulse_width_ms * 100) / pwm[timer].period;
+  pwm[timer].duty = (pulse_width_us * 100) / pwm[timer].period;
   return STATUS_CODE_OK;
 }
 
-StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc) {
+StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc, uint8_t channel) {
   if (timer >= NUM_PWM_TIMERS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid timer id");
   } else if (dc > 100) {

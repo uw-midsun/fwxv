@@ -7,6 +7,7 @@
 #include "stm32f10x_rcc.h"
 #include "stm32f10x_tim.h"
 
+#define NUM_CHANNELS 4
 typedef enum APBClk {
   APB1 = 0,
   APB2,
@@ -102,7 +103,7 @@ uint16_t pwm_get_period(PwmTimer timer) {
   return s_period_us[timer];
 }
 
-StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us) {
+StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channel) {
   if (timer >= NUM_PWM_TIMERS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid timer id");
   } else if (s_period_us[timer] == 0) {
@@ -116,28 +117,36 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us) {
     .TIM_Pulse = pulse_width_us,
     .TIM_OutputState = TIM_OutputState_Enable,
     .TIM_OCPolarity = TIM_OCPolarity_High,
-    .TIM_OutputNState = TIM_OutputNState_Enable,
+    .TIM_OutputNState = TIM_OutputNState_Disable,
     .TIM_OCNPolarity = TIM_OCNPolarity_High,
   };
 
   // Enable PWM on all channels.
-
-  TIM_OC1Init(s_timer_def[timer], &oc_init);
-  TIM_OC1PreloadConfig(s_timer_def[timer], TIM_OCPreload_Enable);
-
-  TIM_OC2Init(s_timer_def[timer], &oc_init);
-  TIM_OC2PreloadConfig(s_timer_def[timer], TIM_OCPreload_Enable);
-
-  TIM_OC3Init(s_timer_def[timer], &oc_init);
-  TIM_OC3PreloadConfig(s_timer_def[timer], TIM_OCPreload_Enable);
-
-  TIM_OC4Init(s_timer_def[timer], &oc_init);
-  TIM_OC4PreloadConfig(s_timer_def[timer], TIM_OCPreload_Enable);
+  switch (channel) {
+    case 1:
+      TIM_OC1Init(s_timer_def[timer], &oc_init);
+      TIM_OC1PreloadConfig(s_timer_def[timer], TIM_OCPreload_Enable);
+      break;
+    case 2:
+      TIM_OC2Init(s_timer_def[timer], &oc_init);
+      TIM_OC2PreloadConfig(s_timer_def[timer], TIM_OCPreload_Enable);
+      break;
+    case 3:
+      TIM_OC3Init(s_timer_def[timer], &oc_init);
+      TIM_OC3PreloadConfig(s_timer_def[timer], TIM_OCPreload_Enable);
+      break;
+    case 4:
+      TIM_OC4Init(s_timer_def[timer], &oc_init);
+      TIM_OC4PreloadConfig(s_timer_def[timer], TIM_OCPreload_Enable);
+      break;
+    default:
+      break;
+  }
 
   return STATUS_CODE_OK;
 }
 
-StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc) {
+StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc, uint8_t channel) {
   if (timer >= NUM_PWM_TIMERS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid timer id");
   } else if (dc > 100) {
@@ -152,7 +161,7 @@ StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc) {
     }
   }
 
-  return pwm_set_pulse(timer, pulse_width);
+  return pwm_set_pulse(timer, pulse_width, channel);
 }
 
 uint16_t pwm_get_dc(PwmTimer timer) {
