@@ -18,6 +18,7 @@
 #define FUEL_GAUGE_CYCLE_TIME_MS 100
 
 static CanStorage s_can_storage = { 0 };
+static GpioAddress kill_switch_mntr = { .port = GPIO_PORT_A, .pin = 15 };
 
 static const CanSettings can_settings = {
   .device_id = SYSTEM_CAN_DEVICE_BMS_CARRIER,
@@ -33,34 +34,45 @@ static const I2CSettings i2c_settings = {
   .scl = BMS_PERIPH_I2C_SCL_PIN,
 };
 
+InterruptSettings it_settings = {
+    .priority = INTERRUPT_PRIORITY_NORMAL,
+    .type = INTERRUPT_TYPE_INTERRUPT,
+    .edge = INTERRUPT_EDGE_FALLING,
+};
+
 BmsStorage bms_storage;
+uint32_t notification;
 
 void pre_loop_init() {
   LOG_DEBUG("Welcome to BMS \n");
   fault_bps_init(&bms_storage.bps_storage);
   init_bms_relays();
-  current_sense_init(&bms_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
-  cell_sense_init(&bms_storage.ltc_afe_storage);
+  // current_sense_init(&bms_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
+  // cell_sense_init(&bms_storage.ltc_afe_storage);
   aux_sense_init(&bms_storage.aux_storage);
   bms_fan_init(&bms_storage);
 }
 
 void run_fast_cycle() {
-  run_can_rx_cycle();
-  wait_tasks(1);
+  notify_get(&notification);
+  if (notification & (1 << KILLSWITCH_IT)) {
+    fault_bps_set(BMS_FAULT_KILLSWITCH);
+  }
+  // run_can_rx_cycle();
+  // wait_tasks(1);
   // Current sense readings + checks
   // current_sense_run();
   // wait_tasks(1);
   // delay_ms(10);
-  run_can_tx_cycle();
-  wait_tasks(1);
+  // run_can_tx_cycle();
+  // wait_tasks(1);
 }
 
 void run_medium_cycle() {
   // Afe Voltage Conversions
-  cell_conversions();
-  wait_tasks(1);
-  cell_sense_run();
+  // cell_conversions();
+  // wait_tasks(1);
+  // cell_sense_run();
 
   aux_sense_run();
   bms_run_fan();
@@ -82,6 +94,8 @@ int main() {
   interrupt_init();
   gpio_it_init();
   can_init(&s_can_storage, &can_settings);
+  gpio_init_pin(&kill_switch_mntr, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
+  gpio_it_register_interrupt(&kill_switch_mntr, &it_settings, KILLSWITCH_IT, get_master_task());
 
   LOG_DEBUG("Welcome to BMS!\n");
   init_master_task();
