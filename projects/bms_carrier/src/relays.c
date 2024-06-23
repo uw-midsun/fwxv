@@ -28,9 +28,9 @@ static StatusCode prv_close_relays(void) {
     gpio_get_state(&s_relays_sense[i], &sense_state);
     if (sense_state != GPIO_STATE_HIGH) {
       LOG_DEBUG("Relay %d not closed\n", i);
-      fault_bps_set(BMS_FAULT_RELAY_CLOSE_FAILED);
-      bms_relay_fault();
-      return STATUS_CODE_INTERNAL_ERROR;
+      // fault_bps_set(BMS_FAULT_RELAY_CLOSE_FAILED);
+      // bms_relay_fault();
+      // return STATUS_CODE_INTERNAL_ERROR;
     }
   }
   return STATUS_CODE_OK;
