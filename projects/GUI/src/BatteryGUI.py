@@ -256,7 +256,8 @@ def update_AFE3_cells(box, num):
         ).place(x=436 + 93 * (box - 9), y=357 + (35 * 2))
 
 
-DISPLAY_MSG_DICT_CURRENT_SENSE = {db.get_message_by_name("battery_vt").frame_id}
+DISPLAY_MSG_DICT_CURRENT_SENSE = {
+    db.get_message_by_name("battery_vt").frame_id}
 
 DISPLAY_MSG_AFES = [
     db.get_message_by_name("AFE1_status").frame_id,
@@ -460,7 +461,12 @@ def handle_message(msg):
 # update_displays()
 
 
-notifier = can.Notifier(can_bus, [handle_message])
+def main():
+    notifier = can.Notifier(can_bus, [handle_message])
 
-while True:
-    root.mainloop()
+    while True:
+        root.mainloop()
+
+
+if __name__ == "__main__":
+    main()

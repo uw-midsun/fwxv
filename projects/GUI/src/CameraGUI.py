@@ -279,7 +279,8 @@ DISPLAY_MSG_DICT = {
     ],
 }
 
-DISPLAY_MSG_DICT_CURRENT_SENSE = {db.get_message_by_name("battery_vt").frame_id}
+DISPLAY_MSG_DICT_CURRENT_SENSE = {
+    db.get_message_by_name("battery_vt").frame_id}
 
 DISPLAY_MSG_AFES = {
     db.get_message_by_name("AFE1_status").frame_id,
@@ -487,9 +488,14 @@ def camera_thread():
     open_camera()
 
 
-t1 = threading.Thread(target=camera_thread)
-t1.start()
+def main():
+    t1 = threading.Thread(target=camera_thread)
+    t1.start()
 
-notifier = can.Notifier(can_bus, [handle_message])
+    notifier = can.Notifier(can_bus, [handle_message])
 
-root.mainloop()
+    root.mainloop()
+
+
+if __name__ == "__main__":
+    main()
