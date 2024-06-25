@@ -9,7 +9,7 @@
 #define CAN_HW_BASE CAN1
 #define CAN_HW_NUM_FILTER_BANKS 14
 #define MAX_TX_RETRIES 3
-#define MAX_TX_MS_TIMEOUT 500  // CAN Messages should only be sent max every 1s
+#define MAX_TX_MS_TIMEOUT 20  // CAN Messages should only be sent max every 1s
 
 typedef struct CanHwTiming {
   uint16_t prescaler;
