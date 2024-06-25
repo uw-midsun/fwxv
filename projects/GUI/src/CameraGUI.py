@@ -72,23 +72,89 @@ for y in range(3):
                         highlightthickness=BorderThickness).place(x=34 + (x * 137),
                                                                   y=40 + (y * 50))
 
-tk.Label(Box, text='AFE1', font='Montserrat 15', bg='#000000', fg='white').place(x=75, y=6)
-tk.Label(Box, text='AFE2', font='Montserrat 15', bg='#000000', fg='white').place(x=209, y=6)
-tk.Label(Box, text='AFE3', font='Montserrat 15', bg='#000000', fg='white').place(x=342, y=6)
+tk.Label(
+    Box,
+    text='AFE1',
+    font='Montserrat 15',
+    bg='#000000',
+    fg='white').place(
+        x=75,
+    y=6)
+tk.Label(
+    Box,
+    text='AFE2',
+    font='Montserrat 15',
+    bg='#000000',
+    fg='white').place(
+        x=209,
+    y=6)
+tk.Label(
+    Box,
+    text='AFE3',
+    font='Montserrat 15',
+    bg='#000000',
+    fg='white').place(
+        x=342,
+    y=6)
 
 for y in range(3):
-    Box = tk.Canvas(root, width=34, height=50, bg='#000000', highlightbackground='white',
-                    highlightthickness=BorderThickness).place(x=0, y=40 + (y * 50))
+    Box = tk.Canvas(root,
+                    width=34,
+                    height=50,
+                    bg='#000000',
+                    highlightbackground='white',
+                    highlightthickness=BorderThickness).place(x=0,
+                                                              y=40 + (y * 50))
 
-tk.Label(Box, text='MAX\nTEMP', font='Montserrat 8', bg='#000000', fg='white').place(x=3, y=52)
-tk.Label(Box, text='MAX\nVOLT', font='Montserrat 8', bg='#000000', fg='white').place(x=3, y=106)
-tk.Label(Box, text='MIN\nVOLT', font='Montserrat 8', bg='#000000', fg='white').place(x=3, y=153)
+tk.Label(
+    Box,
+    text='MAX\nTEMP',
+    font='Montserrat 8',
+    bg='#000000',
+    fg='white').place(
+        x=3,
+    y=52)
+tk.Label(
+    Box,
+    text='MAX\nVOLT',
+    font='Montserrat 8',
+    bg='#000000',
+    fg='white').place(
+        x=3,
+    y=106)
+tk.Label(
+    Box,
+    text='MIN\nVOLT',
+    font='Montserrat 8',
+    bg='#000000',
+    fg='white').place(
+        x=3,
+    y=153)
 
 for x in range(2):
-    Box = tk.Canvas(root, width=223, height=50, bg='#000000', highlightbackground='white',
-                    highlightthickness=BorderThickness).place(x=0 + (x * 223), y=190)
-tk.Label(Box, text='CURRENT', font='Montserrat 10', bg='#000000', fg='white').place(x=10, y=210)
-tk.Label(Box, text='VOLT.', font='Montserrat 10', bg='#000000', fg='white').place(x=241, y=210)
+    Box = tk.Canvas(root,
+                    width=223,
+                    height=50,
+                    bg='#000000',
+                    highlightbackground='white',
+                    highlightthickness=BorderThickness).place(x=0 + (x * 223),
+                                                              y=190)
+tk.Label(
+    Box,
+    text='CURRENT',
+    font='Montserrat 10',
+    bg='#000000',
+    fg='white').place(
+        x=10,
+    y=210)
+tk.Label(
+    Box,
+    text='VOLT.',
+    font='Montserrat 10',
+    bg='#000000',
+    fg='white').place(
+        x=241,
+    y=210)
 
 
 def redBox(message, num):
@@ -114,8 +180,12 @@ def orangeBox(message, num):
     global listCount
     if (listCount > 7):
         listCount = 0
-    OrangeBox = tk.Canvas(root, width=357, height=40, bg=orange,
-                          highlightthickness=0).place(x=448, y=List[listCount + 3])
+    OrangeBox = tk.Canvas(root,
+                          width=357,
+                          height=40,
+                          bg=orange,
+                          highlightthickness=0).place(x=448,
+                                                      y=List[listCount + 3])
     tk.Label(OrangeBox, text=message, font='Montserrat 10', bg=orange,
              fg='black').place(x=450, y=(List[listCount + 3]))
     tk.Label(OrangeBox, text=num, font='Montserrat 10', bg=orange,
@@ -127,8 +197,12 @@ def yellowBox(message, num):
     global listCount
     if (listCount > 7):
         listCount = 0
-    YellowBox = tk.Canvas(root, width=357, height=40, bg=yellow,
-                          highlightthickness=0).place(x=448, y=List[listCount + 3])
+    YellowBox = tk.Canvas(root,
+                          width=357,
+                          height=40,
+                          bg=yellow,
+                          highlightthickness=0).place(x=448,
+                                                      y=List[listCount + 3])
     tk.Label(YellowBox, text=message, font='Montserrat 10', bg=yellow,
              fg='black').place(x=450, y=(List[listCount + 3]))
     tk.Label(YellowBox, text=num, font='Montserrat 10', bg=yellow,
@@ -405,12 +479,14 @@ def handle_message(msg):
             afe_index = DISPLAY_MSG_AFES.index(msg.arbitration_id)
             if decoded_message["id"] < 3:  # only need 3 temperatures
                 # which AFE, temp/voltage, index in that array
-                AFE_Data[afe_index]["Temp"][decoded_message["id"]] = decoded_message["temp"]
-            AFE_Data[afe_index]["Voltages"][3 * decoded_message["id"]] = decoded_message["v1"] / 1000
-            AFE_Data[afe_index]["Voltages"][3 *
-                                            decoded_message["id"] + 1] = decoded_message["v2"] / 1000
-            AFE_Data[afe_index]["Voltages"][3 *
-                                            decoded_message["id"] + 2] = decoded_message["v3"] / 1000
+                AFE_Data[afe_index]["Temp"][decoded_message["id"]
+                                            ] = decoded_message["temp"]
+            AFE_Data[afe_index]["Voltages"][3 * \
+                decoded_message["id"]] = decoded_message["v1"] / 1000
+            AFE_Data[afe_index]["Voltages"][3 * \
+                decoded_message["id"] + 1] = decoded_message["v2"] / 1000
+            AFE_Data[afe_index]["Voltages"][3 * \
+                decoded_message["id"] + 2] = decoded_message["v3"] / 1000
             AFE1FullUpdate()
             AFE2FullUpdate()
             AFE3FullUpdate()

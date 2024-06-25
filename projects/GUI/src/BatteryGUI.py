@@ -23,7 +23,12 @@ sudo ip link set can0 up
 
 def initialize(command):
     try:
-        result = subprocess.run(command, shell=True, check=True, text=True, capture_output=True)
+        result = subprocess.run(
+            command,
+            shell=True,
+            check=True,
+            text=True,
+            capture_output=True)
         return result.stdout
     except subprocess.CalledProcessError as e:
         print(f"Error ocurred while running command: {command}")
@@ -94,11 +99,39 @@ VoltBox = tk.Canvas(
     highlightthickness=BorderThickness).place(
         x=533,
         y=0)
-tk.Label(VoltBox, text='VOLT.', font='Montserrat 20', bg='#000000', fg='white').place(x=549, y=18)
+tk.Label(
+    VoltBox,
+    text='VOLT.',
+    font='Montserrat 20',
+    bg='#000000',
+    fg='white').place(
+        x=549,
+    y=18)
 
-tk.Label(root, text='AFE1.', font='Montserrat 20', bg='#000000', fg='white').place(x=5, y=57)
-tk.Label(root, text='AFE2.', font='Montserrat 20', bg='#000000', fg='white').place(x=5, y=191)
-tk.Label(root, text='AFE3.', font='Montserrat 20', bg='#000000', fg='white').place(x=5, y=326)
+tk.Label(
+    root,
+    text='AFE1.',
+    font='Montserrat 20',
+    bg='#000000',
+    fg='white').place(
+        x=5,
+    y=57)
+tk.Label(
+    root,
+    text='AFE2.',
+    font='Montserrat 20',
+    bg='#000000',
+    fg='white').place(
+        x=5,
+    y=191)
+tk.Label(
+    root,
+    text='AFE3.',
+    font='Montserrat 20',
+    bg='#000000',
+    fg='white').place(
+        x=5,
+    y=326)
 
 for y in range(2):  # AFE1
     for x in range(3):
@@ -351,10 +384,12 @@ def handle_message(msg):
     try:
         decoded_message = db.decode_message(msg.arbitration_id, msg.data)
         if msg.arbitration_id in DISPLAY_MSG_AFES:
-            afe_index = DISPLAY_MSG_AFES.index(msg.arbitration_id)  # Figures out which AFE
+            afe_index = DISPLAY_MSG_AFES.index(
+                msg.arbitration_id)  # Figures out which AFE
             if decoded_message["id"] < 3:  # only need 3 temperatures
                 # which AFE, temp/voltage, index in that array
-                AFE_Data[afe_index]["Temp"][decoded_message["id"]] = decoded_message["temp"]
+                AFE_Data[afe_index]["Temp"][decoded_message["id"]
+                                            ] = decoded_message["temp"]
             AFE_Data[afe_index]["Voltages"][3 * decoded_message["id"]
                                             ] = round(decoded_message["v1"] / 10000, 2)
             AFE_Data[afe_index]["Voltages"][3 * decoded_message["id"] +
