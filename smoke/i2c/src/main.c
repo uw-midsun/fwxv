@@ -9,11 +9,11 @@
 // ==== WRITE PARAMETERS ====
 
 // Fill in these variables with the port and address to write to.
-#define WRITE_I2C_PORT I2C_PORT_1  // I2C_Port_2 is also available
-#define WRITE_I2C_ADDRESS 0x24
+#define WRITE_I2C_PORT I2C_PORT_2  // I2C_Port_2 is also available
+#define WRITE_I2C_ADDRESS 0x38
 
 // Fill in this array with the bytes to write.
-static const uint8_t bytes_to_write[] = { 0x10, 0x2F };
+static const uint8_t bytes_to_write[] = { 0x00 };
 
 // ==== READ PARAMETERS ====
 
@@ -48,13 +48,13 @@ TASK(smoke_i2c_task, TASK_STACK_512) {
   uint16_t tx_len = SIZEOF_ARRAY(bytes_to_write);
   uint8_t rx_buf[SIZEOF_ARRAY(bytes_to_write)] = { 0 };
   gpio_init_pin(&test_pin, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
-  uint8_t dat[2] = { 0xff, 0xff };
+  uint8_t dat[1] = { 0x0 };
   StatusCode ret = i2c_write_reg(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, 0x02, dat, 2);
   while (true) {
     // I2C write
     uint8_t rx_data[2] = { 0 };
-    // StatusCode ret = i2c_write(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, dat, 2);
-    StatusCode ret1 = i2c_read_reg(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, 0x02, rx_data, 2);
+    StatusCode ret = i2c_write(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, dat, 1);
+    StatusCode ret1 = i2c_read(WRITE_I2C_PORT, WRITE_I2C_ADDRESS, rx_data, 2);
     LOG_DEBUG("ret: %d %d, DATA : %d %d\n\r", ret, ret1, rx_data[0], rx_data[1]);
     // I2C read (uncomment to test)
     // i2c_read(READ_I2C_PORT, READ_I2C_ADDRESS, rx_buf, 6);

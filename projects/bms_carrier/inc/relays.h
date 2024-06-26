@@ -23,7 +23,7 @@ typedef enum RelayType {
 } RelayType;
 
 // Closes relays in sequence
-StatusCode init_bms_relays(void);
+StatusCode init_bms_relays(GpioAddress * killswitch);
 
 // Turns off GPIOs to open relays
 void bms_relay_fault(void);
