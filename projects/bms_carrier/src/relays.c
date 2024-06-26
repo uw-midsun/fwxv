@@ -45,7 +45,16 @@ void bms_relay_fault() {
   set_battery_relay_info_state(EE_RELAY_STATE_FAULT);
 }
 
-StatusCode init_bms_relays() {
+StatusCode init_bms_relays(GpioAddress * killswitch) {
+  GpioState ks_state = GPIO_STATE_LOW;;
+  gpio_get_state(killswitch, &ks_state);
+  if (ks_state == GPIO_STATE_LOW) {
+    LOG_DEBUG("KILLSWITCH SET");
+    fault_bps_set(BMS_FAULT_KILLSWITCH);
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
+
   gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&solar_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);

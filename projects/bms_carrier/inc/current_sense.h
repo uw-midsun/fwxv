@@ -12,7 +12,7 @@
 #include "tasks.h"
 
 #define MAX17261_I2C_PORT (I2C_PORT_2)
-#define MAX17261_I2C_ADDR (0x36)
+#define MAX17261_I2C_ADDR (0x38)
 
 #define SENSE_RESISTOR_MOHM (0.5)
 
