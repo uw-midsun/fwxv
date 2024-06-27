@@ -58,14 +58,14 @@ void run_fast_cycle() {
   if (notification & (1 << KILLSWITCH_IT)) {
     fault_bps_set(BMS_FAULT_KILLSWITCH);
   }
-  // run_can_rx_cycle();
-  // wait_tasks(1);
+  run_can_rx_cycle();
+  wait_tasks(1);
   // Current sense readings + checks
   //current_sense_run();
   //wait_tasks(1);
   // delay_ms(10);
-  // run_can_tx_cycle();
-  // wait_tasks(1);
+  run_can_tx_cycle();
+  wait_tasks(1);
 }
 
 void run_medium_cycle() {
@@ -79,7 +79,7 @@ void run_medium_cycle() {
 }
 
 void run_slow_cycle() {
-  // cell_discharge(&bms_storage.ltc_afe_storage);
+  cell_discharge(&bms_storage.ltc_afe_storage);
 
   if (fault_bps_get()) {
     LOG_DEBUG("FAULT_BITMASK: %d\n", fault_bps_get());

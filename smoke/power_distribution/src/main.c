@@ -10,7 +10,7 @@
 #include "power_distribution.h"
 #include "tasks.h"
 
-static const OutputGroup output_groups_to_test[] = { OUTPUT_GROUP_LIGHTS_LEFT_TURN };
+static const OutputGroup output_groups_to_test[] = { OUTPUT_GROUP_ALL };
 
 static const GpioAddress test_gpio = { .port = GPIO_PORT_B, .pin = 5 };
 
@@ -45,8 +45,8 @@ TASK(smoke_pd, TASK_STACK_512) {
       pd_set_output_group(output_groups_to_test[i], OUTPUT_STATE_ON);
       delay_ms(2000);
 
-      pd_sense_output_group(output_groups_to_test[i]);
-      pd_print_adc_readings(output_groups_to_test[i]);
+      //pd_sense_output_group(output_groups_to_test[i]);
+      //pd_print_adc_readings(output_groups_to_test[i]);
 
       pd_set_output_group(output_groups_to_test[i], OUTPUT_STATE_OFF);
       gpio_toggle_state(&test_gpio);
