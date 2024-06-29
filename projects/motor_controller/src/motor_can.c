@@ -202,12 +202,14 @@ static void motor_controller_rx_all() {
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
         set_motor_velocity_velocity_l(
             (uint16_t)abs((prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE)));
-            s_car_velocity_l = prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE * CONVERT_VELOCITY_TO_KPH;
+        s_car_velocity_l =
+            prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE * CONVERT_VELOCITY_TO_KPH;
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
         set_motor_velocity_velocity_r(
             (uint16_t)abs((prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE)));
-            s_car_velocity_r = prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE * CONVERT_VELOCITY_TO_KPH;
+        s_car_velocity_r =
+            prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE * CONVERT_VELOCITY_TO_KPH;
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:

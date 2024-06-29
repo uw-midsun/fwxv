@@ -218,11 +218,11 @@ TASK(MCP2515_INTERRUPT, TASK_STACK_256) {
       prv_handle_error();
     }
     if (notify_check_event(&notification, 1)) {  // RX0BF
-    LOG_DEBUG("NOTIFIED 1\n");
+      LOG_DEBUG("NOTIFIED 1\n");
       prv_handle_rx(0);
     }
     if (notify_check_event(&notification, 2)) {  // RX1BF
-    LOG_DEBUG("NOTIFIED 2\n");
+      LOG_DEBUG("NOTIFIED 2\n");
       prv_handle_rx(1);
     }
   }

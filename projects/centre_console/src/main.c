@@ -53,13 +53,12 @@ void run_fast_cycle() {
 
   adc_run();
   pedal_run();
-  
+
   run_can_tx_cycle();
   wait_tasks(1);
 }
 
 void run_medium_cycle() {
-
   uint32_t notif = 0;
   notify_get(&notif);
 

@@ -65,7 +65,7 @@ void run_fast_cycle() {
   }
   run_mcp2515_rx_cycle();
   wait_tasks(1);
-  
+
   run_mcp2515_tx_cycle();
   wait_tasks(1);
 }
