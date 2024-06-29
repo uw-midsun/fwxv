@@ -28,10 +28,10 @@ StatusCode mcp2515_receive(const CanMessage *msg) {
 
   if (ret == STATUS_CODE_OK) {
     // LOG_DEBUG("Source Id: %d\n", msg->id);
-    LOG_DEBUG("Data: %llx\n", msg->data);
-    LOG_DEBUG("DLC: %d\n", msg->dlc);
+    // LOG_DEBUG("Data: %llx\n", msg->data);
+    // LOG_DEBUG("DLC: %d\n", msg->dlc);
+    // LOG_DEBUG("ret: %d\n", ret);
   }
-  LOG_DEBUG("ret: %d\n", ret);
 
   return ret;
 }
