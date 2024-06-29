@@ -38,12 +38,12 @@ void pedal_run() {
   // Sending messages
   if (brake_state == GPIO_STATE_LOW) {
     // Brake is pressed - Send brake data with throttle as 1
-    set_cc_pedal_brake_output(1);
-    set_cc_pedal_throttle_output(0);
-  } else {
-    // Brake is not pressed
     set_cc_pedal_brake_output(0);
     set_cc_pedal_throttle_output(throttle_position);
+  } else {
+    // Brake is not pressed
+    set_cc_pedal_brake_output(1);
+    set_cc_pedal_throttle_output(0);
   }
 }
 

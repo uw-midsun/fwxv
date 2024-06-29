@@ -54,4 +54,14 @@ Messages:
       input_cc:
         length: 8 # (cc_toggle | cc_increse | cc_decrease)
       input_lights:
-        length: 8 
+        length: 8
+    
+  cc_regen:
+    id: 8
+    critical: true
+    target:
+      motor_controller:
+        watchdog: 0
+    signals:
+      percent:
+        length: 32 # (cc_toggle | cc_increse | cc_decrease)
