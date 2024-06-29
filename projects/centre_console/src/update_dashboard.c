@@ -16,7 +16,7 @@ GpioAddress bps_led = BPS_LED_ADDR;
 
 // Centre Console State Variables
 static bool s_cc_enabled;
-static uint8_t s_regen_braking;
+static float s_regen_braking;
 static bool s_hazard_state;
 static uint32_t s_target_velocity;
 static uint32_t s_last_power_state = EE_POWER_OFF_STATE;
@@ -44,9 +44,14 @@ static Pca9555GpioAddress s_output_leds[NUM_DRIVE_LED] = {
   [AUX_WARNING_LED] = AUX_WARNING_LED_ADDR,
 };
 
-static uint8_t prv_regen_calc(uint16_t batt_current, uint16_t batt_voltage) {
-  return 100 * (MAX_VOLTAGE - (batt_voltage < MIN_VOLTAGE ? MIN_VOLTAGE : batt_voltage)) /
-         (MAX_VOLTAGE - MIN_VOLTAGE);
+static float prv_regen_calc(uint16_t batt_current, uint16_t batt_voltage, uint16_t max_cell_v,
+                            uint16_t batt_soc) {
+  if (batt_soc >= 90) {
+    return (float)(100.0f - batt_soc) / 100.0f;
+  } else {
+    return (MAX_VOLTAGE - (batt_voltage < MIN_VOLTAGE ? MIN_VOLTAGE : batt_voltage)) /
+           (MAX_VOLTAGE - MIN_VOLTAGE);
+  }
 }
 
 void update_indicators(uint32_t notif) {
@@ -66,11 +71,12 @@ void update_indicators(uint32_t notif) {
     uint16_t batt_current = get_battery_vt_current();
     // solar current + regen current <= 27 AMPS
     // regen current shouldnt push cell above 4.2 V
-    if (!s_regen_braking && batt_current < MAX_CURRENT && batt_voltage < MAX_VOLTAGE) {
-      s_regen_braking = prv_regen_calc(batt_current, batt_voltage);
+    if (!s_regen_braking && get_battery_vt_current() < MAX_CURRENT && get_battery_vt_batt_perc() < MAX_VOLTAGE) {
+      s_regen_braking = prv_regen_calc(get_battery_vt_current(), get_battery_vt_voltage(),
+                                       get_battery_info_max_cell_v(), get_battery_vt_batt_perc());
       pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_HIGH);
     } else {
-      s_regen_braking = 0;
+      s_regen_braking = 0.0f;
       pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_LOW);
     }
   }
@@ -160,14 +166,16 @@ void monitor_cruise_control() {
 void update_drive_output() {
   set_cc_info_cruise_control(s_cc_enabled);
   set_cc_info_target_velocity(s_target_velocity);
-  set_cc_info_regen_braking(s_regen_braking);
+  memcpy(&g_tx_struct.cc_regen_percent, &s_regen_braking, sizeof(s_regen_braking));
   set_cc_info_hazard_enabled(s_hazard_state);
 }
 
 TASK(update_displays, TASK_MIN_STACK_SIZE) {
   seg_displays_init(&all_displays);
   while (true) {
-    float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
+    float avg_speed = (abs((int16_t)get_motor_velocity_velocity_l()) +
+                       abs((int16_t)get_motor_velocity_velocity_r())) /
+                      2.0f;
     float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
     uint16_t batt_perc_val = get_battery_vt_batt_perc();
     uint16_t aux_battery_voltage = get_battery_status_aux_batt_v();

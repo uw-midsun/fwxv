@@ -40,6 +40,8 @@ typedef enum DriveState {
 
 static float s_target_current;
 static float s_target_velocity;
+static float s_car_velocity_l = 0.0;
+static float s_car_velocity_r = 0.0;
 
 static float prv_get_float(uint32_t u) {
   union {
@@ -49,20 +51,57 @@ static float prv_get_float(uint32_t u) {
   return fu.f;
 }
 
+static float prv_one_pedal_threshold(float car_velocity) {
+  float threshold = 0.0;
+  if (car_velocity <= MAX_OPD_SPEED) {
+    threshold = car_velocity * COASTING_THRESHOLD_SCALE;
+  } else {
+    threshold = MAX_COASTING_THRESHOLD;
+  }
+  return threshold;
+}
+
+static float prv_one_pedal_drive_current(float throttle_percent, float threshold,
+                                         DriveState *drive_state) {
+  if (throttle_percent <= threshold + 0.05 && throttle_percent >= threshold - 0.05) {
+    return 0.0;
+  }
+
+  if (throttle_percent >= threshold) {
+    return (throttle_percent - threshold) / (1 - threshold);
+  } else {
+    *drive_state = BRAKE;
+    return (threshold - throttle_percent) / (threshold);
+  }
+  LOG_DEBUG("ERROR: One pedal throttle not calculated\n");
+  return 0.0;
+}
+
 static void prv_update_target_current_velocity() {
   float throttle_percent = prv_get_float(get_cc_pedal_throttle_output());
   bool brake = get_cc_pedal_brake_output();
   float target_vel = (int)(get_cc_info_target_velocity()) * VEL_TO_RPM_RATIO;
+  float car_vel = abs((s_car_velocity_l + s_car_velocity_r) / 2);
+  float opd_threshold = prv_one_pedal_threshold(car_vel);
 
   DriveState drive_state = get_cc_info_drive_state();
-  bool regen = get_cc_info_regen_braking();
+
+  // Regen returns a value btwn 0-100 to represent the max regen we can perform
+  // 0 means our cells max voltage is close to 4.2V or regen is off so we should stop regen braking
+  // 100 means we are below 4.0V so regen braking is allowed
+  float regen = prv_get_float(get_cc_regen_percent());
   bool cruise = get_cc_info_cruise_control();
 
-  if (drive_state == DRIVE && cruise && throttle_percent <= CRUISE_THROTTLE_THRESHOLD) {
+  LOG_DEBUG("opd threshold: %d\n", (int)(opd_threshold * 100));
+
+  if ((drive_state == DRIVE) && cruise && (throttle_percent <= opd_threshold)) {
     drive_state = CRUISE;
   }
   if (brake || (throttle_percent == 0 && drive_state != CRUISE)) {
     drive_state = regen ? BRAKE : NEUTRAL;
+  }
+  if (drive_state == DRIVE || drive_state == REVERSE) {
+    throttle_percent = prv_one_pedal_drive_current(throttle_percent, opd_threshold, &drive_state);
   }
 
   // set target current and velocity based on drive state
@@ -81,7 +120,11 @@ static void prv_update_target_current_velocity() {
       s_target_velocity = target_vel;
       break;
     case BRAKE:
-      s_target_current = ACCERLATION_FORCE;
+      if (throttle_percent > regen) {
+        s_target_current = regen;
+      } else {
+        s_target_current = throttle_percent;
+      }
       s_target_velocity = 0;
       break;
     case NEUTRAL:
@@ -158,11 +201,13 @@ static void motor_controller_rx_all() {
 
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
         set_motor_velocity_velocity_l(
-            (uint16_t)(int16_t)(prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE));
+            (uint16_t)abs((prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE)));
+            s_car_velocity_l = prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE * CONVERT_VELOCITY_TO_KPH;
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
         set_motor_velocity_velocity_r(
-            (uint16_t)(int16_t)(prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE));
+            (uint16_t)abs((prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE)));
+            s_car_velocity_r = prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE * CONVERT_VELOCITY_TO_KPH;
         break;
 
       case MOTOR_CONTROLLER_BASE_L + HEAT_SINK_MOTOR_TEMP:
