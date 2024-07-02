@@ -10,13 +10,13 @@ StatusCode fault_bps_init(BpsStorage *storage) {
 // Fault BPS and open relays
 StatusCode fault_bps_set(uint8_t fault_bitmask) {
   // NOTE(Mitch): adding log statements in this function may cause hardfault
+  bms_relay_fault();
   s_bps_storage->fault_bitset |= (1 << fault_bitmask);
   if (s_bps_storage->fault_bitset & 0x7) {
     s_bps_storage->fault_bitset |= (1 << 15);
   } else {
     s_bps_storage->fault_bitset |= (1 << 14);
   }
-  bms_relay_fault();
   set_battery_status_fault(fault_bitmask);
   return STATUS_CODE_OK;
 }

@@ -5,7 +5,7 @@ LtcAfeStorage *ltc_afe_storage;
 #define TEMP_RESISTANCE 10000
 #define VREF2 30000
 #define TABLE_SIZE 125
-#define LTC_RETRIES 3
+#define LTC_RETRIES 5
 
 uint8_t afe_message_index = 0;
 
