@@ -2,8 +2,10 @@
 import tkinter as tk
 import can
 import cantools
+from multiprocessing.connection import Client
 import subprocess
 import sys
+import time
 
 """
 For VCAN:
@@ -20,6 +22,12 @@ sudo ip link set can0 up type can bitrate 500000
 sudo ip link set can0 up
 """
 
+# Wait 30 sec after RPi autostart for listener to complete setup 
+time.sleep(30)
+
+# Multiprocessing client
+address = ('localhost', 6000)
+client = Client(address, authkey=b'secret password')
 
 def initialize(command):
     try:
@@ -47,7 +55,7 @@ for command in commands:
         print(output)
 
 # change the file path to (can/tools/system_can.dbc)
-db = cantools.database.load_file("GUI/system_can.dbc")
+db = cantools.database.load_file("/home/midnightsun/GUI/system_can.dbc")
 can_bus = can.interface.Bus(channel="can0", bustype="socketcan")
 root = tk.Tk()
 root.resizable(False, False)
@@ -411,7 +419,9 @@ def handle_message(msg):
     global AFE1Max, AFE1Min, AFE2Max, AFE2Min, AFE3Max, AFE3Min
 
     try:
+        print("Listener Executed")
         decoded_message = db.decode_message(msg.arbitration_id, msg.data)
+        client.send((msg.arbitration_id, decoded_message))
         if msg.arbitration_id in DISPLAY_MSG_AFES:
             afe_index = DISPLAY_MSG_AFES.index(
                 msg.arbitration_id
