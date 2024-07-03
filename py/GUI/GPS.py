@@ -24,8 +24,7 @@ def send_at(ser,rec_buff,command,back,timeout):
 			print(command + ' back:\t' + rec_buff.decode())
 			return 0
 		else:
-			print(rec_buff.decode())
-			return 1
+			return rec_buff.decode()
 	else:
 		print('GPS is not ready')
 		return 0
@@ -37,13 +36,13 @@ def get_gps_position(ser):
 	send_at(ser,rec_buff,'AT+CGPS=1,1','OK',1)
 	time.sleep(2)
 	answer = send_at(ser,rec_buff,'AT+CGPSINFO','+CGPSINFO: ',1)
-	if 1 == answer:
-		if ',,,,,,' in rec_buff:
+	if answer != 0:
+		if ',,,,,,' in answer:
 			return 'GPS cannot get position'
 		else:
-			if rec_buff.startswith("+CGPSINFO: "):
-				return rec_buff[11:]
-			return rec_buff
+			print('GPS got position')
+			print(answer[25:-5])
+			return answer[25:-5]
 	else:
 		print('error %d'%answer)
 		rec_buff = ''

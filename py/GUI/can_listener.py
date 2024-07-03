@@ -50,8 +50,8 @@ def uploadDict(ns, can_messages_dict):
             mongodb_api.upload_mongodb(to_dict(can_messages_dict), collection)
             print(to_dict(can_messages_dict))
         
-        # Upload dict to mongoDB at most once per 5 seconds
-        time.sleep(5)
+        # Upload dict to mongoDB at most once per 15 seconds
+        time.sleep(15)
 
 def to_dict(d):
     return {
@@ -100,7 +100,6 @@ for message in db.messages:
 # Get GPS data using AT+CGPSINFO
 rec_buff = GPS.get_gps_position(ser)
 can_messages_dict['GPS'] = rec_buff
-print(rec_buff)
 
 # Get current date and time
 dt_string = now.strftime("%m/%d/%y %H:%M:%S")
