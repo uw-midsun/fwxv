@@ -45,13 +45,12 @@ def uploadDict(ns, can_messages_dict):
             can_messages_dict['GPS'] = rec_buff
 
             now = datetime.now()
-            dt_string = now.strftime("%m/%d/%y %H:%M:%S")
-            can_messages_dict['timestamp'] = dt_string
+            can_messages_dict['timestamp'] = now
             mongodb_api.upload_mongodb(to_dict(can_messages_dict), collection)
             print(to_dict(can_messages_dict))
         
-        # Upload dict to mongoDB at most once per 15 seconds
-        time.sleep(15)
+        # Upload dict to mongoDB at most once per 5 seconds
+        time.sleep(5)
 
 def to_dict(d):
     return {
@@ -69,8 +68,13 @@ database = client["systemcan"]
 
 # Create a new MongoDB collection
 now = datetime.now()
-collection_name = now.strftime("%m/%d/%y %H:%M:%S")
-collection = database[collection_name]
+collection_name = now.strftime("%m/%d/%y,%H:%M:%S")
+collection = database.create_collection(collection_name,
+                        timeseries={
+                            "timeField": "timestamp",
+                            "granularity": "seconds"
+                        }
+                       )
 
 # Initialize SIM7600X GPS Module
 ser = serial.Serial('/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0',115200)
@@ -100,10 +104,10 @@ for message in db.messages:
 # Get GPS data using AT+CGPSINFO
 rec_buff = GPS.get_gps_position(ser)
 can_messages_dict['GPS'] = rec_buff
+print(rec_buff)
 
 # Get current date and time
-dt_string = now.strftime("%m/%d/%y %H:%M:%S")
-can_messages_dict['timestamp'] = dt_string
+can_messages_dict['timestamp'] = now
 
 # Upload dictionary template
 mongodb_api.upload_mongodb(to_dict(can_messages_dict), collection)
