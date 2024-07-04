@@ -8,10 +8,9 @@ from pymongo.server_api import ServerApi
 
 def init_mongodb():
     load_dotenv()
-    username = os.environ.get("MONGODB_USERNAME")
-    password = os.environ.get("MONGODB_PASSWORD")
+    password = os.environ.get("MONGODB_UWMIDSUN")
 
-    uri = "mongodb+srv://" + username + ":" + password + "@telemetry.ph2gl5d.mongodb.net/?retryWrites=true&w=majority&appName=Telemetry"
+    uri = "mongodb+srv://uwmidsun:" + password + "@telemetry.vwhkif1.mongodb.net/?retryWrites=true&w=majority&appName=Telemetry"
 
     # Create a new client and connect to the server
     client = MongoClient(uri, server_api=ServerApi('1'))
