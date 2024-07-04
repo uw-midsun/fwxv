@@ -3,6 +3,7 @@ import tkinter as tk
 import can
 import cantools
 import cv2
+from multiprocessing.connection import Client
 import PIL
 import threading
 from PIL import ImageTk
@@ -16,6 +17,13 @@ sudo python3 RPI/GUI.py
 
 v4l2-ctl --list-devices
 """
+
+# Wait 30 sec after RPi autostart for listener to complete setup 
+time.sleep(30)
+
+# Multiprocessing client
+address = ('localhost', 6000)
+client = Client(address, authkey=b'secret password')
 
 # change the file path to (can/tools/system_can.dbc)
 db = cantools.database.load_file("system_can.dbc")
@@ -45,6 +53,9 @@ GUICount = 0
 camera_widget = tk.Label(root, bg="#000000")
 camera_widget.place(x=25, y=250)
 
+# Multiprocessing client
+address = ('localhost', 6000)
+client = Client(address, authkey=b'secret password')
 
 def open_camera():
     _, frame = vid.read()
@@ -429,6 +440,7 @@ def handle_message(msg):
     try:
         combinedSpeed = 0
         decoded_message = db.decode_message(msg.arbitration_id, msg.data)
+        client.send((msg.arbitration_id, decoded_message))
         # print(decoded_message)
         if msg.arbitration_id in DISPLAY_MSG_DICT.keys():
             for sig in DISPLAY_MSG_DICT[msg.arbitration_id]:
