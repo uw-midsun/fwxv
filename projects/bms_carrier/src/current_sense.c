@@ -38,6 +38,7 @@ StatusCode prv_fuel_gauge_read() {
   status |= max17261_full_capacity(&s_fuel_guage_storage, &s_current_storage->full);
 
   // Measured voltage corresponds to one cell. Multiply it by the number of cells in series
+  LOG_DEBUG("Single VOLTAGE: %d\n", s_current_storage->voltage);
   s_current_storage->voltage = s_current_storage->voltage * NUM_SERIES_CELLS / 10;
   LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
   LOG_DEBUG("CURRENT: %d\n", s_current_storage->current);
@@ -61,16 +62,20 @@ StatusCode prv_fuel_gauge_read() {
   set_battery_vt_temperature(s_current_storage->temperature);
 
   // TODO (Aryan): Validate these checks
-  if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
+  if (s_current_storage->current >= (int16_t)(CURRENT_SENSE_MAX_CURRENT_A * 1000)) {
+    LOG_DEBUG("OVERCURRENT FAULT %d %f/n", s_current_storage->current,  CURRENT_SENSE_MAX_CURRENT_A * 1000);
     fault_bps_set(BMS_FAULT_OVERCURRENT);
     return STATUS_CODE_INTERNAL_ERROR;
-  } else if (s_current_storage->current <= CURRENT_SENSE_MIN_CURRENT_A * 1000) {
+  } else if (s_current_storage->current <= (int16_t)(CURRENT_SENSE_MIN_CURRENT_A * 1000)) {
+    LOG_DEBUG("UNDERCURRENT FAULT %d %f/n", s_current_storage->current,  CURRENT_SENSE_MIN_CURRENT_A * 1000);
     fault_bps_set(BMS_FAULT_OVERCURRENT);
     return STATUS_CODE_INTERNAL_ERROR;
   } else if (s_current_storage->voltage >= CURRENT_SENSE_MAX_VOLTAGE_V) {
+    LOG_DEBUG("voltage FAULT %d %d/n", s_current_storage->voltage,  CURRENT_SENSE_MAX_VOLTAGE_V);
     fault_bps_set(BMS_FAULT_OVERVOLTAGE);
     return STATUS_CODE_INTERNAL_ERROR;
   } else if (s_current_storage->temperature >= CURRENT_SENSE_MAX_TEMP_C) {
+    LOG_DEBUG("TEMP FAULT %d/n", s_current_storage->temperature );
     fault_bps_set(BMS_FAULT_OVERTEMP_AMBIENT);
     return STATUS_CODE_INTERNAL_ERROR;
   }
@@ -93,6 +98,7 @@ TASK(current_sense, TASK_STACK_256) {
 
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
+      LOG_DEBUG("ALERT_PIN triggered\n");
       fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     }
     prv_fuel_gauge_read();
@@ -103,6 +109,7 @@ TASK(current_sense, TASK_STACK_256) {
 StatusCode current_sense_run() {
   StatusCode ret = notify(current_sense, CURRENT_SENSE_RUN_CYCLE);
   if (ret != STATUS_CODE_OK) {
+    LOG_DEBUG("Notify Failed: %d\n", ret);
     fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     return STATUS_CODE_INTERNAL_ERROR;
   }
@@ -125,7 +132,7 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
     .type = INTERRUPT_TYPE_INTERRUPT,
     .edge = INTERRUPT_EDGE_RISING,
   };
-  gpio_it_register_interrupt(&alrt_pin, &it_settings, ALRT_GPIO_IT, current_sense);
+  //gpio_it_register_interrupt(&alrt_pin, &it_settings, ALRT_GPIO_IT, current_sense);
 
   s_fuel_gauge_settings.i2c_port = I2C_PORT_2;
   s_fuel_gauge_settings.i2c_address = MAX17261_I2C_ADDR;
@@ -149,7 +156,7 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   // Soft timer period for soc & chargin check
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
 
-  persist_init(&s_persist, CURRENT_SENSE_STORE_FLASH, &s_fuel_params, sizeof(s_fuel_params), false);
+  persist_init(&s_persist, CURRENT_SENSE_STORE_FLASH, &s_fuel_params, sizeof(s_fuel_params), true);
   status = max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings, &s_fuel_params);
   tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
   return status;

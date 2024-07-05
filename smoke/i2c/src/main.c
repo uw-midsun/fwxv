@@ -9,8 +9,8 @@
 // ==== WRITE PARAMETERS ====
 
 // Fill in these variables with the port and address to write to.
-#define WRITE_I2C_PORT I2C_PORT_2  // I2C_Port_2 is also available
-#define WRITE_I2C_ADDRESS 0x38
+#define WRITE_I2C_PORT I2C_PORT_1  // I2C_Port_2 is also available
+#define WRITE_I2C_ADDRESS 0x21
 
 // Fill in this array with the bytes to write.
 static const uint8_t bytes_to_write[] = { 0x00 };

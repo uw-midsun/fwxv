@@ -12,23 +12,23 @@
 #include "tasks.h"
 
 #define MAX17261_I2C_PORT (I2C_PORT_2)
-#define MAX17261_I2C_ADDR (0x38)
+#define MAX17261_I2C_ADDR (0x36)
 
 #define SENSE_RESISTOR_MOHM (0.5)
 
-#define PACK_CAPACITY_MAH (160000)  // one module
+#define PACK_CAPACITY_MAH (1440000)  // one module
 
 #define CELL_EMPTY_VOLTAGE_MV 2500  // LG M50T datasheet
 
 #define CHARGE_TERMINATION_CURRENT_MA (400)  // 50 mA * 8 (one module)
 
-#define NUM_SERIES_CELLS 36  // Number of cells in series to multiply average cell voltage
+#define NUM_SERIES_CELLS 36 // Number of cells in series to multiply average cell voltage
 
 // Thresholds for ALRT Pin
 #define CURRENT_SENSE_MAX_CURRENT_A (58.2f)
 #define CURRENT_SENSE_MIN_CURRENT_A (-27.0f)  // Actually -27
 #define CURRENT_SENSE_MAX_TEMP_C (60U)
-#define CURRENT_SENSE_MAX_VOLTAGE_V (15000)
+#define CURRENT_SENSE_MAX_VOLTAGE_V (15230)
 #define ALRT_PIN_V_RES_MICRO_V (400)
 
 #define CELL_X_R1_KOHMS 1780
