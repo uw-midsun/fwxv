@@ -12,98 +12,100 @@
 #define DGRAM_MAX_MSG_SIZE 8
 
 #define DGRAM_TYPE_SIZE_BYTES 1
-#define CRC_SIZE_BYTES 4
 #define NODE_IDS_SIZE_BYTES 2
 #define DATA_LEN_SIZE_BYTES 2
+
+
+#define CAN_START_ARBITRATION_ID 0b00000010000
+#define CAN_START_ID 0b00000000000
+#define CAN_ARBITRATION_FLASH_ID 0b00000000001
+#define CAN_ARBITRATION_JUMP_ID 0b00000000010
+
+#define CAN_BITRATE 500000
+
+#define MIN_BYTEARRY_SIZE 5
+
+#define DATAGRAM_TYPE_OFFSET 0
+#define NODE_IDS_OFFSET 1 
+#define DATA_SIZE_OFFSET 3  
 
 #define LITTLE_ENDIANIZE(value, outbuf)                 \
   for (size_t byte = 0; byte < sizeof(value); byte++) { \
     outbuf[byte] = value >> (8 * byte) & 0xFF;          \
   }
 
-// Callback used to tx a datagram message, used to handle all CAN transmission
-// Called in each state as data becomes ready to be transmitted
-typedef StatusCode (*CanDatagramTxCb)(uint8_t *data, size_t len, bool start_message);
 
-// Optional callbacks called on tx/rx completion and error
-typedef void (*CanDatagramExitCb)(void);
+typedef uintptr_t bootloader_ptr_t;
 
-typedef struct CanDatagram {
+typedef struct {
   uint8_t dgram_type;
-  uint32_t crc32;
   uint16_t node_ids;
   uint16_t data_len;
   uint8_t *data;
-} CanDatagram;
+} BootloaderRxPacket;
 
-// Tx Config - Data and NodeID buffers must remain available
-// for entirety of datagram execution
-typedef struct CanDatagramTxConfig {
-  uint8_t dgram_type;
-  uint8_t *node_ids_list;
-  uint8_t node_ids_length;
-  uint16_t data_len;
-  uint8_t *data;
-  // Mandatory callback to handle transmission
-  CanDatagramTxCb tx_cb;
-  // Optional callback - called on tx completion
-  CanDatagramExitCb tx_cmpl_cb;
-} CanDatagramTxConfig;
 
-typedef struct CanDatagramRxConfig {
-  // These parameters must be passed
-  uint16_t node_ids;
-  uint8_t *data;
-  // These parameters will be set by rcv'd data
-  uint8_t dgram_type;
-  uint8_t data_len;
-  uint32_t crc32;
-  // Optional callback - called on rx completion
-  CanDatagramExitCb rx_cmpl_cb;
-} CanDatagramRxConfig;
+typedef struct {
 
+
+} BootloaderConfig;
 typedef enum {
+  /// @brief 
   DATAGRAM_START = 0,
+  /// @brief 
   DATAGRAM_DATA,
-} CanDatagramTypeId;
+  /// @brief 
+  DATAGRAM_JUMP,
+} BootloaderTypeID;
 
+//STATE MACHINE
 typedef enum {
-  DATAGRAM_STATUS_ACTIVE = 0,
-  DATAGRAM_STATUS_IDLE,
-  DATAGRAM_STATUS_TX_COMPLETE,
-  DATAGRAM_STATUS_RX_COMPLETE,
-  DATAGRAM_STATUS_ERROR,
-  NUM_DATAGRAM_STATUSES,
-} CanDatagramStatus;
+  /// @brief datagram starts as uninitialized state
+  BOOTLOADER_UNINITIALIZED = 0,
+  /// @brief datagram is ready to either jump or flash applications
+  BOOTLOADER_IDLE, 
+  /// @brief datagram received initial first message, ready to recieve binary flashing data
+  BOOTLOADER_DATA_READY,
+  /// @brief datagram is current receiving the datagram streaming data
+  BOOTLOADER_DATA_RECIEVE,
+  /// @brief datagram is jumping to the application identified in the message
+  BOOTLOADER_JUMP_APP,
+  /// @brief datagram encountered an error
+  BOOTLOADER_FAULT
+} BootloaderStates;
 
-typedef struct CanDatagramStorage {
-  CanDatagram dgram;
-  CanDatagramTxCb tx_cb;
-  CanDatagramStatus status;
-  CanDatagramRxConfig *rx_info;
+//ERROR DATA
+typedef enum {
+  /// @brief no data is found
+  BOOTLOADER_ERROR_NONE = 0,
+  /// @brief more data recieved than anticipated
+  BOOTLOADER_OVERSIZE,
+  /// @brief authenication is not valid 
+  BOOTLOADER_INVALID_ID,
+  /// @brief the can bus encountered an error
+  BOOLOADER_TRANSMISSION_E,
+  /// @brief unidentified internal controller error
+  BOOTLOADER_INTERNAL_ERR,
+  /// @brief agruements given doesn't match the bootloader's requirements 
+  BOOTLOADER_INVALID_ARGS
+} BootloaderError;
 
-  CanDatagramExitCb rx_cmpl_cb;
-  CanDatagramExitCb tx_cmpl_cb;
-  CanDatagramExitCb error_cb;
 
-  size_t tx_bytes_sent;
-  bool rx_listener_enabled;
-  bool start_received;
-  uint8_t node_id;
-} CanDatagramStorage;
+BootloaderError bootloader_switch_states(const BootloaderStates new_state);
+/**
+ * @brief updates the state of the datagram 
+ * @param  takes in the new datagram state to change to
+ * @return returns CanDatagramStates of the updated state
+ */
 
-// Initializes a can datagram instance and prepares for transmitting or receiving
-StatusCode can_datagram_init();
+BootloaderStates bootloader_get_state(void);
+/**
+ * @brief gets the current state machine state of the bootloader
+ * @return Bootloader's current state type
+ */
 
-// Called in the rx handler for datagram messages to process sequential messages
-StatusCode can_datagram_rx(uint8_t *data, size_t len, bool start_message);
-
-// Called after initialization to start txing datagram messages
-StatusCode can_datagram_start_tx(CanDatagramTxConfig *config);
-
-// Used to start listening for/processing rx can datagrams
-// Will continue to listen unless explicitly told to stop
-StatusCode can_datagram_start_listener(CanDatagramRxConfig *config);
-
-// Returns true if the datagram is complete (all data were sent/read)
-CanDatagramStatus can_datagram_get_status(void);
+BootloaderError bootloader_get_err(void);
+/**
+ * @brief get the most recent error from the state machine
+ * @return returns BOOTLOADER_ERROR_NONE when no errors occured
+ */
