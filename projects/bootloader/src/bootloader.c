@@ -63,13 +63,13 @@ BootloaderError bootloader_switch_states(const BootloaderStates new_state) {
             switch (new_state)
             {
             
-            case BOOTLOADER_IDLE:
-                prv_bootloader.state = BOOTLOADER_IDLE;
+            case BOOTLOADER_FLASH_COMPLETE:
+                prv_bootloader.state = BOOTLOADER_FLASH_COMPLETE;
                 break;
 
             case BOOTLOADER_FAULT:
-                    prv_bootloader.state = BOOTLOADER_FAULT;
-                    break;
+                prv_bootloader.state = BOOTLOADER_FAULT;
+                break;
             
             default:
                 return_err = BOOTLOADER_INVALID_ARGS;
@@ -80,8 +80,21 @@ BootloaderError bootloader_switch_states(const BootloaderStates new_state) {
         case BOOTLOADER_JUMP_APP:
             switch (new_state)
             {
-            case BOOTLOADER_FAULT:
-                prv_bootloader.state = BOOTLOADER_FAULT;
+                case BOOTLOADER_FAULT:
+                    prv_bootloader.state = BOOTLOADER_FAULT;
+                    break;
+                
+                default:
+                    return_err = BOOTLOADER_INVALID_ARGS;
+                    prv_bootloader.state = BOOTLOADER_FAULT;
+                    break;
+            }
+
+        case BOOTLOADER_UNINITIALIZED:
+            switch (new_state)
+            {
+            case BOOTLOADER_IDLE:
+                prv_bootloader.state = BOOTLOADER_IDLE;
                 break;
             
             default:
@@ -90,11 +103,19 @@ BootloaderError bootloader_switch_states(const BootloaderStates new_state) {
                 break;
             }
 
-        case BOOTLOADER_UNINITIALIZED:
+        case BOOTLOADER_FLASH_COMPLETE:
             switch (new_state)
             {
             case BOOTLOADER_IDLE:
                 prv_bootloader.state = BOOTLOADER_IDLE;
+                break;
+
+            case BOOTLOADER_JUMP_APP:
+                prv_bootloader.state = BOOTLOADER_JUMP_APP;
+                break;
+
+            case BOOTLOADER_FAULT:
+                prv_bootloader.state = BOOTLOADER_FAULT;
                 break;
             
             default:
@@ -113,3 +134,11 @@ BootloaderError bootloader_switch_states(const BootloaderStates new_state) {
 }
 
 BootloaderError bootloader_get_err() { return prv_bootloader.error; }
+
+BootloaderError bootloader_jump_app(uintptr_t *const jump_addr) {
+    BootloaderStates curr_state = prv_bootloader.state;
+
+    if (curr_state != BOOTLOADER_IDLE || curr_state != BOOTLOADER_FLASH_COMPLETE) {
+
+    }
+}
