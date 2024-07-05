@@ -68,6 +68,8 @@ typedef enum {
   BOOTLOADER_DATA_READY,
   /// @brief datagram is current receiving the datagram streaming data
   BOOTLOADER_DATA_RECIEVE,
+  /// @brief the bootloader is completed flashing all the data successfully
+  BOOTLOADER_FLASH_COMPLETE,
   /// @brief datagram is jumping to the application identified in the message
   BOOTLOADER_JUMP_APP,
   /// @brief datagram encountered an error
@@ -108,4 +110,11 @@ BootloaderError bootloader_get_err(void);
 /**
  * @brief get the most recent error from the state machine
  * @return returns BOOTLOADER_ERROR_NONE when no errors occured
+ */
+
+BootloaderError bootloader_jump_app(uintptr_t *const jump_addr);
+/**
+ * @brief jumps to start the RTOS of the microcontroller
+ * @param gets the address of the main applicaiton to jump to
+ * @return returns BOOTLOADER_ERROR_NONE if ran successfully
  */
