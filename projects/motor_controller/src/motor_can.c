@@ -68,6 +68,7 @@ static float prv_one_pedal_drive_current(float throttle_percent, float threshold
   }
 
   if (throttle_percent >= threshold) {
+    set_motor_velocity_brakes_enabled(false);
     return (throttle_percent - threshold) / (1 - threshold);
   } else {
     *drive_state = BRAKE;
