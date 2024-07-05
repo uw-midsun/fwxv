@@ -5,7 +5,7 @@
 #include "power_distribution_getters.h"
 
 static void prv_brake_lights() {
-  if (get_cc_pedal_brake_output())
+  if (get_cc_pedal_brake_output() || get_motor_velocity_brakes_enabled())
     pd_set_output_group(OUTPUT_GROUP_BRAKE, OUTPUT_STATE_ON);
   else
     pd_set_output_group(OUTPUT_GROUP_BRAKE, OUTPUT_STATE_OFF);
