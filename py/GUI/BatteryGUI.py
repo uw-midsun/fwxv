@@ -7,21 +7,6 @@ import subprocess
 import sys
 import time
 
-"""
-For VCAN:
-sudo modprobe vcan
-sudo ip link ad dev vcan0 type vcan
-sudo ip link set up vcan0
-
-For CAN:
-sudo modprobe can
-sudo modprobe can_raw
-sudo modprobe vcan
-
-sudo ip link set can0 up type can bitrate 500000
-sudo ip link set can0 up
-"""
-
 # Wait 30 sec after RPi autostart for listener to complete setup 
 time.sleep(30)
 
@@ -55,11 +40,11 @@ for command in commands:
         print(output)
 
 # change the file path to (can/tools/system_can.dbc)
-db = cantools.database.load_file("/home/midnightsun/GUI/system_can.dbc")
+db = cantools.database.load_file("/var/display/system_can.dbc")
 can_bus = can.interface.Bus(channel="can0", bustype="socketcan")
 root = tk.Tk()
 root.resizable(False, False)
-root.geometry("800x480")
+root.geometry("800x240")
 root.title("Dashboard")
 root.configure(background="black")
 BorderThickness = 2
@@ -273,21 +258,6 @@ DISPLAY_MSG_AFES = [
     db.get_message_by_name("AFE3_status").frame_id,
 ]
 
-"""
-AFE1_status {id: 0, temp: 10, v1: 10, v2: 10, v3:10} temp1, v1, v2, v3
-AFE2_status {id: 0, temp: 10, v1: 10, v2: 10, v3:10}
-AFE3_status {id: 0, temp: 10, v1: 10, v2: 10, v3:10}
-AFE1_status {id: 1, temp: 10, v1: 10, v2: 10, v3:10} temp1, v4, v5, v6
-AFE2_status {id: 1, temp: 10, v1: 10, v2: 10, v3:10}
-AFE3_status {id: 1, temp: 10, v1: 10, v2: 10, v3:10}
-AFE1_status {id: 2, temp: 10, v1: 10, v2: 10, v3:10} temp1, v7, v8, v9
-AFE2_status {id: 2, temp: 10, v1: 10, v2: 10, v3:10}
-AFE3_status {id: 2, temp: 10, v1: 10, v2: 10, v3:10}
-AFE1_status {id: 3, temp: 10, v1: 10, v2: 10, v3:10} temp1, v10, v11, v12
-AFE2_status {id: 3, temp: 10, v1: 10, v2: 10, v3:10}
-AFE3_status {id: 3, temp: 10, v1: 10, v2: 10, v3:10}
-"""
-
 AFE_Data = [
     {
         "Temp": [None, None, None],
@@ -358,7 +328,7 @@ def AFE1FullUpdate():
 
         AFE1Max = max(AFE_Data[0]["Voltages"])
         AFE1Min = min(AFE_Data[0]["Voltages"])
-        Unbalance = AFE1Max - AFE1Min
+        Unbalance = round((AFE1Max - AFE1Min), 2)
 
         updateAFE1(4, AFE1Max)
         updateAFE1(5, AFE1Min)
@@ -382,7 +352,7 @@ def AFE2FullUpdate():
 
         AFE2Max = max(AFE_Data[1]["Voltages"])
         AFE2Min = min(AFE_Data[1]["Voltages"])
-        Unbalance = AFE2Max - AFE2Min
+        Unbalance = round((AFE2Max - AFE2Min), 2)
 
         updateAFE2(4, AFE2Max)
         updateAFE2(5, AFE2Min)
@@ -406,7 +376,7 @@ def AFE3FullUpdate():
 
         AFE3Max = max(AFE_Data[2]["Voltages"])
         AFE3Min = min(AFE_Data[2]["Voltages"])
-        Unbalance = AFE3Max - AFE3Min
+        Unbalance = round((AFE3Max - AFE3Min), 2)
 
         updateAFE3(4, AFE3Max)
         updateAFE3(5, AFE3Min)
