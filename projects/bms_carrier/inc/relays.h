@@ -11,7 +11,7 @@
 #include "status.h"
 #include "task.h"
 
-#define BMS_CLOSE_RELAYS_DELAY_MS 300
+#define BMS_CLOSE_RELAYS_DELAY_MS 200
 
 // Enumerated set of relays to be closed
 typedef enum RelayType {

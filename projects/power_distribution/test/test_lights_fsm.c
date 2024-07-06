@@ -4,7 +4,7 @@
 #include "unity.h"
 
 #define HAZARD_SIGNAL_MSG g_rx_struct.cc_info_hazard_enabled
-#define STEERING_ANALOG_SIGNAL_MSG g_rx_struct.steering_info_input_lights
+#define STEERING_ANALOG_SIGNAL_MSG g_rx_struct.cc_steering_input_lights
 
 void setup_test(void) {
   log_init();

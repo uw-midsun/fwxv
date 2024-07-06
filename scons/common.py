@@ -54,4 +54,3 @@ def flash_run(entry):
     subprocess.run(cmd, shell=True).check_returncode()
 
     print("Flash complete")
-    return serialData

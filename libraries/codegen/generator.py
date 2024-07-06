@@ -23,6 +23,8 @@ def check_yaml_file(data):
         # Message has id
         if "id" not in message:
             raise Exception("Message " + message_name + " has no id")
+        if "critical" not in message:
+            raise Exception("Critical is not defined for message " + message_name)
 
         # No same ids for messages within a board
         if message["id"] in message_ids:
@@ -67,7 +69,6 @@ def get_data():
 
         sender = Path(yaml_path).stem
         boards.append(sender)
-
         for message_name, message in data["Messages"].items():
             signals = []
             start_bit = 0
@@ -86,6 +87,7 @@ def get_data():
 
             messages.append({
                 "id": message["id"],
+                "critical": message["critical"],
                 "name": message_name,
                 "signals": signals,
                 "sender": sender,

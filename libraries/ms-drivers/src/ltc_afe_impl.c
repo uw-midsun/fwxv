@@ -163,7 +163,6 @@ static void prv_calc_offsets(LtcAfeStorage *afe) {
   // Similarly, we do the opposite mapping for discharge.
   LtcAfeSettings *settings = &afe->settings;
   size_t cell_index = 0;
-  size_t aux_index = 0;
   for (size_t device = 0; device < settings->num_devices; device++) {
     for (size_t device_cell = 0; device_cell < LTC_AFE_MAX_CELLS_PER_DEVICE; device_cell++) {
       size_t cell = device * LTC_AFE_MAX_CELLS_PER_DEVICE + device_cell;
@@ -173,12 +172,6 @@ static void prv_calc_offsets(LtcAfeStorage *afe) {
         // when copying to the result array and the opposite for discharge
         afe->discharge_cell_lookup[cell_index] = cell;
         afe->cell_result_lookup[cell] = cell_index++;
-      }
-
-      if ((settings->aux_bitset[device] >> device_cell) & 0x1) {
-        // Cell input enabled - store the index that this input should be stored in
-        // when copying to the result array
-        afe->aux_result_lookup[cell] = aux_index++;
       }
     }
   }
@@ -233,9 +226,23 @@ StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
   LtcAfeSettings *settings = &afe->settings;
   for (uint8_t cell_reg = 0; cell_reg < NUM_LTC_AFE_VOLTAGE_REGISTERS; ++cell_reg) {
     LtcAfeVoltageRegisterGroup voltage_register[LTC_AFE_MAX_DEVICES] = { 0 };
-    prv_read_voltage(afe, cell_reg, voltage_register);
+    status_ok_or_return(prv_read_voltage(afe, cell_reg, voltage_register));
 
     for (uint8_t device = 0; device < settings->num_devices; ++device) {
+      // the Packet Error Code is transmitted after the cell data (see p.45)
+      uint16_t received_pec = SWAP_UINT16(voltage_register[device].pec);
+      uint16_t data_pec = crc15_calculate((uint8_t *)&voltage_register[device], 6);
+      if (received_pec != data_pec) {
+        // return early on failure
+        LOG_DEBUG("Communication Failed with device: %d\n\r", device);
+        LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
+        LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
+        LOG_DEBUG("Voltage: %d %d %d\n\r", voltage_register[device].reg.voltages[0],
+                  voltage_register[device].reg.voltages[1],
+                  voltage_register[device].reg.voltages[2]);
+        return status_code(STATUS_CODE_INTERNAL_ERROR);
+      }
+
       for (uint16_t cell = 0; cell < LTC6811_CELLS_IN_REG; ++cell) {
         // LSB of the reading is 100 uV
         uint16_t voltage = voltage_register[device].reg.voltages[cell];
@@ -246,19 +253,6 @@ StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
           // Input enabled - store result
           afe->cell_voltages[afe->cell_result_lookup[index]] = voltage;
         }
-      }
-
-      // the Packet Error Code is transmitted after the cell data (see p.45)
-      uint16_t received_pec = SWAP_UINT16(voltage_register[device].pec);
-      uint16_t data_pec = crc15_calculate((uint8_t *)&voltage_register[device], 6);
-      if (received_pec != data_pec) {
-        // return early on failure
-        LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
-        LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
-        LOG_DEBUG("Voltage: %d %d %d\n\r", voltage_register[device].reg.voltages[0],
-                  voltage_register[device].reg.voltages[1],
-                  voltage_register[device].reg.voltages[2]);
-        return status_code(STATUS_CODE_INTERNAL_ERROR);
       }
     }
   }
@@ -271,19 +265,10 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t thermistor) {
   LtcAfeAuxRegisterGroupPacket register_data[LTC_AFE_MAX_DEVICES] = { 0 };
 
   size_t len = settings->num_devices * sizeof(LtcAfeAuxRegisterGroupPacket);
-  prv_read_register(afe, LTC_AFE_REGISTER_AUX_B, (uint8_t *)register_data, len);
+  status_ok_or_return(
+      prv_read_register(afe, LTC_AFE_REGISTER_AUX_B, (uint8_t *)register_data, len));
 
   for (uint16_t device = 0; device < settings->num_devices; ++device) {
-    // data comes in in the form { 1, 1, 2, 2, 3, 3, PEC, PEC }
-    // we only care about GPIO4 and the PEC
-    uint16_t voltage = register_data[device].reg.voltages[0];
-
-    if ((settings->aux_bitset[device] >> thermistor) & 0x1) {
-      // Input enabled - store result
-      uint16_t index = device * LTC_AFE_MAX_CELLS_PER_DEVICE + thermistor;
-      afe->aux_voltages[afe->aux_result_lookup[index]] = voltage;
-    }
-
     uint16_t received_pec = SWAP_UINT16(register_data[device].pec);
     uint16_t data_pec = crc15_calculate((uint8_t *)&register_data[device], 6);
     if (received_pec != data_pec) {
@@ -291,6 +276,15 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t thermistor) {
       LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
       LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
       return status_code(STATUS_CODE_INTERNAL_ERROR);
+    }
+    // data comes in in the form { 1, 1, 2, 2, 3, 3, PEC, PEC }
+    // we only care about GPIO4 and the PEC
+    uint16_t voltage = register_data[device].reg.voltages[0];
+
+    if ((settings->aux_bitset[device] >> thermistor) & 0x1) {
+      // Input enabled - store result
+      uint16_t index = device * LTC_AFE_MAX_THERMISTORS_PER_DEVICE + thermistor;
+      afe->aux_voltages[index] = voltage;
     }
   }
   return STATUS_CODE_OK;

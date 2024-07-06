@@ -11,11 +11,11 @@
 ---
   Messages:
     test_debug:
-      id: 0
+      id: 35
+      critical: true
       target:
         can_debug:
           watchdog: 0
-      critical: true
       signals:
         operation:
           length: 8

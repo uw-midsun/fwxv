@@ -68,7 +68,7 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
 
   USART_InitTypeDef usart_init;
   USART_StructInit(&usart_init);
-  usart_init.USART_Mode = USART_Mode_Tx;
+  usart_init.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
   usart_init.USART_BaudRate = settings->baudrate;
   USART_Init(s_port[uart].base, &usart_init);
 
@@ -78,6 +78,7 @@ StatusCode uart_init(UartPort uart, UartSettings *settings) {
   // Init with disabled TX interrupts otherwise we will get TX
   // buffer empty continuously when there is no data to send
   USART_ITConfig(s_port[uart].base, USART_IT_TXE, DISABLE);
+  USART_ITConfig(s_port[uart].base, USART_IT_RXNE, ENABLE);
   stm32f10x_interrupt_nvic_enable(s_port[uart].irq, INTERRUPT_PRIORITY_LOW);
 
   USART_Cmd(s_port[uart].base, ENABLE);
@@ -152,7 +153,7 @@ static void prv_handle_irq(UartPort uart) {
         errQUEUE_FULL) {
       // Drop oldest data if queue is full
       uint8_t buf = 0;
-      xQueueReceiveFromISR(s_port_queues[uart].tx_queue.handle, &buf, pdFALSE);
+      xQueueReceiveFromISR(s_port_queues[uart].rx_queue.handle, &buf, pdFALSE);
       xQueueSendFromISR(s_port_queues[uart].rx_queue.handle, &rx_data, pdFALSE);
     }
   }

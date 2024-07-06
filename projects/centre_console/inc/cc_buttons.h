@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cc_hw_defs.h"
+#include "centre_console_getters.h"
 #include "drive_fsm.h"
 #include "i2c.h"
 #include "pca9555_gpio_expander.h"
