@@ -2,21 +2,14 @@
 import tkinter as tk
 import can
 import cantools
-import cv2
-from multiprocessing.connection import Client
 import PIL
 import threading
+from multiprocessing.connection import Client
 from PIL import ImageTk
 from PIL import Image
-
-"""
-sudo modprobe vcan
-sudo ip link ad dev vcan0 type vcan
-sudo ip link set up vcan0
-sudo python3 RPI/GUI.py
-
-v4l2-ctl --list-devices
-"""
+import subprocess
+import sys
+import time
 
 # Wait 30 sec after RPi autostart for listener to complete setup 
 time.sleep(30)
@@ -25,22 +18,38 @@ time.sleep(30)
 address = ('localhost', 6000)
 client = Client(address, authkey=b'secret password')
 
+def initialize(command):
+    result = subprocess.run(command, shell=True, text=True, capture_output=True)
+
+commands = [
+    "sudo modprobe can",
+    "sudo modprobe can_raw",
+    "sudo modprobe vcan",
+    "sudo ip link set can0 up type can bitrate 500000",
+    "sudo ip link set can0 up"
+]
+
+for command in commands:
+    output=initialize(command)
+    if output:
+        print(output)
+
 # change the file path to (can/tools/system_can.dbc)
-db = cantools.database.load_file("system_can.dbc")
+db = cantools.database.load_file("/var/display/system_can.dbc")
 can_bus = can.interface.Bus(channel="vcan0", bustype="socketcan")
 root = tk.Tk()
 root.resizable(False, False)
-root.geometry("800x480")
+root.geometry("800x240")
 root.title("Dashboard")
 root.configure(background="black")
 
-vid = cv2.VideoCapture(0)
+#vid = cv2.VideoCapture(0)
 
-vid.set(cv2.CAP_PROP_FRAME_WIDTH, 400)
-vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 400)
+#vid.set(cv2.CAP_PROP_FRAME_WIDTH, 400)
+#vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 400)
 
 BorderThickness = 2
-List = [0, 40, 80, 120, 160, 200, 240, 320, 360, 400]
+List = [0, 40, 80, 120, 160, 200]
 can_message_list = []
 red = "#FF0000"
 orange = "#FF9900"
@@ -50,27 +59,23 @@ listCount = 0
 
 GUICount = 0
 
-camera_widget = tk.Label(root, bg="#000000")
-camera_widget.place(x=25, y=250)
+#camera_widget = tk.Label(root, bg="#000000")
+#camera_widget.place(x=25, y=250)
 
-# Multiprocessing client
-address = ('localhost', 6000)
-client = Client(address, authkey=b'secret password')
-
-def open_camera():
-    _, frame = vid.read()
-
-    opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-
-    captured_image = Image.fromarray(opencv_image)
-
-    photo_image = ImageTk.PhotoImage(image=captured_image)
-
-    camera_widget.photo_image = photo_image
-
-    camera_widget.configure(image=photo_image)
-
-    camera_widget.after(10, open_camera)
+#def open_camera():
+#    _, frame = vid.read()
+#
+#    opencv_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+#
+#    captured_image = Image.fromarray(opencv_image)
+#
+#    photo_image = ImageTk.PhotoImage(image=captured_image)
+#
+#    camera_widget.photo_image = photo_image
+#
+#    camera_widget.configure(image=photo_image)
+#
+#    camera_widget.after(10, open_camera)
 
 
 for y in range(3):
@@ -133,8 +138,8 @@ tk.Label(Box, text="VOLT.", font="Montserrat 10", bg="#000000", fg="white").plac
 
 def redBox(message, num):
     global redlistCount
-    if listCount > 2:
-        listCount = 0
+    if redlistCount > 2:
+        redlistCount = 0
     RedBox = tk.Canvas(root, width=357, height=40, bg=red, highlightthickness=0).place(
         x=448, y=List[redlistCount]
     )
@@ -149,7 +154,7 @@ def redBox(message, num):
 
 def orangeBox(message, num):
     global listCount
-    if listCount > 7:
+    if listCount > 2:
         listCount = 0
     OrangeBox = tk.Canvas(
         root, width=357, height=40, bg=orange, highlightthickness=0
@@ -165,7 +170,7 @@ def orangeBox(message, num):
 
 def yellowBox(message, num):
     global listCount
-    if listCount > 7:
+    if listCount > 2:
         listCount = 0
     YellowBox = tk.Canvas(
         root, width=357, height=40, bg=yellow, highlightthickness=0
@@ -199,20 +204,20 @@ def BMS_Fault(message):
 
     print(message)
     faults = {
-        "BMS_FAULT_OVERVOLTAGE": 0,
-        "BMS_FAULT_UNBALANCE": 1,
-        "BMS_FAULT_OVERTEMP_AMBIENT": 2,
-        "BMS_FAULT_COMMS_LOSS_AFE": 3,
-        "BMS_FAULT_COMMS_LOSS_CURR_SENSE": 4,
-        "BMS_FAULT_OVERTEMP_CELL": 5,
-        "BMS_FAULT_OVERCURRENT": 6,
-        "BMS_FAULT_UNDERVOLTAGE": 7,
-        "BMS_FAULT_KILLSWITCH": 8,
-        "BMS_FAULT_RELAY_CLOSE_FAILED": 9,
+        "BMS_FAULT_OVERVOLTAGE": 1,
+        "BMS_FAULT_UNBALANCE": 2,
+        "BMS_FAULT_OVERTEMP_AMBIENT": 3,
+        "BMS_FAULT_COMMS_LOSS_AFE": 4,
+        "BMS_FAULT_COMMS_LOSS_CURR_SENSE": 5,
+        "BMS_FAULT_OVERTEMP_CELL": 6,
+        "BMS_FAULT_OVERCURRENT": 7,
+        "BMS_FAULT_UNDERVOLTAGE": 8,
+        "BMS_FAULT_KILLSWITCH": 9,
+        "BMS_FAULT_RELAY_CLOSE_FAILED": 10,
     }
     fault_bits = message["fault"]
     for fault_name, bit_position in faults.items():
-        if fault_bits & (1 << bit_position):
+        if (fault_bits == bit_position):
             if fault_name not in can_message_list:
                 can_message_list.append(fault_name)
                 if fault_name == "BMS_FAULT_OVERVOLTAGE":
@@ -362,17 +367,17 @@ def AFE1FullUpdate():
         AFE_Data[0]["Temp"] = [None] * 3
 
     if None not in AFE_Data[0]["Voltages"]:
-        AFE1Max = max(AFE_Data[0]["Voltage"])
-        AFE1Min = min(AFE_Data[0]["Voltage"])
+        AFE1Max = max(AFE_Data[0]["Voltages"])
+        AFE1Min = min(AFE_Data[0]["Voltages"])
 
         tk.Label(
-            Box, text=AFE1MaxTemp, font="Montserrat 8", bg="#000000", fg="white"
+            Box, text=AFE1MaxTemp, font="Montserrat 16", bg="#000000", fg="white"
         ).place(x=47, y=60)
         tk.Label(
-            Box, text=AFE1Max, font="Montserrat 8", bg="#000000", fg="white"
+            Box, text=AFE1Max, font="Montserrat 16", bg="#000000", fg="white"
         ).place(x=47, y=114)
         tk.Label(
-            Box, text=AFE1Min, font="Montserrat 8", bg="#000000", fg="white"
+            Box, text=AFE1Min, font="Montserrat 16", bg="#000000", fg="white"
         ).place(x=47, y=161)
 
         AFE_Data[0]["Voltages"] = [None] * 12
@@ -386,17 +391,17 @@ def AFE2FullUpdate():
         AFE_Data[1]["Temp"] = [None] * 3
 
     if None not in AFE_Data[1]["Voltages"]:
-        AFE2Max = max(AFE_Data[1]["Voltage"])
-        AFE2Min = min(AFE_Data[1]["Voltage"])
+        AFE2Max = max(AFE_Data[1]["Voltages"])
+        AFE2Min = min(AFE_Data[1]["Voltages"])
 
         tk.Label(
-            Box, text=AFE2MaxTemp, font="Montserrat 8", bg="#000000", fg="white"
+            Box, text=AFE2MaxTemp, font="Montserrat 16", bg="#000000", fg="white"
         ).place(x=184, y=60)
         tk.Label(
-            Box, text=AFE2Max, font="Montserrat 8", bg="#000000", fg="white"
+            Box, text=AFE2Max, font="Montserrat 16", bg="#000000", fg="white"
         ).place(x=184, y=114)
         tk.Label(
-            Box, text=AFE2Min, font="Montserrat 8", bg="#000000", fg="white"
+            Box, text=AFE2Min, font="Montserrat 16", bg="#000000", fg="white"
         ).place(x=184, y=161)
 
         AFE_Data[1]["Voltages"] = [None] * 12
@@ -410,17 +415,17 @@ def AFE3FullUpdate():
         AFE_Data[2]["Temp"] = [None] * 3
 
     if None not in AFE_Data[2]["Voltages"]:
-        AFE3Max = max(AFE_Data[2]["Voltage"])
-        AFE3Min = min(AFE_Data[2]["Voltage"])
+        AFE3Max = max(AFE_Data[2]["Voltages"])
+        AFE3Min = min(AFE_Data[2]["Voltages"])
 
         tk.Label(
-            Box, text=AFE3MaxTemp, font="Montserrat 8", bg="#000000", fg="white"
+            Box, text=AFE3MaxTemp, font="Montserrat 16", bg="#000000", fg="white"
         ).place(x=323, y=60)
         tk.Label(
-            Box, text=AFE3Max, font="Montserrat 8", bg="#000000", fg="white"
+            Box, text=AFE3Max, font="Montserrat 16", bg="#000000", fg="white"
         ).place(x=323, y=114)
         tk.Label(
-            Box, text=AFE3Min, font="Montserrat 8", bg="#000000", fg="white"
+            Box, text=AFE3Min, font="Montserrat 16", bg="#000000", fg="white"
         ).place(x=323, y=161)
 
         AFE_Data[2]["Voltages"] = [None] * 12
@@ -430,8 +435,10 @@ def handle_message(msg):
     global AFE1Max, AFE1Min, AFE2Max, AFE2Min, AFE3Max, AFE3Min, GUICount, redlistCount, listCount
 
     GUICount += 1
-    if GUICount % 10 == 0:
+    if GUICount % 15 == 0:
         can_message_list.clear()
+        listCount = 0
+        redlistCount = 0
         for x in range(10):
             BlackBox = tk.Canvas(
                 root, width=357, height=40, bg="#000000", highlightthickness=0
@@ -439,9 +446,9 @@ def handle_message(msg):
 
     try:
         combinedSpeed = 0
+        print("Listener Executed")
         decoded_message = db.decode_message(msg.arbitration_id, msg.data)
         client.send((msg.arbitration_id, decoded_message))
-        # print(decoded_message)
         if msg.arbitration_id in DISPLAY_MSG_DICT.keys():
             for sig in DISPLAY_MSG_DICT[msg.arbitration_id]:
                 if sig[1] == "fault":
@@ -456,14 +463,14 @@ def handle_message(msg):
                 AFE_Data[afe_index]["Temp"][decoded_message["id"]] = decoded_message[
                     "temp"
                 ]
-            AFE_Data[afe_index]["Voltages"][3 * decoded_message["id"]] = (
-                decoded_message["v1"] / 1000
+            AFE_Data[afe_index]["Voltages"][3 * decoded_message["id"]] = round(
+                decoded_message["v1"] / 10000, 2
             )
-            AFE_Data[afe_index]["Voltages"][3 * decoded_message["id"] + 1] = (
-                decoded_message["v2"] / 1000
+            AFE_Data[afe_index]["Voltages"][3 * decoded_message["id"] + 1] = round(
+                decoded_message["v2"] / 10000, 2
             )
-            AFE_Data[afe_index]["Voltages"][3 * decoded_message["id"] + 2] = (
-                decoded_message["v3"] / 1000
+            AFE_Data[afe_index]["Voltages"][3 * decoded_message["id"] + 2] = round(
+                decoded_message["v3"] / 10000, 2
             )
             AFE1FullUpdate()
             AFE2FullUpdate()
@@ -477,7 +484,7 @@ def handle_message(msg):
                 width=6,
                 bg="#000000",
                 fg="white",
-            ).place(x=438, y=18)
+            ).place(x=130, y=210)
             print(decoded_message["current"])
             tk.Label(
                 Box,
@@ -486,7 +493,7 @@ def handle_message(msg):
                 width=6,
                 bg="#000000",
                 fg="white",
-            ).place(x=709, y=18)
+            ).place(x=342, y=210)
             print(decoded_message["voltage"])
 
     except KeyError:
@@ -496,13 +503,13 @@ def handle_message(msg):
 # update_displays()
 
 
-def camera_thread():
-    open_camera()
+#def camera_thread():
+#    open_camera()
 
 
 def main():
-    t1 = threading.Thread(target=camera_thread)
-    t1.start()
+#    t1 = threading.Thread(target=camera_thread)
+#    t1.start()
 
     notifier = can.Notifier(can_bus, [handle_message])
 
