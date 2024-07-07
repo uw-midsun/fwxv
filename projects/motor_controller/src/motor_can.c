@@ -94,8 +94,6 @@ static void prv_update_target_current_velocity() {
   float regen = prv_get_float(get_cc_regen_percent());
   bool cruise = get_cc_info_cruise_control();
 
-  LOG_DEBUG("opd threshold: %d\n", (int)(opd_threshold * 100));
-
   if ((drive_state == DRIVE) && cruise && (throttle_percent <= opd_threshold)) {
     drive_state = CRUISE;
   }

@@ -93,9 +93,8 @@ TASK(current_sense, TASK_STACK_256) {
 
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
-      // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
-    } else if (notification & 1 << KILLSWITCH_IT) {
-      fault_bps_set(BMS_FAULT_KILLSWITCH);
+      LOG_DEBUG("ALERT_PIN triggered\n");
+      fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     }
     prv_fuel_gauge_read();
     send_task_end();
@@ -121,17 +120,13 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   i2c_init(I2C_PORT_2, i2c_settings);
 
   GpioAddress alrt_pin = { .port = GPIO_PORT_A, .pin = 7 };
-  GpioAddress kill_switch_mntr = { .port = GPIO_PORT_A, .pin = 15 };
 
-  InterruptSettings it_settings = {
-    .priority = INTERRUPT_PRIORITY_NORMAL,
-    .type = INTERRUPT_TYPE_INTERRUPT,
-    .edge = INTERRUPT_EDGE_RISING,
-  };
-  gpio_init_pin(&kill_switch_mntr, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
-  gpio_it_register_interrupt(&alrt_pin, &it_settings, ALRT_GPIO_IT, current_sense);
-  it_settings.edge = INTERRUPT_EDGE_FALLING;
-  gpio_it_register_interrupt(&kill_switch_mntr, &it_settings, KILLSWITCH_IT, current_sense);
+  // InterruptSettings it_settings = {
+  //   .priority = INTERRUPT_PRIORITY_NORMAL,
+  //   .type = INTERRUPT_TYPE_INTERRUPT,
+  //   .edge = INTERRUPT_EDGE_RISING,
+  // };
+  // gpio_it_register_interrupt(&alrt_pin, &it_settings, ALRT_GPIO_IT, current_sense);
 
   s_fuel_gauge_settings.i2c_port = I2C_PORT_2;
   s_fuel_gauge_settings.i2c_address = MAX17261_I2C_ADDR;
@@ -155,8 +150,8 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   // Soft timer period for soc & chargin check
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
 
-  persist_init(&s_persist, CURRENT_SENSE_STORE_FLASH, &s_fuel_params, sizeof(s_fuel_params), false);
-  // status = max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings, &s_fuel_params);
-  // tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
+  persist_init(&s_persist, CURRENT_SENSE_STORE_FLASH, &s_fuel_params, sizeof(s_fuel_params), true);
+  status = max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings, &s_fuel_params);
+  tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
   return status;
 }

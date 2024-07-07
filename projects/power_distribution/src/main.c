@@ -11,6 +11,7 @@
 #include "master_task.h"
 #include "output_current_sense.h"
 #include "pin_defs.h"
+#include "pd_fault.h"
 #include "power_seq_fsm.h"
 #include "tasks.h"
 
@@ -60,10 +61,9 @@ int main() {
   gpio_init();
   can_init(&s_can_storage, &can_settings);
   i2c_init(I2C_PORT_1, &i2c_settings);
-  // set_master_cycle_time(250);  // Give it enough time to run an entire medium cycle
-  // set_medium_cycle_count(2);   // adjust medium cycle count to run once per 500ms
   init_power_seq();
   init_lights();
+  init_bps_fault();
 
   LOG_DEBUG("Welcome to PD!\n");
   init_master_task();

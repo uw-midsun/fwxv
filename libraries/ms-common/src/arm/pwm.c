@@ -117,7 +117,7 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channe
     .TIM_Pulse = pulse_width_us,
     .TIM_OutputState = TIM_OutputState_Enable,
     .TIM_OCPolarity = TIM_OCPolarity_High,
-    .TIM_OutputNState = TIM_OutputNState_Disable,
+    .TIM_OutputNState = TIM_OutputNState_Enable,
     .TIM_OCNPolarity = TIM_OCNPolarity_High,
   };
 

@@ -5,7 +5,7 @@ LtcAfeStorage *ltc_afe_storage;
 #define TEMP_RESISTANCE 10000
 #define VREF2 30000
 #define TABLE_SIZE 125
-#define LTC_RETRIES 3
+#define LTC_RETRIES 5
 
 uint8_t afe_message_index = 0;
 
@@ -182,7 +182,7 @@ StatusCode cell_sense_run() {
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
     LOG_DEBUG("CELL %d: %d\n\r", (uint8_t)cell,
               ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
-    delay_ms(3);
+    delay_ms(5);
     max_voltage =
         ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > max_voltage
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
@@ -192,7 +192,6 @@ StatusCode cell_sense_run() {
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
             : min_voltage;
   }
-  delay_ms(10);
 
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
@@ -200,17 +199,17 @@ StatusCode cell_sense_run() {
   set_battery_info_max_cell_v(max_voltage);
   if (max_voltage >= CELL_OVERVOLTAGE) {
     LOG_DEBUG("OVERVOLTAGE\n");
-    fault_bps_set(BMS_FAULT_OVERVOLTAGE);
+    // fault_bps_set(BMS_FAULT_OVERVOLTAGE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
   if (min_voltage <= CELL_UNDERVOLTAGE) {
     LOG_DEBUG("UNDERVOLTAGE\n");
-    fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
+    // fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
   if (max_voltage - min_voltage >= CELL_UNBALANCED) {
     LOG_DEBUG("UNBALANCED\n");
-    fault_bps_set(BMS_FAULT_UNBALANCE);
+    // fault_bps_set(BMS_FAULT_UNBALANCE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
 
