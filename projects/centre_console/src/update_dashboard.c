@@ -46,6 +46,7 @@ static Pca9555GpioAddress s_output_leds[NUM_DRIVE_LED] = {
 
 static float prv_regen_calc(uint16_t batt_current, uint16_t batt_voltage, uint16_t max_cell_v,
                             uint16_t batt_soc) {
+  return 1.0f;
   if (batt_soc >= 90) {
     return (float)(100.0f - batt_soc) / 100.0f;
   } else {
@@ -71,8 +72,8 @@ void update_indicators(uint32_t notif) {
     uint16_t batt_current = get_battery_vt_current();
     // solar current + regen current <= 27 AMPS
     // regen current shouldnt push cell above 4.2 V
-    if (!s_regen_braking && get_battery_vt_current() < MAX_CURRENT &&
-        get_battery_vt_batt_perc() < MAX_VOLTAGE) {
+    if (!s_regen_braking) {// && get_battery_vt_current() < MAX_CURRENT &&
+        //get_battery_vt_batt_perc() < MAX_VOLTAGE) {
       s_regen_braking = prv_regen_calc(get_battery_vt_current(), get_battery_vt_voltage(),
                                        get_battery_info_max_cell_v(), get_battery_vt_batt_perc());
       pca9555_gpio_set_state(&s_output_leds[REGEN_LED], PCA9555_GPIO_STATE_HIGH);

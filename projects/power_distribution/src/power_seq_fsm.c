@@ -10,7 +10,6 @@ static PersistStorage s_persist;
 static BpsStorage s_bps_storage;
 
 #define pd_fault_ok_or_transition(fsm)                                     \
-  power_context.fault = check_pd_fault();                                  \
   if (check_battery_status_msg_watchdog() || get_battery_status_fault()) { \
     fsm_transition(fsm, POWER_STATE_FAULT);                                \
     return;                                                                \
