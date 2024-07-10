@@ -192,6 +192,7 @@ StatusCode cell_sense_run() {
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
             : min_voltage;
   }
+  delay_ms(10);
 
   LOG_DEBUG("MAX VOLTAGE: %d\n", max_voltage);
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
@@ -199,17 +200,17 @@ StatusCode cell_sense_run() {
   set_battery_info_max_cell_v(max_voltage);
   if (max_voltage >= CELL_OVERVOLTAGE) {
     LOG_DEBUG("OVERVOLTAGE\n");
-    // fault_bps_set(BMS_FAULT_OVERVOLTAGE);
+    //fault_bps_set(BMS_FAULT_OVERVOLTAGE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
   if (min_voltage <= CELL_UNDERVOLTAGE) {
     LOG_DEBUG("UNDERVOLTAGE\n");
-    // fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
+    //fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
   if (max_voltage - min_voltage >= CELL_UNBALANCED) {
     LOG_DEBUG("UNBALANCED\n");
-    // fault_bps_set(BMS_FAULT_UNBALANCE);
+    //fault_bps_set(BMS_FAULT_UNBALANCE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
 
@@ -219,7 +220,7 @@ StatusCode cell_sense_run() {
              min_voltage >= AFE_BALANCING_LOWER_THRESHOLD) {
     min_voltage += 100;
   } else {
-    min_voltage += 250;
+    min_voltage += 100;
   }
 
   // Balancing
@@ -230,8 +231,7 @@ StatusCode cell_sense_run() {
       ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
     }
   }
-
-  // LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
+   LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
 
   // Log and check all thermistor values based on settings bitset
   for (uint8_t dev = 0; dev < s_afe_settings.num_devices; dev++) {

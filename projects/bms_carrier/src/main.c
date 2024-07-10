@@ -8,6 +8,7 @@
 #include "current_sense.h"
 #include "fan.h"
 #include "gpio.h"
+#include "gpio_it.h"
 #include "log.h"
 #include "master_task.h"
 #include "relays.h"
@@ -62,11 +63,9 @@ void run_medium_cycle() {
   cell_conversions();
   wait_tasks(1);
   cell_sense_run();
-
   delay_ms(10);
   current_sense_run();
   wait_tasks(1);
-
   aux_sense_run();
   bms_run_fan();
 }
