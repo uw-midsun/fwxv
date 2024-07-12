@@ -103,7 +103,7 @@ uint16_t pwm_get_period(PwmTimer timer) {
   return s_period_us[timer];
 }
 
-StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channel) {
+StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channel, bool n_channel_en) {
   if (timer >= NUM_PWM_TIMERS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid timer id");
   } else if (s_period_us[timer] == 0) {
@@ -120,6 +120,12 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channe
     .TIM_OutputNState = TIM_OutputNState_Disable,
     .TIM_OCNPolarity = TIM_OCNPolarity_High,
   };
+
+  if (n_channel_en) {
+    oc_init.TIM_OutputNState = TIM_OutputNState_Enable;
+  } else {
+    oc_init.TIM_OutputNState = TIM_OutputNState_Disable;
+  }
 
   // Enable PWM on all channels.
   switch (channel) {
@@ -146,7 +152,7 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channe
   return STATUS_CODE_OK;
 }
 
-StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc, uint8_t channel) {
+StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc, uint8_t channel, bool n_channel_en) {
   if (timer >= NUM_PWM_TIMERS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid timer id");
   } else if (dc > 100) {
@@ -161,7 +167,7 @@ StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc, uint8_t channel) {
     }
   }
 
-  return pwm_set_pulse(timer, pulse_width, channel);
+  return pwm_set_pulse(timer, pulse_width, channel, n_channel_en);
 }
 
 uint16_t pwm_get_dc(PwmTimer timer) {

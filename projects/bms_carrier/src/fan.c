@@ -29,16 +29,16 @@ static void prv_bms_fan_sense(void) {
 }
 
 void bms_run_fan(void) {
-  pwm_set_dc(PWM_TIMER_1, 100, 1);
+  pwm_set_dc(PWM_TIMER_1, 100, 1, false);
   if (s_storage->current_storage.temperature >= BMS_FAN_TEMP_UPPER_THRESHOLD) {
-    pwm_set_dc(PWM_TIMER_1, 100, 1);
+    pwm_set_dc(PWM_TIMER_1, 100, 1, false);
   } else if (s_storage->current_storage.temperature <= BMS_FAN_TEMP_LOWER_THRESHOLD) {
-    pwm_set_dc(PWM_TIMER_1, 0, 1);
+    pwm_set_dc(PWM_TIMER_1, 0, 1, false);
   } else {
     pwm_set_dc(PWM_TIMER_1,
                (100 * (s_storage->current_storage.temperature - BMS_FAN_TEMP_LOWER_THRESHOLD)) /
                    (BMS_FAN_TEMP_UPPER_THRESHOLD - BMS_FAN_TEMP_LOWER_THRESHOLD),
-               1);
+               1, false);
   }
   prv_bms_fan_sense();
 }
@@ -47,8 +47,8 @@ void bms_fan_init(BmsStorage *bms_storage) {
   s_storage = bms_storage;
   gpio_init_pin(&bms_fan_pwm, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_LOW);
   pwm_init(PWM_TIMER_1, BMS_FAN_PERIOD);
-  pwm_set_pulse(PWM_TIMER_1, BMS_FAN_PERIOD, 1);
-  pwm_set_dc(PWM_TIMER_1, 0, 1);
+  pwm_set_pulse(PWM_TIMER_1, BMS_FAN_PERIOD, 1, false);
+  pwm_set_dc(PWM_TIMER_1, 0, 1, false);
 
   gpio_init_pin(&bms_fan_sense1, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
   gpio_init_pin(&bms_fan_sense2, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);

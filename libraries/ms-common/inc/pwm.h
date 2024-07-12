@@ -11,6 +11,7 @@
 // - On stm32f10x all PWM channels for a timer are automatically connected.
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "pwm_mcu.h"
 #include "status.h"
@@ -25,12 +26,12 @@ StatusCode pwm_init(PwmTimer timer, uint16_t period_us);
 uint16_t pwm_get_period(PwmTimer timer);
 
 // Sets the pulse width in us of the PWM timer. Use for high resolution control.
-StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channel);
+StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channel, bool n_channel_en);
 
 // Sets the duty cycle, in units of 1%, of the PWM timer. This wraps
 // pwm_set_pulse doing the necessary math to convert from 0-100% to the fraction
 // of the period.
-StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc, uint8_t channel);
+StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc, uint8_t channel, bool n_channel_en);
 
 // Gets the duty cycle of the PWM timer.
 uint16_t pwm_get_dc(PwmTimer timer);
