@@ -28,17 +28,20 @@ static void prv_bms_fan_sense(void) {
   // LOG_DEBUG("FAN2: %d\n", g_tx_struct.battery_status_fan2);
 }
 
+static inline uint8_t prv_calc_fan_speed(uint16_t max_temp) {
+  // Scale percent based on temp range, starting at 50% if fan is set on
+  uint8_t speed_perc =  100 * ((float)max_temp - BMS_FAN_TEMP_LOWER_THRESHOLD) / (float)(BMS_FAN_TEMP_UPPER_THRESHOLD - BMS_FAN_TEMP_LOWER_THRESHOLD);
+  return speed_perc/2 + 50 > 100 ? 100 : speed_perc/2+50;
+}
+
+
 void bms_run_fan(void) {
-  pwm_set_dc(PWM_TIMER_1, 100, 1, false);
-  if (s_storage->current_storage.temperature >= BMS_FAN_TEMP_UPPER_THRESHOLD) {
+  if (s_storage->ltc_afe_storage.max_temp >= BMS_FAN_TEMP_UPPER_THRESHOLD) {
     pwm_set_dc(PWM_TIMER_1, 100, 1, false);
-  } else if (s_storage->current_storage.temperature <= BMS_FAN_TEMP_LOWER_THRESHOLD) {
+  } else if (s_storage->ltc_afe_storage.max_temp <= BMS_FAN_TEMP_LOWER_THRESHOLD) {
     pwm_set_dc(PWM_TIMER_1, 0, 1, false);
   } else {
-    pwm_set_dc(PWM_TIMER_1,
-               (100 * (s_storage->current_storage.temperature - BMS_FAN_TEMP_LOWER_THRESHOLD)) /
-                   (BMS_FAN_TEMP_UPPER_THRESHOLD - BMS_FAN_TEMP_LOWER_THRESHOLD),
-               1, false);
+    pwm_set_dc(PWM_TIMER_1, prv_calc_fan_speed(s_storage->ltc_afe_storage.max_temp), 1, false);
   }
   prv_bms_fan_sense();
 }

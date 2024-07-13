@@ -89,7 +89,7 @@ StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms);
  * @param soc_pct - current in amps returned in this var
  * @return STATUS_CODE_OK on success
  */
-StatusCode max17261_current(Max17261Storage *storage, int16_t *current_a);
+StatusCode max17261_current(Max17261Storage *storage, int32_t *current_a);
 
 /* @brief Gets a single cell's voltage in mV
  * @param storage - a pointer to an already initialized Max17261Storage struct

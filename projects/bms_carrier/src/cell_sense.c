@@ -198,19 +198,20 @@ StatusCode cell_sense_run() {
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
   LOG_DEBUG("UNBALANCE: %d\n", max_voltage - min_voltage);
   set_battery_info_max_cell_v(max_voltage);
+  set_battery_info_min_cell_v(min_voltage);
   if (max_voltage >= CELL_OVERVOLTAGE) {
     LOG_DEBUG("OVERVOLTAGE\n");
-    //fault_bps_set(BMS_FAULT_OVERVOLTAGE);
+    fault_bps_set(BMS_FAULT_OVERVOLTAGE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
   if (min_voltage <= CELL_UNDERVOLTAGE) {
     LOG_DEBUG("UNDERVOLTAGE\n");
-    //fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
+    fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
   if (max_voltage - min_voltage >= CELL_UNBALANCED) {
     LOG_DEBUG("UNBALANCED\n");
-    //fault_bps_set(BMS_FAULT_UNBALANCE);
+    fault_bps_set(BMS_FAULT_UNBALANCE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
 
@@ -234,6 +235,7 @@ StatusCode cell_sense_run() {
    LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
 
   // Log and check all thermistor values based on settings bitset
+  uint16_t max_temp = 0;
   for (uint8_t dev = 0; dev < s_afe_settings.num_devices; dev++) {
     for (uint8_t thermistor = 0; thermistor < LTC_AFE_MAX_THERMISTORS_PER_DEVICE; thermistor += 1) {
       if ((s_afe_settings.aux_bitset[dev] >> thermistor) & 0x1) {
@@ -242,15 +244,17 @@ StatusCode cell_sense_run() {
             calculate_temperature(ltc_afe_storage->aux_voltages[index]);
         LOG_DEBUG("Thermistor reading dev %d, %d: %d\n", dev, thermistor,
                   ltc_afe_storage->aux_voltages[index]);
+        max_temp = ltc_afe_storage->aux_voltages[index] > max_temp ? ltc_afe_storage->aux_voltages[index] : max_temp;
         delay_ms(3);
-        if (ltc_afe_storage->aux_result_lookup[index] >= CELL_MAX_TEMPERATURE) {
+        if (ltc_afe_storage->aux_voltages[index] >= CELL_MAX_TEMPERATURE) {
           LOG_DEBUG("CELL OVERTEMP\n");
-          fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
+          //fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
           status = STATUS_CODE_INTERNAL_ERROR;
         }
       }
     }
   }
+  ltc_afe_storage->max_temp = max_temp;
 
   // CAN Logging
   // AFE messages are logged with 3 voltages at a time, and an index 0-3 to encompass all voltages
