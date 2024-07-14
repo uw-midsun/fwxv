@@ -199,6 +199,11 @@ StatusCode cell_sense_run() {
   LOG_DEBUG("UNBALANCE: %d\n", max_voltage - min_voltage);
   set_battery_info_max_cell_v(max_voltage);
   set_battery_info_min_cell_v(min_voltage);
+  
+  if (max_voltage >= SOLAR_VOLTAGE_THRESHOLD) {
+    bms_open_solar();
+  }
+
   if (max_voltage >= CELL_OVERVOLTAGE) {
     LOG_DEBUG("OVERVOLTAGE\n");
     fault_bps_set(BMS_FAULT_OVERVOLTAGE);

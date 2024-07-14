@@ -29,5 +29,9 @@ typedef enum RelayType {
 // Closes relays in sequence
 StatusCode init_bms_relays(GpioAddress *killswitch);
 
+// Independent solar control
+void bms_open_solar();
+void bms_close_solar();
+
 // Turns off GPIOs to open relays
 void bms_relay_fault(void);

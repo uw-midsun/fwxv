@@ -6,6 +6,7 @@
 #include "bms.h"
 #include "i2c.h"
 #include "max17261_fuel_gauge.h"
+#include "relays.h"
 #include "pwm.h"
 #include "spi.h"
 #include "status.h"
@@ -25,11 +26,13 @@
 #define NUM_SERIES_CELLS 36  // Number of cells in series to multiply average cell voltage
 
 // Thresholds for ALRT Pin
-#define CURRENT_SENSE_MAX_CURRENT_A (58.2f)
-#define CURRENT_SENSE_MIN_CURRENT_A (-27.0f)  // Actually -27
+#define CURRENT_SENSE_MAX_CURRENT_A (-58.2f)
+#define CURRENT_SENSE_MIN_CURRENT_A (27.0f)  // Actually 27
 #define CURRENT_SENSE_MAX_TEMP_C (60U)
 #define CURRENT_SENSE_MAX_VOLTAGE_V (15230)
 #define ALRT_PIN_V_RES_MICRO_V (400)
+
+#define MAX_SOLAR_CURRENT_A (25.0f)
 
 #define CELL_X_R1_KOHMS 1780
 #define CELL_X_R2_KOHMS 20

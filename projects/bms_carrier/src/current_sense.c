@@ -61,6 +61,9 @@ StatusCode prv_fuel_gauge_read() {
   set_battery_vt_temperature(s_current_storage->temperature);
 
   // TODO (Aryan): Validate these checks
+  if (s_current_storage->current >= MAX_SOLAR_CURRENT_A * 1000) {
+    bms_open_solar();
+  }
   if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
     fault_bps_set(BMS_FAULT_OVERCURRENT);
     return STATUS_CODE_INTERNAL_ERROR;

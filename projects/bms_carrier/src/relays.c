@@ -40,6 +40,15 @@ static StatusCode prv_close_relays(void) {
   return STATUS_CODE_OK;
 }
 
+inline void bms_open_solar() {
+  gpio_set_state(&solar_relay_en, GPIO_STATE_LOW);
+}
+
+inline void bms_close_solar() {
+  gpio_set_state(&solar_relay_en, GPIO_STATE_HIGH);
+  delay_ms(BMS_CLOSE_RELAYS_DELAY_MS);
+}
+
 void bms_relay_fault() {
   LOG_DEBUG("Transitioned to RELAYS_FAULT\n");
   // OPEN RELAYS

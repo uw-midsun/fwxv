@@ -51,6 +51,14 @@ static float prv_get_float(uint32_t u) {
   return fu.f;
 }
 
+static float prv_clamp_float(float value) {
+  if (value <= 0.05) {
+    return 0.0f;
+  } else {
+    return value;
+  }
+}
+
 static float prv_one_pedal_threshold(float car_velocity) {
   float threshold = 0.0;
   if (car_velocity <= MAX_OPD_SPEED) {
@@ -63,6 +71,7 @@ static float prv_one_pedal_threshold(float car_velocity) {
 
 static float prv_one_pedal_drive_current(float throttle_percent, float threshold,
                                          DriveState *drive_state) {
+  throttle_percent = prv_clamp_float(throttle_percent);
   if (throttle_percent <= threshold + 0.05 && throttle_percent >= threshold - 0.05) {
     return 0.0;
   }
@@ -81,6 +90,7 @@ static float prv_one_pedal_drive_current(float throttle_percent, float threshold
 
 static void prv_update_target_current_velocity() {
   float throttle_percent = prv_get_float(get_cc_pedal_throttle_output());
+  throttle_percent = prv_clamp_float(throttle_percent);
   bool brake = get_cc_pedal_brake_output();
   float target_vel = (int)(get_cc_info_target_velocity()) * VEL_TO_RPM_RATIO;
   float car_vel = abs((s_car_velocity_l + s_car_velocity_r) / 2);
@@ -165,8 +175,8 @@ static void motor_controller_tx_all() {
     .dlc = 8,
   };
   // Very low reading will be ignored
-  if (s_target_current < 0.05) {
-    s_target_current = 0;
+  if (s_target_current < 0.1) {
+    s_target_current = 0.0f;
   }
   memcpy(&message.data_u32[0], &s_target_velocity, sizeof(uint32_t));
   memcpy(&message.data_u32[1], &s_target_current, sizeof(uint32_t));

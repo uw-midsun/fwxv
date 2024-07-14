@@ -8,6 +8,7 @@
 #include "bms.h"
 #include "delay.h"
 #include "fault_bps.h"
+#include "relay.h"
 #include "gpio.h"
 #include "ltc_afe.h"
 #include "ltc_afe_impl.h"
@@ -24,6 +25,8 @@
 #define CELL_UNDERVOLTAGE 25000
 #define CELL_UNBALANCED 5000
 #define CELL_MAX_TEMPERATURE 60
+
+#define SOLAR_VOLTAGE_THRESHOLD 42000
 
 #define AFE_BALANCING_UPPER_THRESHOLD 41500
 #define AFE_BALANCING_LOWER_THRESHOLD 40000
