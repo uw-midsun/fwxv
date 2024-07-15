@@ -30,11 +30,16 @@ StatusCode prv_fuel_gauge_read() {
   StatusCode status = STATUS_CODE_OK;
 
   status |= max17261_state_of_charge(&s_fuel_guage_storage, &s_current_storage->soc);
+  delay_ms(5);
   status |= max17261_current(&s_fuel_guage_storage, &s_current_storage->current);
+  delay_ms(5);
   status |= max17261_voltage(&s_fuel_guage_storage, &s_current_storage->voltage);
+  delay_ms(5);
   status |= max17261_temp(&s_fuel_guage_storage, &s_current_storage->temperature);
+  delay_ms(5);
   status |=
       max17261_remaining_capacity(&s_fuel_guage_storage, &s_current_storage->remaining_capacity);
+  delay_ms(5);
   status |= max17261_full_capacity(&s_fuel_guage_storage, &s_current_storage->full);
 
   // Measured voltage corresponds to one cell. Multiply it by the number of cells in series
@@ -64,10 +69,10 @@ StatusCode prv_fuel_gauge_read() {
   if (s_current_storage->current >= MAX_SOLAR_CURRENT_A * 1000) {
     bms_open_solar();
   }
-  if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
+  if (s_current_storage->current <= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
     fault_bps_set(BMS_FAULT_OVERCURRENT);
     return STATUS_CODE_INTERNAL_ERROR;
-  } else if (s_current_storage->current <= CURRENT_SENSE_MIN_CURRENT_A * 1000) {
+  } else if (s_current_storage->current >= CURRENT_SENSE_MIN_CURRENT_A * 1000) {
     fault_bps_set(BMS_FAULT_OVERCURRENT);
     return STATUS_CODE_INTERNAL_ERROR;
   } else if (s_current_storage->voltage >= CURRENT_SENSE_MAX_VOLTAGE_V) {
@@ -83,7 +88,7 @@ StatusCode prv_fuel_gauge_read() {
     LOG_DEBUG("Updating params\n");
     s_last_params_update = xTaskGetTickCount();
     max17261_get_learned_params(&s_fuel_guage_storage, &s_fuel_params);
-    persist_commit(&s_persist);
+    //persist_commit(&s_persist);
   }
   return status;
 }
@@ -153,7 +158,7 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   // Soft timer period for soc & chargin check
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
 
-  persist_init(&s_persist, CURRENT_SENSE_STORE_FLASH, &s_fuel_params, sizeof(s_fuel_params), true);
+  //persist_init(&s_persist, CURRENT_SENSE_STORE_FLASH, &s_fuel_params, sizeof(s_fuel_params), true);
   status = max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings, &s_fuel_params);
   tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
   return status;

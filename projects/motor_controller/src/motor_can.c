@@ -113,6 +113,15 @@ static void prv_update_target_current_velocity() {
   if (drive_state == DRIVE || drive_state == REVERSE) {
     throttle_percent = prv_one_pedal_drive_current(throttle_percent, opd_threshold, &drive_state);
   }
+  //LOG_DEBUG("throttle:%d\n", (int)(throttle_percent * 1000));
+  //LOG_DEBUG("brake:%d\n", brake);
+  //LOG_DEBUG("tar vel:%d\n", (int)(target_vel*1000));
+  //LOG_DEBUG("car_vel:%d\n", (int)(car_vel *1000));
+  //LOG_DEBUG("opd_thresh:%d\n", (int)(opd_threshold*1000));
+  //LOG_DEBUG("regen:%d\n", (int)(regen*1000));
+  //LOG_DEBUG("cruise:%d\n", cruise);
+
+  //LOG_DEBUG("DRIVE STATE: %d\n", drive_state);
 
   // set target current and velocity based on drive state
   // https://tritiumcharging.com/wp-content/uploads/2020/11/TritiumWaveSculptor22_Manual.pdf 18.3
@@ -181,8 +190,8 @@ static void motor_controller_tx_all() {
   memcpy(&message.data_u32[0], &s_target_velocity, sizeof(uint32_t));
   memcpy(&message.data_u32[1], &s_target_current, sizeof(uint32_t));
 
-  // LOG_DEBUG("s_target_current: %d\n", (int)(s_target_current * 100));
-  // LOG_DEBUG("s_target_velocity: %d\n", (int)(s_target_velocity * 100));
+  //LOG_DEBUG("s_target_current: %d\n", (int)(s_target_current * 100));
+  //LOG_DEBUG("s_target_velocity: %d\n", (int)(s_target_velocity * 100));
 
   mcp2515_transmit(&message);
 }
