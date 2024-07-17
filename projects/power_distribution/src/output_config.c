@@ -20,8 +20,8 @@ static Bts7xxxPin s_pedal_en = {
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
 
-static Bts7xxxPin s_steering_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)STEERING_EN,  // NOLINT
+static Bts7xxxPin s_drl_left_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)DRL_EN_LEFT,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
 
@@ -45,8 +45,8 @@ static Bts7xxxPin s_left_right_turn_dsel = {
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
 
-static Bts7xxxPin s_drl_light_en = {
-  .pin_pca9555 = &(Pca9555GpioAddress)DRL_LIGHT_EN,  // NOLINT
+static Bts7xxxPin s_drl_right_en = {
+  .pin_pca9555 = &(Pca9555GpioAddress)DRL_EN_RIGHT,  // NOLINT
   .pin_type = BTS7XXX_PIN_PCA9555,
 };
 
@@ -173,8 +173,8 @@ BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
     .resistor = 0,
   },
-  [STEERING] = {
-    .enable_pin = &s_steering_en,
+  [DRL_LEFT] = {
+    .enable_pin = &s_drl_left_en,
     .select_pin = &s_pedal_steering_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
@@ -194,8 +194,8 @@ BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
     .resistor = 0,
   },
-  [DRL_LIGHT] = {
-    .enable_pin = &s_drl_light_en,
+  [DRL_RIGHT] = {
+    .enable_pin = &s_drl_right_en,
     .select_pin = &s_drl_brake_light_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
@@ -300,6 +300,16 @@ static OutputGroupDef s_output_group_left_signal = {
   .outputs = { LEFT_TURN },
 };
 
+static OutputGroupDef s_output_group_right_drl = {
+  .num_outputs = 1,
+  .outputs = { DRL_RIGHT },
+};
+
+static OutputGroupDef s_output_group_left_drl = {
+  .num_outputs = 1,
+  .outputs = { DRL_LEFT },
+};
+
 static OutputGroupDef s_output_group_right_signal = {
   .num_outputs = 1,
   .outputs = { RIGHT_TURN },
@@ -316,26 +326,27 @@ static OutputGroupDef s_output_group_bps = { .num_outputs = 1, .outputs = { BPS_
 
 static OutputGroupDef s_output_group_power_off = {
   .num_outputs = 8,
-  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, STEERING, DRL_LIGHT, REAR_CAM_LCD, SPARE_5V_AUX }
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, DRL_RIGHT, DRL_LEFT, REAR_CAM_LCD, SPARE_5V_AUX }
 };
 
 static OutputGroupDef s_output_group_power_drive = {
   .num_outputs = 10,
-  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, STEERING, MCI, DRL_LIGHT, DRIVER_FAN,
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, MCI, DRL_RIGHT, DRL_LEFT, DRIVER_FAN,
                REAR_CAM_LCD, SPARE_5V_AUX }
 };
 
 static OutputGroupDef s_output_group_power_fault = {
   .num_outputs = 8,
-  .outputs = { CENTER_CONSOLE, BMS_DCDC, PEDAL, STEERING, DRL_LIGHT, BPS_LIGHT, REAR_CAM_LCD, SPARE_5V_AUX }
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, PEDAL, DRL_LEFT, DRL_RIGHT, BPS_LIGHT, REAR_CAM_LCD, SPARE_5V_AUX }
 };
 
-static OutputGroupDef s_output_group_test = { .num_outputs = 2, .outputs = { STEERING, PEDAL } };
 
 const OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS] = {
   [OUTPUT_GROUP_ALL] = NULL,  // Special case
   [OUTPUT_GROUP_LIGHTS_LEFT_TURN] = &s_output_group_left_signal,
   [OUTPUT_GROUP_LIGHTS_RIGHT_TURN] = &s_output_group_right_signal,
+  [OUTPUT_GROUP_DRL_LEFT] = &s_output_group_left_drl,
+  [OUTPUT_GROUP_DRL_RIGHT] = &s_output_group_right_drl,
   [OUTPUT_GROUP_LIGHTS_HAZARD] = &s_output_group_hazards,
   [OUTPUT_GROUP_BRAKE] = &s_output_group_brake,
   [OUTPUT_GROUP_POWER_OFF] = &s_output_group_power_off,

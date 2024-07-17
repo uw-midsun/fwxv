@@ -17,7 +17,7 @@
 
 typedef struct BpsStorage {
   uint16_t fault_bitset;
-  uint16_t vehicle_speed;
+  uint16_t fault_val;
 } BpsStorage;
 
 DECLARE_FSM(power_seq);

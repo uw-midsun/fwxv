@@ -9,6 +9,7 @@ static BmsStorage *bms_storage;
 #define TABLE_SIZE 125
 #define LTC_RETRIES 5
 
+#define CELL_TEMP_OUTLIER 80 
 uint8_t afe_message_index = 0;
 
 typedef enum ThermistorMap {
@@ -257,6 +258,9 @@ StatusCode cell_sense_run() {
                   ltc_afe_storage->aux_voltages[index]);
         max_temp = ltc_afe_storage->aux_voltages[index] > max_temp ? ltc_afe_storage->aux_voltages[index] : max_temp;
         delay_ms(3);
+        if (ltc_afe_storage->aux_voltages[index] > CELL_TEMP_OUTLIER) {
+          continue;
+        }
         if (bms_storage->current_storage.current < 0) {
           if (ltc_afe_storage->aux_voltages[index] >= CELL_MAX_TEMPERATURE_DISCHARGE) {
             LOG_DEBUG("CELL OVERTEMP\n");

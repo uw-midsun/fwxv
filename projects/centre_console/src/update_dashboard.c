@@ -30,7 +30,7 @@ typedef enum DriveLeds {
   RIGHT_LED,
   CRUISE_LED,
   LIGHTS_LED,
-  AUX_WARNING_LED,
+  AFE_WARNING_LED,
   NUM_DRIVE_LED,
 } DriveLeds;
 
@@ -41,7 +41,7 @@ static Pca9555GpioAddress s_output_leds[NUM_DRIVE_LED] = {
   [RIGHT_LED] = RIGHT_LED_ADDR,
   [CRUISE_LED] = CRUISE_LED_ADDR,
   [REGEN_LED] = REGEN_LED_ADDR,
-  [AUX_WARNING_LED] = AUX_WARNING_LED_ADDR,
+  [AFE_WARNING_LED] = AFE_WARNING_LED_ADDR,
 };
 
 static float prv_regen_calc(uint16_t max_cell_v, uint16_t batt_soc) {
@@ -102,12 +102,11 @@ void update_indicators(uint32_t notif) {
   }
 
   // Update Aux warning LED
-  if (get_pd_status_fault_bitset()) {
-    pwm_set_dc(PWM_TIMER_1, 50, 3, true);
-    pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_HIGH);
+  if (get_battery_status_afe_status()) {
+    pca9555_gpio_set_state(&s_output_leds[AFE_WARNING_LED], PCA9555_GPIO_STATE_HIGH);
   } else {
     // PWM will not stop, driver will pull over and diagnose issue
-    pca9555_gpio_set_state(&s_output_leds[AUX_WARNING_LED], PCA9555_GPIO_STATE_LOW);
+    pca9555_gpio_set_state(&s_output_leds[AFE_WARNING_LED], PCA9555_GPIO_STATE_LOW);
   }
 
   if (get_battery_status_fault() & get_pd_status_bps_persist() & (1 << 15)) {
@@ -171,17 +170,29 @@ void update_drive_output() {
 
 TASK(update_displays, TASK_MIN_STACK_SIZE) {
   seg_displays_init(&all_displays);
+  float car_vel = 0;
+  uint16_t batt_fault = 0;
   while (true) {
-    float avg_speed = (abs((int16_t)get_motor_velocity_velocity_l()) +
+    if (get_battery_status_fault()) {
+      batt_fault = (get_battery_status_fault()) & (~(0b11 << 14));
+    } else {
+      float avg_speed = (abs((int16_t)get_motor_velocity_velocity_l()) +
                        abs((int16_t)get_motor_velocity_velocity_r())) /
                       2.0f;
-    float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
-    uint16_t batt_perc_val = get_battery_vt_batt_perc();
+      car_vel = (avg_speed * 60 * MATH_PI * (WHEEL_DIAMETER_CM / CM_TO_INCHES)) / MILES_TO_INCHES;
+      if (car_vel >= 100.0f) {
+        car_vel = 99.9f;
+      }
+    }
+    int16_t batt_current = (int16_t)(get_battery_vt_current());
+    batt_current = abs(batt_current / 100);
     uint16_t aux_battery_voltage = get_battery_status_aux_batt_v();
-    if (speed_kph >= 100) {
-      seg_displays_set_int(&all_displays, (int)speed_kph, batt_perc_val, aux_battery_voltage);
+    if (get_battery_status_fault()) {
+      seg_displays_set_int(&all_displays, batt_fault, (uint16_t)batt_current, aux_battery_voltage);
+    } else if (car_vel >= 100) {
+      seg_displays_set_int(&all_displays, (int)car_vel,(uint16_t)batt_current, aux_battery_voltage);
     } else {
-      seg_displays_set_float(&all_displays, speed_kph, batt_perc_val, aux_battery_voltage);
+      seg_displays_set_float(&all_displays, car_vel, (uint16_t)batt_current, aux_battery_voltage);
     }
   }
 }

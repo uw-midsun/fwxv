@@ -10,7 +10,7 @@ static PersistStorage s_persist;
 static BpsStorage s_bps_storage;
 
 #define pd_fault_ok_or_transition(fsm)                                     \
-  if (check_battery_status_msg_watchdog() || get_battery_status_fault()) { \
+  if (check_battery_status_msg_watchdog()) { \
     fsm_transition(fsm, POWER_STATE_FAULT);                                \
     return;                                                                \
   }
@@ -54,11 +54,6 @@ static void prv_precharge_output(void *context) {
 }
 
 static void prv_precharge_input(Fsm *fsm, void *context) {
-  LOG_DEBUG("GET_MOTOR_VELOCITY %d\n",
-            (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()));
-  if (get_motor_velocity_velocity_l() && get_motor_velocity_velocity_r()) {
-    fsm_transition(fsm, POWER_STATE_OFF);
-  }
   if (get_mc_status_precharge_status()) {
     fsm_transition(fsm, POWER_STATE_DRIVE);
   } else if ((xTaskGetTickCount() - power_context.timer_start_ticks) >
@@ -72,8 +67,6 @@ static void prv_drive_state_output(void *context) {
   pd_set_active_output_group(OUTPUT_GROUP_POWER_DRIVE);
   power_context.latest_state = POWER_STATE_DRIVE;
   s_bps_storage.fault_bitset = 0;
-  s_bps_storage.vehicle_speed =
-      (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
   persist_commit(&s_persist);
   set_pd_status_bps_persist(false);
   set_pd_status_power_state(EE_POWER_DRIVE_STATE);
@@ -94,14 +87,14 @@ static void prv_drive_state_input(Fsm *fsm, void *context) {
 static void prv_fault_state_output(void *context) {
   LOG_DEBUG("Transitioned to FAULT STATE\n");
   s_bps_storage.fault_bitset = get_battery_status_fault();
-  s_bps_storage.vehicle_speed =
-      (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
+  s_bps_storage.fault_bitset = get_battery_status_fault_val();
   if (s_bps_storage.fault_bitset == 0) {
     s_bps_storage.fault_bitset = (1 << 10);  // BMS NOT CONNECTED
   }
   persist_commit(&s_persist);
   pd_set_active_output_group(OUTPUT_GROUP_POWER_FAULT);
   set_pd_status_bps_persist(s_bps_storage.fault_bitset);
+  set_pd_status_bps_persist_val(s_bps_storage.fault_val);
   set_pd_status_power_state(EE_POWER_FAULT_STATE);
   // TODO(devAdhiraj): start bps strobe
 }

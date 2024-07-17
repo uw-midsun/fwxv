@@ -81,7 +81,7 @@ static float prv_one_pedal_drive_current(float throttle_percent, float threshold
     return (throttle_percent - threshold) / (1 - threshold);
   } else {
     *drive_state = BRAKE;
-    set_motor_velocity_brakes_enabled(true);
+    set_motor_velocity_brakes_enabled(regen? true : false);
     return (threshold - throttle_percent) / (threshold);
   }
   LOG_DEBUG("ERROR: One pedal throttle not calculated\n");

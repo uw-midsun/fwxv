@@ -27,8 +27,15 @@ static LightsStateId fsm_prev_state = INIT_STATE;
 static void prv_lights_signal_blinker(SoftTimerId id) {
   switch (light_id_callback) {
     case EE_LIGHT_TYPE_SIGNAL_LEFT:
+      pd_set_output_group(OUTPUT_GROUP_DRL_LEFT, OUTPUT_STATE_OFF);
       left_signal_state ^= 1;
       pd_set_output_group(OUTPUT_GROUP_LIGHTS_LEFT_TURN, left_signal_state);
+      if (left_signal_state) {
+        pd_set_output_group(OUTPUT_GROUP_DRL_RIGHT, OUTPUT_STATE_OFF);
+      } else {
+        pd_set_output_group(OUTPUT_GROUP_DRL_RIGHT, OUTPUT_STATE_ON);
+      }
+
       if (right_signal_state == OUTPUT_STATE_ON) {
         right_signal_state = OUTPUT_STATE_OFF;
         pd_set_output_group(OUTPUT_GROUP_LIGHTS_RIGHT_TURN, right_signal_state);
@@ -38,6 +45,11 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
     case EE_LIGHT_TYPE_SIGNAL_RIGHT:
       right_signal_state ^= 1;
       pd_set_output_group(OUTPUT_GROUP_LIGHTS_RIGHT_TURN, right_signal_state);
+      if (right_signal_state) {
+        pd_set_output_group(OUTPUT_GROUP_DRL_LEFT, OUTPUT_STATE_OFF);
+      } else {
+        pd_set_output_group(OUTPUT_GROUP_DRL_LEFT, OUTPUT_STATE_ON);
+      }
       if (left_signal_state == OUTPUT_STATE_ON) {
         left_signal_state = OUTPUT_STATE_OFF;
         pd_set_output_group(OUTPUT_GROUP_LIGHTS_LEFT_TURN, left_signal_state);
@@ -45,13 +57,16 @@ static void prv_lights_signal_blinker(SoftTimerId id) {
       soft_timer_start(&s_timer_single);
       break;
     case EE_LIGHT_TYPE_SIGNAL_HAZARD:
-      if (left_signal_state != right_signal_state) {
-        left_signal_state = OUTPUT_STATE_OFF;
-        right_signal_state = OUTPUT_STATE_OFF;
-      }
       left_signal_state ^= 1;
-      right_signal_state ^= 1;
       pd_set_output_group(OUTPUT_GROUP_LIGHTS_HAZARD, left_signal_state);
+      if (left_signal_state) {
+        pd_set_output_group(OUTPUT_GROUP_DRL_RIGHT, OUTPUT_STATE_OFF);
+        pd_set_output_group(OUTPUT_GROUP_DRL_LEFT, OUTPUT_STATE_OFF);
+      } else {
+        pd_set_output_group(OUTPUT_GROUP_DRL_RIGHT, OUTPUT_STATE_ON);
+        pd_set_output_group(OUTPUT_GROUP_DRL_LEFT, OUTPUT_STATE_ON);
+      }
+
       soft_timer_start(&s_timer_single);
       break;
     default:
@@ -80,6 +95,8 @@ static void prv_init_state_output(void *context) {
   LOG_DEBUG("Transitioned to INIT_STATE\n");
   light_id_callback = NUM_EE_LIGHT_TYPES;
   fsm_prev_state = INIT_STATE;
+  pd_set_output_group(OUTPUT_GROUP_DRL_RIGHT, OUTPUT_STATE_ON);
+  pd_set_output_group(OUTPUT_GROUP_DRL_LEFT, OUTPUT_STATE_ON);
 }
 
 static void prv_left_signal_input(Fsm *fsm, void *context) {
@@ -92,6 +109,7 @@ static void prv_left_signal_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, HAZARD);
   } else if (light_event == EE_LIGHT_TYPE_OFF) {
     fsm_transition(fsm, INIT_STATE);
+    
   } else if (light_event == EE_LIGHT_TYPE_SIGNAL_RIGHT) {
     fsm_transition(fsm, RIGHT_SIGNAL);
   }
