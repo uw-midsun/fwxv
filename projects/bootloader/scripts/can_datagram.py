@@ -6,14 +6,13 @@ DEFAULT_CHANNEL = 'can0'
 CAN_BITRATE = 500000
 
 DATA_SIZE_SIZE = 2
-MIN_BYTEARRAY_SIZE = 5
+MIN_BYTEARRAY_SIZE = 4
 
-DATAGRAM_TYPE_OFFSET = 0
-NODE_IDS_OFFSET = 1 
-DATA_SIZE_OFFSET = 3  
+NODE_IDS_OFFSET = 0
+DATA_SIZE_OFFSET = 2
 
-CAN_START_ARBITRATION_ID = 0b00000010000
-CAN_ARBITRATION_ID = 0b00000000000
+CAN_START_ARBITRATION_ID = 30
+CAN_ARBITRATION_FLASH_ID = 31
 
 
 class DatagramTypeError(Exception):
@@ -36,7 +35,7 @@ class Datagram:
         self._data = kwargs["data"]
 
     @classmethod
-    def _unpack(cls, datagram_bytearray):
+    def _unpack(cls, datagram_bytearray, arbitration_id):
         '''This function returns an instance fo the class by unpacking a bytearray'''
         assert isinstance(datagram_bytearray, bytearray)
         if len(datagram_bytearray) < MIN_BYTEARRAY_SIZE:
@@ -44,62 +43,57 @@ class Datagram:
             raise DatagramTypeError(
                 "Invalid Datagram format from bytearray: Does not meet minimum size requirement")
 
-        datagram_type_id = datagram_bytearray[DATAGRAM_TYPE_OFFSET]
-        node_ids_raw = datagram_bytearray[NODE_IDS_OFFSET:DATA_SIZE_OFFSET]
-        node_ids = cls._unpack_nodeids(cls, node_ids_raw)
-        data_size = cls._convert_from_bytearray(
-            datagram_bytearray[DATA_SIZE_OFFSET:DATA_SIZE_OFFSET + 2], 2)
+        if arbitration_id == CAN_START_ARBITRATION_ID:
+            node_ids_raw = datagram_bytearray[NODE_IDS_OFFSET:DATA_SIZE_OFFSET]
+            node_ids = cls._unpack_nodeids(cls, node_ids_raw)
+            return cls(datagram_type_id=arbitration_id, node_ids=node_ids, data=bytearray())
+        elif arbitration_id == CAN_ARBITRATION_FLASH_ID:
+            data = []
+            data = datagram_bytearray
+            return cls(datagram_type_id=arbitration_id, node_ids=[], data=data)
 
-        if len(datagram_bytearray) != MIN_BYTEARRAY_SIZE + data_size:
-            raise DatagramTypeError("Invalid Datagram format from bytearray: Not enough data bytes")
-
-        data = datagram_bytearray[DATA_SIZE_OFFSET + DATA_SIZE_SIZE:]
-
-        return cls(datagram_type_id=datagram_type_id, node_ids=node_ids, data=data)
 
     def pack(self):
         '''This function packs a new bytearray based on set data'''
         node_ids = self._pack_nodeids(self._node_ids)
 
         return bytearray([
-            self._datagram_type_id,
             *node_ids,
             len(self._data) & 0xff,
             (len(self._data) >> 8) & 0xff,
-            *(self._data)
         ])
 
     @property
     def datagram_type_id(self):
-        '''This function describe the datragram id'''
+        '''This function describes the datagram id'''
         return self._datagram_type_id
 
     @property
     def node_ids(self):
-        '''This function describe the datragram id'''
+        '''This function assigns the datagram id'''
         return self._node_ids
 
     @property
     def data(self):
-        '''This function describe the datragram id'''
+        '''This function describe the datagram node ids'''
         return self._data
 
     @datagram_type_id.setter
     def datagram_type_id(self, value):
-        '''This function sets the datragram id'''
+        '''This function sets the datagram type'''
         assert value & 0xff == value
         self._datagram_type_id = value & 0xff
 
     @node_ids.setter
     def node_ids(self, nodes):
-        '''This function sets the datragram id'''
+        '''This function sets the datagram node ids'''
         assert isinstance(nodes, list)
         assert all(0 <= nodes < 0xff for node in nodes)
         self._node_ids = nodes
 
     @data.setter
     def data(self, value):
-        '''This function sets the datragram id'''
+        '''This function sets the datagram data'''
         assert isinstance(value, bytearray)
         self._data = value
 
@@ -168,6 +162,7 @@ class DatagramSender:
 
     def __init__(self, bustype="socketcan", channel=DEFAULT_CHANNEL,
                  bitrate=CAN_BITRATE, receive_own_messages=False):
+        print("HERE")
         # pylint: disable=abstract-class-instantiated
         self.bus = can.interface.Bus(
             bustype=bustype,
@@ -178,26 +173,23 @@ class DatagramSender:
     def send(self, message, sender_id=0):
         '''Send a Datagram over CAN'''
         assert isinstance(message, Datagram)
-        chunk_messages = self._chunkify(message.pack(), 8)
+        start_message = message.pack()
+        chunk_messages = list(self._chunkify(message.data, 8))
+        
         message_extended_arbitration = False
-
-        start_arbitration_board_id = (CAN_START_ARBITRATION_ID | sender_id << 5)
-        arbitration_board_id = (CAN_ARBITRATION_ID | sender_id << 5)
-
-        can_messages = [
-            can.Message(
-                arbitration_id=start_arbitration_board_id,
-                data=bytearray(),
-                is_extended_id=message_extended_arbitration)]
+        can_messages = [can.Message(arbitration_id=CAN_START_ARBITRATION_ID,
+                        data=start_message,
+                        is_extended_id=message_extended_arbitration)]
 
         # Populate an array with the can message from the library
         for chunk_message in chunk_messages:
-            can_messages.append(can.Message(arbitration_id=arbitration_board_id,
+            can_messages.append(can.Message(arbitration_id=message._datagram_type_id,
                                             data=chunk_message,
                                             is_extended_id=message_extended_arbitration))
 
         for msg in can_messages:
             self.bus.send(msg)
+            print(msg)
         print("{} messages were sent on {}".format(len(can_messages), self.bus.channel_info))
 
     @staticmethod
@@ -214,6 +206,8 @@ class DatagramListener(can.BufferedReader):
         '''Registers the callback'''
         assert callable(callback)
         self.callback = callback
+        self.board_ids = 0
+        # self.callback("1", 10)
         # Messages are stored in a dictionary where key = board ID, value = message
         self.datagram_messages = {}
         super().__init__()
@@ -221,23 +215,40 @@ class DatagramListener(can.BufferedReader):
     def on_message_received(self, msg: can.Message):
         '''Handles message sent from boards on the CAN'''
         super().on_message_received(msg)
+        arbitration_id = (msg.arbitration_id & 0xff)
 
-        board_id = (msg.arbitration_id & 0b11111100000) >> 5
-        start_message = (msg.arbitration_id & 0x10) >> 4
+        if arbitration_id == CAN_START_ARBITRATION_ID:
+            self.board_ids = self.extract_board_id(msg.data)
+        for board_id in self.board_ids:
+            if arbitration_id == CAN_START_ARBITRATION_ID:
+                # Reset the datagram message when receiving a start message
+                self.datagram_messages[board_id] = msg.data
 
-        if start_message == 1:
-            # Reset the datagram message when receiving a start message
-            self.datagram_messages[board_id] = msg.data
+            if arbitration_id != CAN_START_ARBITRATION_ID:
+                if board_id in self.datagram_messages:
+                    self.datagram_messages[board_id] += msg.data
 
-        if start_message == 0:
-            if board_id in self.datagram_messages:
-                self.datagram_messages[board_id] += msg.data
+            try:
+                datagram = Datagram._unpack(self.datagram_messages[board_id], arbitration_id)
+                self.callback(msg, board_id)
+            except DatagramTypeError:
+                # Datagram is incomplete, continue until complete
+                pass
 
-        try:
-            datagram = Datagram._unpack(self.datagram_messages[board_id])
-        except DatagramTypeError:
-            # Datagram is incomplete, continue until complete
-            pass
-        else:
-            # Datagram is complete, call the callback with formed datagram
-            self.callback(datagram, board_id)
+    def extract_board_id(self, data):
+        '''Extracts the board ID from the data'''
+        out_value = 0
+        for i in range(2):
+            out_value = out_value | ((data[i] & 0xff) << (i * 8))
+        
+        out_nodeids = []
+        while out_value:
+            count = 0
+            byte = out_value & (~out_value + 1)
+            out_value ^= byte
+            while byte:
+                byte = byte >> 1
+                count += 1
+            out_nodeids.append(count)
+
+        return out_nodeids

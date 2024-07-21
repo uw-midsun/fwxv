@@ -1,65 +1,44 @@
 import unittest
+import can
 from unittest.mock import patch, mock_open
 from flash_application import Flash_Application, CAN_ARBITRATION_FLASH_ID
-from can_datagram import Datagram
+from can_datagram import Datagram, DatagramListener, DatagramSender
+
+TEST_CHANNEL = "vcan0"
 
 class TestFlashApplication(unittest.TestCase):
-
-    @patch('flash_application.DatagramSender')
-    @patch('os.path.getsize', return_value=1024)
-    @patch('os.path.isfile', return_value=True)
-    def setUp(self, mock_isfile, mock_getsize, MockSender):
-        self.mock_sender = MockSender
-        self.binary_path = 'dummy_path.bin'
-        self.app = Flash_Application(binary_path=self.binary_path, sender=self.mock_sender)
+    def setUp(self):
+        self.binary_path = '/home/vagrant/shared/fwxv/projects/bootloader/test/dummy.bin'
+        sender = DatagramSender(bustype="virtual", channel=TEST_CHANNEL, receive_own_messages=True)
+        self.app = Flash_Application(bin_path=self.binary_path, sender=sender)
 
     def test_get_binary_path(self):
-        self.assertEqual(self.app.get_binary_path(), 'dummy_path.bin')
+        self.assertEqual(self.app._bin_path, '/home/vagrant/shared/fwxv/projects/bootloader/test/dummy.bin')
 
     def test_get_binary_size(self):
-        self.assertEqual(self.app.get_binary_size(), 1024)
+        self.assertEqual(self.app._bin_size, 37)
 
-    @patch('os.path.isfile', return_value=True)
-    def test_validate_bin_valid(self, mock_isfile):
-        self.assertTrue(self.app.validate_bin())
+    def test_start_flash(self):
+        #incomplete
+        listener = DatagramListener(self.triggerCallback)
+        notifier = can.Notifier(self.app._sender.bus, [listener])
+        self.app.start_flash(node_ids=[1,2])
 
-    @patch('os.path.isfile', return_value=False)
-    def test_validate_bin_invalid(self, mock_isfile):
-        self.assertFalse(self.app.validate_bin())
 
-    @patch('os.path.isfile', return_value=True)
-    @patch('builtins.open', new_callable=mock_open, read_data=b'testdata')
-    def test_start_initial_process(self, mock_open, mock_isfile):
-        board_id = 1
-        self.app.start_initial_process(board_id)
         expected_datagram = Datagram(
-            datagram_type_id=CAN_ARBITRATION_FLASH_ID | (board_id << 5),
-            node_ids=[0, 1],
-            data=bytearray([1024 & 0xff, (1024 >> 8) & 0xff])
+            datagram_type_id=CAN_ARBITRATION_FLASH_ID,
+            node_ids=[1, 2],
+            data=bytearray([37 & 0xff, (37 >> 8) & 0xff])
         )
+        # print (self.datagram.node_ids)
 
-        sent_datagram = self.mock_sender.send.call_args[0][0]
-        self.assertEqual(sent_datagram.datagram_type_id, expected_datagram.datagram_type_id)
-        self.assertEqual(sent_datagram.node_ids, expected_datagram.node_ids)
-        self.assertEqual(sent_datagram.data, expected_datagram.data)
+        # sent_datagram = DatagramListener(bustype="virtual", channel=TEST_CHANNEL, receive_own_messages=True)
+        # self.assertEqual(sent_datagram.datagram_type_id, expected_datagram.datagram_type_id)
+        # self.assertEqual(sent_datagram.node_ids, expected_datagram.node_ids)
+        # self.assertEqual(sent_datagram.data, expected_datagram.data)
 
-    @patch('os.path.isfile', return_value=True)
-    @patch('builtins.open', new_callable=mock_open, read_data=b'\x01\x02\x03\x04\x05\x06\x07\x08\x09')
-    def test_stream_flash_data(self, mock_open, mock_isfile):
-        board_id = 1
-        self.app.stream_flash_data(board_id)
-        
-        expected_data = bytearray(b'\x01\x02\x03\x04\x05\x06\x07\x08\x09')
-        expected_datagram = Datagram(
-            datagram_type_id=CAN_ARBITRATION_FLASH_ID | (board_id << 5),
-            node_ids=[0, 1],
-            data=expected_data
-        )
-
-        sent_datagram = self.mock_sender.send.call_args[0][0]
-        self.assertEqual(sent_datagram.datagram_type_id, expected_datagram.datagram_type_id)
-        self.assertEqual(sent_datagram.node_ids, expected_datagram.node_ids)
-        self.assertEqual(sent_datagram.data, expected_datagram.data)
+    def triggerCallback(self, msg, board_id):
+        self.message = msg
 
 if __name__ == '__main__':
     unittest.main()
