@@ -9,7 +9,7 @@ import can
 
 TEST_CHANNEL = "vcan0"
 
-TEST_DATAGRAM_TYPE_ID = 30 # This is also the start ID
+TEST_DATAGRAM_TYPE_ID = 30  # This is also the start ID
 TEST_NODES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 TEST_NODES_RAW1 = 0b11111111
 TEST_NODES_RAW2 = 0b00000011
@@ -86,7 +86,7 @@ class TestCanDatagramSender(unittest.TestCase):
             node_ids=TEST_NODES,
             data=bytearray(TEST_DATA))
 
-        sender.send(message)
+        sender.send(message, False)
 
         recv_datagram = []
         listener_message = listener.get_message()
@@ -114,7 +114,7 @@ class TestCanDatagramListener(unittest.TestCase):
             datagram_type_id=TEST_DATAGRAM_TYPE_ID,
             node_ids=TEST_NODES,
             data=bytearray(TEST_DATA))
-        sender.send(message)
+        sender.send(message, False)
 
         timeout = time.time() + 10
         while not self.callback_triggered:

@@ -1,9 +1,9 @@
 #include <stdio.h>
 
-#include "log.h"
 #include "can.h"
-#include "status.h"
 #include "can_board_ids.h"
+#include "log.h"
+#include "status.h"
 
 static CanStorage s_can_storage = { 0 };
 
