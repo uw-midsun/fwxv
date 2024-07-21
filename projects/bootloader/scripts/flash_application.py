@@ -2,79 +2,71 @@ from can_datagram import Datagram, DatagramSender
 import os
 from validation import Validation
 
-CAN_ARBITRATION_FLASH_ID = 0b00000000001
+CAN_ARBITRATION_FLASH_ID = 31
+TEST_CHANNEL = "vcan0"
 
-class Flash_Application():
-    def __init__(self, binary_path, sender=None) -> None:
+class Flash_Application:
+    def __init__(self, bin_path, sender=None) -> None:
         if sender:
             self._sender = sender
         else:
+            # Test channel
             self._sender = DatagramSender()
         
-        self._bin_path = binary_path
+        if not isinstance(bin_path, str):
+            raise ValueError("The bin_path must be a string.")
+        
+        if not os.path.isfile(bin_path):
+            raise ValueError("The bin_path does not exist.")
+        
+        self._bin_path = bin_path
         self._bin_size = os.path.getsize(self._bin_path)
 
-
-    def get_binary_path(self):
+    @property
+    def bin_path(self):
         return self._bin_path
     
-    def get_binary_size(self):
+    @property
+    def bin_size(self):
         return self._bin_size
-    
-    def validate_bin(self):
-        if os.path.isfile(self.get_binary_path()):
-            return True
+
+    @bin_path.setter
+    def bin_path(self, value):
+        '''This function sets the binary path'''
+        if not isinstance(value, str):
+            raise ValueError("The bin_path must be a string.")
+        if not os.path.isfile(value):
+            raise ValueError("The bin_path does not exist.")
+        self._bin_path = value
+        self._bin_size = os.path.getsize(self._bin_path)
+
+    @bin_size.setter
+    def bin_size(self, value):
+        '''This function sets the binary size'''
+        if not isinstance(value, int) or value < 0:
+            raise ValueError("bin_size must be a non-negative integer.")
+        self._bin_size = value
+
+    def start_flash(self, **kwargs) -> None:
+        node_ids =[]
+        for val in kwargs["node_ids"]:
+            node_ids.append(val & 0xff)
         
-        print(f"Could not find the binary file for flashing...")
-        return False
+        print(f"Starting flash process")
+        print(f'Sending binary data with size of {self._bin_size}...')
 
+        with open(self._bin_path, 'rb') as bin_data:
+            bin_content = bytearray(bin_data.read())
 
-    '''Send over the protocol to flash + how large the binary file will be'''
-    def start_initial_process(self, board_nums: int) -> None:
-        print(f"Starting the initial flash process")
+        # SOF and EOF for synchronization
+        bin_content = bytearray([0xAA]) + bin_content + bytearray([0xBB])
 
-        print(f'Sending binary data with size of {self.get_binary_size()}...')
-        
-        #assign all boards to a number
-        board_ids = list(range(board_nums + 1))
+        flash_datagram = Datagram(
+            datagram_type_id=CAN_ARBITRATION_FLASH_ID,
+            node_ids=node_ids,
+            data=bin_content 
+        )
 
-        if self.validate_bin() and Validation.validate_board_id(board_nums):
-            # Create a datagram with the initial flash message
-            for board_id in board_ids:
-                initial_datagram = Datagram(
-                    datagram_type_id=CAN_ARBITRATION_FLASH_ID | (board_id << 5),
-                    node_ids=board_ids,
-                    data=bytearray([self.get_binary_size() & 0xff, (self.get_binary_size() >> 8) & 0xff]) 
-                )
+        self._sender.send(flash_datagram)
 
-                self._sender.send(initial_datagram)
-
-                print(f'Send {self._bin_path} to board {board_id}')
-            
-            print(f'Finished initial flash requirements to board {board_ids}...')
-
-    '''Send over the content for the binary file to flash, in chunks '''
-    def stream_flash_data(self, board_nums: int):
-        board_ids = list(range(board_nums + 1))
-        
-        print(f'Starting streaming of boards {board_ids}')
-        
-        if self.validate_bin() and Validation.validate_board_id(board_nums):
-            for board_id in board_ids:
-                with open(self.get_binary_path(), 'rb') as bin_data:
-                        bin_content = bytearray(bin_data.read())
-
-                        flash_datagram = Datagram(
-                            datagram_type_id=CAN_ARBITRATION_FLASH_ID | (board_id << 5),
-                            node_ids=board_ids,
-                            data=bin_content
-                        )
-
-                        self._sender.send(flash_datagram)
-
-                    
-
-                    
-
-
-        print(f"Streaming of flash data completed for boards {board_ids}")
+        print(f'Finished sending flash requirements to boards {node_ids}...')
