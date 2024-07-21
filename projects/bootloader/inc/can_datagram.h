@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
 #include "can.h"
 
 #define DGRAM_MAX_MSG_SIZE 8
@@ -11,8 +12,9 @@
 #define DATA_LEN_SIZE_BYTES 2
 
 #define CAN_ARBITRATION_START_ID 30
-#define CAN_ARBITRATION_FLASH_ID 31
-#define CAN_ARBITRATION_JUMP_ID 32
+#define CAN_ARBITRATION_START_FLASH_ID 31
+#define CAN_ARBITRATION_FLASH_ID 32
+#define CAN_ARBITRATION_JUMP_ID 33
 
 #define CAN_DATAGRAM_SOF 0xAA
 #define CAN_DATAGRAM_EOF 0xBB
@@ -30,8 +32,8 @@
   }
 
 typedef struct {
-  uint8_t datagram_type_id; // Set as arbitration id
-  union{
+  uint8_t datagram_type_id;  // Set as arbitration id
+  union {
     struct {
       uint16_t node_ids;
       uint16_t data_len;

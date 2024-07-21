@@ -1,11 +1,10 @@
 #pragma once
-#include "can_datagram.h"
-#include "can.h"
-#include "global.h"
 #include "boot_flash.h"
+#include "can.h"
+#include "can_datagram.h"
+#include "global.h"
 
 typedef uintptr_t bootloader_ptr_t;
-
 
 typedef struct {
   uint8_t dgram_type;
@@ -15,26 +14,26 @@ typedef struct {
 } BootloaderRxPacket;
 
 typedef struct {
-    // INCOMPLETE
+  // INCOMPLETE
 } BootloaderConfig;
 
 typedef enum {
-  /// @brief 
+  /// @brief
   DATAGRAM_START = 0,
-  /// @brief 
+  /// @brief
   DATAGRAM_DATA,
-  /// @brief 
+  /// @brief
   DATAGRAM_JUMP,
 } BootloaderTypeID;
 
-//STATE MACHINE
+// STATE MACHINE
 typedef enum {
   /// @brief datagram starts as uninitialized state
   BOOTLOADER_UNINITIALIZED = 0,
   /// @brief datagram is ready to either jump or flash applications
-  BOOTLOADER_IDLE, 
+  BOOTLOADER_IDLE,
   /// @brief datagram is processing a start message
-  BOOTLOADER_START, 
+  BOOTLOADER_START,
   /// @brief datagram is current receiving the datagram streaming data
   BOOTLOADER_DATA_RECEIVE,
   /// @brief datagram is jumping to the application identified in the message
@@ -56,9 +55,11 @@ BootloaderStates bootloader_get_state(void);
 BootloaderError bootloader_get_err(void);
 
 typedef struct {
-    BootloaderStates state;
-    BootloaderError error;
-    bool first_byte_received;
-    uint32_t bytes_received;
-    uint32_t binary_size;
+  BootloaderStates state;
+  BootloaderError error;
+  bool first_byte_received;
+
+  uintptr_t current_address;
+  uint32_t bytes_received;
+  uint32_t binary_size;
 } BootloaderStateData;

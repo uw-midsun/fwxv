@@ -23,6 +23,7 @@ class DatagramTypeError(Exception):
 
 class Datagram:
     '''Custom CAN-datagram class'''
+
     def __init__(self, **kwargs):
         '''Initialize datagram class'''
         self._check_kwargs(**kwargs)
@@ -39,7 +40,7 @@ class Datagram:
         '''This function returns an instance fo the class by unpacking a bytearray'''
         assert isinstance(datagram_bytearray, bytearray)
         if len(datagram_bytearray) < MIN_BYTEARRAY_SIZE:
-            
+
             raise DatagramTypeError(
                 "Invalid Datagram format from bytearray: Does not meet minimum size requirement")
 
@@ -51,7 +52,6 @@ class Datagram:
             data = []
             data = datagram_bytearray
             return cls(datagram_type_id=arbitration_id, node_ids=[], data=data)
-
 
     def pack(self):
         '''This function packs a new bytearray based on set data'''
@@ -156,6 +156,7 @@ class Datagram:
         out_value = self._convert_to_bytearray(out_value, DATA_SIZE_OFFSET - NODE_IDS_OFFSET)
         return out_value
 
+
 class DatagramSender:
     # pylint: disable=too-few-public-methods
     '''Class that acts as a distributor for the Datagram class on a CAN bus'''
@@ -170,16 +171,18 @@ class DatagramSender:
             bitrate=bitrate,
             receive_own_messages=receive_own_messages)
 
-    def send(self, message, sender_id=0):
+    def send(self, message, extend, sender_id=0):
         '''Send a Datagram over CAN'''
         assert isinstance(message, Datagram)
         start_message = message.pack()
         chunk_messages = list(self._chunkify(message.data, 8))
-        
+
         message_extended_arbitration = False
-        can_messages = [can.Message(arbitration_id=CAN_START_ARBITRATION_ID,
-                        data=start_message,
-                        is_extended_id=message_extended_arbitration)]
+        can_messages = []
+        if not extend:
+            can_messages.append(can.Message(arbitration_id=CAN_START_ARBITRATION_ID,
+                                            data=start_message,
+                                            is_extended_id=message_extended_arbitration))
 
         # Populate an array with the can message from the library
         for chunk_message in chunk_messages:
@@ -240,7 +243,7 @@ class DatagramListener(can.BufferedReader):
         out_value = 0
         for i in range(2):
             out_value = out_value | ((data[i] & 0xff) << (i * 8))
-        
+
         out_nodeids = []
         while out_value:
             count = 0

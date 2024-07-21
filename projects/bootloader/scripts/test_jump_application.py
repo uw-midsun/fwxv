@@ -5,6 +5,7 @@ from can_datagram import Datagram, DatagramSender
 
 TEST_CHANNEL = "vcan0"
 
+
 class TestJumpApplication(unittest.TestCase):
 
     def setUp(self):
@@ -24,6 +25,7 @@ class TestJumpApplication(unittest.TestCase):
         # self.assertEqual(actual_datagram.datagram_type_id, expected_datagram.datagram_type_id)
         # self.assertEqual(actual_datagram.node_ids, expected_datagram.node_ids)
         # self.assertEqual(actual_datagram.data, expected_datagram.data)
+
 
 if __name__ == '__main__':
     unittest.main()

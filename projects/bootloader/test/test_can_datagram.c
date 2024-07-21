@@ -1,6 +1,5 @@
-#include "can_datagram.h"
-
 #include "can.h"
+#include "can_datagram.h"
 #include "log.h"
 #include "unity.h"
 
@@ -31,18 +30,18 @@ static uint8_t s_data[TEST_DATA_SIZE_SHORT] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g
 
 static uint8_t s_test_short_nodes[3] = { 1, 4, 3 };
 
-static uint8_t data_lengths[] = { 1, 4, 1, 8, 2, 8};
+static uint8_t data_lengths[] = { 1, 4, 1, 8, 2, 8 };
 static int s_num_msg_rx;
 static int s_num_tx;
 static bool s_start_message_set;
 
 void setup_test(void) {
-//   interrupt_init();
-//   soft_timer_init();
-//   crc32_init();
+  //   interrupt_init();
+  //   soft_timer_init();
+  //   crc32_init();
 }
 
-void teardown_test(void) {\
+void teardown_test(void) {
   s_start_message_set = false;
   s_num_msg_rx = 0;
   s_num_tx = 0;
@@ -66,28 +65,26 @@ static StatusCode prv_tx_callback(uint8_t *data, size_t len, bool start_message)
   return STATUS_CODE_OK;
 }
 
-
 void test_can_datagram_tx(void) {
-    prv_can_init();
-    can_datagram_init();
+  prv_can_init();
+  can_datagram_init();
 
-    CanDatagramTxConfig tx_config = {
-        .dgram_type = 3,
-        .node_ids_list = s_test_short_nodes,
-        .node_ids_length = 3,
-        .data_len = TEST_DATA_SIZE_SHORT,
-        .data = s_data,
-        .tx_cb = prv_tx_callback,
-    };
+  CanDatagramTxConfig tx_config = {
+    .dgram_type = 3,
+    .node_ids_list = s_test_short_nodes,
+    .node_ids_length = 3,
+    .data_len = TEST_DATA_SIZE_SHORT,
+    .data = s_data,
+    .tx_cb = prv_tx_callback,
+  };
 
-    can_datagram_start_tx(&tx_config);
-    TEST_ASSERT_EQUAL(DATAGRAM_STATUS_ACTIVE, can_datagram_get_status());
+  can_datagram_start_tx(&tx_config);
+  TEST_ASSERT_EQUAL(DATAGRAM_STATUS_ACTIVE, can_datagram_get_status());
 
-    // while (can_datagram_get_status() == DATAGRAM_STATUS_ACTIVE) {
-    //     //process event
-    //     break;
-    // }
+  // while (can_datagram_get_status() == DATAGRAM_STATUS_ACTIVE) {
+  //     //process event
+  //     break;
+  // }
 
-    // TEST_ASSERT_EQUAL(DATAGRAM_STATUS_TX_COMPLETE, can_datagram_get_status());
-
+  // TEST_ASSERT_EQUAL(DATAGRAM_STATUS_TX_COMPLETE, can_datagram_get_status());
 }
