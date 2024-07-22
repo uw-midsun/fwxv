@@ -55,7 +55,7 @@ class Flash_Application:
             node_ids.append(val & 0xff)
 
         print(f"Starting flash process")
-        print(f'Sending binary data with size of {self._bin_size}...')
+        print(f'Sending binary data with size of {self._bin_size}...\n\n')
 
         with open(self._bin_path, 'rb') as bin_data:
             bin_content = bytearray(bin_data.read())
@@ -84,4 +84,4 @@ class Flash_Application:
         self._sender.send(flash_start_datagram, False)
         self._sender.send(flash_datagram, True)
 
-        print(f'Finished sending flash requirements to boards {node_ids}...')
+        print(f'\n\nFinished sending flash requirements to boards {node_ids}...')
