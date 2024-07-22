@@ -2,8 +2,8 @@
 
 #include "can.h"
 #include "can_board_ids.h"
-#include "log.h"
-#include "status.h"
+#include "bootloader.h"
+#include "can_datagram.h"
 
 static CanStorage s_can_storage = { 0 };
 

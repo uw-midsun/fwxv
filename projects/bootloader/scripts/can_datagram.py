@@ -163,7 +163,6 @@ class DatagramSender:
 
     def __init__(self, bustype="socketcan", channel=DEFAULT_CHANNEL,
                  bitrate=CAN_BITRATE, receive_own_messages=False):
-        print("HERE")
         # pylint: disable=abstract-class-instantiated
         self.bus = can.interface.Bus(
             bustype=bustype,
