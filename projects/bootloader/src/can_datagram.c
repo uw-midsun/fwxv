@@ -1,5 +1,7 @@
 #include "can_datagram.h"
 
+uint8_t error_buffer[DGRAM_MAX_MSG_SIZE];
+
 can_datagram_t unpack_datagram(CanMessage *msg, bool first_byte_received) {
   can_datagram_t ret_datagram;
   do {
@@ -27,4 +29,12 @@ can_datagram_t unpack_datagram(CanMessage *msg, bool first_byte_received) {
   } while (false);
 
   return ret_datagram;
+}
+
+BootloaderError can_datagram_transmit_error(BootloaderError error) {
+  // [ BootloaderError, TBD ]
+  error_buffer[0] = error;
+  can_hw_transmit(CAN_ARBITRATION_FAULT_ID, false, error_buffer, sizeof(error_buffer));
+
+  return BOOTLOADER_ERROR_NONE;
 }
