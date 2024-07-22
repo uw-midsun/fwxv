@@ -86,7 +86,7 @@ static BootloaderError bootloader_handle_arbitration_id(CanMessage *msg) {
   switch (msg->id.raw) {
     case CAN_ARBITRATION_START_ID:
       return bootloader_switch_states(BOOTLOADER_START);
-    case CAN_ARBITRATION_FLASH_ID:
+    case CAN_ARBITRATION_FLASH_ID || CAN_ARBITRATION_START_FLASH_ID:
       return bootloader_switch_states(BOOTLOADER_DATA_RECEIVE);
     case CAN_ARBITRATION_JUMP_ID:
       return bootloader_switch_states(BOOTLOADER_JUMP_APP);
@@ -95,20 +95,33 @@ static BootloaderError bootloader_handle_arbitration_id(CanMessage *msg) {
   }
 }
 
-BootloaderError bootloader_jump_app() {
-  BootloaderStates curr_state = prv_bootloader.state;
+BootloaderError bootloader_start() {
+  prv_bootloader.binary_size = datagram.payload.start.data_len;
 
-  if (curr_state != BOOTLOADER_IDLE) {
-  }
+  if (prv_bootloader.binary_size - prv_bootloader.bytes_received % BOOTLOADER_WRITE_BYTES != 0) {
+    return BOOTLOADER_DATA_NOT_ALIGNED;
+  } 
+
+  return BOOTLOADER_ERROR_NONE;
+}
+
+BootloaderError bootloader_jump_app() {
+  // Adding 32 bits from the applications main stack pointer to pull the function from
+  // the application reset handler (Reset vector)
+  void (*app_reset_handler)(void) = (void *)(volatile uint32_t *)(APP_START_ADDRESS + 0x4);
+  
+  // Updating main stack pointer to be the value stored at APP_START_ADDRESS
+  __set_MSP(*(volatile uint32_t *)APP_START_ADDRESS);
+
+  app_reset_handler();
+
   return BOOTLOADER_ERROR_NONE;
 }
 
 BootloaderError bootloader_data() {
   uint8_t buffer_len = 0;
 
-  if (prv_bootloader.binary_size - prv_bootloader.bytes_received % BOOTLOADER_WRITE_BYTES != 0) {
-    return BOOTLOADER_DATA_NOT_ALIGNED;
-  } else if (prv_bootloader.binary_size - prv_bootloader.bytes_received == BOOTLOADER_WRITE_BYTES) {
+  if (prv_bootloader.binary_size - prv_bootloader.bytes_received == BOOTLOADER_WRITE_BYTES) {
     buffer_len = BOOTLOADER_WRITE_BYTES;
   } else {
     buffer_len = sizeof(datagram.payload.data);
@@ -130,6 +143,9 @@ static BootloaderError bootloader_run_state() {
       break;
     case BOOTLOADER_IDLE:
       return BOOTLOADER_ERROR_NONE;
+      break;
+    case BOOTLOADER_START:
+      return bootloader_start();
       break;
     case BOOTLOADER_DATA_RECEIVE:
       return bootloader_data();

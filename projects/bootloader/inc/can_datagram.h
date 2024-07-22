@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "can.h"
+#include "global.h"
 
 #define DGRAM_MAX_MSG_SIZE 8
 
@@ -15,6 +16,7 @@
 #define CAN_ARBITRATION_START_FLASH_ID 31
 #define CAN_ARBITRATION_FLASH_ID 32
 #define CAN_ARBITRATION_JUMP_ID 33
+#define CAN_ARBITRATION_FAULT_ID 34
 
 #define CAN_DATAGRAM_SOF 0xAA
 #define CAN_DATAGRAM_EOF 0xBB
