@@ -88,8 +88,8 @@ static BootloaderError bootloader_switch_states(const BootloaderStates new_state
   return return_err;
 }
 
-static BootloaderError bootloader_handle_arbitration_id(CanMessage *msg) {
-  switch (msg->id.raw) {
+static BootloaderError bootloader_handle_arbitration_id(Boot_CanMessage *msg) {
+  switch (msg->id) {
     case CAN_ARBITRATION_START_ID:
       return bootloader_switch_states(BOOTLOADER_START);
     case CAN_ARBITRATION_START_FLASH_ID:
@@ -202,10 +202,10 @@ BootloaderStates bootloader_get_state(void) {
   return prv_bootloader.state;
 }
 
-static BootloaderError bootloader_unpack_message(CanMessage *msg, can_datagram_t *datagram) {
+static BootloaderError bootloader_unpack_message(Boot_CanMessage *msg, can_datagram_t *datagram) {
   *datagram = unpack_datagram(msg, prv_bootloader.first_byte_received);
 
-  if (!prv_bootloader.first_byte_received && msg->id.raw == CAN_ARBITRATION_START_FLASH_ID) {
+  if (!prv_bootloader.first_byte_received && msg->id == CAN_ARBITRATION_START_FLASH_ID) {
     prv_bootloader.first_byte_received = true;
   }
 
@@ -216,7 +216,7 @@ static BootloaderError bootloader_unpack_message(CanMessage *msg, can_datagram_t
   return BOOTLOADER_ERROR_NONE;
 }
 
-BootloaderError bootloader_run(CanMessage *msg) {
+BootloaderError bootloader_run(Boot_CanMessage *msg) {
   BootloaderError ret = BOOTLOADER_ERROR_NONE;
 
   if (bootloader_unpack_message(msg, &datagram)) {

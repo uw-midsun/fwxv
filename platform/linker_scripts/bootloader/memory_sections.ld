@@ -1,6 +1,6 @@
 ENTRY(Reset_Handler)
 
-_bootloader_size = 4K;
+_bootloader_size = 8K;
 
 _flash_start = 0x08000000;
 _flash_size = 64K;
