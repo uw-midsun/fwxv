@@ -18,13 +18,13 @@ const CanSettings can_settings = {
 CanMessage msg = { 0 };
 
 int main() {
-  log_init();
   can_init(&s_can_storage, &can_settings);
 
+  bootloader_init();
+  bool extended = false;
   while (true) {
-    if (can_receive(&msg) == STATUS_CODE_OK) {
-      LOG_DEBUG("RECEIVED MSG");
-      LOG_DEBUG("CAN_ID: %ld", msg.id.raw);
+    if (can_hw_receive(&msg.id.raw, &extended, &msg.data, &msg.dlc)) {
+      bootloader_run(&msg);
     }
     // Listen for messages with bootloader+start ID (add to can.c)
     // Check which node it is for
@@ -32,6 +32,5 @@ int main() {
     // Erase memory and flash
   }
 
-  LOG_DEBUG("exiting main?");
   return 0;
 }

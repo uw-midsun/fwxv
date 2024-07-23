@@ -73,7 +73,7 @@ class Flash_Application:
             flash_start_datagram = Datagram(
                 datagram_type_id=CAN_ARBITRATION_START_FLASH_ID,
                 node_ids=node_ids,
-                data=bin_content[0:8]
+                data=bin_content
             )
             flash_datagram = Datagram(
                 datagram_type_id=CAN_ARBITRATION_FLASH_ID,
@@ -81,7 +81,7 @@ class Flash_Application:
                 data=bin_content[8:]
             )
 
-        self._sender.send(flash_start_datagram, False)
-        self._sender.send(flash_datagram, True)
+        self._sender.send(flash_start_datagram, True)
+        self._sender.send(flash_datagram, False)
 
         print(f'\n\nFinished sending flash requirements to boards {node_ids}...')
