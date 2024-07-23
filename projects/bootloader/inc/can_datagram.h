@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "can.h"
+#include "boot_can.h"
 #include "global.h"
 
 #define DGRAM_MAX_MSG_SIZE 8
@@ -49,4 +49,4 @@ typedef struct {
   } payload;
 } can_datagram_t;
 
-can_datagram_t unpack_datagram(CanMessage *msg, bool first_byte_received);
+can_datagram_t unpack_datagram(Boot_CanMessage *msg, bool first_byte_received);

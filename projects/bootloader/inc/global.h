@@ -1,7 +1,7 @@
 #pragma once
 
 #define NODE_ID 0                    // Maybe write this into flash memory? Not determined currently
-#define APP_START_ADDRESS 0x8001000  // Defined in linkerscript (4K BYTES)
+#define APP_START_ADDRESS 0x8002000  // Defined in linkerscript (4K BYTES)
 #define APP_END_ADDRESS 0x08010000   // Defined in linkerscript
 
 // ERROR DATA
@@ -22,4 +22,6 @@ typedef enum {
   BOOTLOADER_INVALID_ARGS,
   /// @brief flash_erase or flash_write error
   BOOTLOADER_FLASH_ERR,
+  /// @brief Bootloader CAN init error
+  BOOTLOADER_CAN_INIT_ERR,
 } BootloaderError;

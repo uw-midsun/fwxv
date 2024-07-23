@@ -45,15 +45,14 @@ def flash_run(entry, flash_type):
         '-f interface/{}.cfg'.format(PROBE),
         '-f target/stm32f1x.cfg',
         '-f {}/stm32f1-openocd.cfg'.format(PLATFORM_DIR),
+        '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
     ]
     if flash_type == 'default':
         OPENOCD_CFG += [
-            '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
             '-c "stm_flash {}"'.format(entry),
         ]
     elif flash_type == 'application':
         OPENOCD_CFG+= [
-            '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
             '-c "stm_flash_bootloader_application {}"'.format(entry),
         ]
     elif flash_type == 'bootloader':

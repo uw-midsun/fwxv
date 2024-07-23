@@ -1,6 +1,6 @@
 #pragma once
 #include "boot_flash.h"
-#include "can.h"
+#include "boot_can.h"
 #include "can_datagram.h"
 #include "global.h"
 
@@ -40,7 +40,7 @@ BootloaderError bootloader_get_err(void);
 
 BootloaderError bootloader_init(void);
 
-BootloaderError bootloader_run(CanMessage *msg);
+BootloaderError bootloader_run(Boot_CanMessage *msg);
 
 typedef struct {
   BootloaderStates state;

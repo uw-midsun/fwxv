@@ -2,22 +2,22 @@
 
 uint8_t error_buffer[DGRAM_MAX_MSG_SIZE];
 
-can_datagram_t unpack_datagram(CanMessage *msg, bool first_byte_received) {
+can_datagram_t unpack_datagram(Boot_CanMessage *msg, bool first_byte_received) {
   can_datagram_t ret_datagram;
   do {
-    switch (msg->id.raw) {
+    switch (msg->id) {
       case CAN_ARBITRATION_START_ID:
-        ret_datagram.datagram_type_id = msg->id.raw;
+        ret_datagram.datagram_type_id = msg->id;
         ret_datagram.payload.start.node_ids = msg->data_u16[0];
         ret_datagram.payload.start.data_len = msg->data_u16[1];
         break;
       case CAN_ARBITRATION_START_FLASH_ID:
-        ret_datagram.datagram_type_id = msg->id.raw;
+        ret_datagram.datagram_type_id = msg->id;
         ret_datagram.payload.data.binary_data = msg->data_u8;
         break;
       case CAN_ARBITRATION_FLASH_ID:
         if (first_byte_received) {
-          ret_datagram.datagram_type_id = msg->id.raw;
+          ret_datagram.datagram_type_id = msg->id;
           ret_datagram.payload.data.binary_data = msg->data_u8;
         }
         break;
@@ -34,7 +34,7 @@ can_datagram_t unpack_datagram(CanMessage *msg, bool first_byte_received) {
 BootloaderError can_datagram_transmit_error(BootloaderError error) {
   // [ BootloaderError, TBD ]
   error_buffer[0] = error;
-  can_hw_transmit(CAN_ARBITRATION_FAULT_ID, false, error_buffer, sizeof(error_buffer));
+  boot_can_transmit(CAN_ARBITRATION_FAULT_ID, false, error_buffer, sizeof(error_buffer));
 
   return BOOTLOADER_ERROR_NONE;
 }
