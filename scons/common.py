@@ -25,7 +25,7 @@ def parse_config(entry):
     return ret
 
 
-def flash_run(entry):
+def flash_run(entry, flash_type):
     '''flash and run file, return a pyserial object which monitors the device serial output'''
     try:
         output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
@@ -45,7 +45,44 @@ def flash_run(entry):
         '-f interface/{}.cfg'.format(PROBE),
         '-f target/stm32f1x.cfg',
         '-f {}/stm32f1-openocd.cfg'.format(PLATFORM_DIR),
-        '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
+    ]
+    if flash_type == 'default':
+        OPENOCD_CFG += [
+            '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
+            '-c "stm_flash {}"'.format(entry),
+        ]
+    elif flash_type == 'application':
+        OPENOCD_CFG+= [
+            '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
+            '-c "stm_flash_bootloader_application {}"'.format(entry),
+        ]
+    elif flash_type == 'bootloader':
+        OPENOCD_CFG += [
+            '-c "stm_flash {}"'.format(entry)
+        ]
+    else:
+        raise ValueError('Invalid flash_type')
+    
+    OPENOCD_CFG.append('-c shutdown')
+
+    cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
+
+    subprocess.run(cmd, shell=True).check_returncode()
+
+    print("Flash complete")
+
+def flash_bootloader(entry):
+    '''flashes can-bootloader'''
+    OPENOCD = 'openocd'
+    OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
+    PROBE = 'cmsis-dap'
+    PLATFORM_DIR = 'platform'
+    OPENOCD_CFG = [
+        OPENOCD,
+        '-s {}'.format(OPENOCD_SCRIPT_DIR),
+        '-f interface/{}.cfg'.format(PROBE),
+        '-f target/stm32f1x.cfg',
+        '-f {}/stm32f1-openocd.cfg'.format(PLATFORM_DIR),
         '-c "stm_flash {}"'.format(entry),
         '-c shutdown'
     ]
@@ -53,4 +90,4 @@ def flash_run(entry):
 
     subprocess.run(cmd, shell=True).check_returncode()
 
-    print("Flash complete")
+    print("Bootloader flash complete")

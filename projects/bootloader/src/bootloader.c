@@ -8,7 +8,8 @@ static BootloaderStateData prv_bootloader = { .state = BOOTLOADER_UNINITIALIZED,
                                               .first_byte_received = false };
 
 BootloaderError bootloader_init() {
-  for (size_t page = 1; page < NUM_FLASH_PAGES - 1; page++) {
+  size_t page = 0;
+  for (page = 1 + ((APP_START_ADDRESS - 0x08000000) / BOOTLOADER_PAGE_BYTES); page < NUM_FLASH_PAGES - 1; page++) {
     if (boot_flash_erase(page)) {
       return BOOTLOADER_FLASH_ERR;
     }
@@ -122,9 +123,9 @@ static BootloaderError bootloader_jump_app() {
   void (*app_reset_handler)(void) = (void *)(volatile uint32_t *)(APP_START_ADDRESS + 0x4);
   
   // Updating main stack pointer to be the value stored at APP_START_ADDRESS
-  __set_MSP(*(volatile uint32_t *)APP_START_ADDRESS);
+  // __set_MSP(*(volatile uint32_t *)APP_START_ADDRESS);
 
-  app_reset_handler();
+  // app_reset_handler();
 
   return BOOTLOADER_ERROR_NONE;
 }
@@ -138,7 +139,7 @@ static BootloaderError bootloader_data_ready() {
     buffer_len = sizeof(datagram.payload.data);
   }
 
-  boot_flash_write(prv_bootloader.current_address, datagram.payload.data.binary_data, buffer_len);
+  // boot_flash_write(prv_bootloader.current_address, datagram.payload.data.binary_data, buffer_len);
   prv_bootloader.bytes_written += buffer_len;
   prv_bootloader.current_address += prv_bootloader.bytes_written;
   prv_bootloader.first_byte_received = true;
@@ -159,7 +160,7 @@ static BootloaderError bootloader_data_receive() {
     buffer_len = sizeof(datagram.payload.data);
   }
 
-  boot_flash_write(prv_bootloader.current_address, datagram.payload.data.binary_data, buffer_len);
+  // boot_flash_write(prv_bootloader.current_address, datagram.payload.data.binary_data, buffer_len);
   prv_bootloader.bytes_written += buffer_len;
   prv_bootloader.current_address += prv_bootloader.bytes_written;
 

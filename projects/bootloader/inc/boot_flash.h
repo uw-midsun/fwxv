@@ -5,7 +5,7 @@
 #include "global.h"
 #include "stm32f10x.h"
 
-#define NUM_FLASH_PAGES 128
+#define NUM_FLASH_PAGES 64
 
 #define BOOTLOADER_ADDR_TO_PAGE(addr) \
   (((uintptr_t)(addr) - (uintptr_t)APP_START_ADDRESS) / BOOTLOADER_PAGE_BYTES)

@@ -1,7 +1,7 @@
 #pragma once
 
 #define NODE_ID 0                    // Maybe write this into flash memory? Not determined currently
-#define APP_START_ADDRESS 0x8000400  // Defined in linkerscript
+#define APP_START_ADDRESS 0x8001000  // Defined in linkerscript (4K BYTES)
 #define APP_END_ADDRESS 0x08010000   // Defined in linkerscript
 
 // ERROR DATA

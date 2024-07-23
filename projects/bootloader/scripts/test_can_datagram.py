@@ -86,7 +86,7 @@ class TestCanDatagramSender(unittest.TestCase):
             node_ids=TEST_NODES,
             data=bytearray(TEST_DATA))
 
-        sender.send(message, False)
+        sender.send(message, True)
 
         recv_datagram = []
         listener_message = listener.get_message()
@@ -114,7 +114,7 @@ class TestCanDatagramListener(unittest.TestCase):
             datagram_type_id=TEST_DATAGRAM_TYPE_ID,
             node_ids=TEST_NODES,
             data=bytearray(TEST_DATA))
-        sender.send(message, False)
+        sender.send(message, True)
 
         timeout = time.time() + 10
         while not self.callback_triggered:

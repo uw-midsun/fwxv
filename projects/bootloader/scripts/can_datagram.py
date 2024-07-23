@@ -170,7 +170,7 @@ class DatagramSender:
             bitrate=bitrate,
             receive_own_messages=receive_own_messages)
 
-    def send(self, message, extend, sender_id=0):
+    def send(self, message, start, sender_id=0):
         '''Send a Datagram over CAN'''
         assert isinstance(message, Datagram)
         start_message = message.pack()
@@ -178,16 +178,21 @@ class DatagramSender:
 
         message_extended_arbitration = False
         can_messages = []
-        if not extend:
+        if start:
             can_messages.append(can.Message(arbitration_id=CAN_START_ARBITRATION_ID,
                                             data=start_message,
                                             is_extended_id=message_extended_arbitration))
 
-        # Populate an array with the can message from the library
-        for chunk_message in chunk_messages:
             can_messages.append(can.Message(arbitration_id=message._datagram_type_id,
-                                            data=chunk_message,
+                                            data=chunk_messages[0],
                                             is_extended_id=message_extended_arbitration))
+
+        else:
+            # Populate an array with the can message from the library
+            for chunk_message in chunk_messages:
+                can_messages.append(can.Message(arbitration_id=message._datagram_type_id,
+                                                data=chunk_message,
+                                                is_extended_id=message_extended_arbitration))
 
         for msg in can_messages:
             self.bus.send(msg)

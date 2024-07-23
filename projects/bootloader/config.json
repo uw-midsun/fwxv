@@ -1,3 +1,6 @@
 {
+    "arm_libs": [
+    "stm32f10x"
+    ],
     "can": true
 }

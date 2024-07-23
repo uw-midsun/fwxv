@@ -38,6 +38,10 @@ BootloaderStates bootloader_get_state(void);
  */
 BootloaderError bootloader_get_err(void);
 
+BootloaderError bootloader_init(void);
+
+BootloaderError bootloader_run(CanMessage *msg);
+
 typedef struct {
   BootloaderStates state;
   BootloaderError error;
