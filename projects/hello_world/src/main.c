@@ -15,7 +15,7 @@ int main(void) {
 
   while (1) {
     out = prv_my_func(&in);
-    printf("In %d, Out %d\n  Hello World", in, out);
+    LOG_DEBUG("Hello World %d\n", out);
   }
   return 0;
 }
