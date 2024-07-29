@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "log.h"
 #define BUF_SIZE 10        // Any defined constants or preprocessor directives
 static int buf[BUF_SIZE];  // Any static/global declarations
 
