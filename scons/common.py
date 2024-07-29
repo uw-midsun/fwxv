@@ -69,24 +69,3 @@ def flash_run(entry, flash_type):
     subprocess.run(cmd, shell=True).check_returncode()
 
     print("Flash complete")
-
-def flash_bootloader(entry):
-    '''flashes can-bootloader'''
-    OPENOCD = 'openocd'
-    OPENOCD_SCRIPT_DIR = '/usr/share/openocd/scripts/'
-    PROBE = 'cmsis-dap'
-    PLATFORM_DIR = 'platform'
-    OPENOCD_CFG = [
-        OPENOCD,
-        '-s {}'.format(OPENOCD_SCRIPT_DIR),
-        '-f interface/{}.cfg'.format(PROBE),
-        '-f target/stm32f1x.cfg',
-        '-f {}/stm32f1-openocd.cfg'.format(PLATFORM_DIR),
-        '-c "stm_flash {}"'.format(entry),
-        '-c shutdown'
-    ]
-    cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
-
-    subprocess.run(cmd, shell=True).check_returncode()
-
-    print("Bootloader flash complete")

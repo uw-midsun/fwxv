@@ -2,11 +2,7 @@
 #include "boot_flash.h"
 #include "boot_can.h"
 #include "can_datagram.h"
-#include "global.h"
-
-typedef struct {
-  // INCOMPLETE
-} BootloaderConfig;
+#include "bootloader_mcu.h"
 
 // STATE MACHINE
 typedef enum {
@@ -26,6 +22,20 @@ typedef enum {
   BOOTLOADER_FAULT
 } BootloaderStates;
 
+typedef struct {
+  uintptr_t application_start;
+  uintptr_t current_address;
+  uint32_t bytes_written;
+  uint32_t binary_size;
+  uint16_t buffer_index;
+  
+  BootloaderStates state;
+  BootloaderError error;
+  uint16_t target_nodes;
+  bool first_byte_received;
+
+} BootloaderStateData;
+
 /**
  * @brief gets the current state machine state of the bootloader
  * @return Bootloader's current state type
@@ -38,16 +48,8 @@ BootloaderStates bootloader_get_state(void);
  */
 BootloaderError bootloader_get_err(void);
 
+BootloaderStateData bootloader_get_state_data(void);
+
 BootloaderError bootloader_init(void);
 
 BootloaderError bootloader_run(Boot_CanMessage *msg);
-
-typedef struct {
-  BootloaderStates state;
-  BootloaderError error;
-  bool first_byte_received;
-
-  uintptr_t current_address;
-  uint32_t bytes_written;
-  uint32_t binary_size;
-} BootloaderStateData;

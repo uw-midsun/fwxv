@@ -1,6 +1,8 @@
 '''This client script handles datagram protocol communication between devices on the CAN'''
 
 import can
+import time
+import bootloader_id
 
 DEFAULT_CHANNEL = 'can0'
 CAN_BITRATE = 500000
@@ -10,9 +12,6 @@ MIN_BYTEARRAY_SIZE = 4
 
 NODE_IDS_OFFSET = 0
 DATA_SIZE_OFFSET = 2
-
-CAN_START_ARBITRATION_ID = 30
-CAN_ARBITRATION_FLASH_ID = 31
 
 
 class DatagramTypeError(Exception):
@@ -58,9 +57,7 @@ class Datagram:
         node_ids = self._pack_nodeids(self._node_ids)
 
         return bytearray([
-            *node_ids,
-            len(self._data) & 0xff,
-            (len(self._data) >> 8) & 0xff,
+            *node_ids
         ])
 
     @property
@@ -170,34 +167,51 @@ class DatagramSender:
             bitrate=bitrate,
             receive_own_messages=receive_own_messages)
 
-    def send(self, message, start, sender_id=0):
+    def send(self, message, sender_id=0):
         '''Send a Datagram over CAN'''
         assert isinstance(message, Datagram)
-        start_message = message.pack()
+        datagram = message.pack()
+        datagram.extend(message.data)
+
+        message_extended_arbitration = False
+        can_message = can.Message(arbitration_id=message._datagram_type_id,
+                                            data=datagram,
+                                            is_extended_id=message_extended_arbitration)
+        self.bus.send(can_message)
+        print(can_message)
+        print("Message was sent on {}".format(self.bus.channel_info))
+
+    def send_data(self, message, sender_id=0):
+        '''Send a Datagram over CAN'''
+        assert isinstance(message, Datagram)
         chunk_messages = list(self._chunkify(message.data, 8))
 
         message_extended_arbitration = False
         can_messages = []
-        if start:
-            can_messages.append(can.Message(arbitration_id=CAN_START_ARBITRATION_ID,
-                                            data=start_message,
-                                            is_extended_id=message_extended_arbitration))
 
-            can_messages.append(can.Message(arbitration_id=message._datagram_type_id,
+        can_messages.append(can.Message(arbitration_id=bootloader_id.START_FLASH,
                                             data=chunk_messages[0],
                                             is_extended_id=message_extended_arbitration))
 
-        else:
-            # Populate an array with the can message from the library
-            for chunk_message in chunk_messages:
-                can_messages.append(can.Message(arbitration_id=message._datagram_type_id,
-                                                data=chunk_message,
-                                                is_extended_id=message_extended_arbitration))
+        for chunk_message in chunk_messages[1:]:
+            can_messages.append(can.Message(arbitration_id=bootloader_id.FLASH,
+                                            data=chunk_message,
+                                            is_extended_id=message_extended_arbitration))
+        binary_sent_counter = 0
+        start_time = time.time()
 
         for msg in can_messages:
-            self.bus.send(msg)
-            print(msg)
-        print("{} messages were sent on {}".format(len(can_messages), self.bus.channel_info))
+            try:
+                # print(msg, "\tBINARY SENT:", binary_sent_counter, "\tTOTAL APP SIZE:", len(message.data))
+                self.bus.send(msg)
+            except:
+                print("Bruh")
+                time.sleep(0.01)
+                self.bus.send(msg)
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print("{} messages were sent on {}. Took {}".format(len(can_messages), self.bus.channel_info, elapsed_time))
 
     @staticmethod
     def _chunkify(data, size):

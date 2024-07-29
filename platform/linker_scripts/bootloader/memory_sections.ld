@@ -14,7 +14,7 @@ _application_start = _bootloader_start + _bootloader_size;
 
 _application_size = _flash_size - (_application_start - _flash_start);
 
-_vector_table_size = 0x14c; /* used for relocating the vector table to RAM for the application */
+_vector_table_size = 0xEC; /* used for relocating the vector table to RAM for the application */
 
 /* TODO: explicitly set aside the last page for calib */
 
