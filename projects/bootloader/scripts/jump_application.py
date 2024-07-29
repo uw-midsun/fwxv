@@ -1,8 +1,5 @@
 from can_datagram import Datagram, DatagramSender
-
-CAN_ARBITRATION_JUMP_ID = 33
-TEST_CHANNEL = "vcan0"
-
+import bootloader_id
 
 class Jump_Application:
     def __init__(self, sender=None) -> None:
@@ -20,9 +17,9 @@ class Jump_Application:
         print(f"Starting jump application process for boards {node_ids}...")
 
         jump_datagram = Datagram(
-            datagram_type_id=CAN_ARBITRATION_JUMP_ID,
+            datagram_type_id=bootloader_id.JUMP,
             node_ids=node_ids,
             data=bytearray(),
         )
-        self._sender.send(jump_datagram, False)
+        self._sender.send(jump_datagram)
         print(f"Jump application completed for boards {node_ids}")

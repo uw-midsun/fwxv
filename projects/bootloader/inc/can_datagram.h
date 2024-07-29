@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #include "boot_can.h"
-#include "global.h"
+#include "bootloader_mcu.h"
 
 #define DGRAM_MAX_MSG_SIZE 8
 
@@ -18,35 +18,27 @@
 #define CAN_ARBITRATION_JUMP_ID 33
 #define CAN_ARBITRATION_FAULT_ID 34
 
-#define CAN_DATAGRAM_SOF 0xAA
-#define CAN_DATAGRAM_EOF 0xBB
-
 #define CAN_BITRATE 500000
 
 #define MIN_BYTEARRY_SIZE 4
-
-#define NODE_IDS_OFFSET 0
-#define DATA_SIZE_OFFSET 2
-
-#define LITTLE_ENDIANIZE(value, outbuf)                 \
-  for (size_t byte = 0; byte < sizeof(value); byte++) { \
-    outbuf[byte] = value >> (8 * byte) & 0xFF;          \
-  }
 
 typedef struct {
   uint8_t datagram_type_id;  // Set as arbitration id
   union {
     struct {
       uint16_t node_ids;
-      uint16_t data_len;
+      uint32_t data_len;
     } start;
     struct {
       uint8_t *binary_data;
     } data;
+    struct {
+      uint16_t node_ids;
+    } jump_app;
     struct {
       // TO BE DEFINED
     } error;
   } payload;
 } can_datagram_t;
 
-can_datagram_t unpack_datagram(Boot_CanMessage *msg, bool first_byte_received);
+can_datagram_t unpack_datagram(Boot_CanMessage *msg, uint16_t *target_nodes);

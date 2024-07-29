@@ -1,11 +1,6 @@
 from can_datagram import Datagram, DatagramSender
+import bootloader_id
 import os
-from validation import Validation
-
-CAN_ARBITRATION_FLASH_ID = 32
-CAN_ARBITRATION_START_FLASH_ID = 31
-TEST_CHANNEL = "vcan0"
-
 
 class Flash_Application:
     def __init__(self, bin_path, sender=None) -> None:
@@ -57,31 +52,26 @@ class Flash_Application:
         print(f"Starting flash process")
         print(f'Sending binary data with size of {self._bin_size}...\n\n')
 
+        start_datagram = Datagram(
+            datagram_type_id=bootloader_id.START,
+            node_ids=node_ids,
+            data=bytearray([
+                self._bin_size & 0xff,
+                (self._bin_size >> 8) & 0xff,
+                (self._bin_size >> 16) & 0xff,
+                (self._bin_size >> 24) & 0xff])
+        )
+
         with open(self._bin_path, 'rb') as bin_data:
             bin_content = bytearray(bin_data.read())
+        
+        flash_datagram = Datagram(
+            datagram_type_id=bootloader_id.FLASH,
+            node_ids=node_ids,
+            data=bin_content
+        )
 
-        if len(bin_content) <= 8:
-            flash_start_datagram = Datagram(
-                datagram_type_id=CAN_ARBITRATION_START_FLASH_ID,
-                node_ids=node_ids,
-                data=bin_content
-            )
-
-            self._sender.send(flash_start_datagram)
-
-        else:
-            flash_start_datagram = Datagram(
-                datagram_type_id=CAN_ARBITRATION_START_FLASH_ID,
-                node_ids=node_ids,
-                data=bin_content
-            )
-            flash_datagram = Datagram(
-                datagram_type_id=CAN_ARBITRATION_FLASH_ID,
-                node_ids=node_ids,
-                data=bin_content[8:]
-            )
-
-        self._sender.send(flash_start_datagram, True)
-        self._sender.send(flash_datagram, False)
+        self._sender.send(start_datagram)
+        self._sender.send_data(flash_datagram)
 
         print(f'\n\nFinished sending flash requirements to boards {node_ids}...')

@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "global.h"
+#include "bootloader_mcu.h"
 #include "stm32f10x.h"
 #include "stm32f10x_gpio.h"
 #include "stm32f10x_can.h"

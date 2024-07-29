@@ -1,6 +1,7 @@
 #include "bootloader.h"
 
-static uint8_t flash_buffer[8];
+// Store CAN traffic in 1024 byte buffer to write to flash
+static uint8_t flash_buffer[BOOTLOADER_PAGE_BYTES];
 
 static can_datagram_t datagram;
 static BootloaderStateData prv_bootloader = { .state = BOOTLOADER_UNINITIALIZED,
@@ -8,16 +9,13 @@ static BootloaderStateData prv_bootloader = { .state = BOOTLOADER_UNINITIALIZED,
                                               .first_byte_received = false };
 
 BootloaderError bootloader_init() {
-  size_t page = 0;
-  for (page = 1 + ((APP_START_ADDRESS - 0x08000000) / BOOTLOADER_PAGE_BYTES); page < NUM_FLASH_PAGES - 1; page++) {
-    if (boot_flash_erase(page)) {
-      return BOOTLOADER_FLASH_ERR;
-    }
-  }
   prv_bootloader.bytes_written = 0;
   prv_bootloader.binary_size = 0;
+  prv_bootloader.application_start = APP_START_ADDRESS;
   prv_bootloader.current_address = APP_START_ADDRESS;
   prv_bootloader.state = BOOTLOADER_IDLE;
+  prv_bootloader.target_nodes = 0;
+  prv_bootloader.buffer_index = 0;
 
   return BOOTLOADER_ERROR_NONE;
 }
@@ -25,7 +23,10 @@ BootloaderError bootloader_init() {
 static BootloaderError bootloader_switch_states(const BootloaderStates new_state) {
   BootloaderError return_err = BOOTLOADER_ERROR_NONE;
   BootloaderStates current_state = prv_bootloader.state;
-
+  if (current_state == new_state) {
+    return return_err;
+  }
+  
   switch (current_state) {
     case BOOTLOADER_IDLE:
       if (new_state == BOOTLOADER_JUMP_APP || new_state == BOOTLOADER_START ||
@@ -104,8 +105,16 @@ static BootloaderError bootloader_handle_arbitration_id(Boot_CanMessage *msg) {
 }
 
 static BootloaderError bootloader_start() {
+  size_t page = 0;
+  for (page = 1 + ((APP_START_ADDRESS - 0x08000000) / BOOTLOADER_PAGE_BYTES); page < NUM_FLASH_PAGES; page++) {
+    if (boot_flash_erase(page)) {
+      return BOOTLOADER_FLASH_ERR;
+    }
+  }
+
   prv_bootloader.binary_size = datagram.payload.start.data_len;
   prv_bootloader.bytes_written = 0;
+  prv_bootloader.buffer_index = 0;
   prv_bootloader.error = 0;
   prv_bootloader.first_byte_received = false;
 
@@ -118,30 +127,19 @@ static BootloaderError bootloader_start() {
 }
 
 static BootloaderError bootloader_jump_app() {
-  // Adding 32 bits from the applications main stack pointer to pull the function from
-  // the application reset handler (Reset vector)
-  void (*app_reset_handler)(void) = (void *)(volatile uint32_t *)(APP_START_ADDRESS + 0x4);
-  
-  // Updating main stack pointer to be the value stored at APP_START_ADDRESS
-  // __set_MSP(*(volatile uint32_t *)APP_START_ADDRESS);
+  __asm volatile (
+        "LDR     R0, =prv_bootloader  \n"
+        "LDR     R1, [R0]             \n"
+        "LDR     R2, [R1, #4]         \n"
+        "BX      R2                   \n"
+    );
 
-  // app_reset_handler();
-
-  return BOOTLOADER_ERROR_NONE;
+  return BOOTLOADER_ERROR_NONE; // Should trigger error
 }
 
 static BootloaderError bootloader_data_ready() {
-  uint8_t buffer_len = 0;
-
-  if (prv_bootloader.binary_size - prv_bootloader.bytes_written == BOOTLOADER_WRITE_BYTES) {
-    buffer_len = BOOTLOADER_WRITE_BYTES;
-  } else {
-    buffer_len = sizeof(datagram.payload.data);
-  }
-
-  // boot_flash_write(prv_bootloader.current_address, datagram.payload.data.binary_data, buffer_len);
-  prv_bootloader.bytes_written += buffer_len;
-  prv_bootloader.current_address += prv_bootloader.bytes_written;
+  memcpy(flash_buffer, datagram.payload.data.binary_data, 8);
+  prv_bootloader.buffer_index = 8;
   prv_bootloader.first_byte_received = true;
   return BOOTLOADER_ERROR_NONE;
 
@@ -151,18 +149,32 @@ static BootloaderError bootloader_data_receive() {
   if (!prv_bootloader.first_byte_received) {
     return BOOTLOADER_INTERNAL_ERR;
   }
-
-  uint8_t buffer_len = 0;
-
-  if (prv_bootloader.binary_size - prv_bootloader.bytes_written == BOOTLOADER_WRITE_BYTES) {
-    buffer_len = BOOTLOADER_WRITE_BYTES;
-  } else {
-    buffer_len = sizeof(datagram.payload.data);
+  if (prv_bootloader.buffer_index + 8 > BOOTLOADER_PAGE_BYTES) {
+    return BOOTLOADER_BUFFER_OVERFLOW;
   }
 
-  // boot_flash_write(prv_bootloader.current_address, datagram.payload.data.binary_data, buffer_len);
-  prv_bootloader.bytes_written += buffer_len;
-  prv_bootloader.current_address += prv_bootloader.bytes_written;
+  memcpy(flash_buffer + prv_bootloader.buffer_index, datagram.payload.data.binary_data, 8);
+  prv_bootloader.buffer_index += 8;
+
+  if (prv_bootloader.buffer_index == BOOTLOADER_PAGE_BYTES) {
+    // boot_flash_write(prv_bootloader.current_address, flash_buffer, BOOTLOADER_PAGE_BYTES);
+
+    prv_bootloader.bytes_written += BOOTLOADER_PAGE_BYTES;
+    prv_bootloader.current_address += BOOTLOADER_PAGE_BYTES;
+    prv_bootloader.buffer_index = 0;
+  }
+
+  if (prv_bootloader.binary_size - prv_bootloader.bytes_written == prv_bootloader.buffer_index) {
+    // boot_flash_write(prv_bootloader.current_address, flash_buffer, prv_bootloader.buffer_index);
+
+    prv_bootloader.bytes_written += prv_bootloader.buffer_index;
+    prv_bootloader.current_address += prv_bootloader.bytes_written;
+    prv_bootloader.buffer_index = 0;
+  }
+
+  if (prv_bootloader.bytes_written == prv_bootloader.binary_size) {
+    bootloader_jump_app();
+  }
 
   return BOOTLOADER_ERROR_NONE;
 };
@@ -201,34 +213,26 @@ BootloaderError bootloader_get_err() {
 BootloaderStates bootloader_get_state(void) {
   return prv_bootloader.state;
 }
-
-static BootloaderError bootloader_unpack_message(Boot_CanMessage *msg, can_datagram_t *datagram) {
-  *datagram = unpack_datagram(msg, prv_bootloader.first_byte_received);
-
-  if (!prv_bootloader.first_byte_received && msg->id == CAN_ARBITRATION_START_FLASH_ID) {
-    prv_bootloader.first_byte_received = true;
+BootloaderStateData bootloader_get_state_data(void) {
+  if (prv_bootloader.error) {
+    flash_buffer[0] = 1;
   }
-
-  if (datagram->datagram_type_id == CAN_ARBITRATION_START_ID) {
-    prv_bootloader.binary_size = datagram->payload.start.data_len;
-  }
-
-  return BOOTLOADER_ERROR_NONE;
+  return prv_bootloader;
 }
 
 BootloaderError bootloader_run(Boot_CanMessage *msg) {
   BootloaderError ret = BOOTLOADER_ERROR_NONE;
 
-  if (bootloader_unpack_message(msg, &datagram)) {
-    return BOOTLOADER_INTERNAL_ERR;
+  if (prv_bootloader.state == BOOTLOADER_UNINITIALIZED) {
+    return BOOTLOADER_ERROR_UNINITIALIZED;
   }
 
-  if (datagram.datagram_type_id == CAN_ARBITRATION_START_ID) {
-    if (!(datagram.payload.start.node_ids & NODE_ID)) {
-      // Return because this device is not the target
-      return BOOTLOADER_ERROR_NONE;
-    }
-  }
+  datagram = unpack_datagram(msg, &prv_bootloader.target_nodes);
+
+  // if (!(prv_bootloader.target_nodes & (1 << _node_id))) {
+  //   // Not the target node
+  //   return BOOTLOADER_ERROR_NONE;
+  // }
 
   ret = bootloader_handle_arbitration_id(msg);
   ret = bootloader_run_state();
