@@ -1,12 +1,15 @@
 #include "cell_sense.h"
 
 LtcAfeStorage *ltc_afe_storage;
+static BmsStorage *bms_storage;
 
 #define TEMP_RESISTANCE 10000
-#define VREF2 30000
+#define VREF2 30000.0f                      // in 100uV
+#define ADC_GAIN (VREF2 / ((1 << 15) - 1))  // 100uV / sample
 #define TABLE_SIZE 125
-#define LTC_RETRIES 3
+#define LTC_RETRIES 5
 
+#define CELL_TEMP_OUTLIER 80
 uint8_t afe_message_index = 0;
 
 typedef enum ThermistorMap {
@@ -40,7 +43,11 @@ static const uint16_t s_resistance_lookup[TABLE_SIZE] = {
 
 int calculate_temperature(uint16_t thermistor) {
   // INCOMPLETE
-  uint16_t thermistor_resistance = (thermistor * TEMP_RESISTANCE) / (VREF2 - thermistor);
+  thermistor = (uint16_t)(thermistor * ADC_GAIN);  // 100uV
+  LOG_DEBUG("Thermistor Voltage: %d\n", thermistor);
+  uint16_t thermistor_resistance = (thermistor * TEMP_RESISTANCE) / (VREF2 - thermistor);  // Ohms
+  LOG_DEBUG("Thermistor Resistance: %d\n", thermistor_resistance);
+  delay_ms(10);
   uint16_t min_diff = abs(thermistor_resistance - s_resistance_lookup[0]);
 
   for (int i = 1; i < TABLE_SIZE; ++i) {
@@ -64,7 +71,7 @@ static const LtcAfeSettings s_afe_settings = {
   .adc_mode = LTC_AFE_ADC_MODE_7KHZ,
 
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
-  .aux_bitset = { 0x15, 0x15, 0x15 },
+  .aux_bitset = { 0x14, 0x15, 0x15 },
 
   .num_devices = 3,
   .num_cells = 12,
@@ -182,7 +189,7 @@ StatusCode cell_sense_run() {
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
     LOG_DEBUG("CELL %d: %d\n\r", (uint8_t)cell,
               ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]);
-    delay_ms(3);
+    delay_ms(5);
     max_voltage =
         ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > max_voltage
             ? ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]]
@@ -198,6 +205,12 @@ StatusCode cell_sense_run() {
   LOG_DEBUG("MIN VOLTAGE: %d\n", min_voltage);
   LOG_DEBUG("UNBALANCE: %d\n", max_voltage - min_voltage);
   set_battery_info_max_cell_v(max_voltage);
+  set_battery_info_min_cell_v(min_voltage);
+
+  if (max_voltage >= SOLAR_VOLTAGE_THRESHOLD) {
+    bms_open_solar();
+  }
+
   if (max_voltage >= CELL_OVERVOLTAGE) {
     LOG_DEBUG("OVERVOLTAGE\n");
     fault_bps_set(BMS_FAULT_OVERVOLTAGE);
@@ -208,11 +221,11 @@ StatusCode cell_sense_run() {
     fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
-  if (max_voltage - min_voltage >= CELL_UNBALANCED) {
-    LOG_DEBUG("UNBALANCED\n");
-    fault_bps_set(BMS_FAULT_UNBALANCE);
-    status = STATUS_CODE_INTERNAL_ERROR;
-  }
+  // if (max_voltage - min_voltage >= CELL_UNBALANCED) {
+  //  LOG_DEBUG("UNBALANCED\n");
+  //  fault_bps_set(BMS_FAULT_UNBALANCE);
+  //  status = STATUS_CODE_INTERNAL_ERROR;
+  //}
 
   if (min_voltage >= AFE_BALANCING_UPPER_THRESHOLD) {
     min_voltage += 20;
@@ -220,21 +233,21 @@ StatusCode cell_sense_run() {
              min_voltage >= AFE_BALANCING_LOWER_THRESHOLD) {
     min_voltage += 100;
   } else {
-    min_voltage += 250;
+    min_voltage += 100;
   }
 
   // Balancing
-  for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-    if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
-      ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
-    } else {
-      ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
-    }
-  }
-
-  // LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
+  // for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
+  //  if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
+  //    ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
+  //  } else {
+  //    ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
+  //  }
+  //}
+  LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
 
   // Log and check all thermistor values based on settings bitset
+  uint16_t max_temp = 0;
   for (uint8_t dev = 0; dev < s_afe_settings.num_devices; dev++) {
     for (uint8_t thermistor = 0; thermistor < LTC_AFE_MAX_THERMISTORS_PER_DEVICE; thermistor += 1) {
       if ((s_afe_settings.aux_bitset[dev] >> thermistor) & 0x1) {
@@ -243,15 +256,30 @@ StatusCode cell_sense_run() {
             calculate_temperature(ltc_afe_storage->aux_voltages[index]);
         LOG_DEBUG("Thermistor reading dev %d, %d: %d\n", dev, thermistor,
                   ltc_afe_storage->aux_voltages[index]);
+        max_temp = ltc_afe_storage->aux_voltages[index] > max_temp
+                       ? ltc_afe_storage->aux_voltages[index]
+                       : max_temp;
         delay_ms(3);
-        if (ltc_afe_storage->aux_result_lookup[index] >= CELL_MAX_TEMPERATURE) {
-          LOG_DEBUG("CELL OVERTEMP\n");
-          fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
-          status = STATUS_CODE_INTERNAL_ERROR;
+        if (ltc_afe_storage->aux_voltages[index] > CELL_TEMP_OUTLIER) {
+          continue;
+        }
+        if (bms_storage->current_storage.current < 0) {
+          if (ltc_afe_storage->aux_voltages[index] >= CELL_MAX_TEMPERATURE_DISCHARGE) {
+            LOG_DEBUG("CELL OVERTEMP\n");
+            fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
+            status = STATUS_CODE_INTERNAL_ERROR;
+          }
+        } else {
+          if (ltc_afe_storage->aux_voltages[index] >= CELL_MAX_TEMPERATURE_CHARGE) {
+            LOG_DEBUG("CELL OVERTEMP\n");
+            fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
+            status = STATUS_CODE_INTERNAL_ERROR;
+          }
         }
       }
     }
   }
+  ltc_afe_storage->max_temp = max_temp;
 
   // CAN Logging
   // AFE messages are logged with 3 voltages at a time, and an index 0-3 to encompass all voltages
@@ -294,8 +322,9 @@ StatusCode cell_discharge(LtcAfeStorage *afe_storage) {
   return ltc_afe_impl_write_config(afe_storage);
 }
 
-StatusCode cell_sense_init(LtcAfeStorage *afe_storage) {
-  ltc_afe_storage = afe_storage;
+StatusCode cell_sense_init(BmsStorage *bms_store) {
+  bms_storage = bms_store;
+  ltc_afe_storage = &bms_store->ltc_afe_storage;
   ltc_afe_init(ltc_afe_storage, &s_afe_settings);
   delay_ms(10);
   tasks_init_task(cell_sense_conversions, TASK_PRIORITY(2), NULL);

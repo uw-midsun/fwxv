@@ -10,7 +10,7 @@ static void prv_buzzer_beep(SoftTimerId id) {
     soft_timer_start(&s_timer);
     beep_flag = false;
   } else {
-    pwm_set_dc(PWM_TIMER_1, 0, 3);
+    pwm_set_dc(PWM_TIMER_1, 0, 3, true);
     beep_flag = true;
   }
 }
@@ -28,7 +28,7 @@ StatusCode get_button_press(void) {
   if ((~(pca9555_reg_val)&REGEN_BTN_MASK) != 0) {
     LOG_DEBUG("REGEN PRESSED\n");
     if (beep_flag && !get_battery_status_fault() && !get_pd_status_bps_persist()) {
-      pwm_set_dc(PWM_TIMER_1, 5, 3);
+      pwm_set_dc(PWM_TIMER_1, 5, 3, true);
       soft_timer_start(&s_timer);
     }
     notify(cc_notify_task, REGEN_BUTTON_EVENT);
@@ -36,7 +36,7 @@ StatusCode get_button_press(void) {
   if ((~(pca9555_reg_val)&HAZARD_BTN_MASK) != 0) {
     LOG_DEBUG("HAZARD PRESSED\n");
     if (beep_flag && !get_battery_status_fault() && !get_pd_status_bps_persist()) {
-      pwm_set_dc(PWM_TIMER_1, 5, 3);
+      pwm_set_dc(PWM_TIMER_1, 5, 3, true);
       soft_timer_start(&s_timer);
     }
     notify(cc_notify_task, HAZARD_BUTTON_EVENT);
@@ -44,7 +44,7 @@ StatusCode get_button_press(void) {
   if ((~(pca9555_reg_val)&POWER_BTN_MASK) != 0) {
     LOG_DEBUG("POWER PRESSED\n");
     if (beep_flag && !get_battery_status_fault() && !get_pd_status_bps_persist()) {
-      pwm_set_dc(PWM_TIMER_1, 5, 3);
+      pwm_set_dc(PWM_TIMER_1, 5, 3, true);
       soft_timer_start(&s_timer);
     }
     notify(cc_notify_task, POWER_BUTTON_EVENT);
@@ -53,7 +53,7 @@ StatusCode get_button_press(void) {
   if ((~(pca9555_reg_val)&DRIVE_BTN_MASK) != 0) {
     LOG_DEBUG("DRIVE PRESSED\n");
     if (beep_flag && !get_battery_status_fault() && !get_pd_status_bps_persist()) {
-      pwm_set_dc(PWM_TIMER_1, 5, 3);
+      pwm_set_dc(PWM_TIMER_1, 5, 3, true);
       soft_timer_start(&s_timer);
     }
     notify(drive, DRIVE_BUTTON_EVENT);
@@ -61,7 +61,7 @@ StatusCode get_button_press(void) {
   if ((~(pca9555_reg_val)&NEUTRAL_BTN_MASK) != 0) {
     LOG_DEBUG("NEUT PRESSED\n");
     if (beep_flag && !get_battery_status_fault() && !get_pd_status_bps_persist()) {
-      pwm_set_dc(PWM_TIMER_1, 5, 3);
+      pwm_set_dc(PWM_TIMER_1, 5, 3, true);
       soft_timer_start(&s_timer);
     }
     notify(drive, NEUTRAL_BUTTON_EVENT);
@@ -69,7 +69,7 @@ StatusCode get_button_press(void) {
   if ((~(pca9555_reg_val)&REVERSE_BTN_MASK) != 0) {
     LOG_DEBUG("REV PRESSED\n");
     if (beep_flag && !get_battery_status_fault() && !get_pd_status_bps_persist()) {
-      pwm_set_dc(PWM_TIMER_1, 5, 3);
+      pwm_set_dc(PWM_TIMER_1, 5, 3, true);
       soft_timer_start(&s_timer);
     }
     notify(drive, REVERSE_BUTTON_EVENT);
@@ -81,7 +81,7 @@ StatusCode init_cc_buttons(Task *task) {
   cc_notify_task = task;
   gpio_init_pin(&buzzer, GPIO_ALTFN_PUSH_PULL, GPIO_STATE_LOW);
   pwm_init(PWM_TIMER_1, BUZZER_MICROSECONDS);
-  pwm_set_dc(PWM_TIMER_1, 0, 3);
+  pwm_set_dc(PWM_TIMER_1, 0, 3, true);
   soft_timer_init(BEEP_MS, prv_buzzer_beep, &s_timer);
   return STATUS_CODE_OK;
 }

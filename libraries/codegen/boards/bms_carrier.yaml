@@ -21,8 +21,12 @@
       signals:
         fault:
           length: 16
+        fault_val:
+          length: 16
         aux_batt_v:
-          length: 32
+          length: 16
+        afe_status:
+          length: 8
 
     battery_info:
       id: 14

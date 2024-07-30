@@ -39,6 +39,8 @@
           length: 16
         velocity_r:
           length: 16
+        brakes_enabled:
+          length: 8
 
     motor_sink_temps:
       id: 38

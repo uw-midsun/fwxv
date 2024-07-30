@@ -6,12 +6,12 @@
 
 // For setting the CAN device
 typedef enum {
-    {% for board in boards -%}
-    SYSTEM_CAN_DEVICE_{{ board | upper }} = {{ loop.index0 }},
-    {% endfor -%}
-    NUM_SYSTEM_CAN_DEVICES = {{ boards | length }}
+  {% for board in boards -%}
+  SYSTEM_CAN_DEVICE_{{ board | upper }} = {{ loop.index0 }},
+  {% endfor -%}
+  NUM_SYSTEM_CAN_DEVICES = {{ boards | length }}
 } SystemCanDevice;
 
 {% for message in messages %}
-{% if message.critical %} #define SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} ({{ message.id }}) {% else %} #define SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} (({{ message.id }} << 5) + SYSTEM_CAN_DEVICE_{{ message.sender | upper }}) {% endif %}
+{% if message.critical %}#define SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} ({{ message.id }}) {% else %} #define SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }} (({{ message.id }} << 5) + SYSTEM_CAN_DEVICE_{{ message.sender | upper }}) {% endif %}
 {% endfor %}

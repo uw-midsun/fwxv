@@ -34,3 +34,5 @@
           length: 8
         bps_persist:
           length: 16
+        bps_persist_val:
+          length: 16

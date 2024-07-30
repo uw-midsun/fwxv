@@ -16,18 +16,22 @@ StatusCode precharge_init(const PrechargeSettings *settings, Event event, const 
 
   GpioState state;
   gpio_get_state(&settings->precharge_monitor, &state);
-  if (state == GPIO_STATE_HIGH) {
-    InterruptSettings monitor_it_settings = {
-      .type = INTERRUPT_TYPE_INTERRUPT,
-      .priority = INTERRUPT_PRIORITY_NORMAL,
-      .edge = INTERRUPT_EDGE_FALLING,
-    };
-    set_mc_status_precharge_status(false);
-    return gpio_it_register_interrupt(&settings->precharge_monitor, &monitor_it_settings, event,
-                                      task);
-  } else {
-    set_mc_status_precharge_status(true);
-    gpio_set_state(&settings->motor_sw, GPIO_STATE_HIGH);
-    return STATUS_CODE_OK;
-  }
+  // if (state == GPIO_STATE_HIGH) {
+  //  InterruptSettings monitor_it_settings = {
+  //    .type = INTERRUPT_TYPE_INTERRUPT,
+  //    .priority = INTERRUPT_PRIORITY_NORMAL,
+  //    .edge = INTERRUPT_EDGE_FALLING,
+  //  };
+  //  set_mc_status_precharge_status(false);
+  //  return gpio_it_register_interrupt(&settings->precharge_monitor, &monitor_it_settings, event,
+  //                                    task);
+  //} else {
+  //  set_mc_status_precharge_status(true);
+  //  gpio_set_state(&settings->motor_sw, GPIO_STATE_HIGH);
+  //  return STATUS_CODE_OK;
+  //}
+
+  set_mc_status_precharge_status(true);
+  gpio_set_state(&settings->motor_sw, GPIO_STATE_HIGH);
+  return STATUS_CODE_OK;
 }

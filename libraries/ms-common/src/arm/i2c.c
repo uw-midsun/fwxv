@@ -150,6 +150,7 @@ StatusCode i2c_init(I2CPort i2c, const I2CSettings *settings) {
 // Do a transaction on the I2C bus
 static StatusCode prv_txn(I2CPort i2c, I2CAddress addr, uint8_t *data, size_t len, bool read) {
   // Check that bus is not busy - If it is, assume that lockup has occurred
+  StatusCode status = STATUS_CODE_OK;
   if (!s_port[i2c].multi_txn && I2C_GetFlagStatus(s_port[i2c].base, I2C_FLAG_BUSY) == SET) {
     status_ok_or_return(prv_recover_lockup(i2c));
   }
@@ -177,9 +178,10 @@ static StatusCode prv_txn(I2CPort i2c, I2CAddress addr, uint8_t *data, size_t le
   I2C_GenerateSTART(s_port[i2c].base, ENABLE);
   I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, ENABLE);
   // Wait for signal that txn is finished from ISR, then disable IT and generate stop
-  status_ok_or_return(sem_wait(&s_port[i2c].i2c_buf.wait_txn, I2C_TIMEOUT_MS));
+  status = sem_wait(&s_port[i2c].i2c_buf.wait_txn, I2C_TIMEOUT_MS);
   I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
-  if (!s_port[i2c].multi_txn) {  // In an multi exchange, need to keep line live to receive data
+  if (!s_port[i2c].multi_txn ||
+      status) {  // In an multi exchange or failed txn, need to keep line live to receive data
     I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
   }
   status_ok_or_return(s_port[i2c].exit);

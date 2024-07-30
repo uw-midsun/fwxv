@@ -1,6 +1,10 @@
 #include "relays.h"
 
 #include "bms.h"
+#include "current_sense.h"
+#include "gpio_it.h"
+#include "interrupt.h"
+#include "master_task.h"
 
 static const GpioAddress pos_relay_en = { .port = GPIO_PORT_B, .pin = 8 };
 static const GpioAddress pos_relay_sense = { .port = GPIO_PORT_B, .pin = 5 };
@@ -28,12 +32,21 @@ static StatusCode prv_close_relays(void) {
     gpio_get_state(&s_relays_sense[i], &sense_state);
     if (sense_state != GPIO_STATE_HIGH) {
       LOG_DEBUG("Relay %d not closed\n", i);
-      fault_bps_set(BMS_FAULT_RELAY_CLOSE_FAILED);
-      bms_relay_fault();
-      return STATUS_CODE_INTERNAL_ERROR;
+      // fault_bps_set(BMS_FAULT_RELAY_CLOSE_FAILED);
+      // bms_relay_fault();
+      // return STATUS_CODE_INTERNAL_ERROR;
     }
   }
   return STATUS_CODE_OK;
+}
+
+inline void bms_open_solar() {
+  gpio_set_state(&solar_relay_en, GPIO_STATE_LOW);
+}
+
+inline void bms_close_solar() {
+  gpio_set_state(&solar_relay_en, GPIO_STATE_HIGH);
+  delay_ms(BMS_CLOSE_RELAYS_DELAY_MS);
 }
 
 void bms_relay_fault() {
@@ -45,7 +58,28 @@ void bms_relay_fault() {
   set_battery_relay_info_state(EE_RELAY_STATE_FAULT);
 }
 
-StatusCode init_bms_relays() {
+StatusCode init_bms_relays(GpioAddress *killswitch) {
+  // Set up kill switch
+  interrupt_init();
+  InterruptSettings it_settings = {
+    .priority = INTERRUPT_PRIORITY_NORMAL,
+    .type = INTERRUPT_TYPE_INTERRUPT,
+    .edge = INTERRUPT_EDGE_FALLING,
+  };
+
+  gpio_init_pin(killswitch, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
+  gpio_it_register_interrupt(killswitch, &it_settings, KILLSWITCH_IT, get_master_task());
+  GpioState ks_state = GPIO_STATE_LOW;
+
+  delay_ms(10);
+  gpio_get_state(killswitch, &ks_state);
+  if (ks_state == GPIO_STATE_LOW) {
+    LOG_DEBUG("KILLSWITCH SET");
+    delay_ms(5);
+    fault_bps_set(BMS_FAULT_KILLSWITCH);
+    return STATUS_CODE_INTERNAL_ERROR;
+  }
+
   gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&solar_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);

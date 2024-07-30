@@ -30,17 +30,22 @@ StatusCode prv_fuel_gauge_read() {
   StatusCode status = STATUS_CODE_OK;
 
   status |= max17261_state_of_charge(&s_fuel_guage_storage, &s_current_storage->soc);
+  delay_ms(5);
   status |= max17261_current(&s_fuel_guage_storage, &s_current_storage->current);
+  delay_ms(5);
   status |= max17261_voltage(&s_fuel_guage_storage, &s_current_storage->voltage);
+  delay_ms(5);
   status |= max17261_temp(&s_fuel_guage_storage, &s_current_storage->temperature);
+  delay_ms(5);
   status |=
       max17261_remaining_capacity(&s_fuel_guage_storage, &s_current_storage->remaining_capacity);
+  delay_ms(5);
   status |= max17261_full_capacity(&s_fuel_guage_storage, &s_current_storage->full);
 
   // Measured voltage corresponds to one cell. Multiply it by the number of cells in series
   s_current_storage->voltage = s_current_storage->voltage * NUM_SERIES_CELLS / 10;
   LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
-  LOG_DEBUG("CURRENT: %d\n", s_current_storage->current);
+  // LOG_DEBUG("CURRENT: %ld\n", s_current_storage->current);
   LOG_DEBUG("VOLTAGE: %d\n", s_current_storage->voltage);
   LOG_DEBUG("TEMP: %d\n", s_current_storage->temperature);
   LOG_DEBUG("REMCAP: %" PRIu32 "\n", s_current_storage->remaining_capacity);
@@ -61,10 +66,13 @@ StatusCode prv_fuel_gauge_read() {
   set_battery_vt_temperature(s_current_storage->temperature);
 
   // TODO (Aryan): Validate these checks
-  if (s_current_storage->current >= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
+  if (s_current_storage->current >= MAX_SOLAR_CURRENT_A * 1000) {
+    bms_open_solar();
+  }
+  if (s_current_storage->current <= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
     fault_bps_set(BMS_FAULT_OVERCURRENT);
     return STATUS_CODE_INTERNAL_ERROR;
-  } else if (s_current_storage->current <= CURRENT_SENSE_MIN_CURRENT_A * 1000) {
+  } else if (s_current_storage->current >= CURRENT_SENSE_MIN_CURRENT_A * 1000) {
     fault_bps_set(BMS_FAULT_OVERCURRENT);
     return STATUS_CODE_INTERNAL_ERROR;
   } else if (s_current_storage->voltage >= CURRENT_SENSE_MAX_VOLTAGE_V) {
@@ -80,7 +88,7 @@ StatusCode prv_fuel_gauge_read() {
     LOG_DEBUG("Updating params\n");
     s_last_params_update = xTaskGetTickCount();
     max17261_get_learned_params(&s_fuel_guage_storage, &s_fuel_params);
-    persist_commit(&s_persist);
+    // persist_commit(&s_persist);
   }
   return status;
 }
@@ -93,9 +101,8 @@ TASK(current_sense, TASK_STACK_256) {
 
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
-      // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
-    } else if (notification & 1 << KILLSWITCH_IT) {
-      fault_bps_set(BMS_FAULT_KILLSWITCH);
+      LOG_DEBUG("ALERT_PIN triggered\n");
+      fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     }
     prv_fuel_gauge_read();
     send_task_end();
@@ -121,17 +128,13 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   i2c_init(I2C_PORT_2, i2c_settings);
 
   GpioAddress alrt_pin = { .port = GPIO_PORT_A, .pin = 7 };
-  GpioAddress kill_switch_mntr = { .port = GPIO_PORT_A, .pin = 15 };
 
-  InterruptSettings it_settings = {
-    .priority = INTERRUPT_PRIORITY_NORMAL,
-    .type = INTERRUPT_TYPE_INTERRUPT,
-    .edge = INTERRUPT_EDGE_RISING,
-  };
-  gpio_init_pin(&kill_switch_mntr, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
-  gpio_it_register_interrupt(&alrt_pin, &it_settings, ALRT_GPIO_IT, current_sense);
-  it_settings.edge = INTERRUPT_EDGE_FALLING;
-  gpio_it_register_interrupt(&kill_switch_mntr, &it_settings, KILLSWITCH_IT, current_sense);
+  // InterruptSettings it_settings = {
+  //   .priority = INTERRUPT_PRIORITY_NORMAL,
+  //   .type = INTERRUPT_TYPE_INTERRUPT,
+  //   .edge = INTERRUPT_EDGE_RISING,
+  // };
+  // gpio_it_register_interrupt(&alrt_pin, &it_settings, ALRT_GPIO_IT, current_sense);
 
   s_fuel_gauge_settings.i2c_port = I2C_PORT_2;
   s_fuel_gauge_settings.i2c_address = MAX17261_I2C_ADDR;
@@ -155,8 +158,9 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   // Soft timer period for soc & chargin check
   s_current_storage->fuel_guage_cycle_ms = fuel_guage_cycle_ms;
 
-  persist_init(&s_persist, CURRENT_SENSE_STORE_FLASH, &s_fuel_params, sizeof(s_fuel_params), false);
-  // status = max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings, &s_fuel_params);
-  // tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
+  // persist_init(&s_persist, CURRENT_SENSE_STORE_FLASH, &s_fuel_params, sizeof(s_fuel_params),
+  // true);
+  status = max17261_init(&s_fuel_guage_storage, &s_fuel_gauge_settings, &s_fuel_params);
+  tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
   return status;
 }

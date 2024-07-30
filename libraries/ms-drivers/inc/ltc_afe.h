@@ -86,6 +86,7 @@ typedef struct LtcAfeStorage {
   uint16_t cell_result_lookup[LTC_AFE_MAX_CELLS];
   uint16_t aux_result_lookup[LTC_AFE_MAX_THERMISTORS];
   uint16_t discharge_cell_lookup[LTC_AFE_MAX_CELLS];
+  uint16_t max_temp;
 
   LtcAfeSettings settings;
 } LtcAfeStorage;

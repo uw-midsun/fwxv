@@ -10,7 +10,7 @@
 #include "task.h"
 
 #define NUM_DRIVE_STATES 3
-#define NUM_DRIVE_TRANSITIONS 4
+#define NUM_DRIVE_TRANSITIONS 6
 
 DECLARE_FSM(drive);
 

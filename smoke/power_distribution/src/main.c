@@ -41,15 +41,15 @@ TASK(smoke_pd, TASK_STACK_512) {
     for (uint8_t i = 0; i < num_test_grps; i++) {
       uint16_t sense = 0;
 
-      gpio_toggle_state(&test_gpio);
+      gpio_set_state(&test_gpio, GPIO_STATE_HIGH);
       pd_set_output_group(output_groups_to_test[i], OUTPUT_STATE_ON);
       delay_ms(2000);
 
       pd_sense_output_group(output_groups_to_test[i]);
       pd_print_adc_readings(output_groups_to_test[i]);
 
-      pd_set_output_group(output_groups_to_test[i], OUTPUT_STATE_OFF);
-      gpio_toggle_state(&test_gpio);
+      // pd_set_output_group(output_groups_to_test[i], OUTPUT_STATE_OFF);
+      // gpio_toggle_state(&test_gpio);
       delay_ms(2000);
     }
   }

@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #include "exported_enums.h"
 #include "status.h"
@@ -10,6 +11,11 @@
 #define MAX_VOLTAGE 42000
 #define MIN_VOLTAGE 40000
 #define MAX_CURRENT 58.2
+
+#define MATH_PI 3.14159
+#define WHEEL_DIAMETER_CM 55.84
+#define CM_TO_INCHES 2.54
+#define MILES_TO_INCHES 63360
 
 typedef enum MainTaskBtnEvents {
   POWER_BUTTON_EVENT = 0,
