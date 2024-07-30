@@ -45,7 +45,7 @@ StatusCode prv_fuel_gauge_read() {
   // Measured voltage corresponds to one cell. Multiply it by the number of cells in series
   s_current_storage->voltage = s_current_storage->voltage * NUM_SERIES_CELLS / 10;
   LOG_DEBUG("SOC: %d\n", s_current_storage->soc);
-  LOG_DEBUG("CURRENT: %ld\n", s_current_storage->current);
+  // LOG_DEBUG("CURRENT: %ld\n", s_current_storage->current);
   LOG_DEBUG("VOLTAGE: %d\n", s_current_storage->voltage);
   LOG_DEBUG("TEMP: %d\n", s_current_storage->temperature);
   LOG_DEBUG("REMCAP: %" PRIu32 "\n", s_current_storage->remaining_capacity);
