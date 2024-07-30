@@ -88,7 +88,7 @@ StatusCode max17261_time_to_full(Max17261Storage *storage, uint16_t *ttf_ms) {
 StatusCode max17261_current(Max17261Storage *storage, int32_t *current_ua) {
   uint16_t current_reg_val = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_CURRENT, &current_reg_val));
-  *current_ua = ((int16_t)current_reg_val)*CUR_LSB;
+  *current_ua = ((int16_t)current_reg_val) * CUR_LSB;
   return STATUS_CODE_OK;
 }
 

@@ -9,10 +9,10 @@
 static PersistStorage s_persist;
 static BpsStorage s_bps_storage;
 
-#define pd_fault_ok_or_transition(fsm)                                     \
+#define pd_fault_ok_or_transition(fsm)       \
   if (check_battery_status_msg_watchdog()) { \
-    fsm_transition(fsm, POWER_STATE_FAULT);                                \
-    return;                                                                \
+    fsm_transition(fsm, POWER_STATE_FAULT);  \
+    return;                                  \
   }
 
 FSM(power_seq, NUM_POWER_STATES, TASK_STACK_256);

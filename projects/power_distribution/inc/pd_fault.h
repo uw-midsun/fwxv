@@ -5,7 +5,7 @@
 
 #include "status.h"
 
-#define BPS_FAULT_LIGHT_PERIOD_MS 500 // Signal blink frequency of 1Hz
+#define BPS_FAULT_LIGHT_PERIOD_MS 500  // Signal blink frequency of 1Hz
 
 /*
  * @brief Checks for PD fault states and updates fault bitset CAN message

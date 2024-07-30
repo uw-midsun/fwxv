@@ -109,7 +109,7 @@ static void prv_left_signal_input(Fsm *fsm, void *context) {
     fsm_transition(fsm, HAZARD);
   } else if (light_event == EE_LIGHT_TYPE_OFF) {
     fsm_transition(fsm, INIT_STATE);
-    
+
   } else if (light_event == EE_LIGHT_TYPE_SIGNAL_RIGHT) {
     fsm_transition(fsm, RIGHT_SIGNAL);
   }

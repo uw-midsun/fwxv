@@ -3,12 +3,12 @@
 #include "adc.h"
 #include "exported_enums.h"
 #include "gpio.h"
-#include "outputs.h"
-#include "power_distribution_getters.h"
-#include "soft_timer.h"
 #include "log.h"
+#include "outputs.h"
 #include "pin_defs.h"
+#include "power_distribution_getters.h"
 #include "power_distribution_setters.h"
+#include "soft_timer.h"
 
 static uint8_t s_fault_bitset = 0;
 static OutputState bps_light_state = OUTPUT_STATE_OFF;

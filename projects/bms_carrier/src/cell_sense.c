@@ -4,12 +4,12 @@ LtcAfeStorage *ltc_afe_storage;
 static BmsStorage *bms_storage;
 
 #define TEMP_RESISTANCE 10000
-#define VREF2 30000.0f // in 100uV
-#define ADC_GAIN ( VREF2 / ((1 << 15) - 1) ) // 100uV / sample
+#define VREF2 30000.0f                      // in 100uV
+#define ADC_GAIN (VREF2 / ((1 << 15) - 1))  // 100uV / sample
 #define TABLE_SIZE 125
 #define LTC_RETRIES 5
 
-#define CELL_TEMP_OUTLIER 80 
+#define CELL_TEMP_OUTLIER 80
 uint8_t afe_message_index = 0;
 
 typedef enum ThermistorMap {
@@ -43,9 +43,9 @@ static const uint16_t s_resistance_lookup[TABLE_SIZE] = {
 
 int calculate_temperature(uint16_t thermistor) {
   // INCOMPLETE
-  thermistor = (uint16_t) (thermistor * ADC_GAIN); // 100uV
+  thermistor = (uint16_t)(thermistor * ADC_GAIN);  // 100uV
   LOG_DEBUG("Thermistor Voltage: %d\n", thermistor);
-  uint16_t thermistor_resistance = (thermistor * TEMP_RESISTANCE) / (VREF2 - thermistor); // Ohms
+  uint16_t thermistor_resistance = (thermistor * TEMP_RESISTANCE) / (VREF2 - thermistor);  // Ohms
   LOG_DEBUG("Thermistor Resistance: %d\n", thermistor_resistance);
   delay_ms(10);
   uint16_t min_diff = abs(thermistor_resistance - s_resistance_lookup[0]);
@@ -206,7 +206,7 @@ StatusCode cell_sense_run() {
   LOG_DEBUG("UNBALANCE: %d\n", max_voltage - min_voltage);
   set_battery_info_max_cell_v(max_voltage);
   set_battery_info_min_cell_v(min_voltage);
-  
+
   if (max_voltage >= SOLAR_VOLTAGE_THRESHOLD) {
     bms_open_solar();
   }
@@ -221,7 +221,7 @@ StatusCode cell_sense_run() {
     fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
-  //if (max_voltage - min_voltage >= CELL_UNBALANCED) {
+  // if (max_voltage - min_voltage >= CELL_UNBALANCED) {
   //  LOG_DEBUG("UNBALANCED\n");
   //  fault_bps_set(BMS_FAULT_UNBALANCE);
   //  status = STATUS_CODE_INTERNAL_ERROR;
@@ -237,14 +237,14 @@ StatusCode cell_sense_run() {
   }
 
   // Balancing
-  //for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
+  // for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
   //  if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
   //    ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
   //  } else {
   //    ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
   //  }
   //}
-   LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
+  LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
 
   // Log and check all thermistor values based on settings bitset
   uint16_t max_temp = 0;
@@ -256,7 +256,9 @@ StatusCode cell_sense_run() {
             calculate_temperature(ltc_afe_storage->aux_voltages[index]);
         LOG_DEBUG("Thermistor reading dev %d, %d: %d\n", dev, thermistor,
                   ltc_afe_storage->aux_voltages[index]);
-        max_temp = ltc_afe_storage->aux_voltages[index] > max_temp ? ltc_afe_storage->aux_voltages[index] : max_temp;
+        max_temp = ltc_afe_storage->aux_voltages[index] > max_temp
+                       ? ltc_afe_storage->aux_voltages[index]
+                       : max_temp;
         delay_ms(3);
         if (ltc_afe_storage->aux_voltages[index] > CELL_TEMP_OUTLIER) {
           continue;

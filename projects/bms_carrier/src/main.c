@@ -71,15 +71,16 @@ void run_medium_cycle() {
 }
 
 void run_slow_cycle() {
- // cell_discharge(&bms_storage.ltc_afe_storage);
+  // cell_discharge(&bms_storage.ltc_afe_storage);
 
- // if (fault_bps_get()) {
- //   LOG_DEBUG("FAULT_BITMASK: %d\n", fault_bps_get());
- //   delay_ms(3);
- // }
-}//
+  // if (fault_bps_get()) {
+  //   LOG_DEBUG("FAULT_BITMASK: %d\n", fault_bps_get());
+  //   delay_ms(3);
+  // }
+}  //
 
 int main() {
+  // Remove this in the future - Aryan
   set_master_cycle_time(200);
   tasks_init();
   log_init();

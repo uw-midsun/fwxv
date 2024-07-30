@@ -180,7 +180,8 @@ static StatusCode prv_txn(I2CPort i2c, I2CAddress addr, uint8_t *data, size_t le
   // Wait for signal that txn is finished from ISR, then disable IT and generate stop
   status = sem_wait(&s_port[i2c].i2c_buf.wait_txn, I2C_TIMEOUT_MS);
   I2C_ITConfig(s_port[i2c].base, I2C_IT_ERR | I2C_IT_EVT, DISABLE);
-  if (!s_port[i2c].multi_txn || status) {  // In an multi exchange or failed txn, need to keep line live to receive data
+  if (!s_port[i2c].multi_txn ||
+      status) {  // In an multi exchange or failed txn, need to keep line live to receive data
     I2C_GenerateSTOP(s_port[i2c].base, ENABLE);
   }
   status_ok_or_return(s_port[i2c].exit);

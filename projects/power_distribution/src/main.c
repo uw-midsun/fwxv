@@ -10,8 +10,8 @@
 #include "log.h"
 #include "master_task.h"
 #include "output_current_sense.h"
-#include "pin_defs.h"
 #include "pd_fault.h"
+#include "pin_defs.h"
 #include "power_seq_fsm.h"
 #include "tasks.h"
 

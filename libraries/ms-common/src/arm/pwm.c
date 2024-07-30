@@ -103,7 +103,8 @@ uint16_t pwm_get_period(PwmTimer timer) {
   return s_period_us[timer];
 }
 
-StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channel, bool n_channel_en) {
+StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channel,
+                         bool n_channel_en) {
   if (timer >= NUM_PWM_TIMERS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid timer id");
   } else if (s_period_us[timer] == 0) {

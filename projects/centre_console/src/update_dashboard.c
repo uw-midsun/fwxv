@@ -177,8 +177,8 @@ TASK(update_displays, TASK_MIN_STACK_SIZE) {
       batt_fault = (get_battery_status_fault()) & (~(0b11 << 14));
     } else {
       float avg_speed = (abs((int16_t)get_motor_velocity_velocity_l()) +
-                       abs((int16_t)get_motor_velocity_velocity_r())) /
-                      2.0f;
+                         abs((int16_t)get_motor_velocity_velocity_r())) /
+                        2.0f;
       car_vel = (avg_speed * 60 * MATH_PI * (WHEEL_DIAMETER_CM / CM_TO_INCHES)) / MILES_TO_INCHES;
       if (car_vel >= 100.0f) {
         car_vel = 99.9f;
@@ -190,7 +190,8 @@ TASK(update_displays, TASK_MIN_STACK_SIZE) {
     if (get_battery_status_fault()) {
       seg_displays_set_int(&all_displays, batt_fault, (uint16_t)batt_current, aux_battery_voltage);
     } else if (car_vel >= 100) {
-      seg_displays_set_int(&all_displays, (int)car_vel,(uint16_t)batt_current, aux_battery_voltage);
+      seg_displays_set_int(&all_displays, (int)car_vel, (uint16_t)batt_current,
+                           aux_battery_voltage);
     } else {
       seg_displays_set_float(&all_displays, car_vel, (uint16_t)batt_current, aux_battery_voltage);
     }

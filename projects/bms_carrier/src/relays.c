@@ -1,10 +1,10 @@
 #include "relays.h"
-#include "interrupt.h"
-#include "gpio_it.h"
-#include "master_task.h"
 
 #include "bms.h"
 #include "current_sense.h"
+#include "gpio_it.h"
+#include "interrupt.h"
+#include "master_task.h"
 
 static const GpioAddress pos_relay_en = { .port = GPIO_PORT_B, .pin = 8 };
 static const GpioAddress pos_relay_sense = { .port = GPIO_PORT_B, .pin = 5 };
@@ -58,7 +58,7 @@ void bms_relay_fault() {
   set_battery_relay_info_state(EE_RELAY_STATE_FAULT);
 }
 
-StatusCode init_bms_relays(GpioAddress * killswitch) {
+StatusCode init_bms_relays(GpioAddress *killswitch) {
   // Set up kill switch
   interrupt_init();
   InterruptSettings it_settings = {
@@ -69,7 +69,8 @@ StatusCode init_bms_relays(GpioAddress * killswitch) {
 
   gpio_init_pin(killswitch, GPIO_INPUT_FLOATING, GPIO_STATE_LOW);
   gpio_it_register_interrupt(killswitch, &it_settings, KILLSWITCH_IT, get_master_task());
-  GpioState ks_state = GPIO_STATE_LOW;;
+  GpioState ks_state = GPIO_STATE_LOW;
+
   delay_ms(10);
   gpio_get_state(killswitch, &ks_state);
   if (ks_state == GPIO_STATE_LOW) {
@@ -78,7 +79,6 @@ StatusCode init_bms_relays(GpioAddress * killswitch) {
     fault_bps_set(BMS_FAULT_KILLSWITCH);
     return STATUS_CODE_INTERNAL_ERROR;
   }
-
 
   gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);

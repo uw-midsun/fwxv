@@ -8,10 +8,10 @@
 #include "bms.h"
 #include "delay.h"
 #include "fault_bps.h"
-#include "relays.h"
 #include "gpio.h"
 #include "ltc_afe.h"
 #include "ltc_afe_impl.h"
+#include "relays.h"
 #include "spi.h"
 
 #define CONV_DELAY_MS 10

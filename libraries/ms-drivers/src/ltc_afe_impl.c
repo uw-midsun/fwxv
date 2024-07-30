@@ -124,8 +124,7 @@ static StatusCode prv_write_config(LtcAfeStorage *afe, uint8_t gpio_enable_pins)
   // essentially, each set of CFGR registers are clocked through each device,
   // until the first set reaches the last device (like a giant shift register)
   // thus, we send CFGR registers starting with the bottom slave in the stack
- for (uint8_t curr_device = 0; curr_device < settings->num_devices; curr_device++) { 
-
+  for (uint8_t curr_device = 0; curr_device < settings->num_devices; curr_device++) {
     uint8_t enable = gpio_enable_pins;
 
     uint16_t undervoltage = 0;
