@@ -29,7 +29,8 @@ uint16_t pwm_get_period(PwmTimer timer) {
   }
   return pwm[timer].period;
 }
-StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channel) {
+StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channel,
+                         bool n_channel_en) {
   if (timer >= NUM_PWM_TIMERS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid timer id");
   } else if (pwm[timer].period == 0) {
@@ -42,7 +43,7 @@ StatusCode pwm_set_pulse(PwmTimer timer, uint16_t pulse_width_us, uint8_t channe
   return STATUS_CODE_OK;
 }
 
-StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc, uint8_t channel) {
+StatusCode pwm_set_dc(PwmTimer timer, uint16_t dc, uint8_t channel, bool n_channel_en) {
   if (timer >= NUM_PWM_TIMERS) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Invalid timer id");
   } else if (dc > 100) {
