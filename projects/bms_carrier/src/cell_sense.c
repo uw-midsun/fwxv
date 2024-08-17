@@ -44,9 +44,7 @@ static const uint16_t s_resistance_lookup[TABLE_SIZE] = {
 int calculate_temperature(uint16_t thermistor) {
   // INCOMPLETE
   thermistor = (uint16_t)(thermistor * ADC_GAIN);  // 100uV
-  LOG_DEBUG("Thermistor Voltage: %d\n", thermistor);
   uint16_t thermistor_resistance = (thermistor * TEMP_RESISTANCE) / (VREF2 - thermistor);  // Ohms
-  LOG_DEBUG("Thermistor Resistance: %d\n", thermistor_resistance);
   delay_ms(10);
   uint16_t min_diff = abs(thermistor_resistance - s_resistance_lookup[0]);
 
@@ -237,13 +235,13 @@ StatusCode cell_sense_run() {
   }
 
   // Balancing
-  // for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-  //  if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
-  //    ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
-  //  } else {
-  //    ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
-  //  }
-  //}
+  for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
+   if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
+     ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
+   } else {
+     ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
+   }
+  }
   LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
 
   // Log and check all thermistor values based on settings bitset

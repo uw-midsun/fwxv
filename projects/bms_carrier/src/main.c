@@ -39,11 +39,11 @@ uint32_t notification;
 void pre_loop_init() {
   LOG_DEBUG("Welcome to BMS \n");
   fault_bps_init(&bms_storage.bps_storage);
-  init_bms_relays(&kill_switch_mntr);
-  current_sense_init(&bms_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
+  // init_bms_relays(&kill_switch_mntr);
+  // current_sense_init(&bms_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
   cell_sense_init(&bms_storage);
-  aux_sense_init(&bms_storage.aux_storage);
-  bms_fan_init(&bms_storage);
+  // aux_sense_init(&bms_storage.aux_storage);
+  // bms_fan_init(&bms_storage);
 }
 
 void run_fast_cycle() {
@@ -52,10 +52,10 @@ void run_fast_cycle() {
     LOG_DEBUG("KILLSWITCH PRESSED\n");
     fault_bps_set(BMS_FAULT_KILLSWITCH);
   }
-  run_can_rx_cycle();
-  wait_tasks(1);
-  run_can_tx_cycle();
-  wait_tasks(1);
+  // run_can_rx_cycle();
+  // wait_tasks(1);
+  // run_can_tx_cycle();
+  // wait_tasks(1);
 }
 
 void run_medium_cycle() {
@@ -63,21 +63,21 @@ void run_medium_cycle() {
   cell_conversions();
   wait_tasks(1);
   cell_sense_run();
-  delay_ms(10);
-  current_sense_run();
-  wait_tasks(1);
-  aux_sense_run();
-  bms_run_fan();
+  // delay_ms(10);
+  // current_sense_run();
+  // wait_tasks(1);
+  // aux_sense_run();
+  // bms_run_fan();
 }
 
 void run_slow_cycle() {
-  // cell_discharge(&bms_storage.ltc_afe_storage);
+  cell_discharge(&bms_storage.ltc_afe_storage);
 
-  // if (fault_bps_get()) {
-  //   LOG_DEBUG("FAULT_BITMASK: %d\n", fault_bps_get());
-  //   delay_ms(3);
-  // }
-}  //
+  if (fault_bps_get()) {
+    LOG_DEBUG("FAULT_BITMASK: %d\n", fault_bps_get());
+    delay_ms(3);
+  }
+}
 
 int main() {
   // Remove this in the future - Aryan
