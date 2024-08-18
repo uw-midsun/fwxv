@@ -3,9 +3,7 @@
 #include "log.h"
 #include "mppt.h"
 
-MPPTData mppt = {
-    .algorithm = MPPT_PERTURB_OBSERVE
-};
+MPPTData mppt = { .algorithm = MPPT_PERTURB_OBSERVE };
 
 int main() {
   log_init();
