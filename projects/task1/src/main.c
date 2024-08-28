@@ -11,9 +11,7 @@
 
 // Non blocking delay. Simply consumes cpu cycles until a given time has passed
 static void prv_delay(const TickType_t delay_ms) {
-  TickType_t curr_tick = xTaskGetTickCount();
-  while(xTaskGetTickCount() - curr_tick < pdMS_TO_TICKS(delay_ms))
-  {}
+  vTaskDelay(pdMS_TO_TICKS(delay_ms));
 }
 
 TASK(task1, TASK_STACK_512) {
@@ -41,7 +39,7 @@ int main(void) {
     LOG_DEBUG("Program start...\n");
     
     tasks_init_task(task1, TASK_PRIORITY(2), NULL);
-    tasks_init_task(task2, TASK_PRIORITY(2), NULL);
+    tasks_init_task(task2, TASK_PRIORITY(3), NULL);
 
     tasks_start();
 
