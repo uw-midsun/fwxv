@@ -41,21 +41,18 @@ TASK(task1, TASK_STACK_512) {
 
   while (true) {
 
-    ret = queue_send(&s_queue1, &s_list[index], 0);
+    if (index < QUEUE_LEN){
+      ret = queue_send(&s_queue1, &s_list[index], 0);
+    }
 
-    if (ret != STATUS_CODE_OK){
+    if (ret != STATUS_CODE_OK || index >= QUEUE_LEN){
       LOG_DEBUG("write to queue failed\n");
     }
 
     delay_ms(1000);
 
-   
-    if (index == QUEUE_LEN-1){
-      index = 0;
-    }else{
     index++;
-    }
-    
+
   }
 }
 
@@ -73,7 +70,7 @@ TASK(task2, TASK_STACK_512) {
     if (ret == STATUS_CODE_OK){
       LOG_DEBUG("%s\n", outstr);
     }else{
-      LOG_DEBUG("read to queue failed\n");
+      LOG_DEBUG("read from queue failed\n");
     }
 
   }
