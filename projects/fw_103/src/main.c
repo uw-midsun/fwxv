@@ -15,19 +15,7 @@
 #include "delay.h"
 #include "gpio.h"
 #include "log.h"
-#include "queues.h"
 #include "tasks.h"
-
-#define NUM_ITEMS 5
-#define ITEM_SIZE sizeof(uint32_t)  // This is the same as 4 bytes
-// Allocate a data buffer (array of bytes) big enough to hold all queue items
-static uint8_t s_queue_buf[NUM_ITEMS * ITEM_SIZE];
-// Initialize queue settings
-static Queue s_my_queue = {
-  .num_items = NUM_ITEMS,
-  .item_size = ITEM_SIZE,
-  .storage_buf = s_queue_buf,
-};
 
 // Task to handle our ADC reads
 TASK(adc_task, TASK_STACK_256) {
@@ -51,18 +39,7 @@ TASK(adc_task, TASK_STACK_256) {
     // Read ADC
     float reading;
     ads1115_read_converted(&config, ADS1115_CHANNEL_0, &reading);
-    queue_send(&s_my_queue, &reading, 0);
-    delay_ms(100);
-  }
-}
-
-// Receive task for our ADC readings
-TASK(queues_task, TASK_STACK_512) {
-  float received = 0;  // Value to receive to the queue from
-  while (true) {
-    // Copies data from front of queue into receive
-    queue_receive(&s_my_queue, &received, 0);
-    LOG_DEBUG("Received ADC reading from queue: %f\n", received);
+    LOG_DEBUG("ADC read %f\n", reading);
     delay_ms(100);
   }
 }
@@ -74,7 +51,6 @@ int main() {
   LOG_DEBUG("Welcome to FW 103!\n");
 
   tasks_init_task(adc_task, TASK_PRIORITY(2), NULL);
-  tasks_init_task(queues_task, TASK_PRIORITY(2), NULL);
 
   tasks_start();
 
