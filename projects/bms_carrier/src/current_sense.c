@@ -140,7 +140,7 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   s_fuel_gauge_settings.i2c_address = MAX17261_I2C_ADDR;
 
   s_fuel_gauge_settings.charge_term_current_ma = CHARGE_TERMINATION_CURRENT_MA;
-  s_fuel_gauge_settings.pack_design_cap_mah = PACK_CAPACITY_MAH;
+  s_fuel_gauge_settings.pack_design_cap_mah = 38800;
   s_fuel_gauge_settings.cell_empty_voltage_v = CELL_EMPTY_VOLTAGE_MV;
 
   // Expected MAX current / (uV / uOhmsSense) resolution

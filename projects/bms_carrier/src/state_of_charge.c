@@ -1,4 +1,5 @@
 #include "state_of_charge.h"
+#include "log.h"
 
 BmsStorage *bms_storage;
 static StateOfChargeStorage s_storage;
@@ -6,29 +7,27 @@ static float ocv_voltage_weight = 0.75f;
 
 static uint32_t ocv_voltage_lookup[OCV_TABLE_SIZE];
 
-// static uint32_t perdict_ocv_voltage() {
-//   uint32_t d_time = pdTICKS_TO_MS(xTaskGetTickCount()) - s_storage.last_time;
+static void update_storage() {
+  s_storage.last_current = bms_storage->current_storage.current;
+  s_storage.last_time = pdTICKS_TO_MS(xTaskGetTickCount());
+}
 
-//   // 10 * current_storage.voltage to convert to mV
-//   float pack_voltage_mv = 10 * bms_storage->current_storage.voltage;
+float perdict_ocv_voltage() {
+  float d_time = pdTICKS_TO_MS(xTaskGetTickCount()) - s_storage.last_time;
 
-//   float rc1_voltage = s_storage.prev_rc1_voltage * (bms_storage->current_storage.current * d_time) / BATT_MODEL_C1;
-//   float rc2_voltage = s_storage.prev_rc2_voltage * (bms_storage->current_storage.current * d_time) / BATT_MODEL_C2;
+  // 10 * current_storage.voltage to convert to mV
+  float pack_voltage_mv = 10.0f * bms_storage->current_storage.voltage;
 
-//   // Store voltage for next calculation
-//   s_storage.prev_rc1_voltage = rc1_voltage;
-//   s_storage.prev_rc2_voltage = rc2_voltage;
+  // Voltage under load + Ohmic voltage drop in battery pack
+  return pack_voltage_mv + bms_storage->current_storage.current * (PACK_INTERNAL_RESISTANCE_mOHMS / 1000.0f);
+}
 
-//   // Voltage under load + Ohmic voltage drop in battery pack
-//   return pack_voltage_mv + bms_storage->current_storage.current * PACK_INTERNAL_RESISTANCE_R - rc1_voltage - rc2_voltage;
-// }
+void coulomb_counting_soc() {
+  float d_time = (float)(pdTICKS_TO_MS(xTaskGetTickCount()) - s_storage.last_time) / (1000.0f * 3600.0f);
 
-static void coulomb_counting_soc() {
-  uint32_t d_time = pdTICKS_TO_MS(xTaskGetTickCount()) - s_storage.last_time;
-
-  float integrated_current = (float)(bms_storage->current_storage.current) * (d_time) /
-                             (1000.0f * 3600.0f);  // in milliamp hours
-  s_storage.i_soc = s_storage.averaged_soc - (integrated_current) / PACK_CAPACITY_MAH;
+  // Trapezoidal rule
+  float integrated_current = 0.5f * (float)(bms_storage->current_storage.current + s_storage.last_current) * (d_time);
+  s_storage.i_soc = s_storage.averaged_soc + (integrated_current / PACK_CAPACITY_MAH);
 
   if (s_storage.i_soc > 1.0f) {
     s_storage.i_soc = 1.0f;
@@ -37,7 +36,7 @@ static void coulomb_counting_soc() {
   }
 }
 
-static void ocv_voltage_soc() {
+void ocv_voltage_soc() {
   // TO BE COMPLETED AFTER OCV LOOKUP TABLE IS MADE
   uint8_t low_index = 0xff;
   uint8_t upper_index = 0;
@@ -71,10 +70,11 @@ static void ocv_voltage_soc() {
 StatusCode update_state_of_chrage() {
   coulomb_counting_soc();
   ocv_voltage_soc();
-  s_storage.last_time = pdTICKS_TO_MS(xTaskGetTickCount());
 
   s_storage.averaged_soc =
       (ocv_voltage_weight * s_storage.v_soc) + ((1 - ocv_voltage_weight) * (s_storage.i_soc));
+      
+  update_storage();
   return STATUS_CODE_OK;
 }
 
@@ -94,4 +94,46 @@ StatusCode state_of_charge_init(BmsStorage *bms_store) {
   }
 
   return STATUS_CODE_OK;
+}
+
+// TEST FUNCTIONS
+
+void set_last_time(uint32_t last_time) {
+    s_storage.last_time = last_time;
+}
+
+void set_i_soc(float i_soc) {
+    s_storage.i_soc = i_soc;
+}
+
+void set_v_soc(float v_soc) {
+    s_storage.v_soc = v_soc;
+}
+
+void set_averaged_soc(float averaged_soc) {
+    s_storage.averaged_soc = averaged_soc;
+}
+
+void set_last_current(int32_t last_current) {
+    s_storage.last_current = last_current;
+}
+
+uint32_t get_last_time(void) {
+    return s_storage.last_time;
+}
+
+float get_i_soc(void) {
+    return s_storage.i_soc;
+}
+
+float get_v_soc(void) {
+    return s_storage.v_soc;
+}
+
+float get_averaged_soc(void) {
+    return s_storage.averaged_soc;
+}
+
+int32_t get_last_current(void) {
+    return s_storage.last_current;
 }

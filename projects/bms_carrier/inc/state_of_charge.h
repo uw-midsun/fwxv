@@ -4,11 +4,10 @@
 #include "current_sense.h"
 #include "status.h"
 
-#define PACK_CAPACITY_AH 124  // Not actually
-#define PACK_INTERNAL_RESISTANCE_R 124 // Not actually
-
-#define BATT_MODEL_C1 123 // Not actually. Should be in milliseconds
-#define BATT_MODEL_C2 122 // Not actually. Should be in milliseconds
+#define CELL_CAPACITY_MAH 4850
+#define PACK_CAPACITY_MAH (CELL_CAPACITY_MAH * 8)
+#define CELL_INTERNAL_RESISTANCE_mOHMS 22
+#define PACK_INTERNAL_RESISTANCE_mOHMS (CELL_INTERNAL_RESISTANCE_mOHMS * 9 * 4) / 8 // 9 modules, each module is 8P4S
 
 #define OCV_TABLE_SIZE 20
 
@@ -18,10 +17,27 @@ typedef struct {
   float v_soc;
   float averaged_soc;
 
-  float prev_rc1_voltage;
-  float prev_rc2_voltage;
+  int32_t last_current;
 } StateOfChargeStorage;
+
+void coulomb_counting_soc();
+float perdict_ocv_voltage();
+void ocv_voltage_soc();
 
 StatusCode state_of_charge_init(BmsStorage *bms_storage);
 
 StatusCode update_state_of_chrage();
+
+// TEST FUNCTIONS
+
+void set_last_time(uint32_t last_time);
+void set_i_soc(float i_soc);
+void set_v_soc(float v_soc);
+void set_averaged_soc(float averaged_soc);
+void set_last_current(int32_t last_current);
+
+uint32_t get_last_time(void);
+float get_i_soc(void);
+float get_v_soc(void);
+float get_averaged_soc(void);
+int32_t get_last_current(void);

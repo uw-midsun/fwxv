@@ -321,7 +321,7 @@ StatusCode ltc_afe_impl_set_discharge_pwm_cycle(LtcAfeStorage *afe, uint8_t duty
   // For every device, set all 6 PWM bytes to the same config
   for (uint8_t curr_device = 0; curr_device < settings->num_devices; curr_device++) {
     for (int cell_pwm = 0; cell_pwm < 6; cell_pwm++) {
-      cmd[(curr_device * 6) + cell_pwm] = duty_cycle;
+      cmd[4 + (curr_device * 6) + cell_pwm] = (duty_cycle << 4 ) | duty_cycle;
     }
   }
 
