@@ -49,16 +49,17 @@ static void prv_wakeup_idle(SpiSettings *settings) {
   delay_ms(1);
 }
 
-// static StatusCode prv_build_cmd(uint16_t command, uint8_t *cmd) {
-//   cmd[0] = (uint8_t)(command >> 8);
-//   cmd[1] = (uint8_t)(command & 0xFF);
+static StatusCode prv_build_cmd(uint16_t command, uint8_t *cmd) {
+  cmd[0] = (uint8_t)(command >> 8);
+  cmd[1] = (uint8_t)(command & 0xFF);
 
-//   uint16_t cmd_pec = crc15_calculate(cmd, 2);
-//   cmd[2] = (uint8_t)(cmd_pec >> 8);
-//   cmd[3] = (uint8_t)(cmd_pec);
+  uint16_t cmd_pec = crc15_calculate(cmd, 2);
+  LOG_DEBUG("CMD PEC: 0x%X\n", cmd_pec);
+  cmd[2] = (uint8_t)(cmd_pec >> 8);
+  cmd[3] = (uint8_t)(cmd_pec);
 
-//   return STATUS_CODE_OK;
-// }
+  return STATUS_CODE_OK;
+}
 
 void printBytesInHex(unsigned char *array, size_t length) {
   for (size_t i = 0; i < length; i++) {
@@ -69,19 +70,27 @@ void printBytesInHex(unsigned char *array, size_t length) {
 
 TASK(smoke_spi_task, TASK_STACK_512) {
   spi_init(SPI_PORT_2, &spi_settings);
+  crc15_init_table();
   while (true) {
     // LTC6811
+    uint8_t cmd[4];
+
+    prv_build_cmd(0x01, cmd);
 
     // Wake
     prv_wakeup_idle(&spi_settings);
     static uint8_t rx_bytes[8] = { 0 };
-    static uint8_t tx_bytes[8] = { 0x00, 0x01, 0x3d, 0x6e, 0xea, 0x00, 0x00, 0x00 };
+    static uint8_t tx_bytes[12] = { 0x00, 0x01, 0x3d, 0x6e, 0xea, 0x00, 0x00, 0x00, 0xFF, 0x0F, 0xFB, 0x70 };
+    static uint8_t pec_calc[6] = {  0xea, 0x00, 0x00, 0x00, 0xFF, 0x0F };
+    LOG_DEBUG("CRC15 FOR DATA CALCULATED: %d\n", crc15_calculate(pec_calc, 6));
+
     // Write Config
-    spi_exchange(SPI_PORT_2, tx_bytes, 8, rx_bytes, 0);
+    spi_exchange(SPI_PORT_2, tx_bytes, 12, rx_bytes, 0);
     LOG_DEBUG("Wrote Config \n");
 
     // Idle
     delay_ms(10);
+    prv_build_cmd(0x02, cmd);
 
     // Wake
     prv_wakeup_idle(&spi_settings);
