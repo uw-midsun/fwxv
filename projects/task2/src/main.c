@@ -61,7 +61,7 @@ TASK(task2, TASK_STACK_512) {
       }else{
         LOG_DEBUG("String Read from queue: %s\n", outstr);
       }
-      delay_ms(1000);
+      delay_ms(1000);// added this delay so that the screen doesn't get flooded with logs stating that the read failed
      }
   }
 }
