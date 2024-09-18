@@ -17,6 +17,8 @@
 #include "gpio.h"
 #include "delay.h"
 
+#include "ads1115.h"
+
 // GpioAddress struct
 GpioAddress led_addr = {
   .port = GPIO_PORT_B,
@@ -25,9 +27,25 @@ GpioAddress led_addr = {
 
 TASK(led_gpio_task, TASK_STACK_512) {
   gpio_init_pin(&led_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  float reading;
+
+  //Ngl, i'm not fully sure why this is being done in the same task as the led thing from before but this seems to be what the instructions are saying.
+  GpioAddress ready_pin = {
+    .port = GPIO_PORT_B,
+    .pin = GPIO_Pin_0,
+  };
+  ADS1115_Config config = {
+    .handler_task = led_gpio_task,
+    .i2c_addr = ADS1115_ADDR_GND,
+    .i2c_port = ADS1115_I2C_PORT,
+    .ready_pin = &ready_pin,
+  };
+
   while(true) {
     gpio_toggle_state(&led_addr);
     LOG_DEBUG("Toggling LED\n"); // Added this line to see if something is even happening in the scons build
+    ads1115_read_converted(&config, ADS1115_CHANNEL_0, &reading);
+    LOG_DEBUG("Reading: %f\n", reading); // Added to see if a value actually comes
     delay_ms(1000);
   }
 }
