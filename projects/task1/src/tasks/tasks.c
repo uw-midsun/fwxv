@@ -8,6 +8,7 @@
 #include "log.h"
 #include "misc.h"
 #include "delay.h"
+#include "queues.h"
 
 // Non blocking delay. Simply consumes cpu cycles until a given time has passed
 /*
@@ -47,6 +48,7 @@ int main(void) {
     tasks_init();
     tasks_init_task(task1,TASK_PRIORITY(2),NULL);
     tasks_init_task(task2,TASK_PRIORITY(1),NULL);
+    queue_init(&[queue_name])
 
     LOG_DEBUG("Program start...\n");
     // Start the scheduler
