@@ -1,32 +1,48 @@
 #include "state_of_charge.h"
 #include "log.h"
 
-BmsStorage *bms_storage;
+BmsStorage *bms;
 static StateOfChargeStorage s_storage;
-static float ocv_voltage_weight = 0.75f;
+static float voltage_weight = 1.0f;
 
-static uint32_t ocv_voltage_lookup[OCV_TABLE_SIZE];
+/* Cell voltage. 0.2A Load taken off this page https://lygte-info.dk/review/batteries2012/LG%2021700%20M50%205000mAh%20(Grey)%20UK.html */
+/* Placeholder lookup for testing */
+static float voltage_lookup[OCV_TABLE_SIZE] = {
+  2.80, 3.00, 3.12, 3.18, 3.22, 3.25, 3.28, 3.30, 3.32, 3.34, 3.36, 3.38, 3.40, 3.42,
+  3.44, 3.46, 3.48, 3.50, 3.52, 3.54, 3.56, 3.58, 3.60, 3.62, 3.64, 3.66, 3.68, 3.70,
+  3.72, 3.74, 3.76, 3.78, 3.80, 3.82, 3.84, 3.86, 3.89, 3.93, 3.98, 4.07, 4.15 
+};
+
+/* Ramps the voltage when its less than 30% SOC or greater than 70% SOC */
+/* https://stackoverflow.com/questions/5731863/mapping-a-numeric-range-onto-another */
+void ramp_voltage_weight() {
+  if (s_storage.averaged_soc > 70.0f) {
+    voltage_weight = 0.20f + ((0.6f / 30.0f) * (s_storage.averaged_soc - 70.0f));
+  } else if (s_storage.averaged_soc < 30.0f) {
+    voltage_weight = 0.20f + ((0.6f / 30.0f) * (30.0f - s_storage.averaged_soc));
+  } else {
+    voltage_weight = 0.20f;
+  }
+}
 
 static void update_storage() {
-  s_storage.last_current = bms_storage->current_storage.current;
+  s_storage.last_current = bms->current_storage.current;
   s_storage.last_time = pdTICKS_TO_MS(xTaskGetTickCount());
 }
 
 float perdict_ocv_voltage() {
-  float d_time = pdTICKS_TO_MS(xTaskGetTickCount()) - s_storage.last_time;
-
   // 10 * current_storage.voltage to convert to mV
-  float pack_voltage_mv = 10.0f * bms_storage->current_storage.voltage;
+  float pack_voltage_mv = 10.0f * bms->current_storage.voltage;
 
   // Voltage under load + Ohmic voltage drop in battery pack
-  return pack_voltage_mv + bms_storage->current_storage.current * (PACK_INTERNAL_RESISTANCE_mOHMS / 1000.0f);
+  return pack_voltage_mv + bms->current_storage.current * (PACK_INTERNAL_RESISTANCE_mOHMS / 1000.0f);
 }
 
 void coulomb_counting_soc() {
   float d_time = (float)(pdTICKS_TO_MS(xTaskGetTickCount()) - s_storage.last_time) / (1000.0f * 3600.0f);
 
   // Trapezoidal rule
-  float integrated_current = 0.5f * (float)(bms_storage->current_storage.current + s_storage.last_current) * (d_time);
+  float integrated_current = 0.5f * (float)(bms->current_storage.current + s_storage.last_current) * (d_time);
   s_storage.i_soc = s_storage.averaged_soc + (integrated_current / PACK_CAPACITY_MAH);
 
   if (s_storage.i_soc > 1.0f) {
@@ -41,9 +57,11 @@ void ocv_voltage_soc() {
   uint8_t low_index = 0xff;
   uint8_t upper_index = 0;
 
+  float pack_voltage = perdict_ocv_voltage();
+
   for (uint8_t i = 0; i < OCV_TABLE_SIZE - 1; i++) {
-    if (bms_storage->current_storage.voltage >= ocv_voltage_lookup[i] &&
-        bms_storage->current_storage.voltage <= ocv_voltage_lookup[i + 1]) {
+    if (pack_voltage >= (voltage_lookup[i] * PACK_CELL_SERIES_COUNT * VOLTS_TO_mV) &&
+        pack_voltage <= (voltage_lookup[i + 1] * PACK_CELL_SERIES_COUNT * VOLTS_TO_mV)) {
       low_index = i;
       upper_index = i + 1;
       break;
@@ -54,17 +72,17 @@ void ocv_voltage_soc() {
     return;
   }
 
-  uint16_t voltage_low = ocv_voltage_lookup[low_index];
-  uint16_t voltage_high = ocv_voltage_lookup[upper_index];
+  uint16_t voltage_low = voltage_lookup[low_index] * PACK_CELL_SERIES_COUNT;
+  uint16_t voltage_high = voltage_lookup[upper_index] * PACK_CELL_SERIES_COUNT;
 
   // Lookup table index = SOC, voltage = value
   s_storage.v_soc = low_index + ((float)(upper_index - low_index) *
-                                 (bms_storage->current_storage.voltage - voltage_low) /
+                                 (bms->current_storage.voltage - voltage_low) /
                                  (voltage_high - voltage_low));
 
-  // For now, lets assume we measure SOC over 5% increments
-  // This means SOC = 5% * lookup_index
-  s_storage.v_soc *= 5.0f;
+  // We measure SOC over 2.5% increments
+  // This means SOC = 2.5% * lookup_index
+  s_storage.v_soc *= 2.5f;
 }
 
 StatusCode update_state_of_chrage() {
@@ -72,14 +90,15 @@ StatusCode update_state_of_chrage() {
   ocv_voltage_soc();
 
   s_storage.averaged_soc =
-      (ocv_voltage_weight * s_storage.v_soc) + ((1 - ocv_voltage_weight) * (s_storage.i_soc));
-      
+      (voltage_weight * s_storage.v_soc) + ((1 - voltage_weight) * (s_storage.i_soc));
+  
+  ramp_voltage_weight();
   update_storage();
   return STATUS_CODE_OK;
 }
 
 StatusCode state_of_charge_init(BmsStorage *bms_store) {
-  bms_storage = bms_store;
+  bms = bms_store;
   s_storage.last_time = 0;
   // No current sense voltage until all relays are closed, which means there is a load
   // Maybe use afe voltages???
@@ -87,11 +106,7 @@ StatusCode state_of_charge_init(BmsStorage *bms_store) {
   s_storage.i_soc = s_storage.v_soc;
   s_storage.averaged_soc = s_storage.v_soc;
 
-  if (ocv_voltage_weight > 1.0f) {
-    ocv_voltage_weight = 1.0f;
-  } else if (ocv_voltage_weight < 0.0f) {
-    ocv_voltage_weight = 0.0f;
-  }
+  ramp_voltage_weight();
 
   return STATUS_CODE_OK;
 }
@@ -136,4 +151,8 @@ float get_averaged_soc(void) {
 
 int32_t get_last_current(void) {
     return s_storage.last_current;
+}
+
+float get_voltage_weight(void) {
+  return voltage_weight;
 }

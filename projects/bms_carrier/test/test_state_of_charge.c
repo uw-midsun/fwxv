@@ -101,3 +101,37 @@ void test_coulomb_counting_dynamic_current(void) {
   LOG_DEBUG("Expected SOC %d\n", (int)(expected_soc* 100000.0f));
   TEST_ASSERT_FLOAT_WITHIN(0.00001f, expected_soc, get_i_soc());
 }
+
+TEST_IN_TASK
+void test_initial_state_of_charge(void) {
+    mock_bms_storage.current_storage.current = 0;
+    mock_bms_storage.current_storage.voltage = 3500;
+    state_of_charge_init(&mock_bms_storage);
+
+    // Check if the initial SOC is set based on the OCV voltage
+    float expected_soc = 0; // Update based on your lookup logic
+    TEST_ASSERT_FLOAT_WITHIN(0.00001f, expected_soc, get_v_soc());
+    TEST_ASSERT_FLOAT_WITHIN(0.00001f, expected_soc, get_i_soc());
+    TEST_ASSERT_FLOAT_WITHIN(0.00001f, expected_soc, get_averaged_soc());
+}
+
+TEST_IN_TASK
+void test_ramp_voltage_weight_high_soc(void) {
+    set_averaged_soc(80.0f);
+    ramp_voltage_weight();
+    TEST_ASSERT_FLOAT_WITHIN(0.00001f, 0.20f + ((0.6f / 30.0f) * (80.0f - 70.0f)), get_voltage_weight());
+}
+
+TEST_IN_TASK
+void test_ramp_voltage_weight_low_soc(void) {
+    set_averaged_soc(20.0f);
+    ramp_voltage_weight();
+    TEST_ASSERT_FLOAT_WITHIN(0.00001f, 0.20f + ((0.6f / 30.0f) * (30.0f - 20.0f)), get_voltage_weight());
+}
+
+TEST_IN_TASK
+void test_ramp_voltage_weight_normal_soc(void) {
+    set_averaged_soc(50.0f);
+    ramp_voltage_weight();
+    TEST_ASSERT_FLOAT_WITHIN(0.00001f, 0.20f, get_voltage_weight());
+}

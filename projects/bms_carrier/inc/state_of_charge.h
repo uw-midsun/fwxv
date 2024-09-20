@@ -8,8 +8,10 @@
 #define PACK_CAPACITY_MAH (CELL_CAPACITY_MAH * 8)
 #define CELL_INTERNAL_RESISTANCE_mOHMS 22
 #define PACK_INTERNAL_RESISTANCE_mOHMS (CELL_INTERNAL_RESISTANCE_mOHMS * 9 * 4) / 8 // 9 modules, each module is 8P4S
+#define PACK_CELL_SERIES_COUNT (4 * 9)
+#define VOLTS_TO_mV 1000
 
-#define OCV_TABLE_SIZE 20
+#define OCV_TABLE_SIZE 41
 
 typedef struct {
   uint32_t last_time;
@@ -29,6 +31,7 @@ StatusCode state_of_charge_init(BmsStorage *bms_storage);
 StatusCode update_state_of_chrage();
 
 // TEST FUNCTIONS
+void ramp_voltage_weight();
 
 void set_last_time(uint32_t last_time);
 void set_i_soc(float i_soc);
@@ -41,3 +44,4 @@ float get_i_soc(void);
 float get_v_soc(void);
 float get_averaged_soc(void);
 int32_t get_last_current(void);
+float get_voltage_weight(void);
