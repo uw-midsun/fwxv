@@ -30,11 +30,11 @@ TASK(task1, TASK_STACK_512) {
     vTaskResume(task1->handle);
     if(counter1 % 2 == 0){
       if(priority == 1){
-        vTaskPrioritySet(task1->handle, 2);
         priority = 2;
+        vTaskPrioritySet(task1->handle, priority);
       }else{
-        vTaskPrioritySet(task1->handle, 1);
         priority = 1;
+        vTaskPrioritySet(task1->handle, priority);
       }
     }
   }
@@ -50,11 +50,11 @@ TASK(task2, TASK_STACK_512) {
     // prv_delay(50);
     if(counter2 % 2 == 0){
       if(priority == 2){
-        vTaskPrioritySet(task2->handle, 1);
         priority = 1;
+        vTaskPrioritySet(task2->handle, priority);
       }else{
-        vTaskPrioritySet(task2->handle, 2);
         priority = 2;
+        vTaskPrioritySet(task2->handle, priority);
       }
     }
   }
