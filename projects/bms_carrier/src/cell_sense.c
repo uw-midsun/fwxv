@@ -43,7 +43,7 @@ static const uint16_t s_resistance_lookup[TABLE_SIZE] = {
 
 int calculate_temperature(uint16_t thermistor) {
   // INCOMPLETE
-  thermistor = (uint16_t)(thermistor * ADC_GAIN);  // 100uV
+  thermistor = (uint16_t)(thermistor * ADC_GAIN);                                          // 100uV
   uint16_t thermistor_resistance = (thermistor * TEMP_RESISTANCE) / (VREF2 - thermistor);  // Ohms
   delay_ms(10);
   uint16_t min_diff = abs(thermistor_resistance - s_resistance_lookup[0]);
@@ -163,21 +163,14 @@ static inline StatusCode prv_cell_sense_conversions() {
 
 // Task bc delays
 TASK(cell_sense_conversions, TASK_STACK_256) {
+  ltc_afe_init(ltc_afe_storage, &s_afe_settings);
+  delay_ms(10);
+  TickType_t xLastWakeTime = xTaskGetTickCount();
   while (true) {
-    notify_wait(NULL, BLOCK_INDEFINITELY);
     prv_cell_sense_conversions();
-    send_task_end();
+    /* Delay is TBD */
+    xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
   }
-}
-
-StatusCode cell_conversions() {
-  StatusCode ret = notify(cell_sense_conversions, CELL_SENSE_CONVERSIONS);
-  if (ret != STATUS_CODE_OK) {
-    LOG_DEBUG("NOTIFY FAILED\n");
-    fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
-    return STATUS_CODE_INTERNAL_ERROR;
-  }
-  return STATUS_CODE_OK;
 }
 
 StatusCode cell_sense_run() {
@@ -236,11 +229,11 @@ StatusCode cell_sense_run() {
 
   // Balancing
   for (size_t cell = 0; cell < (s_afe_settings.num_devices * s_afe_settings.num_cells); cell++) {
-   if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
-     ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
-   } else {
-     ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
-   }
+    if (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]] > min_voltage) {
+      ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, true);
+    } else {
+      ltc_afe_impl_toggle_cell_discharge(ltc_afe_storage, cell, false);
+    }
   }
   LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
 
@@ -323,8 +316,6 @@ StatusCode cell_discharge(LtcAfeStorage *afe_storage) {
 StatusCode cell_sense_init(BmsStorage *bms_store) {
   bms_storage = bms_store;
   ltc_afe_storage = &bms_store->ltc_afe_storage;
-  ltc_afe_init(ltc_afe_storage, &s_afe_settings);
-  delay_ms(10);
   tasks_init_task(cell_sense_conversions, TASK_PRIORITY(2), NULL);
   return STATUS_CODE_OK;
 }

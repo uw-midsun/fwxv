@@ -130,8 +130,8 @@ static StatusCode prv_write_config(LtcAfeStorage *afe, uint8_t gpio_enable_pins)
     uint16_t undervoltage = 0;
     uint16_t overvoltage = 0;
 
-    config_packet.devices[curr_device].reg.discharge_bitset = 0xFFF;
-    config_packet.devices[curr_device].reg.discharge_timeout = 3;
+    config_packet.devices[curr_device].reg.discharge_bitset = afe->discharge_bitset[curr_device];
+    config_packet.devices[curr_device].reg.discharge_timeout = LTC_AFE_DISCHARGE_TIMEOUT_30_S;
 
     config_packet.devices[curr_device].reg.adcopt = ((settings->adc_mode + 1) > 3);
     config_packet.devices[curr_device].reg.swtrd = true;
@@ -321,7 +321,7 @@ StatusCode ltc_afe_impl_set_discharge_pwm_cycle(LtcAfeStorage *afe, uint8_t duty
   // For every device, set all 6 PWM bytes to the same config
   for (uint8_t curr_device = 0; curr_device < settings->num_devices; curr_device++) {
     for (int cell_pwm = 0; cell_pwm < 6; cell_pwm++) {
-      cmd[4 + (curr_device * 6) + cell_pwm] = (duty_cycle << 4 ) | duty_cycle;
+      cmd[4 + (curr_device * 6) + cell_pwm] = (duty_cycle << 4) | duty_cycle;
     }
   }
 

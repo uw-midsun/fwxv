@@ -67,7 +67,7 @@ typedef struct {
   uint32_t undervoltage : 12;  // Undervoltage Comparison Voltage
   uint32_t overvoltage : 12;   // Overvoltage Comparison Voltage
 
-  uint32_t discharge_bitset : 12;
+  uint16_t discharge_bitset : 12;
   uint8_t discharge_timeout : 4;
 } _PACKED LtcAfeConfigRegisterData;
 static_assert(sizeof(LtcAfeConfigRegisterData) == 6, "LtcAfeConfigRegisterData must be 6 bytes");
