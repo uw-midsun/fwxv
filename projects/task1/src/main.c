@@ -32,7 +32,7 @@ TASK(task2, TASK_STACK_512) {
   int counter2 = 0;
   while (true) {
     LOG_DEBUG("Task 2\n");
-    if (counter2 % 100){
+    if (counter2 % 100 == 0){
       delay_ms(1);
     }
     counter2++;
