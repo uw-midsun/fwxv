@@ -2,6 +2,7 @@ from can_datagram import Datagram, DatagramSender
 import bootloader_id
 import os
 
+
 class Flash_Application:
     def __init__(self, bin_path, sender=None) -> None:
         if sender:
@@ -64,7 +65,7 @@ class Flash_Application:
 
         with open(self._bin_path, 'rb') as bin_data:
             bin_content = bytearray(bin_data.read())
-        
+
         flash_datagram = Datagram(
             datagram_type_id=bootloader_id.FLASH,
             node_ids=node_ids,

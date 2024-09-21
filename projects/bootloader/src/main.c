@@ -1,8 +1,8 @@
 #include <stdio.h>
 
 #include "boot_can.h"
-#include "can_board_ids.h"
 #include "bootloader.h"
+#include "can_board_ids.h"
 #include "can_datagram.h"
 #include "stm32f10x_flash.h"
 

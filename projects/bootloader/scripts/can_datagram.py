@@ -175,8 +175,8 @@ class DatagramSender:
 
         message_extended_arbitration = False
         can_message = can.Message(arbitration_id=message._datagram_type_id,
-                                            data=datagram,
-                                            is_extended_id=message_extended_arbitration)
+                                  data=datagram,
+                                  is_extended_id=message_extended_arbitration)
         self.bus.send(can_message)
         print(can_message)
         print("Message was sent on {}".format(self.bus.channel_info))
@@ -190,8 +190,8 @@ class DatagramSender:
         can_messages = []
 
         can_messages.append(can.Message(arbitration_id=bootloader_id.START_FLASH,
-                                            data=chunk_messages[0],
-                                            is_extended_id=message_extended_arbitration))
+                                        data=chunk_messages[0],
+                                        is_extended_id=message_extended_arbitration))
 
         for chunk_message in chunk_messages[1:]:
             can_messages.append(can.Message(arbitration_id=bootloader_id.FLASH,
@@ -204,14 +204,18 @@ class DatagramSender:
             try:
                 # print(msg, "\tBINARY SENT:", binary_sent_counter, "\tTOTAL APP SIZE:", len(message.data))
                 self.bus.send(msg)
-            except:
+            except BaseException:
                 print("Bruh")
                 time.sleep(0.01)
                 self.bus.send(msg)
 
         end_time = time.time()
         elapsed_time = end_time - start_time
-        print("{} messages were sent on {}. Took {}".format(len(can_messages), self.bus.channel_info, elapsed_time))
+        print(
+            "{} messages were sent on {}. Took {}".format(
+                len(can_messages),
+                self.bus.channel_info,
+                elapsed_time))
 
     @staticmethod
     def _chunkify(data, size):

@@ -1,6 +1,7 @@
 from can_datagram import Datagram, DatagramSender
 import bootloader_id
 
+
 class Jump_Application:
     def __init__(self, sender=None) -> None:
         if sender:

@@ -26,7 +26,7 @@ static BootloaderError bootloader_switch_states(const BootloaderStates new_state
   if (current_state == new_state) {
     return return_err;
   }
-  
+
   switch (current_state) {
     case BOOTLOADER_IDLE:
       if (new_state == BOOTLOADER_JUMP_APP || new_state == BOOTLOADER_START ||
@@ -54,7 +54,8 @@ static BootloaderError bootloader_switch_states(const BootloaderStates new_state
       break;
 
     case BOOTLOADER_DATA_RECEIVE:
-      if (new_state == BOOTLOADER_START || new_state == BOOTLOADER_JUMP_APP || new_state == BOOTLOADER_FAULT) {
+      if (new_state == BOOTLOADER_START || new_state == BOOTLOADER_JUMP_APP ||
+          new_state == BOOTLOADER_FAULT) {
         prv_bootloader.state = new_state;
       } else {
         return_err = BOOTLOADER_INVALID_ARGS;
@@ -106,7 +107,8 @@ static BootloaderError bootloader_handle_arbitration_id(Boot_CanMessage *msg) {
 
 static BootloaderError bootloader_start() {
   size_t page = 0;
-  for (page = 1 + ((APP_START_ADDRESS - 0x08000000) / BOOTLOADER_PAGE_BYTES); page < NUM_FLASH_PAGES; page++) {
+  for (page = 1 + ((APP_START_ADDRESS - 0x08000000) / BOOTLOADER_PAGE_BYTES);
+       page < NUM_FLASH_PAGES; page++) {
     if (boot_flash_erase(page)) {
       return BOOTLOADER_FLASH_ERR;
     }
@@ -121,20 +123,18 @@ static BootloaderError bootloader_start() {
   if (prv_bootloader.binary_size % BOOTLOADER_WRITE_BYTES != 0) {
     return BOOTLOADER_DATA_NOT_ALIGNED;
   }
-  
 
   return BOOTLOADER_ERROR_NONE;
 }
 
 static BootloaderError bootloader_jump_app() {
-  __asm volatile (
-        "LDR     R0, =prv_bootloader  \n"
-        "LDR     R1, [R0]             \n"
-        "LDR     R2, [R1, #4]         \n"
-        "BX      R2                   \n"
-    );
+  __asm volatile(
+      "LDR     R0, =prv_bootloader  \n"
+      "LDR     R1, [R0]             \n"
+      "LDR     R2, [R1, #4]         \n"
+      "BX      R2                   \n");
 
-  return BOOTLOADER_ERROR_NONE; // Should trigger error
+  return BOOTLOADER_ERROR_NONE;  // Should trigger error
 }
 
 static BootloaderError bootloader_data_ready() {
@@ -142,7 +142,6 @@ static BootloaderError bootloader_data_ready() {
   prv_bootloader.buffer_index = 8;
   prv_bootloader.first_byte_received = true;
   return BOOTLOADER_ERROR_NONE;
-
 }
 
 static BootloaderError bootloader_data_receive() {

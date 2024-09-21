@@ -6,11 +6,11 @@
 #include <string.h>
 
 #include "bootloader_mcu.h"
-#include "stm32f10x.h"
-#include "stm32f10x_gpio.h"
-#include "stm32f10x_can.h"
-#include "stm32f10x_rcc.h"
 #include "misc.h"
+#include "stm32f10x.h"
+#include "stm32f10x_can.h"
+#include "stm32f10x_gpio.h"
+#include "stm32f10x_rcc.h"
 
 typedef enum {
   CAN_HW_BITRATE_125KBPS,
@@ -20,11 +20,7 @@ typedef enum {
   NUM_CAN_HW_BITRATES
 } Boot_CanBitrate;
 
-typedef enum {
-  CAN_CONTINUOUS = 0,
-  CAN_ONE_SHOT_MODE,
-  NUM_CAN_MODES
-} Boot_CanMode;
+typedef enum { CAN_CONTINUOUS = 0, CAN_ONE_SHOT_MODE, NUM_CAN_MODES } Boot_CanMode;
 
 typedef struct Boot_CanSettings {
   uint16_t device_id;
