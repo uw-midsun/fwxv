@@ -26,17 +26,13 @@ void ramp_voltage_weight() {
 }
 
 static void update_storage() {
-  s_storage.last_current = bms->current_storage.current;
+  s_storage.last_current = bms->pack_current;
   s_storage.last_time = pdTICKS_TO_MS(xTaskGetTickCount());
 }
 
 float perdict_ocv_voltage() {
-  // 10 * current_storage.voltage to convert to mV
-  float pack_voltage_mv = 10.0f * bms->current_storage.voltage;
-
   // Voltage under load + Ohmic voltage drop in battery pack
-  return pack_voltage_mv +
-         bms->current_storage.current * (PACK_INTERNAL_RESISTANCE_mOHMS / 1000.0f);
+  return (float)bms->pack_voltage + bms->pack_current * (PACK_INTERNAL_RESISTANCE_mOHMS / 1000.0f);
 }
 
 void coulomb_counting_soc() {
@@ -44,9 +40,8 @@ void coulomb_counting_soc() {
       (float)(pdTICKS_TO_MS(xTaskGetTickCount()) - s_storage.last_time) / (1000.0f * 3600.0f);
 
   // Trapezoidal rule
-  float integrated_current =
-      0.5f * (float)(bms->current_storage.current + s_storage.last_current) * (d_time);
-  s_storage.i_soc = s_storage.averaged_soc + (integrated_current / PACK_CAPACITY_MAH);
+  float integrated_current = 0.5f * (float)(bms->pack_current + s_storage.last_current) * (d_time);
+  s_storage.i_soc = s_storage.averaged_soc + (integrated_current / bms->config.pack_capacity);
 
   if (s_storage.i_soc > 1.0f) {
     s_storage.i_soc = 1.0f;
@@ -62,17 +57,18 @@ void ocv_voltage_soc() {
 
   float pack_voltage = perdict_ocv_voltage();
 
-  if (pack_voltage >= (voltage_lookup[OCV_TABLE_SIZE - 1] * PACK_CELL_SERIES_COUNT * VOLTS_TO_mV)) {
+  if (pack_voltage >=
+      (voltage_lookup[OCV_TABLE_SIZE - 1] * bms->config.series_count * VOLTS_TO_mV)) {
     s_storage.v_soc = 100.0f;
     return;
-  } else if (pack_voltage <= (voltage_lookup[0] * PACK_CELL_SERIES_COUNT * VOLTS_TO_mV)) {
+  } else if (pack_voltage <= (voltage_lookup[0] * bms->config.series_count * VOLTS_TO_mV)) {
     s_storage.v_soc = 0.0f;
     return;
   }
 
   for (uint8_t i = 0; i < OCV_TABLE_SIZE - 1; i++) {
-    if (pack_voltage >= (voltage_lookup[i] * PACK_CELL_SERIES_COUNT * VOLTS_TO_mV) &&
-        pack_voltage <= (voltage_lookup[i + 1] * PACK_CELL_SERIES_COUNT * VOLTS_TO_mV)) {
+    if (pack_voltage >= (voltage_lookup[i] * bms->config.series_count * VOLTS_TO_mV) &&
+        pack_voltage <= (voltage_lookup[i + 1] * bms->config.series_count * VOLTS_TO_mV)) {
       low_index = i;
       upper_index = i + 1;
       break;
@@ -83,8 +79,8 @@ void ocv_voltage_soc() {
     return;
   }
 
-  float voltage_low = voltage_lookup[low_index] * PACK_CELL_SERIES_COUNT * VOLTS_TO_mV;
-  float voltage_high = voltage_lookup[upper_index] * PACK_CELL_SERIES_COUNT * VOLTS_TO_mV;
+  float voltage_low = voltage_lookup[low_index] * bms->config.series_count * VOLTS_TO_mV;
+  float voltage_high = voltage_lookup[upper_index] * bms->config.series_count * VOLTS_TO_mV;
   // Lookup table index = SOC, voltage = value
   s_storage.v_soc = low_index + ((float)(upper_index - low_index) * (pack_voltage - voltage_low) /
                                  (voltage_high - voltage_low));
@@ -101,13 +97,14 @@ StatusCode update_state_of_chrage() {
   s_storage.averaged_soc =
       (voltage_weight * s_storage.v_soc) + ((1 - voltage_weight) * (s_storage.i_soc));
 
+  set_battery_vt_batt_perc((uint16_t)s_storage.averaged_soc);
   ramp_voltage_weight();
   update_storage();
   return STATUS_CODE_OK;
 }
 
-StatusCode state_of_charge_init(BmsStorage *bms_store) {
-  bms = bms_store;
+StatusCode state_of_charge_init(BmsStorage *storage) {
+  bms = storage;
   s_storage.last_time = 0;
   // No current sense voltage until all relays are closed, which means there is a load
   // Maybe use afe voltages???

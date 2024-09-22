@@ -1,7 +1,7 @@
 #include "cell_sense.h"
 
-LtcAfeStorage *ltc_afe_storage;
-static BmsStorage *bms_storage;
+static LtcAfeStorage *ltc_afe_storage;
+static BmsStorage *bms;
 
 #define TEMP_RESISTANCE 10000
 #define VREF2 30000.0f                      // in 100uV
@@ -71,7 +71,7 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0x14, 0x15, 0x15 },
 
-  .num_devices = 3,
+  .num_devices = 1,
   .num_cells = 12,
   .num_thermistors = NUM_THERMISTORS,
 };
@@ -161,19 +161,7 @@ static inline StatusCode prv_cell_sense_conversions() {
   return status;
 }
 
-// Task bc delays
-TASK(cell_sense_conversions, TASK_STACK_256) {
-  ltc_afe_init(ltc_afe_storage, &s_afe_settings);
-  delay_ms(10);
-  TickType_t xLastWakeTime = xTaskGetTickCount();
-  while (true) {
-    prv_cell_sense_conversions();
-    /* Delay is TBD */
-    xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(1000));
-  }
-}
-
-StatusCode cell_sense_run() {
+static inline StatusCode cell_sense_run() {
   StatusCode status = STATUS_CODE_OK;
   uint16_t max_voltage = 0;
   uint16_t min_voltage = 0xffff;
@@ -212,11 +200,11 @@ StatusCode cell_sense_run() {
     fault_bps_set(BMS_FAULT_UNDERVOLTAGE);
     status = STATUS_CODE_INTERNAL_ERROR;
   }
-  // if (max_voltage - min_voltage >= CELL_UNBALANCED) {
-  //  LOG_DEBUG("UNBALANCED\n");
-  //  fault_bps_set(BMS_FAULT_UNBALANCE);
-  //  status = STATUS_CODE_INTERNAL_ERROR;
-  //}
+  if (max_voltage - min_voltage >= CELL_UNBALANCED) {
+   LOG_DEBUG("UNBALANCED\n");
+   fault_bps_set(BMS_FAULT_UNBALANCE);
+   status = STATUS_CODE_INTERNAL_ERROR;
+  }
 
   if (min_voltage >= AFE_BALANCING_UPPER_THRESHOLD) {
     min_voltage += 20;
@@ -236,6 +224,7 @@ StatusCode cell_sense_run() {
     }
   }
   LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
+  ltc_afe_impl_write_config(afe_storage);
 
   // Log and check all thermistor values based on settings bitset
   uint16_t max_temp = 0;
@@ -254,7 +243,7 @@ StatusCode cell_sense_run() {
         if (ltc_afe_storage->aux_voltages[index] > CELL_TEMP_OUTLIER) {
           continue;
         }
-        if (bms_storage->current_storage.current < 0) {
+        if (bms->pack_current < 0) {
           if (ltc_afe_storage->aux_voltages[index] >= CELL_MAX_TEMPERATURE_DISCHARGE) {
             LOG_DEBUG("CELL OVERTEMP\n");
             fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
@@ -309,13 +298,22 @@ StatusCode cell_sense_run() {
   return status;
 }
 
-StatusCode cell_discharge(LtcAfeStorage *afe_storage) {
-  return ltc_afe_impl_write_config(afe_storage);
+// Task bc delays
+TASK(cell_sense_conversions, TASK_STACK_512) {
+  ltc_afe_init(ltc_afe_storage, &s_afe_settings);
+  delay_ms(10);
+  TickType_t xLastWakeTime = xTaskGetTickCount();
+  while (true) {
+    prv_cell_sense_conversions();
+    cell_sense_run();
+    /* Delay is TBD */
+    xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10000));
+  }
 }
 
-StatusCode cell_sense_init(BmsStorage *bms_store) {
-  bms_storage = bms_store;
-  ltc_afe_storage = &bms_store->ltc_afe_storage;
+StatusCode cell_sense_init(BmsStorage *storage) {
+  bms = storage;
+  ltc_afe_storage = &(bms->ltc_afe_storage);
   tasks_init_task(cell_sense_conversions, TASK_PRIORITY(2), NULL);
   return STATUS_CODE_OK;
 }

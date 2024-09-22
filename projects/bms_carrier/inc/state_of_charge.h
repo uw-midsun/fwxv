@@ -1,17 +1,14 @@
 #pragma once
 
 #include "bms.h"
-#include "current_sense.h"
+#include "bms_carrier_getters.h"
+#include "bms_carrier_setters.h"
 #include "status.h"
 
-#define CELL_CAPACITY_MAH 4850
-#define PACK_CAPACITY_MAH (CELL_CAPACITY_MAH * 8)
 #define CELL_INTERNAL_RESISTANCE_mOHMS 22
 #define PACK_INTERNAL_RESISTANCE_mOHMS \
   (CELL_INTERNAL_RESISTANCE_mOHMS * 9 * 4) / 8  // 9 modules, each module is 8P4S
-#define PACK_CELL_SERIES_COUNT (4 * 9)
 #define VOLTS_TO_mV 1000
-
 #define OCV_TABLE_SIZE 41
 
 typedef struct {

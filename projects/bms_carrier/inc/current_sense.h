@@ -21,8 +21,6 @@
 
 #define CHARGE_TERMINATION_CURRENT_MA (400)  // 50 mA * 8 (one module)
 
-#define NUM_SERIES_CELLS 36  // Number of cells in series to multiply average cell voltage
-
 // Thresholds for ALRT Pin
 #define CURRENT_SENSE_MAX_CURRENT_A (-58.2f)
 #define CURRENT_SENSE_MIN_CURRENT_A (27.0f)  // Actually 27

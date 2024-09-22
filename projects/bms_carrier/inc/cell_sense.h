@@ -48,5 +48,3 @@ StatusCode cell_sense_init(BmsStorage *bms_store);
 // |cell| should be [0, settings.num_cells)
 
 StatusCode cell_discharge(LtcAfeStorage *afe);
-
-StatusCode cell_sense_run(void);

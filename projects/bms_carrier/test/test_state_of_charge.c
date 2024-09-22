@@ -7,7 +7,10 @@
 #include "test_helpers.h"
 #include "unity.h"
 
-static BmsStorage mock_bms_storage;
+static BmsStorage mock_bms_storage = { .config = { .series_count = NUM_SERIES_CELLS,
+                                                   .parallel_count = NUM_PARALLEL_CELLS,
+                                                   .pack_capacity = PACK_CAPACITY_MAH } };
+
 static TickType_t mock_time = 1;
 
 // TODO Fix this, currently delaying for xTaskGetTickCount to work
@@ -23,8 +26,8 @@ void teardown_test(void) {}
 
 TEST_IN_TASK
 void test_coulomb_counting_zero_current(void) {
-  mock_bms_storage.current_storage.current = 0;
-  mock_bms_storage.current_storage.voltage = 35000;
+  mock_bms_storage.pack_current = 0;
+  mock_bms_storage.pack_voltage = 35000;
   set_averaged_soc(0.5f);
 
   coulomb_counting_soc();
@@ -34,8 +37,7 @@ void test_coulomb_counting_zero_current(void) {
 
 TEST_IN_TASK
 void test_coulomb_counting_constant_current(void) {
-  mock_bms_storage.current_storage.current =
-      -100000;  // Pack is drawing 100 AMPS... I hope this never happens
+  mock_bms_storage.pack_current = -100000;  // Pack is drawing 100 AMPS... I hope this never happens
   set_last_current(-100000);
   set_averaged_soc(0.5f);
 
@@ -67,7 +69,7 @@ void test_coulomb_counting_constant_current(void) {
 
 TEST_IN_TASK
 void test_coulomb_counting_dynamic_current(void) {
-  mock_bms_storage.current_storage.current = -200000;  // Pack is discharging 200 AMPS
+  mock_bms_storage.pack_current = -200000;  // Pack is discharging 200 AMPS
   set_last_current(-100000);
   set_averaged_soc(0.5f);
 
@@ -83,8 +85,8 @@ void test_coulomb_counting_dynamic_current(void) {
   set_last_time(xTaskGetTickCount());
 
   set_last_current(-200000);
-  mock_bms_storage.current_storage.current = -400000;  // Pack is discharging 400 AMPS
-  mock_time = 120000;                                  // 2 minutes
+  mock_bms_storage.pack_current = -400000;  // Pack is discharging 400 AMPS
+  mock_time = 120000;                       // 2 minutes
   coulomb_counting_soc();
 
   expected_soc = expected_soc + (0.5f * (-200000 - 400000) * (60.0f / 3600.0f)) / PACK_CAPACITY_MAH;
@@ -94,8 +96,8 @@ void test_coulomb_counting_dynamic_current(void) {
   set_last_time(xTaskGetTickCount());
 
   set_last_current(-400000);
-  mock_bms_storage.current_storage.current = 300000;  // Pack is charging 300 AMPS
-  mock_time = 180000;                                 // 3 minutes
+  mock_bms_storage.pack_current = 300000;  // Pack is charging 300 AMPS
+  mock_time = 180000;                      // 3 minutes
   coulomb_counting_soc();
 
   expected_soc = expected_soc + (0.5f * (-400000 + 300000) * (60.0f / 3600.0f)) / PACK_CAPACITY_MAH;
@@ -105,8 +107,8 @@ void test_coulomb_counting_dynamic_current(void) {
 
 TEST_IN_TASK
 void test_initial_state_of_charge(void) {
-  mock_bms_storage.current_storage.current = 0;
-  mock_bms_storage.current_storage.voltage = 3500;
+  mock_bms_storage.pack_current = 0;
+  mock_bms_storage.pack_voltage = 3500;
   state_of_charge_init(&mock_bms_storage);
 
   // Check if the initial SOC is set based on the OCV voltage
@@ -141,35 +143,35 @@ void test_ramp_voltage_weight_normal_soc(void) {
 
 TEST_IN_TASK
 void test_ocv_voltage_soc_100_percent() {
-  mock_bms_storage.current_storage.voltage = 15200;  // 152.0V
+  mock_bms_storage.pack_voltage = 152000;  // 152.0V
   ocv_voltage_soc();
   TEST_ASSERT_FLOAT_WITHIN(0.01f, 100.0f, get_v_soc());
 }
 
 TEST_IN_TASK
 void test_ocv_voltage_soc_80_percent() {
-  mock_bms_storage.current_storage.voltage = 13680;  // 136.8V
+  mock_bms_storage.pack_voltage = 136800;  // 136.8V
   ocv_voltage_soc();
   TEST_ASSERT_FLOAT_WITHIN(0.01f, 80.0f, get_v_soc());
 }
 
 TEST_IN_TASK
 void test_ocv_voltage_soc_50_percent() {
-  mock_bms_storage.current_storage.voltage = 12816;  // 128.16V
+  mock_bms_storage.pack_voltage = 128160;  // 128.16V
   ocv_voltage_soc();
   TEST_ASSERT_FLOAT_WITHIN(0.01f, 50.0f, get_v_soc());
 }
 
 TEST_IN_TASK
 void test_ocv_voltage_soc_30_percent() {
-  mock_bms_storage.current_storage.voltage = 12240;  // 122.4V
+  mock_bms_storage.pack_voltage = 122400;  // 122.4V
   ocv_voltage_soc();
   TEST_ASSERT_FLOAT_WITHIN(0.01f, 30.0f, get_v_soc());
 }
 
 TEST_IN_TASK
 void test_ocv_voltage_soc_0_percent() {
-  mock_bms_storage.current_storage.voltage = 10000;  // 100V
+  mock_bms_storage.pack_voltage = 100000;  // 100V
   ocv_voltage_soc();
   TEST_ASSERT_FLOAT_WITHIN(0.01f, 0.0f, get_v_soc());
 }
