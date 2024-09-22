@@ -42,7 +42,6 @@ static const uint16_t s_resistance_lookup[TABLE_SIZE] = {
 };
 
 int calculate_temperature(uint16_t thermistor) {
-  // INCOMPLETE
   thermistor = (uint16_t)(thermistor * ADC_GAIN);                                          // 100uV
   uint16_t thermistor_resistance = (thermistor * TEMP_RESISTANCE) / (VREF2 - thermistor);  // Ohms
   delay_ms(10);
@@ -71,12 +70,12 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0x14, 0x15, 0x15 },
 
-  .num_devices = 1,
+  .num_devices = 3,
   .num_cells = 12,
   .num_thermistors = NUM_THERMISTORS,
 };
 
-static inline StatusCode prv_cell_sense_conversions() {
+static StatusCode prv_cell_sense_conversions() {
   StatusCode status = STATUS_CODE_OK;
   // TODO: Figure out why cell_conv cannot happen without spi timing out (Most likely RTOS
   // implemntation error) Retry Mechanism
@@ -161,7 +160,7 @@ static inline StatusCode prv_cell_sense_conversions() {
   return status;
 }
 
-static inline StatusCode cell_sense_run() {
+static StatusCode prv_cell_sense_run() {
   StatusCode status = STATUS_CODE_OK;
   uint16_t max_voltage = 0;
   uint16_t min_voltage = 0xffff;
@@ -305,7 +304,7 @@ TASK(cell_sense_conversions, TASK_STACK_512) {
   TickType_t xLastWakeTime = xTaskGetTickCount();
   while (true) {
     prv_cell_sense_conversions();
-    cell_sense_run();
+    prv_cell_sense_run();
     /* Delay is TBD */
     xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10000));
   }

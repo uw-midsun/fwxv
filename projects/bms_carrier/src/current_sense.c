@@ -36,8 +36,6 @@ StatusCode prv_fuel_gauge_read() {
   // LOG_DEBUG("TEMP: %d\n", s_storage->temperature);
 
   if (status != STATUS_CODE_OK) {
-    // TODO (Adel): Handle a fuel gauge fault
-    // Open Relays
     LOG_DEBUG("Status error: %d\n", status);
     fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     return status;
@@ -123,6 +121,6 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   s_fuel_gauge_settings->sense_resistor_mohms = SENSE_RESISTOR_MOHM;
 
   status = max17261_init(s_fuel_guage_storage, s_fuel_gauge_settings, &s_fuel_params);
-  tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
+  tasks_init_task(current_sense, TASK_PRIORITY(3), NULL);
   return status;
 }
