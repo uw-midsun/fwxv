@@ -10,17 +10,38 @@
 
 ---
   Messages:
-    current_measurement:
+    current_measurement_1:
       id: 54
       critical: false
       target:
         centre_console:
           watchdog: 0
       signals:
-        current_id:
+        current_id_1:
+          length: 8
+        current_1:
           length: 16
-        current:
+        current_id_2:
+          length: 8
+        current_2:
           length: 16
+          
+    current_measurement_2:
+      id: 55
+      critical: false
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        current_id_1:
+          length: 8
+        current_1:
+          length: 16
+        current_id_2:
+          length: 8
+        current_2:
+          length: 16
+          
     pd_status:
       id: 2
       critical: true
