@@ -201,9 +201,9 @@ static inline StatusCode cell_sense_run() {
     status = STATUS_CODE_INTERNAL_ERROR;
   }
   if (max_voltage - min_voltage >= CELL_UNBALANCED) {
-   LOG_DEBUG("UNBALANCED\n");
-   fault_bps_set(BMS_FAULT_UNBALANCE);
-   status = STATUS_CODE_INTERNAL_ERROR;
+    LOG_DEBUG("UNBALANCED\n");
+    fault_bps_set(BMS_FAULT_UNBALANCE);
+    status = STATUS_CODE_INTERNAL_ERROR;
   }
 
   if (min_voltage >= AFE_BALANCING_UPPER_THRESHOLD) {
