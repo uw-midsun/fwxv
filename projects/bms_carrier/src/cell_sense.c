@@ -224,7 +224,7 @@ static inline StatusCode cell_sense_run() {
     }
   }
   LOG_DEBUG("Config discharge bitset %d\n", ltc_afe_storage->discharge_bitset[0]);
-  ltc_afe_impl_write_config(afe_storage);
+  ltc_afe_impl_write_config(ltc_afe_storage);
 
   // Log and check all thermistor values based on settings bitset
   uint16_t max_temp = 0;
