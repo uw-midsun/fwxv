@@ -46,6 +46,7 @@ TASK(gpioTask, TASK_STACK_512) {
     gpio_toggle_state(&led_addr);
 
     gpio_get_state(&led_addr, &temp_state);
+    // gpio_toggle_state(&ready_pin);
 
     // LOG_DEBUG("State: %d\n", temp_state);
     ads1115_read_converted(&config, ADS1115_CHANNEL_1, &reader);
