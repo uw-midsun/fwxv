@@ -51,7 +51,7 @@ StatusCode ads1115_select_channel(ADS1115_Config *config, ADS1115_Channel channe
 
 StatusCode ads1115_read_raw(ADS1115_Config *config, ADS1115_Channel channel, int16_t *reading) {
   /* TODO: complete function */
-  i2c_read_reg(config->i2c_port, config->i2c_addr, ADS1115_REG_CONVERSION, (uint8_t *) reading, 16);
+  i2c_read_reg(config->i2c_port, config->i2c_addr, ADS1115_REG_CONVERSION, (uint8_t *) reading, 2);
   return STATUS_CODE_OK;
 }
 
