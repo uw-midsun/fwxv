@@ -1,9 +1,8 @@
 #include "ads1115.h"
 
 #include "gpio_it.h"
-#include "log.h"
-
 #include "i2c.h"
+#include "log.h"
 #include "status.h"
 
 StatusCode ads1115_init(ADS1115_Config *config, ADS1115_Address i2c_addr, GpioAddress *ready_pin) {
@@ -49,23 +48,19 @@ StatusCode ads1115_select_channel(ADS1115_Config *config, ADS1115_Channel channe
   return STATUS_CODE_OK;
 }
 
-StatusCode ads1115_read_raw(ADS1115_Config *config, ADS1115_Channel channel, int16_t *reading) {
+StatusCode ads1115_read_raw(ADS1115_Config *config, ADS1115_Channel channel, uint16_t *reading) {
   /* TODO: complete function */
-  i2c_read_reg(config->i2c_port, config->i2c_addr, ADS1115_REG_CONVERSION, (uint8_t *) reading, 2);
+  i2c_read_reg(config->i2c_port, config->i2c_addr, ADS1115_REG_CONVERSION, (uint8_t *)reading, 2);
   return STATUS_CODE_OK;
 }
 
 StatusCode ads1115_read_converted(ADS1115_Config *config, ADS1115_Channel channel, float *reading) {
   /* TODO: complete function */
-  uint16_t reader ;
-  
-  ads1115_read_raw(config, channel,(int16_t *) &reader);
+  uint16_t reader;
 
-  if (reader <= 32768) {
-    *reading = -1 * (reader/ 65535)*4.096;
-  } else {
-    *reading = (reader/ 65535)*4.096;
-  }
+  ads1115_read_raw(config, channel, &reader);
+
+  *reading = ((float)reader / 65535.0f) * 8.192f - 4.096f;
 
   return STATUS_CODE_OK;
 }

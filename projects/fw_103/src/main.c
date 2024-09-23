@@ -11,20 +11,13 @@
 
 #include <stdio.h>
 
+#include "ads1115.h"
+#include "delay.h"
+#include "gpio.h"
 #include "log.h"
 #include "tasks.h"
 
-#include "gpio.h"
-#include "delay.h"
-
-#include "ads1115.h"
-
-static GpioAddress led_addr = {
-  .port = GPIO_PORT_B,
-  .pin = 3
-};
-
-
+static GpioAddress led_addr = { .port = GPIO_PORT_B, .pin = 3 };
 
 TASK(gpioTask, TASK_STACK_512) {
   GpioAddress ready_pin = {
@@ -53,7 +46,7 @@ TASK(gpioTask, TASK_STACK_512) {
 
     LOG_DEBUG("reader value: %f\n", reader);
 
-    delay_s(1);
+    // delay_s(1);
   }
 }
 
