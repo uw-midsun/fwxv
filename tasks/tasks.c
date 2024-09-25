@@ -3,6 +3,7 @@
 
 #include "FreeRTOS.h"
 #include "tasks.h"
+#include "queues.h"
 
 #include "gpio.h"
 #include "log.h"
