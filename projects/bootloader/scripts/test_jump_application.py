@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from jump_application import Jump_Application, CAN_ARBITRATION_JUMP_ID
+from jump_application import Jump_Application
 from can_datagram import Datagram, DatagramSender
 
 TEST_CHANNEL = "vcan0"

@@ -2,7 +2,6 @@ from can_datagram import Datagram, DatagramSender
 import bootloader_id
 import os
 
-
 class Flash_Application:
     def __init__(self, bin_path, sender=None) -> None:
         if sender:

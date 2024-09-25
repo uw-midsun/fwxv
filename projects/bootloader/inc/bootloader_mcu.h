@@ -7,7 +7,6 @@ extern uint32_t _application_size;
 extern uint32_t _ram_start;
 extern uint32_t _ram_size;
 extern uint32_t _vector_table_size;
-uint8_t _node_id;
 
 #define APP_START_ADDRESS ((uint32_t)&_application_start)
 #define BOOTLOADER_APPLICATION_SIZE ((size_t)_application_size)
@@ -39,4 +38,6 @@ typedef enum {
   BOOTLOADER_BUFFER_OVERFLOW,
   /// @brief Bootloader CAN init error
   BOOTLOADER_CAN_INIT_ERR,
+  /// @brief Bootloader attempted to write/read to incorrect address
+  BOOTLOADER_INVALID_ADDRESS
 } BootloaderError;

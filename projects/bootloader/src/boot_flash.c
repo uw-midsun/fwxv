@@ -15,8 +15,7 @@ BootloaderError boot_flash_write(uintptr_t address, uint8_t *buffer, size_t buff
   // volatile FLASH_Status status = FLASH_COMPLETE;
   for (size_t i = 0; i < data_len; i++) {
     FLASH_ProgramWord(address + (i * BOOTLOADER_WRITE_BYTES), data[i]);
-    while (FLASH->SR & FLASH_SR_BSY)
-      ;  // Wait for the flash operation to complete
+    while (FLASH->SR & FLASH_SR_BSY);  // Wait for the flash operation to complete
   }
   FLASH_Lock();
   if (FLASH->SR & FLASH_SR_EOP) {
@@ -33,12 +32,23 @@ BootloaderError boot_flash_erase(uint8_t page) {
 
   FLASH_Unlock();
   FLASH_Status status = FLASH_ErasePage(BOOTLOADER_PAGE_TO_ADDR(page));
-  while (FLASH->SR & FLASH_SR_BSY)
-    ;  // Wait for the flash operation to complete
+  while (FLASH->SR & FLASH_SR_BSY);  // Wait for the flash operation to complete
   FLASH_Lock();
 
   if (status != FLASH_COMPLETE) {
     return BOOTLOADER_FLASH_ERR;
   }
+  return BOOTLOADER_ERROR_NONE;
+}
+
+BootloaderError boot_flash_read(uintptr_t address, uint8_t *buffer, size_t buffer_len) {
+  if (address < APP_START_ADDRESS || address >= APP_START_ADDRESS + BOOTLOADER_APPLICATION_SIZE) {
+    return BOOTLOADER_INVALID_ADDRESS;
+  }
+
+  for (size_t i = 0; i < buffer_len; i++) {
+    buffer[i] = *((volatile uint8_t *)(address + i));
+  }
+
   return BOOTLOADER_ERROR_NONE;
 }

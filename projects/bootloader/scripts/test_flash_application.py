@@ -1,7 +1,7 @@
 import unittest
 import can
 from unittest.mock import patch, mock_open
-from flash_application import Flash_Application, CAN_ARBITRATION_FLASH_ID
+from flash_application import Flash_Application
 from can_datagram import Datagram, DatagramListener, DatagramSender
 
 TEST_CHANNEL = "vcan0"
@@ -9,17 +9,17 @@ TEST_CHANNEL = "vcan0"
 
 class TestFlashApplication(unittest.TestCase):
     def setUp(self):
-        self.binary_path = '/home/vagrant/shared/fwxv/projects/bootloader/test/dummy.bin'
+        self.binary_path = '/home/firmware/dev/Akashem06/fwxv/projects/bootloader/test/dummy.bin'
         sender = DatagramSender(bustype="virtual", channel=TEST_CHANNEL, receive_own_messages=True)
         self.app = Flash_Application(bin_path=self.binary_path, sender=sender)
 
     def test_get_binary_path(self):
         self.assertEqual(
             self.app._bin_path,
-            '/home/vagrant/shared/fwxv/projects/bootloader/test/dummy.bin')
+            '/home/firmware/dev/Akashem06/fwxv/projects/bootloader/test/dummy.bin')
 
     def test_get_binary_size(self):
-        self.assertEqual(self.app._bin_size, 37)
+        self.assertEqual(self.app._bin_size, 1725)
 
     def test_start_flash(self):
         # incomplete

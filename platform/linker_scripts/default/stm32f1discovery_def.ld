@@ -2,6 +2,19 @@
 Linker subscript for STM32F103C definitions with 64K Flash and 20K RAM
 */
 
+_flash_start = 0x08000000;
+_flash_size = 64K;
+_flash_page_size = 1K;
+
+_ram_start = 0x20000000;
+_ram_size = 20K;
+
+_application_start = _flash_start;
+
+_application_size = _flash_size;
+
+_vector_table_size = 0xEC; /* used for relocating the vector table to RAM for the application */
+
 /* Memory Spaces Definitions */
 
 ENTRY(Reset_Handler)

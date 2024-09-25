@@ -67,7 +67,6 @@ class TestCanDatagram(unittest.TestCase):
 
         test_bytes = bytearray([TEST_NODES_RAW1,            # Node ID's RAW
                                 TEST_NODES_RAW2,            # Node ID's RAW
-                                26, 0,                      # Data Size, little-endian
                                 ])
 
         self.assertEqual(message.pack(), test_bytes)

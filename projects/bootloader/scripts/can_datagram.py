@@ -2,7 +2,8 @@
 
 import can
 import time
-import bootloader_id
+from crc32 import CRC32
+from bootloader_id import *
 
 DEFAULT_CHANNEL = 'can0'
 CAN_BITRATE = 500000
@@ -13,6 +14,7 @@ MIN_BYTEARRAY_SIZE = 4
 NODE_IDS_OFFSET = 0
 DATA_SIZE_OFFSET = 2
 
+crc32 = CRC32(STANDARD_CRC32_POLY)
 
 class DatagramTypeError(Exception):
     # pylint: disable=unnecessary-pass
@@ -43,11 +45,11 @@ class Datagram:
             raise DatagramTypeError(
                 "Invalid Datagram format from bytearray: Does not meet minimum size requirement")
 
-        if arbitration_id == CAN_START_ARBITRATION_ID:
+        if arbitration_id == START:
             node_ids_raw = datagram_bytearray[NODE_IDS_OFFSET:DATA_SIZE_OFFSET]
             node_ids = cls._unpack_nodeids(cls, node_ids_raw)
             return cls(datagram_type_id=arbitration_id, node_ids=node_ids, data=bytearray())
-        elif arbitration_id == CAN_ARBITRATION_FLASH_ID:
+        elif arbitration_id == FLASH:
             data = []
             data = datagram_bytearray
             return cls(datagram_type_id=arbitration_id, node_ids=[], data=data)
@@ -185,16 +187,30 @@ class DatagramSender:
         '''Send a Datagram over CAN'''
         assert isinstance(message, Datagram)
         chunk_messages = list(self._chunkify(message.data, 8))
+        crc32_chunks = list(self._chunkify(message.data, 1024))
+        
+        for crc_chunk in crc32_chunks:
+            crc32_value = crc32.calculate(crc_chunk)
+            print(crc32_value)
+            crc_data = crc32_value.to_bytes(4, byteorder='big')
+            print(crc_data)e
+
+            print(crc32_value)
+
+            # Create a CAN message for the CRC32 data
+            # crc_message = can.Message(arbitration_id=CRC32_CHECK,
+            #                         data=crc_data,
+            #                         is_extended_id=message_extended_arbitration)
 
         message_extended_arbitration = False
         can_messages = []
 
-        can_messages.append(can.Message(arbitration_id=bootloader_id.START_FLASH,
+        can_messages.append(can.Message(arbitration_id=START_FLASH,
                                         data=chunk_messages[0],
                                         is_extended_id=message_extended_arbitration))
 
-        for chunk_message in chunk_messages[1:]:
-            can_messages.append(can.Message(arbitration_id=bootloader_id.FLASH,
+        for chunk_message in chunk_messages:
+            can_messages.append(can.Message(arbitration_id=FLASH,
                                             data=chunk_message,
                                             is_extended_id=message_extended_arbitration))
         binary_sent_counter = 0
@@ -205,7 +221,7 @@ class DatagramSender:
                 # print(msg, "\tBINARY SENT:", binary_sent_counter, "\tTOTAL APP SIZE:", len(message.data))
                 self.bus.send(msg)
             except BaseException:
-                print("Bruh")
+                # print("Bruh")
                 time.sleep(0.01)
                 self.bus.send(msg)
 
@@ -242,14 +258,14 @@ class DatagramListener(can.BufferedReader):
         super().on_message_received(msg)
         arbitration_id = (msg.arbitration_id & 0xff)
 
-        if arbitration_id == CAN_START_ARBITRATION_ID:
+        if arbitration_id == START:
             self.board_ids = self.extract_board_id(msg.data)
         for board_id in self.board_ids:
-            if arbitration_id == CAN_START_ARBITRATION_ID:
+            if arbitration_id == START:
                 # Reset the datagram message when receiving a start message
                 self.datagram_messages[board_id] = msg.data
 
-            if arbitration_id != CAN_START_ARBITRATION_ID:
+            if arbitration_id != START:
                 if board_id in self.datagram_messages:
                     self.datagram_messages[board_id] += msg.data
 
