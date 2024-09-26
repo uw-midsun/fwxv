@@ -1,27 +1,55 @@
-/*
-  Project Code for FW 103
-
-  Assignment: Create an ADC driver to interface with the ADS1115 Multi-Channel ADC IC.
-
-  Requirements:
-    - Implement the ADC driver functions (set config, select and read from a channel)
-    - ADC task to periodically measure the voltage of channel 0
-    - Overvoltage interrupt (configure the interrupt to be on channel 0 with thresholds of 0V - 1V)
-*/
-
 #include <stdio.h>
+#include "gpio.h"
 
 #include "log.h"
+#include "master_task.h"
 #include "tasks.h"
+#include "delay.h"
+#include "ads1115.h"
+
+TASK(task1, TASK_STACK_512) {
+  float reading;
+  int counter1 = 0;
+  GpioAddress led_addr = {
+    .port = GPIO_PORT_B,
+    .pin = 3,
+  };
+
+    GpioAddress ready_pin = {
+    .port = GPIO_PORT_B,
+    .pin = GPIO_Pin_0,
+  };
+
+  ADS1115_Config config = {
+    .handler_task = task1,
+    .i2c_addr = ADS1115_ADDR_GND,
+    .i2c_port = ADS1115_I2C_PORT,
+    .ready_pin = &ready_pin,
+  };
+
+  while (true) {
+    counter1++;
+    // gpio_toggle_state(&led_addr);
+    // delay_ms(1); //blocking -> lets other things run
+    // //prv_delay(1) //nonblocking -> consumes clock cycles
+    ads1115_read_converted(&config, ADS1115_CHANNEL_0, &reading);
+
+    LOG_DEBUG("Voltage: %f\n", reading);
+
+  }
+}
+
 
 int main() {
-  tasks_init();
   log_init();
   gpio_init();
-  LOG_DEBUG("Welcome to FW 103!\n");
+  tasks_init();
+  tasks_init_task(task1, TASK_PRIORITY(1), NULL);
+  LOG_DEBUG("Welcome to TEST!");
+
 
   tasks_start();
 
-  LOG_DEBUG("exiting main?\n");
+  LOG_DEBUG("exiting main?");
   return 0;
 }
