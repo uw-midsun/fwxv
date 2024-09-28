@@ -18,6 +18,8 @@ Messages:
         watchdog: 3
       power_distribution:
         watchdog: 3
+      telemetry:
+          watchdog: 0
     signals:
       target_velocity:
         length: 32
@@ -37,6 +39,8 @@ Messages:
         watchdog: 0
       power_distribution:
         watchdog: 0
+      telemetry:
+          watchdog: 0
     signals:
       throttle_output:
         length: 32
@@ -50,6 +54,8 @@ Messages:
         watchdog: 0
       motor_controller:
         watchdog: 0
+      telemetry:
+          watchdog: 0
     signals:
       input_cc:
         length: 8 # (cc_toggle | cc_increse | cc_decrease)

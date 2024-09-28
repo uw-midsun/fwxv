@@ -10,33 +10,12 @@
 
 ---
   Messages:
-    current_measurement:
-      id: 54
-      critical: false
-      target:
-        centre_console:
-          watchdog: 0
+    test_msg:
+      id: 0
+      target: 
         telemetry:
           watchdog: 0
-      signals:
-        current_id:
-          length: 16
-        current:
-          length: 16
-    pd_status:
-      id: 2
       critical: true
-      target:
-        centre_console:
-          watchdog: 3
-        telemetry:
-          watchdog: 0
-      signals:
-        power_state:
+      signals: 
+        test:
           length: 8
-        fault_bitset:
-          length: 8
-        bps_persist:
-          length: 16
-        bps_persist_val:
-          length: 16

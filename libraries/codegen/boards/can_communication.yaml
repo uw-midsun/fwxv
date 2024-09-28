@@ -16,6 +16,8 @@
       target:
        can_communication:
         watchdog: 0
+      telemetry:
+          watchdog: 0
       signals:
         sig1:
           length: 16
