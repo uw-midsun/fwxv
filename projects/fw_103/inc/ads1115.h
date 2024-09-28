@@ -40,6 +40,6 @@ StatusCode ads1115_init(ADS1115_Config *config, ADS1115_Address i2c_addr, GpioAd
 
 StatusCode ads1115_select_channel(ADS1115_Config *config, ADS1115_Channel channel);
 
-StatusCode ads1115_read_raw(ADS1115_Config *config, ADS1115_Channel channel, int16_t *reading);
+StatusCode ads1115_read_raw(ADS1115_Config *config, ADS1115_Channel channel, uint16_t *reading);
 
 StatusCode ads1115_read_converted(ADS1115_Config *config, ADS1115_Channel channel, float *reading);
