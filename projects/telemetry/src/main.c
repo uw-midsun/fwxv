@@ -1,13 +1,12 @@
 #include <stdio.h>
 
+#include "can.h"
+#include "can_board_ids.h"
+#include "datagram.h"
 #include "log.h"
 #include "master_task.h"
 #include "tasks.h"
-#include "can_board_ids.h"
-#include "can.h"
 #include "uart.h"
-
-#include "datagram.h"
 
 static CanStorage s_can_storage = { 0 };
 
@@ -27,7 +26,7 @@ TASK(CAN_TO_UART, TASK_STACK_256) {
   while (true) {
     CanMessage msg = { 0 };
     Datagram datagram = { .start_frame = 0xAA, .end_of_frame = 0xBB };
-    
+
     // Polling can_storage queue
     StatusCode ret = can_queue_pop(&s_can_storage.rx_queue, &msg);
 
@@ -39,7 +38,6 @@ TASK(CAN_TO_UART, TASK_STACK_256) {
       LOG_DEBUG("can_queue_pop failed\n");
     }
   }
-  
 }
 
 void run_fast_cycle() {
@@ -58,7 +56,6 @@ Datagram decode_can_message(Datagram datagram, CanMessage msg) {
 
   return datagram;
 }
-
 
 int main() {
   tasks_init();
