@@ -10,16 +10,12 @@
 
 ---
   Messages:
-    one_shot_msg:
-      id: 34
-      critical: true
-      target:
-       can_communication:
-        watchdog: 0
-      telemetry:
+    test_msg:
+      id: 0
+      target: 
+        telemetry:
           watchdog: 0
-      signals:
-        sig1:
-          length: 16
-        sig2:
-          length: 16
+      critical: true
+      signals: 
+        test:
+          length: 8
