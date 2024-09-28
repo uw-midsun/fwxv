@@ -39,5 +39,11 @@ typedef enum {
   /// @brief Bootloader CAN init error
   BOOTLOADER_CAN_INIT_ERR,
   /// @brief Bootloader attempted to write/read to incorrect address
-  BOOTLOADER_INVALID_ADDRESS
+  BOOTLOADER_INVALID_ADDRESS,
+  /// @brief Bootloader has detected a crc mismatch before writing to flash
+  BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE,
+  /// @brief Bootloader has detected a crc mismatch after reading the new flash memory
+  BOOTLOADER_CRC_MISMATCH_AFTER_WRITE,
+  /// @brief Bootloader received an incorrect sequence number
+  BOOTLOADER_SEQUENCE_ERROR
 } BootloaderError;

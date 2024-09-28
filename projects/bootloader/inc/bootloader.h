@@ -12,7 +12,7 @@ typedef enum {
   BOOTLOADER_IDLE,
   /// @brief Bootloader is processing a start message
   BOOTLOADER_START,
-  /// @brief Bootloader is waiting for the first byte to be sent (CAN_ARBITRATION_START_FLASH_ID)
+  /// @brief Bootloader is waiting for the first byte to be sent (CAN_ARBITRATION_SEQUENCING_ID)
   BOOTLOADER_DATA_READY,
   /// @brief Bootloader is receiving streamed data and flashing it immediately
   /// (CAN_ARBITRATION_FLASH_ID)
@@ -28,6 +28,8 @@ typedef struct {
   uintptr_t current_address;
   uint32_t bytes_written;
   uint32_t binary_size;
+  uint32_t packet_crc32;
+  uint16_t expected_sequence_number;
   uint16_t buffer_index;
 
   BootloaderStates state;

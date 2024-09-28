@@ -2,12 +2,23 @@
 
 #include "log.h"
 #include "boot_flash.h"
+#include "can_board_ids.h"
 #include "boot_crc32.h"
 #include "delay.h"
 #include "tasks.h"
 #include <string.h>
 
+const Boot_CanSettings can_settings = {
+  .device_id = SYSTEM_CAN_DEVICE_BOOTLOADER,
+  .bitrate = CAN_HW_BITRATE_500KBPS,
+  .loopback = false,
+};
+
+Boot_CanMessage msg = { 0 };
+
 TASK(read_write, TASK_STACK_512) {
+  boot_can_init(&can_settings);
+  bootloader_init();
   crc_init();
   uint8_t flash_buffer[1024];
   const uint8_t test_data[] = "Test data for CRC32";

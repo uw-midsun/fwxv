@@ -52,6 +52,15 @@ class Flash_Application:
         print(f"Starting flash process")
         print(f'Sending binary data with size of {self._bin_size}...\n\n')
 
+        with open(self._bin_path, 'rb') as bin_data:
+            bin_content = bytearray(bin_data.read())
+
+        remainder = len(bin_content) % 4
+        if remainder != 0:
+            padding_size = 4 - remainder
+            bin_content.extend([0x00] * padding_size)
+            self._bin_size = os.path.getsize(self._bin_path) + padding_size
+
         start_datagram = Datagram(
             datagram_type_id=bootloader_id.START,
             node_ids=node_ids,
@@ -61,9 +70,6 @@ class Flash_Application:
                 (self._bin_size >> 16) & 0xff,
                 (self._bin_size >> 24) & 0xff])
         )
-
-        with open(self._bin_path, 'rb') as bin_data:
-            bin_content = bytearray(bin_data.read())
 
         flash_datagram = Datagram(
             datagram_type_id=bootloader_id.FLASH,

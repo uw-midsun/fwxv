@@ -6,7 +6,7 @@ from crc32 import CRC32
 from bootloader_id import *
 
 DEFAULT_CHANNEL = 'can0'
-CAN_BITRATE = 500000
+CAN_BITRATE = 1000000
 
 DATA_SIZE_SIZE = 2
 MIN_BYTEARRAY_SIZE = 4
@@ -183,55 +183,113 @@ class DatagramSender:
         print(can_message)
         print("Message was sent on {}".format(self.bus.channel_info))
 
+        ack_received = False
+        retry_count = 0
+        max_retries = 3
+        
+        while not ack_received and retry_count < max_retries:
+            try:
+                ack_msg = self.bus.recv(timeout=5.0)
+                
+                if ack_msg and ack_msg.arbitration_id == ACK:
+                    if ack_msg.data[0] == 0x01:
+                        ack_received = True
+                        print(f"Received ACK for start message")
+                    elif ack_msg.data[0] == 0x00:
+                        print(f"Received NACK for start message, aborting")
+                        break
+                    else:
+                        print(f"Received unknown response for start message, retrying...")
+                        retry_count += 1
+                else:
+                    print(f"No ACK/NACK received for start message, retrying...")
+                    retry_count += 1
+                
+            except can.CanError:
+                print(f"Error waiting for ACK/NACK for start message, retrying...")
+                retry_count += 1
+        
+        if not ack_received:
+            raise Exception(f"Failed to receive ACK for start message after {max_retries} attempts")
+    
+
+        print(f"Start message received succesfully!")
+
     def send_data(self, message, sender_id=0):
         '''Send a Datagram over CAN'''
         assert isinstance(message, Datagram)
-        chunk_messages = list(self._chunkify(message.data, 8))
-        crc32_chunks = list(self._chunkify(message.data, 1024))
         
-        for crc_chunk in crc32_chunks:
-            crc32_value = crc32.calculate(crc_chunk)
-            print(crc32_value)
-            crc_data = crc32_value.to_bytes(4, byteorder='big')
-            print(crc_data)e
-
-            print(crc32_value)
-
-            # Create a CAN message for the CRC32 data
-            # crc_message = can.Message(arbitration_id=CRC32_CHECK,
-            #                         data=crc_data,
-            #                         is_extended_id=message_extended_arbitration)
-
         message_extended_arbitration = False
-        can_messages = []
+        chunk_messages = list(self._chunkify(message.data, 8))
+        sequence_number = 0
+        
+        while chunk_messages:
+            seq_num_bytes = sequence_number.to_bytes(2, byteorder='little')
+            
+            # Prepare up to 1024 bytes (128 chunks of 8 bytes each)
+            current_chunk = chunk_messages[:128]
+            chunk_messages = chunk_messages[128:]
+            
+            crc_chunk = b''.join(current_chunk)
+            crc32_value = crc32.calculate(crc_chunk)
+            print(f"CRC32 VALUE: {crc32_value}")
+            crc_data = crc32_value.to_bytes(4, byteorder='little')
+            
+            sequencing_data = seq_num_bytes + crc_data
+            
+            # Send sequence message
+            sequence_msg = can.Message(arbitration_id=SEQUENCING,
+                                    data=sequencing_data,
+                                    is_extended_id=message_extended_arbitration)
+            
+            self.bus.send(sequence_msg)
+            print(f"Sent sequence message {sequence_number}")
+            
+            # Send data chunks (up to 1024 bytes)
+            for chunk in current_chunk:
+                time.sleep(0.01)  # Small delay between messages
+                data_msg = can.Message(arbitration_id=FLASH,
+                                    data=chunk,
+                                    is_extended_id=message_extended_arbitration)
+                self.bus.send(data_msg)
+            
+            print(f"Sent {len(current_chunk) * 8} bytes for sequence {sequence_number}")
+            
+            # After sending sequence 0 and its data, start checking for ACK/NACK
+            if sequence_number > 0 or chunk_messages:
+                ack_received = False
+                retry_count = 0
+                max_retries = 3
+                
+                while not ack_received and retry_count < max_retries:
+                    try:
+                        ack_msg = self.bus.recv(timeout=5.0)
+                        
+                        if ack_msg and ack_msg.arbitration_id == ACK:
+                            if ack_msg.data[0] == 0x01:
+                                ack_received = True
+                                print(f"Received ACK for sequence {sequence_number}")
+                            elif ack_msg.data[0] == 0x00:
+                                print(f"Received NACK for sequence {sequence_number}, retrying...")
+                                retry_count += 1
+                                break
+                            else:
+                                print(f"Received unknown response for sequence {sequence_number}, retrying...")
+                                retry_count += 1
+                        else:
+                            print(f"No ACK/NACK received for sequence {sequence_number}, retrying...")
+                            retry_count += 1
+                        
+                    except can.CanError:
+                        print(f"Error waiting for ACK/NACK for sequence {sequence_number}, retrying...")
+                        retry_count += 1
+                
+                if not ack_received:
+                    raise Exception(f"Failed to receive ACK for sequence {sequence_number} after {max_retries} attempts")
+            
+            sequence_number += 1
 
-        can_messages.append(can.Message(arbitration_id=START_FLASH,
-                                        data=chunk_messages[0],
-                                        is_extended_id=message_extended_arbitration))
-
-        for chunk_message in chunk_messages:
-            can_messages.append(can.Message(arbitration_id=FLASH,
-                                            data=chunk_message,
-                                            is_extended_id=message_extended_arbitration))
-        binary_sent_counter = 0
-        start_time = time.time()
-
-        for msg in can_messages:
-            try:
-                # print(msg, "\tBINARY SENT:", binary_sent_counter, "\tTOTAL APP SIZE:", len(message.data))
-                self.bus.send(msg)
-            except BaseException:
-                # print("Bruh")
-                time.sleep(0.01)
-                self.bus.send(msg)
-
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        print(
-            "{} messages were sent on {}. Took {}".format(
-                len(can_messages),
-                self.bus.channel_info,
-                elapsed_time))
+        print(f"All data sent successfully. Total sequences: {sequence_number}")
 
     @staticmethod
     def _chunkify(data, size):

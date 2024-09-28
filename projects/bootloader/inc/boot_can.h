@@ -22,14 +22,14 @@ typedef enum {
 
 typedef enum { CAN_CONTINUOUS = 0, CAN_ONE_SHOT_MODE, NUM_CAN_MODES } Boot_CanMode;
 
-typedef struct Boot_CanSettings {
+typedef struct {
   uint16_t device_id;
   Boot_CanBitrate bitrate;
   bool loopback;
   Boot_CanMode mode;
 } Boot_CanSettings;
 
-typedef struct Boot_CanMessage {
+typedef struct {
   uint32_t id;
   uint8_t extended;
   size_t dlc;

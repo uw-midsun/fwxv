@@ -8,7 +8,7 @@
 
 const Boot_CanSettings can_settings = {
   .device_id = SYSTEM_CAN_DEVICE_BOOTLOADER,
-  .bitrate = CAN_HW_BITRATE_500KBPS,
+  .bitrate = CAN_HW_BITRATE_1000KBPS,
   .loopback = false,
 };
 
