@@ -143,6 +143,8 @@ for entry in PROJ_DIR.glob('*') + SMOKE_DIR.glob('*'):
     # SCons automagically handles object creation and linking
 
     if PLATFORM == 'x86' and config['arm_only']:
+        print('Project is only for ARM devices. Cannot build x86 version.')
+        Exit(0)
         break
     
     target = env.Program(
