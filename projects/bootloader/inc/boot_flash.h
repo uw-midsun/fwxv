@@ -13,7 +13,7 @@
 #define BOOTLOADER_PAGE_TO_ADDR(page) \
   ((uintptr_t)(page) * (uintptr_t)BOOTLOADER_PAGE_BYTES + (uintptr_t)APP_START_ADDRESS)
 #define BOOTLOADER_WRITE_BYTES 4
-#define BOOTLOADER_PAGE_BYTES 0x400
+#define BOOTLOADER_PAGE_BYTES ((size_t)0x400)
 
 BootloaderError boot_flash_write(uintptr_t address, uint8_t *buffer, size_t buffer_len);
 BootloaderError boot_flash_erase(uint8_t page);
