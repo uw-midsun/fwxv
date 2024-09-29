@@ -10,8 +10,10 @@
 #include "status.h"
 
 #define BMS_PERIPH_I2C_PORT I2C_PORT_2
-#define BMS_PERIPH_I2C_SDA_PIN { .port = GPIO_PORT_B, .pin = 11 }
-#define BMS_PERIPH_I2C_SCL_PIN { .port = GPIO_PORT_B, .pin = 10 }
+#define BMS_PERIPH_I2C_SDA_PIN \
+  { .port = GPIO_PORT_B, .pin = 11 }
+#define BMS_PERIPH_I2C_SCL_PIN \
+  { .port = GPIO_PORT_B, .pin = 10 }
 
 typedef struct CurrentStorage {
   uint16_t soc;

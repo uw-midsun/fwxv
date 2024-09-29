@@ -27,10 +27,14 @@ static const uint8_t bytes_to_write[] = { 0x10, 0x2F };
 // ==== END OF PARAMETERS ====
 
 // These are the SDA and SCL ports for the I2C ports 1 and 2.
-#define I2C1_SDA { .port = GPIO_PORT_B, .pin = 9 }
-#define I2C1_SCL { .port = GPIO_PORT_B, .pin = 8 }
-#define I2C2_SDA { .port = GPIO_PORT_B, .pin = 11 }
-#define I2C2_SCL { .port = GPIO_PORT_B, .pin = 10 }
+#define I2C1_SDA \
+  { .port = GPIO_PORT_B, .pin = 9 }
+#define I2C1_SCL \
+  { .port = GPIO_PORT_B, .pin = 8 }
+#define I2C2_SDA \
+  { .port = GPIO_PORT_B, .pin = 11 }
+#define I2C2_SCL \
+  { .port = GPIO_PORT_B, .pin = 10 }
 
 static I2CSettings i2c_settings = {
   .speed = I2C_SPEED_STANDARD,

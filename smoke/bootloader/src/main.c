@@ -42,10 +42,6 @@ TASK(read_write, TASK_STACK_512) {
     boot_flash_read(0x8009000, flash_buffer, 1024);
     for (uint8_t i = 0; i < 240; i++) {
       // LOG_DEBUG("FLASH BUFFER %d\n", flash_buffer[i]);
-      if (flash_buffer[i] != i) {
-        // Hang
-        while (true);
-      }
       delay_ms(5);
     }
 

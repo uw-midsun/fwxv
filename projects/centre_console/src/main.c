@@ -19,8 +19,10 @@
 #define MASTER_MS_CYCLE_TIME 1000
 #endif
 
-#define I2C1_SDA { .port = GPIO_PORT_B, .pin = 9 }
-#define I2C1_SCL { .port = GPIO_PORT_B, .pin = 8 }
+#define I2C1_SDA \
+  { .port = GPIO_PORT_B, .pin = 9 }
+#define I2C1_SCL \
+  { .port = GPIO_PORT_B, .pin = 8 }
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
