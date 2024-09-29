@@ -1,0 +1,58 @@
+# Message Definitions in plaintext are on the wiki at:
+# https://uwmidsun.atlassian.net/l/cp/Pxn8Xhm8
+#
+# If you are making changes to this file please update the corresponding entry
+# on the wiki. If you need to add a new message use a reasonable
+# reserved ID. The higher ID the lower the priority. Generally
+# - 0-13: Critical messages (have ACK)
+# - 14-30: Actionable messages (trigger a change in another system)
+# - 30-63: Data messages (usually not actionable by an onboard device)
+
+---
+  Messages:
+    bootloader_start:
+      id: 30
+      target:
+        bootloader:
+          watchdog: 0
+      critical: true
+      signals:
+        data0:
+          length: 8
+        data1:
+          length: 8
+        data2:
+          length: 8
+        data3:
+          length: 8
+        data4:
+          length: 8
+        data5:
+          length: 8
+        data6:
+          length: 8
+        data7:
+          length: 8
+    bootloader_data:
+      id: 31
+      target:
+        bootloader:
+          watchdog: 0
+      critical: true
+      signals:
+        data0:
+          length: 8
+        data1:
+          length: 8
+        data2:
+          length: 8
+        data3:
+          length: 8
+        data4:
+          length: 8
+        data5:
+          length: 8
+        data6:
+          length: 8
+        data7:
+          length: 8
