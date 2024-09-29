@@ -11,6 +11,7 @@ class CRC32:
     def calculate(self, buf):
         crc = 0xFFFFFFFF
         buf_len = len(buf)
+        print("ATTENTION: BUFFER LENGTH: ", buf_len)
         i = 0
 
         while i + 4 <= buf_len:

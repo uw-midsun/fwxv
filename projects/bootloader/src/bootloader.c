@@ -20,6 +20,8 @@ BootloaderError bootloader_init() {
   prv_bootloader.target_nodes = 0;
   prv_bootloader.buffer_index = 0;
 
+  crc_init();
+
   return BOOTLOADER_ERROR_NONE;
 }
 
@@ -109,14 +111,14 @@ static BootloaderError bootloader_handle_arbitration_id(Boot_CanMessage *msg) {
 }
 
 static BootloaderError bootloader_start() {
-  size_t page = 0;
-  for (page = 1 + ((APP_START_ADDRESS - 0x08000000) / BOOTLOADER_PAGE_BYTES);
-       page < NUM_FLASH_PAGES; page++) {
-    if (boot_flash_erase(page)) {
-      send_ack_datagram(false, BOOTLOADER_FLASH_ERR);
-      return BOOTLOADER_FLASH_ERR;
-    }
-  }
+  // size_t page = 0;
+  // for (page = (APP_START_ADDRESS - 0x08000000) / BOOTLOADER_PAGE_BYTES;
+  //    page < NUM_FLASH_PAGES; page++) {
+  //   if (boot_flash_erase(page)) {
+  //     send_ack_datagram(false, BOOTLOADER_FLASH_ERR);
+  //     return BOOTLOADER_FLASH_ERR;
+  //   }
+  // }
 
   prv_bootloader.binary_size = datagram.payload.start.data_len;
   prv_bootloader.bytes_written = 0;
@@ -165,6 +167,7 @@ static BootloaderError bootloader_data_ready() {
 }
 
 static BootloaderError bootloader_data_receive() {
+  BootloaderError error =  BOOTLOADER_ERROR_NONE;
   if (!prv_bootloader.first_byte_received) {
     send_ack_datagram(false, BOOTLOADER_INTERNAL_ERR);
     return BOOTLOADER_INTERNAL_ERR;
@@ -174,8 +177,13 @@ static BootloaderError bootloader_data_receive() {
     return BOOTLOADER_BUFFER_OVERFLOW;
   }
 
-  size_t remaining_space = BOOTLOADER_PAGE_BYTES - prv_bootloader.buffer_index;
-  size_t bytes_to_copy = (remaining_space < 8) ? remaining_space : 8;
+  size_t bytes_to_copy = 8;
+  if (BOOTLOADER_PAGE_BYTES - prv_bootloader.buffer_index < 8) {
+    bytes_to_copy = BOOTLOADER_PAGE_BYTES - prv_bootloader.buffer_index;
+  }
+  if (prv_bootloader.binary_size - (prv_bootloader.buffer_index + prv_bootloader.bytes_written) < 8) {
+    bytes_to_copy = prv_bootloader.binary_size - (prv_bootloader.buffer_index + prv_bootloader.bytes_written);
+  }
 
   memcpy(flash_buffer + prv_bootloader.buffer_index, datagram.payload.data.binary_data, bytes_to_copy);
   prv_bootloader.buffer_index += bytes_to_copy;
@@ -183,28 +191,38 @@ static BootloaderError bootloader_data_receive() {
   if (prv_bootloader.buffer_index == BOOTLOADER_PAGE_BYTES ||
       (prv_bootloader.bytes_written + prv_bootloader.buffer_index)  >= prv_bootloader.binary_size) {
 
-
+    
+    // align_to_32bit_words(flash_buffer, (size_t *)&prv_bootloader.buffer_index);
     uint32_t calculated_crc32 = crc_calculate((const uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
     if (calculated_crc32 != prv_bootloader.packet_crc32) {
-      // GENERATE NACK, INFORMING THE PYTHON SCRIPT OF CRC MISMATCH
-      // TODO: Implement NACK generation
       send_ack_datagram(false, BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE);
       return BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE;
     }
+    error = boot_flash_erase(BOOTLOADER_ADDR_TO_PAGE(prv_bootloader.current_address));
+    error = boot_flash_write(prv_bootloader.current_address, flash_buffer, BOOTLOADER_PAGE_BYTES);
 
-    boot_flash_write(prv_bootloader.current_address, flash_buffer, BOOTLOADER_PAGE_BYTES);
+    if(error != BOOTLOADER_ERROR_NONE) {
+      send_ack_datagram(false, error);
+      return error;
+    }
 
-    // boot_flash_read(prv_bootloader.current_address, flash_buffer, prv_bootloader.buffer_index);
-    // calculated_crc32 = crc_calculate((uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
-    // if (calculated_crc32 != prv_bootloader.packet_crc32) {
-    //   // GENERATE NACK, INFORMING THE PYTHON SCRIPT OF CRC MISMATCH
-    //   // TODO: Implement NACK generation
-    //   send_ack_datagram(false, BOOTLOADER_CRC_MISMATCH_AFTER_WRITE);
-    //   return BOOTLOADER_CRC_MISMATCH_AFTER_WRITE;
-    // }
+    error = boot_flash_read(prv_bootloader.current_address, flash_buffer, BOOTLOADER_PAGE_BYTES);
 
+    if (error != BOOTLOADER_ERROR_NONE) {
+      send_ack_datagram(false, error);
+      return error;
+    }
+
+    calculated_crc32 = crc_calculate((uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
+    if (calculated_crc32 != prv_bootloader.packet_crc32) {
+      send_ack_datagram(false, BOOTLOADER_CRC_MISMATCH_AFTER_WRITE);
+      return BOOTLOADER_CRC_MISMATCH_AFTER_WRITE;
+    }
+
+    prv_bootloader.bytes_written += prv_bootloader.buffer_index;
     prv_bootloader.current_address += prv_bootloader.buffer_index;
     prv_bootloader.buffer_index = 0;
+    memset(flash_buffer, 0, sizeof(flash_buffer));
     send_ack_datagram(true, BOOTLOADER_ERROR_NONE);
     if (prv_bootloader.bytes_written >= prv_bootloader.binary_size) {
       return bootloader_jump_app();

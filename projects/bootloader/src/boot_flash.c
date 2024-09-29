@@ -1,11 +1,10 @@
 #include "boot_flash.h"
 
 BootloaderError boot_flash_write(uintptr_t address, uint8_t *buffer, size_t buffer_len) {
-  if (address < APP_START_ADDRESS ||
-      (address + buffer_len) > (APP_START_ADDRESS + BOOTLOADER_APPLICATION_SIZE)) {
-    return BOOTLOADER_FLASH_ERR;
+  if (address < APP_START_ADDRESS) {
+    return BOOTLOADER_FLASH_WRITE_OUT_OF_BOUNDS;
   } else if (buffer_len % BOOTLOADER_WRITE_BYTES != 0 || address % BOOTLOADER_WRITE_BYTES != 0) {
-    return BOOTLOADER_FLASH_ERR;
+    return BOOTLOADER_FLASH_WRITE_NOT_ALIGNED;
   }
 
   uint32_t *data = (uint32_t *)buffer;
@@ -42,8 +41,8 @@ BootloaderError boot_flash_erase(uint8_t page) {
 }
 
 BootloaderError boot_flash_read(uintptr_t address, uint8_t *buffer, size_t buffer_len) {
-  if (address < APP_START_ADDRESS || address >= APP_START_ADDRESS + BOOTLOADER_APPLICATION_SIZE) {
-    return BOOTLOADER_INVALID_ADDRESS;
+  if (address < APP_START_ADDRESS) {
+    return BOOTLOADER_FLASH_READ_FAILED;
   }
 
   for (size_t i = 0; i < buffer_len; i++) {

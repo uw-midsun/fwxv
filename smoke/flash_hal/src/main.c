@@ -17,25 +17,33 @@ const Boot_CanSettings can_settings = {
 Boot_CanMessage msg = { 0 };
 
 TASK(read_write, TASK_STACK_512) {
-  boot_can_init(&can_settings);
-  bootloader_init();
   crc_init();
   uint8_t flash_buffer[1024];
   const uint8_t test_data[] = "Test data for CRC32";
-  size_t test_data_len = strlen((char *)test_data);
+  size_t test_data_len = sizeof(test_data);
   align_to_32bit_words(test_data, &test_data_len);
   uint32_t crc32_value = crc_calculate((const uint32_t *)test_data, BYTES_TO_WORD(test_data_len));
 
   while (true) {
-    LOG_DEBUG("CRC32: %lu\n", crc32_value);
+    // LOG_DEBUG("CRC32: %lu\n", crc32_value);
+    boot_flash_erase(BOOTLOADER_ADDR_TO_PAGE(0x8009000));
+    delay_ms(10);
+    boot_flash_read(0x8009000, flash_buffer, 1024);
     for (uint8_t i = 0; i < 240; i++) {
+      LOG_DEBUG("ERASED FLASH BUFFER %d\n", flash_buffer[i]);
+      delay_ms(5);
+    }
+
+     for (uint8_t i = 0; i < 240; i++) {
       flash_buffer[i] = i;
     }
-    boot_flash_write(BOOTLOADER_PAGE_TO_ADDR(43), flash_buffer, 1024);
+
+    // LOG_DEBUG("ADDRESS: %X\n", BOOTLOADER_PAGE_TO_ADDR(12));
+    boot_flash_write(0x8009000, flash_buffer, 1024);
     delay_ms(10);
-    boot_flash_read(BOOTLOADER_PAGE_TO_ADDR(43), flash_buffer, 1024);
+    boot_flash_read(0x8009000, flash_buffer, 1024);
     for (uint8_t i = 0; i < 240; i++) {
-      // LOG_DEBUG("FLASH BUFFER %d\n", flash_buffer[i]);
+      LOG_DEBUG("FLASH BUFFER %d\n", flash_buffer[i]);
       if (flash_buffer[i] != i) {
         // Hang
         while (true);

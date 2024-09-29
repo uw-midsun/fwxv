@@ -34,6 +34,12 @@ typedef enum {
   BOOTLOADER_ERROR_UNINITIALIZED,
   /// @brief flash_erase or flash_write error
   BOOTLOADER_FLASH_ERR,
+  /// @brief Bootloader flash write failed because data is not aligned
+  BOOTLOADER_FLASH_WRITE_NOT_ALIGNED,
+  /// @brief Bootloader flash write failed because address out of bounds
+  BOOTLOADER_FLASH_WRITE_OUT_OF_BOUNDS,
+  /// @brief Bootloader flash read failed
+  BOOTLOADER_FLASH_READ_FAILED,
   /// @brief flash buffer has overflowed (more than 1024 bytes)
   BOOTLOADER_BUFFER_OVERFLOW,
   /// @brief Bootloader CAN init error
@@ -45,5 +51,5 @@ typedef enum {
   /// @brief Bootloader has detected a crc mismatch after reading the new flash memory
   BOOTLOADER_CRC_MISMATCH_AFTER_WRITE,
   /// @brief Bootloader received an incorrect sequence number
-  BOOTLOADER_SEQUENCE_ERROR
+  BOOTLOADER_SEQUENCE_ERROR,
 } BootloaderError;

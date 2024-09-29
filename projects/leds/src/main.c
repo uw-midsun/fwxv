@@ -34,7 +34,7 @@ TASK(leds_task, TASK_STACK_512) {
 }
 
 int main(void) {
-  //  SCB->VTOR = 0x08002000U;
+  SCB->VTOR = 0x08003000U;
   tasks_init();
   gpio_init();
   log_init();

@@ -218,7 +218,7 @@ class DatagramSender:
     def send_data(self, message, sender_id=0):
         '''Send a Datagram over CAN'''
         assert isinstance(message, Datagram)
-        
+        start_time = time.time()
         message_extended_arbitration = False
         chunk_messages = list(self._chunkify(message.data, 8))
         sequence_number = 0
@@ -232,7 +232,6 @@ class DatagramSender:
             
             crc_chunk = b''.join(current_chunk)
             crc32_value = crc32.calculate(crc_chunk)
-            print(f"CRC32 VALUE: {crc32_value}")
             crc_data = crc32_value.to_bytes(4, byteorder='little')
             
             sequencing_data = seq_num_bytes + crc_data
@@ -243,19 +242,20 @@ class DatagramSender:
                                     is_extended_id=message_extended_arbitration)
             
             self.bus.send(sequence_msg)
-            print(f"Sent sequence message {sequence_number}")
             
             # Send data chunks (up to 1024 bytes)
             for chunk in current_chunk:
-                time.sleep(0.01)  # Small delay between messages
-                data_msg = can.Message(arbitration_id=FLASH,
-                                    data=chunk,
-                                    is_extended_id=message_extended_arbitration)
-                self.bus.send(data_msg)
+                try:
+                    data_msg = can.Message(arbitration_id=FLASH,
+                                        data=chunk,
+                                        is_extended_id=message_extended_arbitration)
+                    self.bus.send(data_msg)
+                except BaseException:
+                    time.sleep(0.01)
+                    self.bus.send(data_msg)
             
-            print(f"Sent {len(current_chunk) * 8} bytes for sequence {sequence_number}")
+            print(f"Sent {len(current_chunk) * 8} bytes for sequence {sequence_number}\n")
             
-            # After sending sequence 0 and its data, start checking for ACK/NACK
             if sequence_number > 0 or chunk_messages:
                 ack_received = False
                 retry_count = 0
@@ -288,8 +288,11 @@ class DatagramSender:
                     raise Exception(f"Failed to receive ACK for sequence {sequence_number} after {max_retries} attempts")
             
             sequence_number += 1
+        
+        end_time = time.time()
 
-        print(f"All data sent successfully. Total sequences: {sequence_number}")
+        print(f"Time Elapsed: {end_time - start_time}")
+        print(f"All data sent successfully. Total sequences: {sequence_number}\n")
 
     @staticmethod
     def _chunkify(data, size):

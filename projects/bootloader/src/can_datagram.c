@@ -17,7 +17,8 @@ can_datagram_t unpack_datagram(Boot_CanMessage *msg, uint16_t *target_nodes) {
       case CAN_ARBITRATION_SEQUENCING_ID:
         ret_datagram.datagram_type_id = msg->id;
         ret_datagram.payload.sequencing.sequence_num = msg->data_u16[0];
-        ret_datagram.payload.sequencing.crc32 = ((uint32_t)msg->data_u16[1] << 16) | (uint32_t)msg->data_u16[2];
+        ret_datagram.payload.sequencing.crc32 =
+            ((uint32_t)msg->data_u16[2] << 16) | (uint32_t)msg->data_u16[1];
         break;
       case CAN_ARBITRATION_FLASH_ID:
         ret_datagram.datagram_type_id = msg->id;
