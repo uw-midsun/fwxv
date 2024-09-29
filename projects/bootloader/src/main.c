@@ -8,7 +8,7 @@
 
 const Boot_CanSettings can_settings = {
   .device_id = SYSTEM_CAN_DEVICE_BOOTLOADER,
-  .bitrate = CAN_HW_BITRATE_1000KBPS,
+  .bitrate = CAN_HW_BITRATE_500KBPS,
   .loopback = false,
 };
 
@@ -20,16 +20,10 @@ int main() {
   bootloader_init();
 
   while (true) {
-    // bootloader_get_state_data();
     if (boot_can_receive(&msg) == BOOTLOADER_ERROR_NONE) {
       can_byte_counter += 8;
       bootloader_run(&msg);
     }
-
-    // Listen for messages with bootloader+start ID (add to can.c)
-    // Check which naode it is for
-    // Capture data
-    // Erase memory and flash
   }
 
   return 0;

@@ -42,7 +42,5 @@ typedef struct {
 } Boot_CanMessage;
 
 BootloaderError boot_can_init(const Boot_CanSettings *settings);
-
 BootloaderError boot_can_transmit(uint32_t id, bool extended, const uint8_t *data, size_t len);
-
 BootloaderError boot_can_receive(Boot_CanMessage *msg);

@@ -16,11 +16,5 @@
 #define BOOTLOADER_PAGE_BYTES 0x400
 
 BootloaderError boot_flash_write(uintptr_t address, uint8_t *buffer, size_t buffer_len);
-
 BootloaderError boot_flash_erase(uint8_t page);
-
 BootloaderError boot_flash_read(uintptr_t address, uint8_t *buffer, size_t buffer_len);
-
-static inline void set_MSP(uint32_t msp) {
-    __ASM volatile ("MSR MSP, %0" : : "r" (msp));
-}

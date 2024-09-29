@@ -1,4 +1,5 @@
 #pragma once
+
 #include "boot_can.h"
 #include "boot_flash.h"
 #include "bootloader_mcu.h"
@@ -39,20 +40,5 @@ typedef struct {
 
 } BootloaderStateData;
 
-/**
- * @brief gets the current state machine state of the bootloader
- * @return Bootloader's current state type
- */
-BootloaderStates bootloader_get_state(void);
-
-/**
- * @brief get the most recent error from the state machine
- * @return returns BOOTLOADER_ERROR_NONE when no errors occured
- */
-BootloaderError bootloader_get_err(void);
-
-BootloaderStateData bootloader_get_state_data(void);
-
 BootloaderError bootloader_init(void);
-
 BootloaderError bootloader_run(Boot_CanMessage *msg);

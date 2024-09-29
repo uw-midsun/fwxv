@@ -55,7 +55,6 @@ void run_medium_cycle() {
 void run_slow_cycle() {}
 
 int main() {
-  SCB->VTOR = 0x08003000U;
   tasks_init();
   log_init();
   interrupt_init();

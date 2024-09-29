@@ -2,8 +2,8 @@
 
 uint8_t error_buffer[DGRAM_MAX_MSG_SIZE];
 
-can_datagram_t unpack_datagram(Boot_CanMessage *msg, uint16_t *target_nodes) {
-  can_datagram_t ret_datagram;
+BootloaderDatagram_t unpack_datagram(Boot_CanMessage *msg, uint16_t *target_nodes) {
+  BootloaderDatagram_t ret_datagram;
   do {
     switch (msg->id) {
       case CAN_ARBITRATION_START_ID:

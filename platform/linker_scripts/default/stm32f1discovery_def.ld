@@ -11,6 +11,7 @@ _ram_size = 20K;
 
 _application_start = _flash_start;
 
+_bootloader_size = 0;
 _application_size = _flash_size;
 
 _vector_table_size = 0xEC; /* used for relocating the vector table to RAM for the application */

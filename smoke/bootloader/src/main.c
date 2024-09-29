@@ -23,16 +23,14 @@ TASK(read_write, TASK_STACK_512) {
   size_t test_data_len = sizeof(test_data);
   align_to_32bit_words(test_data, &test_data_len);
   uint32_t crc32_value = crc_calculate((const uint32_t *)test_data, BYTES_TO_WORD(test_data_len));
-
+  extern uint32_t _bootloader_size;
+  extern uint32_t _flash_start;
   while (true) {
-    // LOG_DEBUG("CRC32: %lu\n", crc32_value);
+    LOG_DEBUG("CRC32: %lu\n", crc32_value);
+    LOG_DEBUG("FLASH START %lX\n", (uint32_t)(&_flash_start));
+    LOG_DEBUG("BOOTLOADER SIZE %lX\n", (uint32_t)(&_bootloader_size));
     boot_flash_erase(BOOTLOADER_ADDR_TO_PAGE(0x8009000));
     delay_ms(10);
-    boot_flash_read(0x8009000, flash_buffer, 1024);
-    for (uint8_t i = 0; i < 240; i++) {
-      LOG_DEBUG("ERASED FLASH BUFFER %d\n", flash_buffer[i]);
-      delay_ms(5);
-    }
 
      for (uint8_t i = 0; i < 240; i++) {
       flash_buffer[i] = i;
@@ -43,7 +41,7 @@ TASK(read_write, TASK_STACK_512) {
     delay_ms(10);
     boot_flash_read(0x8009000, flash_buffer, 1024);
     for (uint8_t i = 0; i < 240; i++) {
-      LOG_DEBUG("FLASH BUFFER %d\n", flash_buffer[i]);
+      // LOG_DEBUG("FLASH BUFFER %d\n", flash_buffer[i]);
       if (flash_buffer[i] != i) {
         // Hang
         while (true);

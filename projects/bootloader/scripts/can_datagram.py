@@ -6,7 +6,7 @@ from crc32 import CRC32
 from bootloader_id import *
 
 DEFAULT_CHANNEL = 'can0'
-CAN_BITRATE = 1000000
+CAN_BITRATE = 500000
 
 DATA_SIZE_SIZE = 2
 MIN_BYTEARRAY_SIZE = 4
@@ -17,7 +17,6 @@ DATA_SIZE_OFFSET = 2
 crc32 = CRC32(STANDARD_CRC32_POLY)
 
 class DatagramTypeError(Exception):
-    # pylint: disable=unnecessary-pass
     '''Error wrapper (NEEDS WORK)'''
     pass
 
@@ -180,7 +179,6 @@ class DatagramSender:
                                   data=datagram,
                                   is_extended_id=message_extended_arbitration)
         self.bus.send(can_message)
-        print(can_message)
         print("Message was sent on {}".format(self.bus.channel_info))
 
         ack_received = False
@@ -254,7 +252,7 @@ class DatagramSender:
                     time.sleep(0.01)
                     self.bus.send(data_msg)
             
-            print(f"Sent {len(current_chunk) * 8} bytes for sequence {sequence_number}\n")
+            print(f"Sent {len(current_chunk) * 8} bytes for sequence {sequence_number}")
             
             if sequence_number > 0 or chunk_messages:
                 ack_received = False
@@ -268,7 +266,7 @@ class DatagramSender:
                         if ack_msg and ack_msg.arbitration_id == ACK:
                             if ack_msg.data[0] == 0x01:
                                 ack_received = True
-                                print(f"Received ACK for sequence {sequence_number}")
+                                print(f"Received ACK for sequence {sequence_number}\n")
                             elif ack_msg.data[0] == 0x00:
                                 print(f"Received NACK for sequence {sequence_number}, retrying...")
                                 retry_count += 1
@@ -291,6 +289,7 @@ class DatagramSender:
         
         end_time = time.time()
 
+        print("--------------------------------- COMPLETED ---------------------------------")
         print(f"Time Elapsed: {end_time - start_time}")
         print(f"All data sent successfully. Total sequences: {sequence_number}\n")
 

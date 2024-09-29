@@ -14,6 +14,7 @@ extern uint32_t _vector_table_size;
 #define BOOTLOADER_RAM_SIZE ((size_t)_ram_size)
 #define BOOTLOADER_VECTOR_TABLE_SIZE ((size_t)_vector_table_size)
 
+
 // ERROR DATA
 typedef enum {
   /// @brief no data is found

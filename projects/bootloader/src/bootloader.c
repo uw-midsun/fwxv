@@ -4,7 +4,7 @@
 // Store CAN traffic in 1024 byte buffer to write to flash
 static uint8_t flash_buffer[BOOTLOADER_PAGE_BYTES];
 
-static can_datagram_t datagram;
+static BootloaderDatagram_t datagram;
 static BootloaderStateData prv_bootloader = { .state = BOOTLOADER_UNINITIALIZED,
                                               .error = BOOTLOADER_ERROR_NONE,
                                               .first_byte_received = false };
@@ -111,15 +111,6 @@ static BootloaderError bootloader_handle_arbitration_id(Boot_CanMessage *msg) {
 }
 
 static BootloaderError bootloader_start() {
-  // size_t page = 0;
-  // for (page = (APP_START_ADDRESS - 0x08000000) / BOOTLOADER_PAGE_BYTES;
-  //    page < NUM_FLASH_PAGES; page++) {
-  //   if (boot_flash_erase(page)) {
-  //     send_ack_datagram(false, BOOTLOADER_FLASH_ERR);
-  //     return BOOTLOADER_FLASH_ERR;
-  //   }
-  // }
-
   prv_bootloader.binary_size = datagram.payload.start.data_len;
   prv_bootloader.bytes_written = 0;
   prv_bootloader.buffer_index = 0;
@@ -137,6 +128,7 @@ static BootloaderError bootloader_start() {
 }
 
 static BootloaderError bootloader_jump_app() {
+  send_ack_datagram(true, BOOTLOADER_ERROR_NONE);
   __asm volatile(
       "LDR     R0, =prv_bootloader  \n"
       "LDR     R1, [R0]             \n"
@@ -157,10 +149,7 @@ static BootloaderError bootloader_data_ready() {
     }
     prv_bootloader.expected_sequence_number++;
   } else {
-    // GENERATE NACK, INFORMING THE PYTHON SCRIPT THAT WE MISSED A PACKET
-    // TODO: Implement NACK generation
     send_ack_datagram(false, BOOTLOADER_SEQUENCE_ERROR);
-    bootloader_switch_states(BOOTLOADER_FAULT);
     return BOOTLOADER_SEQUENCE_ERROR;
   }
   return BOOTLOADER_ERROR_NONE;
@@ -191,22 +180,15 @@ static BootloaderError bootloader_data_receive() {
   if (prv_bootloader.buffer_index == BOOTLOADER_PAGE_BYTES ||
       (prv_bootloader.bytes_written + prv_bootloader.buffer_index)  >= prv_bootloader.binary_size) {
 
-    
-    // align_to_32bit_words(flash_buffer, (size_t *)&prv_bootloader.buffer_index);
     uint32_t calculated_crc32 = crc_calculate((const uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
     if (calculated_crc32 != prv_bootloader.packet_crc32) {
       send_ack_datagram(false, BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE);
       return BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE;
     }
-    error = boot_flash_erase(BOOTLOADER_ADDR_TO_PAGE(prv_bootloader.current_address));
-    error = boot_flash_write(prv_bootloader.current_address, flash_buffer, BOOTLOADER_PAGE_BYTES);
-
-    if(error != BOOTLOADER_ERROR_NONE) {
-      send_ack_datagram(false, error);
-      return error;
-    }
-
-    error = boot_flash_read(prv_bootloader.current_address, flash_buffer, BOOTLOADER_PAGE_BYTES);
+    
+    error |= boot_flash_erase(BOOTLOADER_ADDR_TO_PAGE(prv_bootloader.current_address));
+    error |= boot_flash_write(prv_bootloader.current_address, flash_buffer, BOOTLOADER_PAGE_BYTES);
+    error |= boot_flash_read(prv_bootloader.current_address, flash_buffer, BOOTLOADER_PAGE_BYTES);
 
     if (error != BOOTLOADER_ERROR_NONE) {
       send_ack_datagram(false, error);
@@ -228,11 +210,11 @@ static BootloaderError bootloader_data_receive() {
       return bootloader_jump_app();
     }
   }
-
   return BOOTLOADER_ERROR_NONE;
 }
 
 static BootloaderError bootloader_fault() {
+  /* Implement code to reset the board. */
   return BOOTLOADER_INTERNAL_ERR;
 };
 
@@ -260,19 +242,6 @@ static BootloaderError bootloader_run_state() {
   }
 }
 
-BootloaderError bootloader_get_err() {
-  return prv_bootloader.error;
-}
-BootloaderStates bootloader_get_state(void) {
-  return prv_bootloader.state;
-}
-BootloaderStateData bootloader_get_state_data(void) {
-  if (prv_bootloader.error) {
-    flash_buffer[0] = 1;
-  }
-  return prv_bootloader;
-}
-
 BootloaderError bootloader_run(Boot_CanMessage *msg) {
   BootloaderError ret = BOOTLOADER_ERROR_NONE;
 
@@ -289,6 +258,10 @@ BootloaderError bootloader_run(Boot_CanMessage *msg) {
 
   ret = bootloader_handle_arbitration_id(msg);
   ret = bootloader_run_state();
+
+  if (ret != BOOTLOADER_ERROR_NONE) {
+    bootloader_switch_states(BOOTLOADER_FAULT);
+  }
 
   return ret;
 }
