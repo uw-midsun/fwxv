@@ -8,12 +8,11 @@ extern uint32_t _ram_start;
 extern uint32_t _ram_size;
 extern uint32_t _vector_table_size;
 
-#define APP_START_ADDRESS ((uint32_t)&_application_start)
+#define APP_START_ADDRESS ((uint32_t) & _application_start)
 #define BOOTLOADER_APPLICATION_SIZE ((size_t)_application_size)
 #define RAM_START_ADDRESS (_ram_start)
 #define BOOTLOADER_RAM_SIZE ((size_t)_ram_size)
 #define BOOTLOADER_VECTOR_TABLE_SIZE ((size_t)_vector_table_size)
-
 
 // ERROR DATA
 typedef enum {
