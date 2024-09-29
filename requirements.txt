@@ -7,4 +7,3 @@ cantools
 Jinja2
 PyYAML
 pyserial
-PyQt5
