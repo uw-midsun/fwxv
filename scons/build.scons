@@ -142,7 +142,7 @@ for entry in PROJ_DIR.glob('*') + SMOKE_DIR.glob('*'):
     lib_deps = get_lib_deps(entry)
     # SCons automagically handles object creation and linking
 
-    if PLATFORM == 'x86' and not config['arm_only']:
+    if (PLATFORM == 'x86' and not config['arm_only']) or (PLATFORM == 'arm'):
         target = env.Program(
             target=BIN_DIR.File(entry.path),
             source=srcs,
