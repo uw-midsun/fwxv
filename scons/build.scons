@@ -142,21 +142,19 @@ for entry in PROJ_DIR.glob('*') + SMOKE_DIR.glob('*'):
     lib_deps = get_lib_deps(entry)
     # SCons automagically handles object creation and linking
 
-    if PLATFORM == 'x86' and config['arm_only']:
-        print('Project is only for ARM devices. Cannot build x86 version.')
-        Exit(0)
-        break
-    
-    target = env.Program(
-        target=BIN_DIR.File(entry.path),
-        source=srcs,
-        CPPPATH=env['CPPPATH'] + incs + lib_incs,
-        # link each library twice so that dependency cycles are resolved
-        # See: https://stackoverflow.com/questions/45135
-        LIBS=env['LIBS'] + lib_deps * 2,
-        LIBPATH=[LIB_BIN_DIR],
-        CCFLAGS=env['CCFLAGS'] + config['cflags'],
-    )
+    if PLATFORM == 'x86' and not config['arm_only']:
+        target = env.Program(
+            target=BIN_DIR.File(entry.path),
+            source=srcs,
+            CPPPATH=env['CPPPATH'] + incs + lib_incs,
+            # link each library twice so that dependency cycles are resolved
+            # See: https://stackoverflow.com/questions/45135
+            LIBS=env['LIBS'] + lib_deps * 2,
+            LIBPATH=[LIB_BIN_DIR],
+            CCFLAGS=env['CCFLAGS'] + config['cflags'],
+        )
+    else:
+        print(f'Project: {entry} is only for ARM devices. Cannot build x86 version.')
 
     # .bin file only required for arm, not x86
     if PLATFORM == 'arm':
