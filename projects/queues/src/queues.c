@@ -77,7 +77,6 @@ int main(void) {
   //go to adress of q struct
   queue_init(&s_queue1);
   // Initialize queues here
-
   tasks_init_task(task1, TASK_PRIORITY(3), NULL);
   tasks_init_task(task2, TASK_PRIORITY(2), NULL);
 
