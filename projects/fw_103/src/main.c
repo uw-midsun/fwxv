@@ -11,8 +11,24 @@
 
 #include <stdio.h>
 
+#include "delay.h"
+#include "gpio.h"
 #include "log.h"
 #include "tasks.h"
+
+GpioAddress led_addr = {
+  .port = GPIO_PORT_B,
+  .pin = 3,
+};
+
+TASK(blink, TASK_STACK_512) {
+  gpio_init_pin(&led_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  while (true) {
+    gpio_toggle_state(&led_addr);
+    LOG_DEBUG("Blink toggle\n");
+    delay_s(1);
+  }
+};
 
 int main() {
   tasks_init();
@@ -20,6 +36,7 @@ int main() {
   gpio_init();
   LOG_DEBUG("Welcome to FW 103!\n");
 
+  tasks_init_task(blink, TASK_PRIORITY(1), NULL);
   tasks_start();
 
   LOG_DEBUG("exiting main?\n");
