@@ -1,27 +1,22 @@
 #include <stdbool.h>
 #include <stdint.h>
+
 #include "FreeRTOS.h"
-#include "tasks.h"
-#include "queues.h"
-#include "status.h"
 #include "delay.h"
 #include "log.h"
 #include "misc.h"
+#include "queues.h"
+#include "status.h"
+#include "tasks.h"
 #define ITEM_SZ 6
 #define QUEUE_LEN 5
 #define BUF_SIZE (QUEUE_LEN * ITEM_SZ)
-static const char s_list[QUEUE_LEN][ITEM_SZ] = {
-	"Item1",
-	"Item2",
-	"Item3",
-	"Item4",
-	"Item5"
-};
+static const char s_list[QUEUE_LEN][ITEM_SZ] = { "Item1", "Item2", "Item3", "Item4", "Item5" };
 // Task static entities
 static uint8_t s_queue1_buf[BUF_SIZE];
 static Queue s_queue1 = {
-  .num_items = QUEUE_LEN,    // Number of items the queue can hold
-  .item_size = ITEM_SZ,  // Size of each item
+  .num_items = QUEUE_LEN,      // Number of items the queue can hold
+  .item_size = ITEM_SZ,        // Size of each item
   .storage_buf = s_queue1_buf  // Must be declared statically, and have size num_items*item_size
 };
 TASK(task1, TASK_STACK_512) {
