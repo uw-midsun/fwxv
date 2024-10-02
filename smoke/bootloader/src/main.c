@@ -1,12 +1,12 @@
 #include <stdio.h>
+#include <string.h>
 
-#include "log.h"
+#include "boot_crc32.h"
 #include "boot_flash.h"
 #include "can_board_ids.h"
-#include "boot_crc32.h"
 #include "delay.h"
+#include "log.h"
 #include "tasks.h"
-#include <string.h>
 
 const Boot_CanSettings can_settings = {
   .device_id = SYSTEM_CAN_DEVICE_BOOTLOADER,
@@ -22,7 +22,9 @@ TASK(read_write, TASK_STACK_512) {
   const uint8_t test_data[] = "Test data for CRC32";
   size_t test_data_len = sizeof(test_data);
   boot_align_to_32bit_words(test_data, &test_data_len);
-  uint32_t crc32_value = boot_crc_calculate((const uint32_t *)test_data, BYTES_TO_WORD(test_data_len));
+  uint32_t crc32_value =
+      boot_crc_calculate((const uint32_t *)test_data, BYTES_TO_WORD(test_data_len));
+      
   extern uint32_t _bootloader_size;
   extern uint32_t _flash_start;
   while (true) {
@@ -32,7 +34,7 @@ TASK(read_write, TASK_STACK_512) {
     boot_flash_erase(BOOTLOADER_ADDR_TO_PAGE(0x8009000));
     delay_ms(10);
 
-     for (uint8_t i = 0; i < 240; i++) {
+    for (uint8_t i = 0; i < 240; i++) {
       flash_buffer[i] = i;
     }
 
