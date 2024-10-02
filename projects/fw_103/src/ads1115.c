@@ -15,7 +15,7 @@ StatusCode ads1115_init(ADS1115_Config *config, ADS1115_Address i2c_addr, GpioAd
 
   // Write Config register
   /* TODO: fill out this value */
-  cmd = 0x0000;
+  cmd = 0x8583 & ~0x0100;   //reset value with bit 8 set to 0
   i2c_write_reg(config->i2c_port, i2c_addr, ADS1115_REG_CONFIG, (uint8_t *)(&cmd), 2);
 
   /* TODO (optional) */
@@ -42,17 +42,23 @@ StatusCode ads1115_select_channel(ADS1115_Config *config, ADS1115_Channel channe
   uint16_t cmd;
 
   // Write Config register
-  cmd = 0x0000;
+cmd = 0x0000;
   i2c_write_reg(config->i2c_port, config->i2c_addr, ADS1115_REG_CONFIG, (uint8_t *)(&cmd), 2);
   return STATUS_CODE_OK;
 }
 
 StatusCode ads1115_read_raw(ADS1115_Config *config, ADS1115_Channel channel, int16_t *reading) {
+
   /* TODO: complete function */
+  i2c_read_reg(config->i2c_port, config->i2c_addr, ADS1115_REG_CONFIG, (uint8_t *) reading, 1);
   return STATUS_CODE_OK;
 }
 
 StatusCode ads1115_read_converted(ADS1115_Config *config, ADS1115_Channel channel, float *reading) {
   /* TODO: complete function */
+  uint16_t buf = 0x00;
+  ads1115_read_raw( config, channel, &buf);
+
+  reading  = ((buf * 4.096)/65535) - 2.048;
   return STATUS_CODE_OK;
 }
