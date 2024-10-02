@@ -25,6 +25,7 @@ Boot_CanMessage msg = { 0 };
 
 int main() {
   SysTick_Config(SystemCoreClock / 1000);
+
   boot_can_init(&can_settings);
   bootloader_init();
 
@@ -39,6 +40,5 @@ int main() {
       bootloader_timer = 0;
       if (boot_verify_flash_memory()) bootloader_jump_app();
   }
-
   return 0;
 }

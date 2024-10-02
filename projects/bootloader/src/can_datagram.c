@@ -39,8 +39,8 @@ BootloaderDatagram_t unpack_datagram(Boot_CanMessage *msg, uint16_t *target_node
 void send_ack_datagram(bool ack, BootloaderError error) {
   error_buffer[0] = ack;
   uint16_t status_code = error;
-  error_buffer[1] = (uint8_t) (error << 8);
-  error_buffer[2] = (uint8_t) (error);
+  error_buffer[1] = (uint8_t)(error << 8);
+  error_buffer[2] = (uint8_t)(error);
 
   boot_can_transmit(CAN_ARBITRATION_ACK_ID, false, error_buffer, sizeof(error_buffer));
 }

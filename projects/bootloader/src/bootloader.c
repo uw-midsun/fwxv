@@ -156,7 +156,7 @@ static BootloaderError bootloader_data_ready() {
 }
 
 static BootloaderError bootloader_data_receive() {
-  BootloaderError error =  BOOTLOADER_ERROR_NONE;
+  BootloaderError error = BOOTLOADER_ERROR_NONE;
   if (!prv_bootloader.first_byte_received) {
     send_ack_datagram(false, BOOTLOADER_INTERNAL_ERR);
     return BOOTLOADER_INTERNAL_ERR;

@@ -13,7 +13,8 @@ def parse_config(entry):
         'cflags': [],
         'mocks': {},
         'no_lint': False,
-        "can": False,
+        'can': False,
+        'arm_only': False
     }
     config_file = entry.File('config.json')
     if not config_file.exists():

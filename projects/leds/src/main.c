@@ -39,9 +39,7 @@ int main(void) {
   log_init();
 
   tasks_init_task(leds_task, TASK_PRIORITY(2), NULL);
-  for (uint8_t i = 0; i < SIZEOF_ARRAY(leds); i++) {
-    gpio_init_pin(&leds[i], GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
-  }
+
   tasks_start();
   LOG_DEBUG("Blinking LEDs...\n");
 
