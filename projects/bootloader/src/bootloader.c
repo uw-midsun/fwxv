@@ -20,7 +20,7 @@ BootloaderError bootloader_init() {
   prv_bootloader.target_nodes = 0;
   prv_bootloader.buffer_index = 0;
 
-  crc_init();
+  boot_crc_init();
 
   return BOOTLOADER_ERROR_NONE;
 }
@@ -127,7 +127,7 @@ static BootloaderError bootloader_start() {
   return BOOTLOADER_ERROR_NONE;
 }
 
-static BootloaderError bootloader_jump_app() {
+BootloaderError bootloader_jump_app() {
   send_ack_datagram(true, BOOTLOADER_ERROR_NONE);
   __asm volatile(
       "LDR     R0, =prv_bootloader  \n"
@@ -180,7 +180,7 @@ static BootloaderError bootloader_data_receive() {
   if (prv_bootloader.buffer_index == BOOTLOADER_PAGE_BYTES ||
       (prv_bootloader.bytes_written + prv_bootloader.buffer_index)  >= prv_bootloader.binary_size) {
 
-    uint32_t calculated_crc32 = crc_calculate((const uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
+    uint32_t calculated_crc32 = boot_crc_calculate((const uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
     if (calculated_crc32 != prv_bootloader.packet_crc32) {
       send_ack_datagram(false, BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE);
       return BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE;
@@ -195,7 +195,7 @@ static BootloaderError bootloader_data_receive() {
       return error;
     }
 
-    calculated_crc32 = crc_calculate((uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
+    calculated_crc32 = boot_crc_calculate((uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
     if (calculated_crc32 != prv_bootloader.packet_crc32) {
       send_ack_datagram(false, BOOTLOADER_CRC_MISMATCH_AFTER_WRITE);
       return BOOTLOADER_CRC_MISMATCH_AFTER_WRITE;

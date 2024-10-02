@@ -57,7 +57,7 @@ def flash_run(entry, flash_type):
         ]
     elif flash_type == 'bootloader':
         OPENOCD_CFG += [
-            '-c "stm_flash {}"'.format(entry)
+            '-c "stm_flash_bootloader {}"'.format(entry)
         ]
     else:
         raise ValueError('Invalid flash_type')

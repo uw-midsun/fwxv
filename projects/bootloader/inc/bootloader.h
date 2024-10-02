@@ -42,3 +42,4 @@ typedef struct {
 
 BootloaderError bootloader_init(void);
 BootloaderError bootloader_run(Boot_CanMessage *msg);
+BootloaderError bootloader_jump_app(void);

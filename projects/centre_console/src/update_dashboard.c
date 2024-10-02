@@ -174,7 +174,7 @@ TASK(update_displays, TASK_MIN_STACK_SIZE) {
   uint16_t batt_fault = 0;
   while (true) {
     if (get_battery_status_fault()) {
-      batt_fault = (get_battery_status_fault()) & (~(0b11 << 14));
+      batt_fault = (uint16_t)((get_battery_status_fault()) & (~(0b11 << 14)));
     } else {
       float avg_speed = (abs((int16_t)get_motor_velocity_velocity_l()) +
                          abs((int16_t)get_motor_velocity_velocity_r())) /
