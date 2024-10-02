@@ -139,7 +139,6 @@ TASK(smoke_ltc, TASK_STACK_1024) {
       LOG_DEBUG("Thermistor reading: %d\n", s_ltc_store.aux_result_lookup[i]);
     }
 
-
     LOG_DEBUG("\n\n\r");
     delay_ms(500);
   }
