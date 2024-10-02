@@ -1,6 +1,9 @@
 # build directory
 build/*
 
+# ignore the venv directory
+venv/*
+
 # scons cache
 .sconsign.dblite
 
