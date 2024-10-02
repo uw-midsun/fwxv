@@ -21,7 +21,7 @@ TASK(task1, TASK_STACK_512) {
   while (true) {
     LOG_DEBUG("task1 %d\n", counter1);
     counter1++;
-    delay_ms(125);
+    delay_ms(1000);
   }
 }
 
@@ -30,7 +30,7 @@ TASK(task2, TASK_STACK_512) {
   while (true) {
     LOG_DEBUG("task2 %d\n", counter2);
     counter2++;
-    prv_delay(125);
+    prv_delay(1000);
   }
 }
 
