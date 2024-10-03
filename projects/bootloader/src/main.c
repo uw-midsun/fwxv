@@ -8,7 +8,7 @@
 #include "stm32f10x_tim.h"
 #include "stm32f10x_it.h"
 
-#define BOOTLOADER_TIMEOUT_MS        5000
+#define BOOTLOADER_TIMEOUT_MS        15000
 
 volatile uint32_t bootloader_timer = 0;
 
