@@ -51,3 +51,16 @@ BootloaderError boot_flash_read(uintptr_t address, uint8_t *buffer, size_t buffe
 
   return BOOTLOADER_ERROR_NONE;
 }
+
+BootloaderError boot_verify_flash_memory() {
+  volatile uint32_t *flash_pointer = (volatile uint32_t *)APP_START_ADDRESS;
+  uint32_t size_in_words = APPLICATION_SIZE / sizeof(uint32_t);
+
+  for (uint32_t i = 0; i < size_in_words; i++) {
+    if (flash_pointer[i] != 0xFFFFFFFF) {
+      return BOOTLOADER_ERROR_NONE;
+    }
+  }
+  
+  return BOOTLOADER_FLASH_ERR;
+}

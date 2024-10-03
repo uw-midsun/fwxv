@@ -7,12 +7,17 @@ extern uint32_t _application_size;
 extern uint32_t _ram_start;
 extern uint32_t _ram_size;
 extern uint32_t _vector_table_size;
+extern uint32_t _flash_start;
 
-#define APP_START_ADDRESS ((uint32_t) & _application_start)
-#define BOOTLOADER_APPLICATION_SIZE ((size_t)_application_size)
+#define APP_START_ADDRESS ((uint32_t) &_application_start)
+#define APPLICATION_SIZE ((size_t)&_application_size)
 #define RAM_START_ADDRESS (_ram_start)
 #define BOOTLOADER_RAM_SIZE ((size_t)_ram_size)
 #define BOOTLOADER_VECTOR_TABLE_SIZE ((size_t)_vector_table_size)
+#define FLASH_START_ADDRESS ((uint32_t) &_flash_start)
+
+#define NACK  0
+#define ACK   1
 
 // ERROR DATA
 typedef enum {
@@ -52,4 +57,8 @@ typedef enum {
   BOOTLOADER_CRC_MISMATCH_AFTER_WRITE,
   /// @brief Bootloader received an incorrect sequence number
   BOOTLOADER_SEQUENCE_ERROR,
+  /// @brief Bootloader time out
+  BOOTLOADER_TIMEOUT,
+  /// @brief Bootloader flash memory verification failed. Everything is still erased
+  BOOTLOADER_FLASH_MEMORY_VERIFY_FAILED
 } BootloaderError;

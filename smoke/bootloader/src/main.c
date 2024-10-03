@@ -17,12 +17,14 @@ const Boot_CanSettings can_settings = {
 Boot_CanMessage msg = { 0 };
 
 TASK(read_write, TASK_STACK_512) {
-  crc_init();
+  boot_crc_init();
   uint8_t flash_buffer[1024];
   const uint8_t test_data[] = "Test data for CRC32";
   size_t test_data_len = sizeof(test_data);
-  align_to_32bit_words(test_data, &test_data_len);
-  uint32_t crc32_value = crc_calculate((const uint32_t *)test_data, BYTES_TO_WORD(test_data_len));
+  boot_align_to_32bit_words(test_data, &test_data_len);
+  uint32_t crc32_value =
+      boot_crc_calculate((const uint32_t *)test_data, BYTES_TO_WORD(test_data_len));
+
   extern uint32_t _bootloader_size;
   extern uint32_t _flash_start;
   while (true) {
@@ -41,7 +43,12 @@ TASK(read_write, TASK_STACK_512) {
     delay_ms(10);
     boot_flash_read(0x8009000, flash_buffer, 1024);
     for (uint8_t i = 0; i < 240; i++) {
-      // LOG_DEBUG("FLASH BUFFER %d\n", flash_buffer[i]);
+      // LOG_DEBUG("FLASH BUFFER %d\n", flash_buffer[i
+      if (flash_buffer[i] != i) {
+        // Hang
+        while (true) {
+        }
+      }
       delay_ms(5);
     }
 

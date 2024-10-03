@@ -18,3 +18,4 @@
 BootloaderError boot_flash_write(uintptr_t address, uint8_t *buffer, size_t buffer_len);
 BootloaderError boot_flash_erase(uint8_t page);
 BootloaderError boot_flash_read(uintptr_t address, uint8_t *buffer, size_t buffer_len);
+BootloaderError boot_verify_flash_memory(void); 
