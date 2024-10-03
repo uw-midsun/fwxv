@@ -46,7 +46,8 @@ TASK(read_write, TASK_STACK_512) {
       // LOG_DEBUG("FLASH BUFFER %d\n", flash_buffer[i
       if (flash_buffer[i] != i) {
         // Hang
-        while (true) {};
+        while (true) {
+        }
       }
       delay_ms(5);
     }

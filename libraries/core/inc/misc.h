@@ -4,7 +4,7 @@
 #define SIZEOF_ARRAY(arr) (sizeof((arr)) / sizeof((arr)[0]))
 #define SIZEOF_FIELD(type, field) (sizeof(((type *)0)->field))
 // Casts void * to uint8_t *
-#define VOID_PTR_UINT8(x) (_Generic((x), void *: (uint8_t *)(x), default: (x)))
+#define VOID_PTR_UINT8(x) (_Generic((x), void * : (uint8_t *)(x), default : (x)))
 #define SWAP_UINT16(x) (uint16_t)(((uint16_t)(x) >> 8) | ((uint16_t)(x) << 8))
 
 #define STRINGIFY_(x) #x
