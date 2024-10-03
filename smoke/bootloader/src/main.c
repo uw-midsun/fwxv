@@ -24,7 +24,7 @@ TASK(read_write, TASK_STACK_512) {
   boot_align_to_32bit_words(test_data, &test_data_len);
   uint32_t crc32_value =
       boot_crc_calculate((const uint32_t *)test_data, BYTES_TO_WORD(test_data_len));
-      
+
   extern uint32_t _bootloader_size;
   extern uint32_t _flash_start;
   while (true) {
@@ -46,7 +46,7 @@ TASK(read_write, TASK_STACK_512) {
       // LOG_DEBUG("FLASH BUFFER %d\n", flash_buffer[i
       if (flash_buffer[i] != i) {
         // Hang
-        while (true);
+        while (true) {};
       }
       delay_ms(5);
     }

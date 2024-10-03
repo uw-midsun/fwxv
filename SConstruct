@@ -76,7 +76,7 @@ AddOption(
     '--flash',
     dest='flash',
     type='choice',
-    choices=('bootloader', 'application', "default"),
+    choices=('bootloader', 'application', 'default'),
     default='default',
     help="Specifies which application to flash. The bootloader, application or the entire flash bank"
 )
@@ -161,6 +161,14 @@ elif COMMAND == "clean":
 elif COMMAND == "lint" or COMMAND == "format":
     SConscript('scons/lint_format.scons', exports='VARS')
 
+###########################################################
+# Erasing the flash memory
+###########################################################
+elif COMMAND == "erase_flash":
+    def erase_flash(target, source, env, *args, **kwargs):
+        flash_run(None, COMMAND)
+    AlwaysBuild(Command('#/erase_flash', None, erase_flash))
+    
 ###########################################################
 # Build
 ###########################################################

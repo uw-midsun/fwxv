@@ -53,7 +53,7 @@ BootloaderError boot_flash_read(uintptr_t address, uint8_t *buffer, size_t buffe
 }
 
 BootloaderError boot_verify_flash_memory() {
-  const uint32_t *flash_pointer = (const uint32_t *)FLASH_START_ADDRESS;
+  volatile uint32_t *flash_pointer = (volatile uint32_t *)APP_START_ADDRESS;
   uint32_t size_in_words = APPLICATION_SIZE / sizeof(uint32_t);
 
   for (uint32_t i = 0; i < size_in_words; i++) {
