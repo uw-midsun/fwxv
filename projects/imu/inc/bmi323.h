@@ -1,6 +1,8 @@
 #pragma once
 
+#include "log.h"
 #include "spi.h"
+
 
 #define READ 0x80
 #define WRITE 0x7F
@@ -28,3 +30,7 @@ typedef struct {
 typedef struct {
   bmi323_settings *settings;
 } bmi323_storage;
+
+
+static StatusCode set_register(uint8_t user_bank, uint8_t reg_addr, uint8_t value);
+static StatusCode set_multi_register(uint8_t user_bank, uint8_t reg_addr, uint8_t *value, uint8_t len);
