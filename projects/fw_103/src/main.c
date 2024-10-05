@@ -50,8 +50,6 @@ TASK(led_task, TASK_STACK_512){
   }
 }
 
-
-
 int main() {
   tasks_init();
   log_init();
