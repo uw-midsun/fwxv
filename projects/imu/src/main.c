@@ -3,6 +3,7 @@
 #include "log.h"
 #include "master_task.h"
 #include "tasks.h"
+#include "spi.h"
 
 void pre_loop_init() {}
 
