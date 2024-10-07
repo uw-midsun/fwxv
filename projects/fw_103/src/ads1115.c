@@ -1,9 +1,8 @@
 #include "ads1115.h"
-
 #include "gpio_it.h"
 #include "i2c.h"
 #include "status.h"
-
+#include "log.h"
 StatusCode ads1115_init(ADS1115_Config *config, ADS1115_Address i2c_addr, GpioAddress *ready_pin) {
   if (config == NULL) {
     return status_code(STATUS_CODE_INVALID_ARGS);
@@ -15,7 +14,7 @@ StatusCode ads1115_init(ADS1115_Config *config, ADS1115_Address i2c_addr, GpioAd
 
   // Write Config register
   /* TODO: fill out this value */
-  cmd = 0x0000;
+  cmd = 0x0483;
   i2c_write_reg(config->i2c_port, i2c_addr, ADS1115_REG_CONFIG, (uint8_t *)(&cmd), 2);
 
   /* TODO (optional) */
@@ -30,9 +29,9 @@ StatusCode ads1115_init(ADS1115_Config *config, ADS1115_Address i2c_addr, GpioAd
 
   // Register the ALRT pin
   /* TODO (optional) */
-
   return STATUS_CODE_OK;
 }
+
 
 StatusCode ads1115_select_channel(ADS1115_Config *config, ADS1115_Channel channel) {
   if (config == NULL) {
@@ -40,7 +39,6 @@ StatusCode ads1115_select_channel(ADS1115_Config *config, ADS1115_Channel channe
   }
 
   uint16_t cmd;
-
   // Write Config register
   cmd = 0x0000;
   i2c_write_reg(config->i2c_port, config->i2c_addr, ADS1115_REG_CONFIG, (uint8_t *)(&cmd), 2);
@@ -48,11 +46,26 @@ StatusCode ads1115_select_channel(ADS1115_Config *config, ADS1115_Channel channe
 }
 
 StatusCode ads1115_read_raw(ADS1115_Config *config, ADS1115_Channel channel, uint16_t *reading) {
-  /* TODO: complete function */
+  uint8_t raw_value[2];
+  StatusCode status = i2c_read_reg(config->i2c_port, config->i2c_addr, ADS1115_REG_CONVERSION, raw_value, 2); //raw value decays to pointer to array
+
+  if (status != STATUS_CODE_OK) {
+    return status; 
+  }
+  
+  *reading = (raw_value[0] << 8) | raw_value[1];  //accessing byte 1, then combine it with second byte to get full 16 bits
   return STATUS_CODE_OK;
 }
 
 StatusCode ads1115_read_converted(ADS1115_Config *config, ADS1115_Channel channel, float *reading) {
-  /* TODO: complete function */
+  uint16_t raw_adc_value;
+  const float full_scale_voltage = 4.096; 
+  StatusCode status = ads1115_read_raw(config, channel, &raw_adc_value);
+  if (status != STATUS_CODE_OK) {
+    return status; 
+  }
+
+  *reading = (raw_adc_value / 65535.0) * full_scale_voltage; //conversion
+
   return STATUS_CODE_OK;
 }
