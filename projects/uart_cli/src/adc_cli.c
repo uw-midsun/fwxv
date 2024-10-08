@@ -187,6 +187,7 @@ bool adc_valid_addr(char *addr) {
   return true;
 }
 
+//Replace with valid adc pin
 bool adc_valid_state(char *state) {
   if (strcmp(state, "high") != 0 && strcmp(state, "low") != 0) {
     printf("Invalid state - must be high or low\n\r");

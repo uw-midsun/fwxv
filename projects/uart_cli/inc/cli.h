@@ -16,6 +16,7 @@ the keyword for an action to the corresponding prv function
 */
 
 #include "gpio_cli.h"
+#include "adc_cli.h"
 
 void cli_init();
 void cli_run();
