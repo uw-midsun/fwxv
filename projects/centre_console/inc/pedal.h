@@ -16,6 +16,7 @@
 
 // Runs a pedal cycle to update throttle and brake values
 void pedal_run();
+uint16_t pedal_map();
 
 // Initializes pedal peripherals
 // Must be called before adc_init

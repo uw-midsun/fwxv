@@ -10,7 +10,7 @@ static PedalCalibBlob *s_calib_blob;
 static void prv_read_throttle_data(uint32_t *reading) {
   volatile uint16_t adc_reading;
   adc_read_raw(throttle, &adc_reading);
-
+  
   // Convert ADC Reading to readable voltage by normalizing with calibration data and dividing
   // to get percentage press. Brake is now just a GPIO. Negatives and > 100 values will be
   // capped.
@@ -27,6 +27,23 @@ static void prv_read_throttle_data(uint32_t *reading) {
   }
   // LOG_DEBUG("READING %d\n", (int)(calculated_reading * 100));
   memcpy(reading, &calculated_reading, sizeof(calculated_reading));
+}
+
+uint16_t pedal_map (uint32_t *reading) {
+  volatile uint16_t adc_reading;
+  adc_read_raw(throttle, &adc_reading);
+
+  int16_t range_throttle =
+    s_calib_blob->throttle_calib.upper_value - s_calib_blob->throttle_calib.lower_value;
+ 
+  float map_reading = (((adc_reading * 0.7) / range_throttle) + 0.3);
+  if (map_reading < 0.3) {
+    map_reading = 0.3;
+  } else if (map_reading > 1) {
+    map_reading = 1;
+  }
+  LOG_DEBUG("READING %f\n", map_reading);
+  return map_reading;
 }
 
 void pedal_run() {
