@@ -1,8 +1,4 @@
 #include "cc_buttons.h"
-#include "steering.h"
-#include "centre_console_getters.h"
-#include "centre_console_setters.h"
-#define CC_INPUT g_tx_struct.cc_steering_input_cc
 
 static Task *cc_notify_task = NULL;
 static GpioAddress buzzer = BUZZER;
@@ -20,7 +16,7 @@ static void prv_buzzer_beep(SoftTimerId id) {
 }
 
 // Notifies drive/power task of button press event
-StatusCode get_button_press(uint32_t notif) {
+StatusCode get_button_press(void) {
   // TODO: Migrate this read to PCA9555
   uint16_t pca9555_reg_val = 0;
   i2c_read_reg(I2C_PORT_1, PCA9555_I2C_ADDR, INPUT0, (uint8_t *)&pca9555_reg_val, 2);
@@ -78,12 +74,6 @@ StatusCode get_button_press(uint32_t notif) {
     }
     notify(drive, REVERSE_BUTTON_EVENT);
   }
-
-    if (notify_check_event(&notif, CC_TOGGLE_EVENT)) {
-      set_cc_steering_input_cc(CC_TOGGLE_MASK | CC_INPUT);
-      LOG_DEBUG("CC TOGGLED\n");
-    }
-
   return STATUS_CODE_OK;
 }
 
