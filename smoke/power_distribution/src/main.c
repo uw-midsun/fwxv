@@ -43,14 +43,14 @@ TASK(smoke_pd, TASK_STACK_512) {
 
       gpio_set_state(&test_gpio, GPIO_STATE_HIGH);
       pd_set_output_group(output_groups_to_test[i], OUTPUT_STATE_ON);
-      delay_ms(2000);
+      delay_ms(1000);
 
       pd_sense_output_group(output_groups_to_test[i]);
       pd_print_adc_readings(output_groups_to_test[i]);
 
       // pd_set_output_group(output_groups_to_test[i], OUTPUT_STATE_OFF);
       // gpio_toggle_state(&test_gpio);
-      delay_ms(2000);
+      delay_ms(1000);
     }
   }
 }

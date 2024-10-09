@@ -43,6 +43,9 @@ static float s_target_velocity;
 static float s_car_velocity_l = 0.0;
 static float s_car_velocity_r = 0.0;
 
+void (*mcp2515_rx_all)();
+void (*mcp2515_tx_all)();
+
 static float prv_get_float(uint32_t u) {
   union {
     float f;

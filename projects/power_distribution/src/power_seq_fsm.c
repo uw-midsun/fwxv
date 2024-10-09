@@ -1,5 +1,6 @@
 #include "power_seq_fsm.h"
 
+#include "output_current_sense.h"
 #include "outputs.h"
 #include "pd_fault.h"
 #include "persist.h"
@@ -34,6 +35,7 @@ static void prv_off_state_input(Fsm *fsm, void *context) {
   }
   LOG_DEBUG("IN off state - %d\n", get_received_cc_info());
   LOG_DEBUG("s_bps_storage.fault_bitset %d\n", s_bps_storage.fault_bitset);
+  pd_sense_output_group(OUTPUT_GROUP_POWER_OFF);
   if (!get_received_cc_info()) {
     return;
   }
@@ -54,6 +56,7 @@ static void prv_precharge_output(void *context) {
 }
 
 static void prv_precharge_input(Fsm *fsm, void *context) {
+  pd_sense_output_group(OUTPUT_GROUP_POWER_DRIVE);
   if (get_mc_status_precharge_status()) {
     fsm_transition(fsm, POWER_STATE_DRIVE);
   } else if ((xTaskGetTickCount() - power_context.timer_start_ticks) >
@@ -77,6 +80,7 @@ static void prv_drive_state_input(Fsm *fsm, void *context) {
   if (!get_received_cc_info()) {
     return;
   }
+  pd_sense_output_group(OUTPUT_GROUP_POWER_DRIVE);
   CentreConsoleDriveState cc_drive_event = get_cc_info_drive_state();
   if (cc_drive_event == EE_DRIVE_OUTPUT_NEUTRAL_STATE) {
     power_context.target_state = POWER_STATE_OFF;
@@ -99,7 +103,9 @@ static void prv_fault_state_output(void *context) {
   // TODO(devAdhiraj): start bps strobe
 }
 
-static void prv_fault_state_input(Fsm *fsm, void *context) {}
+static void prv_fault_state_input(Fsm *fsm, void *context) {
+  pd_sense_output_group(OUTPUT_GROUP_POWER_FAULT);
+}
 
 // Power Sequence FSM declaration for states and transitions
 static FsmState s_power_seq_state_list[NUM_POWER_STATES] = {
@@ -124,6 +130,7 @@ StatusCode init_power_seq(void) {
   persist_init(&s_persist, BPS_FAULT_FLASH_PAGE, &s_bps_storage, sizeof(s_bps_storage), true);
   persist_ctrl_periodic(&s_persist, false);
   if (s_bps_storage.fault_bitset) set_pd_status_bps_persist(s_bps_storage.fault_bitset);
+  pd_sense_init();
 
   fsm_init(power_seq, s_power_seq_state_list, s_power_seq_transitions, POWER_STATE_OFF, NULL);
   return STATUS_CODE_OK;

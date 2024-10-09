@@ -1,6 +1,7 @@
 #include "output_current_sense.h"
 
 #include "bts_load_switch.h"
+#include "log.h"
 #include "status.h"
 
 static const GpioAddress sense_mux_pin = PD_MUX_OUTPUT_PIN;
@@ -44,6 +45,10 @@ StatusCode pd_sense_output_group(OutputGroup group) {
       status_ok_or_return(prv_set_sense_mux(g_output_config[out].mux_val));
       status_ok_or_return(
           bts_output_get_current(&g_output_config[out], &(g_output_config[out].reading_out)));
+      g_output_config[out].reading_out =
+          (g_output_config[out].reading_out +
+           (((g_output_config[out].reading_out) != 0) * ISENSE_BIAS)) *
+          ISENSE_VOLTAGE_DIVIDER * ISENSE_GAIN;
     }
   } else {
     // Get specific group, iterate through set of pins
@@ -57,6 +62,11 @@ StatusCode pd_sense_output_group(OutputGroup group) {
       status_ok_or_return(prv_set_sense_mux(g_output_config[output].mux_val));
       status_ok_or_return(
           bts_output_get_current(&g_output_config[output], &(g_output_config[output].reading_out)));
+      g_output_config[output].reading_out =
+          (g_output_config[output].reading_out +
+           (((g_output_config[output].reading_out) != 0) * ISENSE_BIAS)) *
+          ISENSE_VOLTAGE_DIVIDER * ISENSE_GAIN;
+      LOG_DEBUG("%d, %d\n", output, g_output_config[output].reading_out);
     }
   }
   return STATUS_CODE_OK;
