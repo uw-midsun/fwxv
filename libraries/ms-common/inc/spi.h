@@ -40,8 +40,11 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings);
 // This method will initiate a spi transaction on the |spi| port.
 // First, it will pull CS low, then transmit |tx_len| number of bytes from |tx_data|,
 // then receive |rx_len| number of bytes into |tx_data|, Finally pull CS high.
-StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
-                        size_t rx_len);
+StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data, size_t rx_len);
+
+StatusCode spi_exchange_noreset(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data, size_t rx_len);
+
+StatusCode spi_cs_set_state(SpiPort spi, GpioState state);
 
 #ifdef MS_PLATFORM_X86
 // Reads data from the tx buffer into data
