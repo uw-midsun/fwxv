@@ -35,8 +35,7 @@ TASK(my_task, TASK_STACK_512) {
   };
   while (true) {
     float voltage;
-    StatusCode status = ads1115_read_converted(&config, ADS1115_CHANNEL_0, &voltage); 
-
+    StatusCode status = ads1115_read_converted(&config, ADS1115_CHANNEL_0, &voltage); //passes in memoery address of voltage variable
     if (status == STATUS_CODE_OK) {
       LOG_DEBUG("Converted Voltage: %f\n", voltage);
     } else {

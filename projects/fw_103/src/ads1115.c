@@ -14,7 +14,8 @@ StatusCode ads1115_init(ADS1115_Config *config, ADS1115_Address i2c_addr, GpioAd
 
   // Write Config register
   /* TODO: fill out this value */
-  cmd = 0x0483;
+  cmd = 0x0483; //in hexadecimal, representing the bit confirguration 
+  //configuring it correctly when it starts up
   i2c_write_reg(config->i2c_port, i2c_addr, ADS1115_REG_CONFIG, (uint8_t *)(&cmd), 2);
 
   /* TODO (optional) */
@@ -41,7 +42,7 @@ StatusCode ads1115_select_channel(ADS1115_Config *config, ADS1115_Channel channe
   uint16_t cmd;
   // Write Config register
   cmd = 0x0000;
-  i2c_write_reg(config->i2c_port, config->i2c_addr, ADS1115_REG_CONFIG, (uint8_t *)(&cmd), 2);
+  i2c_write_reg(config->i2c_port, config->i2c_addr, ADS1115_REG_CONFIG, (uint8_t *)(&cmd), 2); //why rewriting?????
   return STATUS_CODE_OK;
 }
 
@@ -57,15 +58,16 @@ StatusCode ads1115_read_raw(ADS1115_Config *config, ADS1115_Channel channel, uin
   return STATUS_CODE_OK;
 }
 
-StatusCode ads1115_read_converted(ADS1115_Config *config, ADS1115_Channel channel, float *reading) {
+StatusCode ads1115_read_converted(ADS1115_Config *config, ADS1115_Channel channel, float *reading) { //reads from the ADC, which we have already confirugred
   uint16_t raw_adc_value;
   const float full_scale_voltage = 4.096; 
-  StatusCode status = ads1115_read_raw(config, channel, &raw_adc_value);
+  StatusCode status = ads1115_read_raw(config, channel, &raw_adc_value); //the function it calls effectively changes the raw_adc_value 
+
   if (status != STATUS_CODE_OK) {
     return status; 
   }
 
-  *reading = (raw_adc_value / 65535.0) * full_scale_voltage; //conversion
+  *reading = (raw_adc_value / 65535.0) * full_scale_voltage - 2.048; //conversion
 
   return STATUS_CODE_OK;
 }
