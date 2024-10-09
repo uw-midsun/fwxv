@@ -65,6 +65,8 @@ void update_indicators(uint32_t notif) {
     s_hazard_state = false;
     pca9555_gpio_set_state(&s_output_leds[HAZARD_LED], PCA9555_GPIO_STATE_LOW);
   }
+
+
   // Update regen light
   if (notify_check_event(&notif, REGEN_BUTTON_EVENT)) {
     uint16_t batt_voltage = get_battery_info_max_cell_v();  // Gets max voltage out of all cells
@@ -122,48 +124,7 @@ void update_indicators(uint32_t notif) {
   }
 }
 
-void monitor_cruise_control() {
-  // Check steering message for cc event (toggle/increase/decrease)
-  // Update cc enabled based on brake/cc toggle
-  uint8_t cc_info = g_tx_struct.cc_steering_input_cc;
-  bool new_cc_state = s_cc_enabled;
-  if (g_tx_struct.cc_info_drive_state != DRIVE || g_tx_struct.cc_pedal_brake_output) {
-    new_cc_state = false;
-  } else {
-    if (cc_info & EE_STEERING_CC_TOGGLE_MASK) {
-      new_cc_state = !s_cc_enabled;
-    }
-  }
-
-  // If a state change has occurred update values and indicator LED
-  if (new_cc_state != s_cc_enabled) {
-    if (new_cc_state) {
-      // Store recent speed from MCI as initial cruise control speed
-      float avg_speed = (get_motor_velocity_velocity_l() + get_motor_velocity_velocity_r()) / 2;
-      float speed_kph = avg_speed * CONVERT_VELOCITY_TO_KPH;
-      s_target_velocity = (unsigned int)speed_kph;
-      pca9555_gpio_set_state(&s_output_leds[CRUISE_LED], PCA9555_GPIO_STATE_HIGH);
-    } else {
-      s_target_velocity = 0;
-      pca9555_gpio_set_state(&s_output_leds[CRUISE_LED], PCA9555_GPIO_STATE_LOW);
-    }
-    s_cc_enabled = new_cc_state;
-  }
-
-  // Allow for updates to cruise control value if it is enabled
-  if (s_cc_enabled) {
-    if (cc_info & EE_STEERING_CC_INCREASE_MASK) {
-      s_target_velocity += 1000;  // 1000 for testing should actually be 1
-    }
-    if (cc_info & EE_STEERING_CC_DECREASE_MASK) {
-      s_target_velocity -= 1000;
-    }
-  }
-}
-
 void update_drive_output() {
-  set_cc_info_cruise_control(s_cc_enabled);
-  set_cc_info_target_velocity(s_target_velocity);
   memcpy(&g_tx_struct.cc_regen_percent, &s_regen_braking, sizeof(s_regen_braking));
   set_cc_info_hazard_enabled(s_hazard_state);
 }
@@ -174,11 +135,12 @@ TASK(update_displays, TASK_MIN_STACK_SIZE) {
   uint16_t batt_fault = 0;
   while (true) {
     if (get_battery_status_fault()) {
-      batt_fault = (uint16_t)((get_battery_status_fault()) & (~(0b11 << 14)));
+      batt_fault = (get_battery_status_fault()) & (~(0b11 << 14));
     } else {
       float avg_speed = (abs((int16_t)get_motor_velocity_velocity_l()) +
                          abs((int16_t)get_motor_velocity_velocity_r())) /
                         2.0f;
+    
       car_vel = (avg_speed * 60 * MATH_PI * (WHEEL_DIAMETER_CM / CM_TO_INCHES)) / MILES_TO_INCHES;
       if (car_vel >= 100.0f) {
         car_vel = 99.9f;
