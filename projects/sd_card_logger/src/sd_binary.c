@@ -297,7 +297,7 @@ StatusCode sd_read_blocks(SpiPort spi, uint8_t *dest, uint32_t ReadAddr, uint32_
   response = prv_send_cmd(spi, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE, 0xFF, SD_RESPONSE_R1);
   prv_pulse_idle(spi);
 
-  if (response.r1 != SD_R1_NO_ERROR) {
+  if (response.data != SD_R1_NO_ERROR) {
     prv_pulse_idle(spi);
     return status_msg(STATUS_CODE_INTERNAL_ERROR,
                       "Failed to read because SD card responded with an error\n");
@@ -346,7 +346,7 @@ static StatusCode prv_sd_write_block(SpiPort spi, uint8_t *src, uint32_t WriteAd
   // (0x00: no errors)
   response = prv_send_cmd(spi, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE, 0xFF, SD_RESPONSE_R1);
   prv_pulse_idle(spi);
-  if (response.r1 != SD_R1_NO_ERROR) {
+  if (response.data != SD_R1_NO_ERROR) {
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card error\n");
   }
 
@@ -356,7 +356,7 @@ static StatusCode prv_sd_write_block(SpiPort spi, uint8_t *src, uint32_t WriteAd
 
   response =
       prv_send_cmd(spi, SD_CMD_WRITE_SINGLE_BLOCK, WriteAddr / SD_BLOCK_SIZE, 0xFF, SD_RESPONSE_R1);
-  if (response.r1 != SD_R1_NO_ERROR) {
+  if (response.data != SD_R1_NO_ERROR) {
     prv_pulse_idle(spi);
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card error\n");
   }
@@ -371,9 +371,8 @@ static StatusCode prv_sd_write_block(SpiPort spi, uint8_t *src, uint32_t WriteAd
   spi_tx(spi, src, SD_BLOCK_SIZE);
 
   // Put CRC bytes (not really needed by us, but required by SD)
-  uint8_t crc = 0x00;
-  spi_tx(spi, &crc, 1);
-  spi_tx(spi, &crc, 1);
+  uint16_t crc = crc15_calculate(src, SD_BLOCK_SIZE);
+  spi_tx(spi, &crc, 2);
 
   if (!status_ok(prv_sd_get_data_response(spi))) {
     // Quit and return failed status
