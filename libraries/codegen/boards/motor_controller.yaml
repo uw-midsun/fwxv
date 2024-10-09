@@ -16,6 +16,8 @@
       target:
         centre_console:
           watchdog: 0
+        telemetry:
+          watchdog: 0
       signals:
         mc_voltage_l:
           length: 16
@@ -34,6 +36,8 @@
           watchdog: 0
         power_distribution:
           watchdog: 0
+        telemetry:
+          watchdog: 0
       signals:
         velocity_l:
           length: 16
@@ -47,6 +51,8 @@
       critical: false
       target:
         centre_console:
+          watchdog: 0
+        telemetry:
           watchdog: 0
       signals:
         motor_temp_l:
@@ -64,6 +70,8 @@
       target:
         centre_console:
           watchdog: 0
+        telemetry:
+          watchdog: 0
       signals:
         dsp_temp_l:
           length: 16
@@ -77,6 +85,8 @@
         centre_console:
           watchdog: 0
         power_distribution:
+          watchdog: 0
+        telemetry:
           watchdog: 0
       signals:
         limit_bitset_l:
