@@ -50,6 +50,9 @@
 // The default byte to send
 #define SD_DUMMY_BYTE (0xFF)
 
+// Maximum amount of relevant response bytes (if response is R1b, we keep on reading the )
+#define SD_MAX_RESPONSE_DATA (5)
+
 // Misc definitions for SD card things
 #define SD_R1_NO_ERROR (0x00)
 #define SD_R1_IN_IDLE_STATE (0x01)
@@ -61,13 +64,18 @@
 #define SD_TOKEN_STOP_DATA_MULTI_BLOCK_WRITE (0xFD)
 
 #define SD_CMD_GO_IDLE_STATE (0)
+#define SD_CMD_SEND_OP_COND (1)
 #define SD_CMD_SEND_IF_COND (8)
-#define SD_CMD_STATUS (13)
+#define SD_CMD_SEND_CSD (9)
+#define SD_CMD_SEND_CID (10)
+#define SD_CMD_STOP_TRANSMISSION (12)
 #define SD_CMD_SET_BLOCKLEN (16)
 #define SD_CMD_READ_SINGLE_BLOCK (17)
-#define SD_CMD_WRITE_SINGLE_BLOCK (24)
-#define SD_CMD_WRITE_MULTI_BLOCK (25)
-#define SD_CMD_SD_APP_OP_COND (41)
+#define SD_CMD_READ_MULTIPLE_BLOCK (18)
+#define SD_CMD_SET_WR_BLOCK_ERASE_COUNT (23)
+#define SD_CMD_WRITE_BLOCK (24)
+#define SD_CMD_WRITE_MULTIPLE_BLOCK (25)
+#define SD_CMD_APP_SEND_OP_COND (41)
 #define SD_CMD_APP_CMD (55)
 #define SD_CMD_READ_OCR (58)
 
@@ -79,10 +87,9 @@
 typedef enum {
   SD_RESPONSE_R1 = 0,
   SD_RESPONSE_R1B,
-  SD_RESPONSE_R2,
   SD_RESPONSE_R3,
-  SD_RESPONSE_R4R5,
   SD_RESPONSE_R7,
+  SD_RESPONSE_UNKNOWN,
   NUM_SD_RESPONSES
 } SdResponseType;
 
@@ -92,36 +99,46 @@ typedef struct SdResponse {
   uint32_t ocr_value;
 } SdResponse;
 
-static uint8_t prv_write_read_byte(SpiPort spi, uint8_t byte) {
-  uint8_t result = 0x00;
-  spi_exchange_noreset(spi, &byte, 1, &result, 1);
-  return result;
+static StatusCode prv_write_read_byte(SpiPort spi, uint8_t* out, uint8_t byte) {
+  return spi_exchange_noreset(spi, &byte, 1, out, 1);
 }
 
-static uint8_t prv_read_byte(SpiPort spi) {
-  return prv_write_read_byte(spi, 0xFF);
+static StatusCode prv_read_byte(SpiPort spi, uint8_t* out) {
+  return prv_write_read_byte(spi, out, 0xFF);
 }
 
-static void prv_write_dummy(SpiPort spi, uint8_t times) {
-  for (uint8_t i = 0; i < times; i++) {
-    prv_read_byte(spi);
+static StatusCode prv_read_multi(SpiPort spi, uint8_t* base_addr, size_t amount) {
+  for (size_t i = 0; i < amount; i++) {
+    StatusCode s = prv_read_byte(spi, base_addr + i * sizeof(uint8_t));
+    if (s != STATUS_CODE_OK) return s;
   }
+  return STATUS_CODE_OK;
 }
 
-static uint8_t prv_wait_byte(SpiPort spi) {
-  uint8_t timeout = 0x08;
+static StatusCode prv_wait_sd_response(SpiPort spi, uint8_t* out) {
+  uint8_t timeout_bytes = 8;
   uint8_t readvalue;
-
+  StatusCode s = STATUS_CODE_OK;
   do {
-    readvalue = prv_write_read_byte(spi, SD_DUMMY_BYTE);
-    timeout--;
-  } while ((readvalue == SD_DUMMY_BYTE) && timeout);
-
-  return readvalue;
+    s = prv_read_byte(spi, &readvalue);
+    timeout_bytes--;
+  } while ((readvalue == SD_DUMMY_BYTE) && timeout_bytes && s == STATUS_CODE_OK);
+  uint8_t read_bytes = 0;
+  while (readvalue != SD_DUMMY_BYTE && s == STATUS_CODE_OK && read_bytes < SD_MAX_RESPONSE_DATA) {
+    *(out + read_bytes * sizeof(uint8_t)) = readvalue;
+    read_bytes++;
+    s = prv_read_byte(spi, &readvalue);
+  }
+  if (!read_bytes) return STATUS_CODE_TIMEOUT;
+  // Burn busy time
+  while (readvalue == 0 && s == STATUS_CODE_OK) {
+    s = prv_read_byte(spi, &readvalue);
+  }
+  return s;
 }
 
 // CRC is optional, so we can just set it to 0 I think.
-static SdResponse prv_send_cmd(SpiPort spi, uint8_t cmd, uint32_t arg, SdResponseType expected) {
+static StatusCode prv_send_cmd(SpiPort spi, SdResponse* response_field, uint8_t cmd, uint32_t arg) {
   uint8_t frame[SD_SEND_SIZE];
 
   // Split the cmd parameter into 8 byte ints
@@ -130,42 +147,45 @@ static SdResponse prv_send_cmd(SpiPort spi, uint8_t cmd, uint32_t arg, SdRespons
   frame[2] = (uint8_t)(arg >> 16);
   frame[3] = (uint8_t)(arg >> 8);
   frame[4] = (uint8_t)(arg);
-  frame[5] = (uint8_t)0;
+  frame[5] = (uint8_t)1;
 
   spi_cs_set_state(spi, GPIO_STATE_LOW);
 
   spi_tx(spi, frame, SD_SEND_SIZE);
 
-  SdResponse res = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-  switch (expected) {
-    case SD_RESPONSE_R1:
-      res.r1 = prv_wait_byte(spi);
+  uint8_t* res[5];
+  StatusCode read_result = prv_wait_sd_response(spi, &res);
+  if (read_result != STATUS_CODE_OK) return read_result;
+  response_field->data = res[0];
+  response_field->ocr_value = *((uint32_t*)(res + 1));
+  switch(cmd) {
+    case SD_CMD_GO_IDLE_STATE:
+    case SD_CMD_SEND_OP_COND:
+    case SD_CMD_APP_SEND_OP_COND:
+    case SD_CMD_SEND_CSD:
+    case SD_CMD_SEND_CID:
+    case SD_CMD_SET_BLOCKLEN:
+    case SD_CMD_READ_SINGLE_BLOCK:
+    case SD_CMD_READ_MULTIPLE_BLOCK:
+    case SD_CMD_SET_WR_BLOCK_ERASE_COUNT:
+    case SD_CMD_WRITE_BLOCK:
+    case SD_CMD_WRITE_MULTIPLE_BLOCK:
+    case SD_CMD_APP_CMD:
+      response_field->type = SD_RESPONSE_R1;
       break;
-    case SD_RESPONSE_R1B:
-      res.r1 = prv_wait_byte(spi);
-      res.r2 = prv_write_read_byte(spi, SD_DUMMY_BYTE);
-      spi_cs_set_state(spi, GPIO_STATE_HIGH);
-      delay_ms(1);
-      spi_cs_set_state(spi, GPIO_STATE_LOW);
-      while (prv_write_read_byte(spi, SD_DUMMY_BYTE) != 0xFF) {
-      }
+    case SD_CMD_STOP_TRANSMISSION:
+      response_field->type = SD_RESPONSE_R1B;
       break;
-    case SD_RESPONSE_R2:
-      res.r1 = prv_wait_byte(spi);
-      res.r2 = prv_write_read_byte(spi, SD_DUMMY_BYTE);
+    case SD_CMD_READ_OCR:
+      response_field->type = SD_RESPONSE_R3;
       break;
-    case SD_RESPONSE_R3:
-    case SD_RESPONSE_R7:
-      res.r1 = prv_wait_byte(spi);
-      res.r2 = prv_write_read_byte(spi, SD_DUMMY_BYTE);
-      res.r3 = prv_write_read_byte(spi, SD_DUMMY_BYTE);
-      res.r4 = prv_write_read_byte(spi, SD_DUMMY_BYTE);
-      res.r5 = prv_write_read_byte(spi, SD_DUMMY_BYTE);
+    case SD_CMD_SEND_IF_COND:
+      response_field->type = SD_RESPONSE_R7;
       break;
     default:
+      response_field->type = SD_RESPONSE_UNKNOWN;
       break;
   }
-  return res;
 }
 
 static StatusCode prv_sd_get_data_response(SpiPort spi) {
@@ -195,7 +215,7 @@ static StatusCode prv_sd_get_data_response(SpiPort spi) {
 
 static void prv_pulse_idle(SpiPort spi) {
   spi_cs_set_state(spi, GPIO_STATE_HIGH);
-  prv_write_read_byte(spi, SD_DUMMY_BYTE);
+  prv_read_byte(spi, NULL);
 }
 
 StatusCode sd_card_init(SpiPort spi) {
