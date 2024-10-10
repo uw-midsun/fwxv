@@ -4,6 +4,9 @@ build/*
 # venv directory 
 venv/*
 
+# ignore the clang cache
+.cache/*
+
 # scons cache
 .sconsign.dblite
 
