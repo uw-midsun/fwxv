@@ -353,7 +353,7 @@ StatusCode sd_read_blocks(SpiPort spi, uint8_t *dest, uint32_t ReadAddr, uint32_
   response = prv_send_cmd(spi, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE, 0xFF, SD_RESPONSE_R1);
   prv_pulse_idle(spi);
 
-  if (response.r1 != SD_R1_NO_ERROR) {
+  if (response.data != SD_R1_NO_ERROR) {
     prv_pulse_idle(spi);
     return status_msg(STATUS_CODE_INTERNAL_ERROR,
                       "Failed to read because SD card responded with an error\n");
@@ -400,9 +400,9 @@ static StatusCode prv_sd_write_block(SpiPort spi, uint8_t *src, uint32_t WriteAd
   // Send CMD16 (SD_CMD_SET_BLOCKLEN) to set the size of the block and
   // Check if the SD acknowledged the set block length command: R1 response
   // (0x00: no errors)
-  response = prv_send_cmd(spi, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE, 0xFF, SD_RESPONSE_R1);
+  prv_send_cmd(spi, &response, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE);
   prv_pulse_idle(spi);
-  if (response.r1 != SD_R1_NO_ERROR) {
+  if (response.data != SD_R1_NO_ERROR) {
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card error\n");
   }
 
@@ -410,9 +410,8 @@ static StatusCode prv_sd_write_block(SpiPort spi, uint8_t *src, uint32_t WriteAd
   // Check if the SD acknowledged the write block command: R1 response (0x00: no
   // errors)
 
-  response =
-      prv_send_cmd(spi, SD_CMD_WRITE_SINGLE_BLOCK, WriteAddr / SD_BLOCK_SIZE, 0xFF, SD_RESPONSE_R1);
-  if (response.r1 != SD_R1_NO_ERROR) {
+  prv_send_cmd(spi, &response, SD_CMD_WRITE_BLOCK, WriteAddr / SD_BLOCK_SIZE);
+  if (response.data != SD_R1_NO_ERROR) {
     prv_pulse_idle(spi);
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card error\n");
   }
@@ -427,9 +426,8 @@ static StatusCode prv_sd_write_block(SpiPort spi, uint8_t *src, uint32_t WriteAd
   spi_tx(spi, src, SD_BLOCK_SIZE);
 
   // Put CRC bytes (not really needed by us, but required by SD)
-  uint8_t crc = 0x00;
-  spi_tx(spi, &crc, 1);
-  spi_tx(spi, &crc, 1);
+  uint16_t crc = crc15_calculate(src, SD_BLOCK_SIZE);
+  spi_tx(spi, &crc, 2);
 
   if (!status_ok(prv_sd_get_data_response(spi))) {
     // Quit and return failed status
@@ -441,6 +439,7 @@ static StatusCode prv_sd_write_block(SpiPort spi, uint8_t *src, uint32_t WriteAd
   return STATUS_CODE_OK;
 }
 
+// potentially autocalculate number of blocks?
 StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t WriteAddr, uint32_t NumberOfBlocks) {
   if (!NumberOfBlocks) {
     return prv_sd_write_block(spi, src, WriteAddr);
@@ -452,16 +451,15 @@ StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t WriteAddr, uint32
   // Send CMD16 (SD_CMD_SET_BLOCKLEN) to set the size of the block and
   // Check if the SD acknowledged the set block length command: R1 response
   // (0x00: no errors)
-  response = prv_send_cmd(spi, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE, 0xFF, SD_RESPONSE_R1);
+  prv_send_cmd(spi, &response, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE);
   prv_pulse_idle(spi);
-  if (response.r1 != SD_R1_NO_ERROR) {
+  if (response.data != SD_R1_NO_ERROR) {
     return status_code(STATUS_CODE_INTERNAL_ERROR);
   }
 
   // Data transfer
-  response = prv_send_cmd(spi, SD_CMD_WRITE_MULTI_BLOCK, (WriteAddr + offset) / SD_BLOCK_SIZE, 0xFF,
-                          SD_RESPONSE_R1);
-  if (response.r1 != SD_R1_NO_ERROR) {
+  prv_send_cmd(spi, &response, SD_CMD_WRITE_MULTIPLE_BLOCK, WriteAddr / SD_BLOCK_SIZE);
+  if (response.data != SD_R1_NO_ERROR) {
     prv_pulse_idle(spi);
     return status_code(STATUS_CODE_INTERNAL_ERROR);
   }
@@ -469,10 +467,6 @@ StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t WriteAddr, uint32
   prv_write_dummy(spi, SD_DUMMY_COUNT_CONST);
 
   while (NumberOfBlocks--) {
-    // Send CMD24 (SD_CMD_WRITE_SINGLE_BLOCK) to write blocks  and
-    // Check if the SD acknowledged the write block command: R1 response (0x00:
-    // no errors)
-
     // Send the data token to signify the start of the data
     uint8_t dat = SD_TOKEN_START_DATA_MULTI_BLOCK_WRITE;
     spi_tx(spi, &dat, 1);
@@ -484,9 +478,8 @@ StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t WriteAddr, uint32
     offset += SD_BLOCK_SIZE;
 
     // Put CRC bytes (not really needed by us, but required by SD)
-    uint8_t crc = 0x00;
-    spi_tx(spi, &crc, 1);
-    spi_tx(spi, &crc, 1);
+    uint16_t crc = crc15_calculate(src + offset, SD_BLOCK_SIZE);
+    spi_tx(spi, &crc, 2);
 
     if (!status_ok(prv_sd_get_data_response(spi))) {
       // Quit and return failed status
