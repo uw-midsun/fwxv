@@ -1,13 +1,6 @@
 #include "i_watchdog.h"
 
-// taken from the original driver, this just defines prescaler values.
-#define IWDG_Prescaler_4 ((uint8_t)0x00)
-#define IWDG_Prescaler_8 ((uint8_t)0x01)
-#define IWDG_Prescaler_16 ((uint8_t)0x02)
-#define IWDG_Prescaler_32 ((uint8_t)0x03)
-#define IWDG_Prescaler_64 ((uint8_t)0x04)
-#define IWDG_Prescaler_128 ((uint8_t)0x05)
-#define IWDG_Prescaler_256 ((uint8_t)0x06)
+#include "stm32f10x_iwdg.h"
 
 // This is the time that we want the clock to reset after
 #define RELOAD_TIME ((uint16_t)3000)
