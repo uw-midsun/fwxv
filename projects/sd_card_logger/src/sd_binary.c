@@ -53,10 +53,13 @@
 // Maximum amount of relevant response bytes (if response is R1b, we keep on reading the )
 #define SD_MAX_RESPONSE_DATA (5)
 
-// Misc definitions for SD card things
-#define SD_R1_NO_ERROR (0x00)
-#define SD_R1_IN_IDLE_STATE (0x01)
-#define SD_R1_ILLEGAL_COMMAND (0x04)
+#define SD_R1_IDLE (0x1)
+#define SD_R1_ERASE_RESET (0x2)
+#define SD_R1_ILLEGAL_CMD (0x4)
+#define SD_R1_CRC_ERROR (0x8)
+#define SD_R1_ERASE_ERROR (0x10)
+#define SD_R1_ADDRESS_ERROR (0x20)
+#define SD_R1_PARAM_ERROR (0x40)
 
 #define SD_TOKEN_START_DATA_SINGLE_BLOCK_READ (0xFE)
 #define SD_TOKEN_START_DATA_SINGLE_BLOCK_WRITE (0xFE)
@@ -79,13 +82,29 @@
 #define SD_CMD_APP_CMD (55)
 #define SD_CMD_READ_OCR (58)
 
-#define SD_DATA_OK (0x05)
-#define SD_DATA_CRC_ERROR (0x0B)
-#define SD_DATA_WRITE_ERROR (0x0D)
-#define SD_DATA_OTHER_ERROR (0xFF)
+#define SD_DATA_OK (0x5)
+#define SD_DATA_CRC_ERROR (0xB)
+#define SD_DATA_WRITE_ERROR (0xD)
+#define SD_DATA_MALFORMED (0xFF)
+
+#define SD_OCR_V2728 (0x10000)
+#define SD_OCR_V2829 (0x8000)
+#define SD_OCR_V2930 (0x4000)
+#define SD_OCR_V3031 (0x2000)
+#define SD_OCR_V3132 (0x1000)
+#define SD_OCR_V3233 (0x800)
+#define SD_OCR_V3334 (0x400)
+#define SD_OCR_V3435 (0x200)
+#define SD_OCR_V3536 (0x100)
+#define SD_OCR_CAP_TYPE (0x2)
+#define SD_OCR_POWER_STATUS (0x1)
+#define SD_OCR_ALL (0x1FF00)
+
+#define SD_R7_CHECK_PAT (0xFF)
+#define SD_R7_VAC_BITS (0xF00)
 
 typedef enum {
-  SD_RESPONSE_R1 = 0,
+  SD_RESPONSE_R1,
   SD_RESPONSE_R1B,
   SD_RESPONSE_R3,
   SD_RESPONSE_R7,
@@ -95,9 +114,27 @@ typedef enum {
 
 typedef struct SdResponse {
   SdResponseType type;
-  uint8_t data;
+  uint8_t r1;
   uint32_t ocr_value;
 } SdResponse;
+
+typedef struct SpiPortSdConfig {
+  uint32_t voltage_range;
+  bool is_card;
+  bool is_high_capacity;
+  bool is_ready;
+  bool is_sdv2;
+} SpiPortSdConfig;
+
+static SpiPortSdConfig SpiPortSdConfig_default = {
+  .voltage_range = 0,
+  .is_card = false,
+  .is_high_capacity = false,
+  .is_ready = false,
+  .is_sdv2 = false
+};
+
+static SpiPortSdConfig sd_port[NUM_SPI_PORTS];
 
 static StatusCode prv_write_read_byte(SpiPort spi, uint8_t* out, uint8_t byte) {
   return spi_exchange_noreset(spi, &byte, 1, out, 1);
@@ -117,7 +154,7 @@ static StatusCode prv_read_multi(SpiPort spi, uint8_t* base_addr, size_t amount)
 
 static StatusCode prv_wait_sd_response(SpiPort spi, uint8_t* out) {
   uint8_t timeout_bytes = 8;
-  uint8_t readvalue;
+  volatile uint8_t readvalue;
   StatusCode s = STATUS_CODE_OK;
   do {
     s = prv_read_byte(spi, &readvalue);
@@ -137,7 +174,6 @@ static StatusCode prv_wait_sd_response(SpiPort spi, uint8_t* out) {
   return s;
 }
 
-// CRC is optional, so we can just set it to 0 I think.
 static StatusCode prv_send_cmd(SpiPort spi, SdResponse* response_field, uint8_t cmd, uint32_t arg) {
   uint8_t frame[SD_SEND_SIZE];
 
@@ -147,7 +183,7 @@ static StatusCode prv_send_cmd(SpiPort spi, SdResponse* response_field, uint8_t 
   frame[2] = (uint8_t)(arg >> 16);
   frame[3] = (uint8_t)(arg >> 8);
   frame[4] = (uint8_t)(arg);
-  frame[5] = (uint8_t)1;
+  frame[5] = (uint8_t)0x95; // CRC for a CMD0. We can hardcode this since the CRC is ignored from then on anyways.
 
   spi_cs_set_state(spi, GPIO_STATE_LOW);
 
@@ -156,7 +192,7 @@ static StatusCode prv_send_cmd(SpiPort spi, SdResponse* response_field, uint8_t 
   uint8_t* res[5];
   StatusCode read_result = prv_wait_sd_response(spi, &res);
   if (read_result != STATUS_CODE_OK) return read_result;
-  response_field->data = res[0];
+  response_field->r1 = res[0];
   response_field->ocr_value = *((uint32_t*)(res + 1));
   switch(cmd) {
     case SD_CMD_GO_IDLE_STATE:
@@ -189,28 +225,25 @@ static StatusCode prv_send_cmd(SpiPort spi, SdResponse* response_field, uint8_t 
 }
 
 static StatusCode prv_sd_get_data_response(SpiPort spi) {
-  volatile uint8_t dataresponse;
-  uint16_t timeout = 0xFFFF;
-  while ((dataresponse = prv_read_byte(spi)) == 0xFF && timeout) {
+  volatile uint8_t readvalue;
+  uint16_t timeout = 8;
+  StatusCode s = prv_read_byte(spi, &readvalue);
+  while (readvalue == SD_DUMMY_BYTE && timeout && s == STATUS_CODE_OK) {
     timeout--;
+    s = prv_read_byte(spi, &readvalue);
   }
-
-  // Consumes the busy response byte
-  prv_read_byte(spi);
-
-  // Masks the bits which are not part of the response and
-  // parses the response
-  if ((dataresponse & 0x1F) == SD_DATA_OK) {
-    spi_cs_set_state(spi, GPIO_STATE_HIGH);
-    spi_cs_set_state(spi, GPIO_STATE_LOW);
-
+  if (s != STATUS_CODE_OK) return s;
+  if (!timeout) return STATUS_CODE_TIMEOUT;
+  if (readvalue == SD_DATA_OK) {
     // Wait for IO line to return to 0xFF
-    while (prv_read_byte(spi) != 0xFF) {
-    }
+    while (prv_read_byte(spi, NULL) != SD_DUMMY_BYTE) {}
     return STATUS_CODE_OK;
   }
+  return STATUS_CODE_INTERNAL_ERROR;
+}
 
-  return status_code(STATUS_CODE_INTERNAL_ERROR);
+static bool prv_check_sd_response_blank(SdResponse response) {
+  return response.r1 == 0xFF && response.ocr_value == 0xFFFFFFFF;
 }
 
 static void prv_pulse_idle(SpiPort spi) {
@@ -219,72 +252,75 @@ static void prv_pulse_idle(SpiPort spi) {
 }
 
 StatusCode sd_card_init(SpiPort spi) {
+  volatile StatusCode last_status;
+  volatile SdResponse last_response;
+  volatile uint16_t retry_counter = SD_NUM_RETRIES;
 
-  volatile SdResponse response = { 0, 0, 0, 0, 0 };
-  volatile uint16_t counter = 0;
+  sd_port[spi] = SpiPortSdConfig_default;
+
   // Send CMD0 (SD_CMD_GO_IDLE_STATE) to put SD in SPI mode and
   // wait for In Idle State Response (R1 Format) equal to 0x01
-  prv_write_dummy(spi, 10);
   do {
-    counter++;
-    response = prv_send_cmd(spi, SD_CMD_GO_IDLE_STATE, 0, 0x95, SD_RESPONSE_R1);
+    last_status = prv_send_cmd(spi, &last_response, SD_CMD_GO_IDLE_STATE, 0);
     spi_cs_set_state(spi, GPIO_STATE_HIGH);
-    if (counter >= SD_NUM_RETRIES) {
+    if (!(--retry_counter)) {
       return status_msg(STATUS_CODE_TIMEOUT, "Fail to init SD card before timeout\n");
     }
     delay_ms(20);
-  } while (response.r1 != SD_R1_IN_IDLE_STATE);
+  } while (!((last_response.r1 & SD_R1_IDLE) && last_status == STATUS_CODE_OK));
 
-  // Send CMD8 (SD_CMD_SEND_IF_COND) to check the power supply status
-  // and wait until response (R7 Format) equal to 0xAA and
-  response = prv_send_cmd(spi, SD_CMD_SEND_IF_COND, 0x1AA, 0x87, SD_RESPONSE_R7);
-  spi_cs_set_state(spi, GPIO_STATE_HIGH);
-  prv_write_read_byte(spi, SD_DUMMY_BYTE);
-  if (response.r1 == SD_R1_IN_IDLE_STATE) {
-    // initialise card V2
-    do {
-      // Send CMD55 (SD_CMD_APP_CMD) before any ACMD command: R1 response (0x00:
-      // no errors)
-      response = prv_send_cmd(spi, SD_CMD_APP_CMD, 0, 0x65, SD_RESPONSE_R1);
-      spi_cs_set_state(spi, GPIO_STATE_HIGH);
-      prv_write_read_byte(spi, SD_DUMMY_BYTE);
-
-      // Send ACMD41 (SD_CMD_SD_APP_OP_COND) to initialize SDHC or SDXC cards:
-      // R1 response (0x00: no errors)
-      response = prv_send_cmd(spi, SD_CMD_SD_APP_OP_COND, 0x40000000, 0x77, SD_RESPONSE_R1);
-      spi_cs_set_state(spi, GPIO_STATE_HIGH);
-      prv_write_read_byte(spi, SD_DUMMY_BYTE);
-    } while (response.r1 == SD_R1_IN_IDLE_STATE);
-
-    if ((response.r1 & SD_R1_ILLEGAL_COMMAND) == SD_R1_ILLEGAL_COMMAND) {
-      do {
-        // Send CMD55 (SD_CMD_APP_CMD) before any ACMD command: R1 response
-        // (0x00: no errors) */
-        response = prv_send_cmd(spi, SD_CMD_APP_CMD, 0, 0x65, SD_RESPONSE_R1);
-        spi_cs_set_state(spi, GPIO_STATE_HIGH);
-        prv_write_read_byte(spi, SD_DUMMY_BYTE);
-        if (response.r1 != SD_R1_IN_IDLE_STATE) {
-          return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card is not in idle state\n");
-        }
-        // Send ACMD41 (SD_CMD_SD_APP_OP_COND) to initialize SDHC or SDXC cards:
-        // R1 response (0x00: no errors)
-        response = prv_send_cmd(spi, SD_CMD_SD_APP_OP_COND, 0x40000000, 0x77, SD_RESPONSE_R1);
-        spi_cs_set_state(spi, GPIO_STATE_HIGH);
-        prv_write_read_byte(spi, SD_DUMMY_BYTE);
-      } while (response.r1 == SD_R1_IN_IDLE_STATE);
-    }
-
-    // Send CMD58 (SD_CMD_READ_OCR) to initialize SDHC or SDXC cards: R3
-    // response (0x00: no errors)
-    response = prv_send_cmd(spi, SD_CMD_READ_OCR, 0x00000000, 0xFF, SD_RESPONSE_R3);
+  retry_counter = SD_NUM_RETRIES;
+  // Send CMD8 (SD_CMD_SEND_IF_COND) to check the power supply status. SDV2 only.
+  // and wait until response (R7 Format). If there isn't a response after a set timeout, we'll stop the initialization.
+  // Arg: Voltage Supplied is 2.7-3.6V, Check Pattern is 0xAA
+  do {
+    last_status = prv_send_cmd(spi, &last_response, SD_CMD_SEND_IF_COND, 0x1AA);
     spi_cs_set_state(spi, GPIO_STATE_HIGH);
-    prv_write_read_byte(spi, SD_DUMMY_BYTE);
-    if (response.r1 != SD_R1_NO_ERROR) {
-      return status_msg(STATUS_CODE_INTERNAL_ERROR, "Could not init SDHC or SDXC\n");
+    if (last_response.r1 & SD_R1_ILLEGAL_CMD) { // Legacy SD Card
+      sd_port[spi].is_sdv2 = false;
+      break;
     }
-  } else {
-    return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card is not in idle state\n");
-  }
+    if (!(--retry_counter)) {
+      return status_msg(STATUS_CODE_TIMEOUT, "SD Card failed to give valid infrastructure condition in alloted number of retries\n");
+    }
+    if (!(last_response.ocr_value & SD_R7_VAC_BITS)) {
+      return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD Card does not support provided voltage range\n");
+    }
+    if (last_response.ocr_value & SD_R7_CHECK_PAT == 0xAA) {
+      sd_port[spi].is_sdv2 = true;
+      break;
+    }
+  } while (true);
+
+  // Check voltage again (SD1/SD2)
+  last_status = prv_send_cmd(spi, &last_response, SD_CMD_READ_OCR, 0);
+  spi_cs_set_state(spi, GPIO_STATE_HIGH); // Reset
+
+  if (!(--retry_counter)) 
+    return status_msg(STATUS_CODE_TIMEOUT, "SD Card failed to power within alloted timeframe\n");
+
+  if (last_response.r1 & SD_R1_ILLEGAL_CMD) 
+    return status_msg(STATUS_CODE_INTERNAL_ERROR, "Attached device does not recognize CMD58, aborting\n");
+  uint32_t acceptable_v_range = SD_OCR_ALL;
+  if (!(last_response.r1 & acceptable_v_range)) 
+    return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD Card not in supported voltage range\n");
+  if (sd_port[spi].is_sdv2)
+    sd_port[spi].is_high_capacity = last_response.ocr_value & SD_OCR_CAP_TYPE;
+  
+  // Start initialization
+  do {
+    // Send ACMD41 (SD_CMD_SD_APP_OP_COND)
+    // Arg: 0x40000000, SDHC/SDXC Support with Power Saving on
+
+    last_status = prv_send_cmd(spi, &last_response, SD_CMD_APP_CMD, 0);
+    spi_cs_set_state(spi, GPIO_STATE_HIGH);
+    prv_read_byte(spi, NULL);
+
+    last_status = prv_send_cmd(spi, &last_response, SD_CMD_APP_SEND_OP_COND, 0x40000000);
+    spi_cs_set_state(spi, GPIO_STATE_HIGH);
+    prv_read_byte(spi, NULL);
+  } while (last_response.r1 & SD_R1_IDLE);
+  
   return STATUS_CODE_OK;
 }
 
