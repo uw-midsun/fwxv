@@ -60,11 +60,24 @@
 #define SD_R1_ERASE_ERROR (0x10)
 #define SD_R1_ADDRESS_ERROR (0x20)
 #define SD_R1_PARAM_ERROR (0x40)
+#define SD_R1_NO_ERRORS (0x7B)
 
 #define SD_TOKEN_START_DATA_SINGLE_BLOCK_READ (0xFE)
+#define SD_TOKEN_START_DATA_MULTI_BLOCK_READ (0xFE)
 #define SD_TOKEN_START_DATA_SINGLE_BLOCK_WRITE (0xFE)
 #define SD_TOKEN_START_DATA_MULTI_BLOCK_WRITE (0xFC)
 #define SD_TOKEN_STOP_DATA_MULTI_BLOCK_WRITE (0xFD)
+#define SD_TOKEN_RESPONSE_MASK (0b00010001)
+#define SD_TOKEN_RESPONSE_MASKED_VAL (1)
+#define SD_TOKEN_RESPONSE_DATA_MASK (0b00001110)
+#define SD_TOKEN_RESPONSE_ACCEPT (0b100)
+#define SD_TOKEN_RESPONSE_CRC_ERROR (0b1010)
+#define SD_TOKEN_RESPONSE_WRITE_ERROR (0b1100)
+#define SD_TOKEN_ERRORLESS_MASK (0xF0)
+#define SD_TOKEN_ERROR_GENERIC (0x1)
+#define SD_TOKEN_ERROR_CC (0x2)
+#define SD_TOKEN_ERROR_CARD_ECC (0x4)
+#define SD_TOKEN_ERROR_OUT_OF_RANGE (0x8)
 
 #define SD_CMD_GO_IDLE_STATE (0)
 #define SD_CMD_SEND_OP_COND (1)
@@ -81,11 +94,6 @@
 #define SD_CMD_APP_SEND_OP_COND (41)
 #define SD_CMD_APP_CMD (55)
 #define SD_CMD_READ_OCR (58)
-
-#define SD_DATA_OK (0x5)
-#define SD_DATA_CRC_ERROR (0xB)
-#define SD_DATA_WRITE_ERROR (0xD)
-#define SD_DATA_MALFORMED (0xFF)
 
 #define SD_OCR_V2728 (0x10000)
 #define SD_OCR_V2829 (0x8000)
@@ -174,6 +182,63 @@ static StatusCode prv_wait_sd_response(SpiPort spi, uint8_t* out) {
   return s;
 }
 
+static bool prv_check_sd_response_blank(SdResponse response) {
+  return response.r1 == 0xFF && response.ocr_value == 0xFFFFFFFF;
+}
+
+static void prv_end_transaction(SpiPort spi) {
+  spi_cs_set_state(spi, GPIO_STATE_HIGH);
+  prv_read_byte(spi, NULL);
+}
+
+static StatusCode prv_sd_get_next_data_token(SpiPort spi, uint8_t* token) {
+  volatile StatusCode last_status;
+  volatile uint8_t readvalue;
+  uint16_t timeout = 0xFFF;
+
+  do {
+    last_status = prv_read_byte(spi, &readvalue);
+    if (!(timeout--)) return status_msg(STATUS_CODE_TIMEOUT, "Timed out while waiting for data token\n");
+  } while (readvalue == SD_DUMMY_BYTE);
+
+  *token = readvalue;
+
+  return STATUS_CODE_OK;
+}
+
+static StatusCode prv_sd_get_next_write_data_response(SpiPort spi, uint8_t* response) {
+  volatile uint8_t readvalue;
+  uint16_t timeout = 8;
+  StatusCode s;
+
+  do {
+    s = prv_read_byte(spi, &readvalue);
+    if (s != STATUS_CODE_OK) return s;
+    if (--timeout) 
+      return status_msg(STATUS_CODE_TIMEOUT, "Timed out waiting for the data response after a write. This should not happen\n");
+  } while (readvalue == SD_DUMMY_BYTE);
+
+  if ((readvalue & SD_TOKEN_RESPONSE_MASK) == SD_TOKEN_RESPONSE_MASKED_VAL) {
+    readvalue &= SD_TOKEN_RESPONSE_DATA_MASK;
+    switch (readvalue) {
+      case SD_TOKEN_RESPONSE_CRC_ERROR:
+        return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD Card encountered CRC error while writing.\n");
+        break;
+      case SD_TOKEN_RESPONSE_WRITE_ERROR:
+        return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD Card encountered Write error while writing.\n");
+        break;
+      case SD_TOKEN_RESPONSE_ACCEPT:
+        do {
+          s = prv_read_byte(spi, &readvalue);
+        } while (readvalue != SD_DUMMY_BYTE);
+        return STATUS_CODE_OK;
+        break;
+      default:
+        break;
+    }
+  } else return status_msg(STATUS_CODE_INTERNAL_ERROR, "Received invalid write Response from the SD Card.\n");
+}
+
 static StatusCode prv_send_cmd(SpiPort spi, SdResponse* response_field, uint8_t cmd, uint32_t arg) {
   uint8_t frame[SD_SEND_SIZE];
 
@@ -188,6 +253,11 @@ static StatusCode prv_send_cmd(SpiPort spi, SdResponse* response_field, uint8_t 
   spi_cs_set_state(spi, GPIO_STATE_LOW);
 
   spi_tx(spi, frame, SD_SEND_SIZE);
+
+  if (cmd == SD_CMD_STOP_TRANSMISSION) {
+    // Discard stuff byte in currently transmitting data
+    prv_read_byte(spi, NULL);
+  }
 
   uint8_t* res[5];
   StatusCode read_result = prv_wait_sd_response(spi, &res);
@@ -224,33 +294,6 @@ static StatusCode prv_send_cmd(SpiPort spi, SdResponse* response_field, uint8_t 
   }
 }
 
-static StatusCode prv_sd_get_data_response(SpiPort spi) {
-  volatile uint8_t readvalue;
-  uint16_t timeout = 8;
-  StatusCode s = prv_read_byte(spi, &readvalue);
-  while (readvalue == SD_DUMMY_BYTE && timeout && s == STATUS_CODE_OK) {
-    timeout--;
-    s = prv_read_byte(spi, &readvalue);
-  }
-  if (s != STATUS_CODE_OK) return s;
-  if (!timeout) return STATUS_CODE_TIMEOUT;
-  if (readvalue == SD_DATA_OK) {
-    // Wait for IO line to return to 0xFF
-    while (prv_read_byte(spi, NULL) != SD_DUMMY_BYTE) {}
-    return STATUS_CODE_OK;
-  }
-  return STATUS_CODE_INTERNAL_ERROR;
-}
-
-static bool prv_check_sd_response_blank(SdResponse response) {
-  return response.r1 == 0xFF && response.ocr_value == 0xFFFFFFFF;
-}
-
-static void prv_pulse_idle(SpiPort spi) {
-  spi_cs_set_state(spi, GPIO_STATE_HIGH);
-  prv_read_byte(spi, NULL);
-}
-
 StatusCode sd_card_init(SpiPort spi) {
   volatile StatusCode last_status;
   volatile SdResponse last_response;
@@ -262,7 +305,7 @@ StatusCode sd_card_init(SpiPort spi) {
   // wait for In Idle State Response (R1 Format) equal to 0x01
   do {
     last_status = prv_send_cmd(spi, &last_response, SD_CMD_GO_IDLE_STATE, 0);
-    spi_cs_set_state(spi, GPIO_STATE_HIGH);
+    prv_end_transaction(spi);
     if (!(--retry_counter)) {
       return status_msg(STATUS_CODE_TIMEOUT, "Fail to init SD card before timeout\n");
     }
@@ -275,7 +318,7 @@ StatusCode sd_card_init(SpiPort spi) {
   // Arg: Voltage Supplied is 2.7-3.6V, Check Pattern is 0xAA
   do {
     last_status = prv_send_cmd(spi, &last_response, SD_CMD_SEND_IF_COND, 0x1AA);
-    spi_cs_set_state(spi, GPIO_STATE_HIGH);
+    prv_end_transaction(spi);
     if (last_response.r1 & SD_R1_ILLEGAL_CMD) { // Legacy SD Card
       sd_port[spi].is_sdv2 = false;
       break;
@@ -294,7 +337,7 @@ StatusCode sd_card_init(SpiPort spi) {
 
   // Check voltage again (SD1/SD2)
   last_status = prv_send_cmd(spi, &last_response, SD_CMD_READ_OCR, 0);
-  spi_cs_set_state(spi, GPIO_STATE_HIGH); // Reset
+  prv_end_transaction(spi);
 
   if (!(--retry_counter)) 
     return status_msg(STATUS_CODE_TIMEOUT, "SD Card failed to power within alloted timeframe\n");
@@ -313,106 +356,70 @@ StatusCode sd_card_init(SpiPort spi) {
     // Arg: 0x40000000, SDHC/SDXC Support with Power Saving on
 
     last_status = prv_send_cmd(spi, &last_response, SD_CMD_APP_CMD, 0);
-    spi_cs_set_state(spi, GPIO_STATE_HIGH);
-    prv_read_byte(spi, NULL);
+    prv_end_transaction(spi);
 
     last_status = prv_send_cmd(spi, &last_response, SD_CMD_APP_SEND_OP_COND, 0x40000000);
-    spi_cs_set_state(spi, GPIO_STATE_HIGH);
-    prv_read_byte(spi, NULL);
+    prv_end_transaction(spi);
+
   } while (last_response.r1 & SD_R1_IDLE);
-  
+
   return STATUS_CODE_OK;
 }
 
-StatusCode sd_wait_data(SpiPort spi, uint8_t data) {
-  uint16_t timeout = 0xFFF;
-  uint8_t readvalue;
+StatusCode sd_read_blocks(SpiPort spi, uint8_t *dest, uint32_t read_addr, uint32_t block_count) {
+  StatusCode last_status;
+  SdResponse last_response;
+  uint8_t data_token;
 
-  // Check if response matches data
+  if (!block_count) return status_msg(STATUS_CODE_INVALID_ARGS, "Can't read zero blocks from the SD Card.\n");
+  // Note from previous: Read Block Size is locked at 512 bytes
 
+  last_status = prv_send_cmd(spi, &last_response, SD_CMD_READ_MULTIPLE_BLOCK, read_addr);
+  if (!(last_response.r1 & SD_R1_NO_ERRORS)) {
+    prv_end_transaction(spi);
+    return status_msg(STATUS_CODE_INTERNAL_ERROR, "Failed to read because SD card responded with an error\n");
+  }
+
+  // Now look for the data token to signify the start of the data
   do {
-    readvalue = prv_read_byte(spi);
-    timeout--;
-  } while ((readvalue != data) && timeout);
-
-  if (timeout == 0) {
-    // After time out
-    return status_msg(STATUS_CODE_TIMEOUT, "Timed out while waiting\n");
-  }
-
-  return STATUS_CODE_OK;
-}
-
-StatusCode sd_read_blocks(SpiPort spi, uint8_t *dest, uint32_t ReadAddr, uint32_t NumberOfBlocks) {
-  uint32_t offset = 0;
-  SdResponse response;
-
-  // Send CMD16 (SD_CMD_SET_BLOCKLEN) to set the size of the block and
-  // Check if the SD acknowledged the set block length command: R1 response
-  // (0x00: no errors)
-  response = prv_send_cmd(spi, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE, 0xFF, SD_RESPONSE_R1);
-  prv_pulse_idle(spi);
-
-  if (response.data != SD_R1_NO_ERROR) {
-    prv_pulse_idle(spi);
-    return status_msg(STATUS_CODE_INTERNAL_ERROR,
-                      "Failed to read because SD card responded with an error\n");
-  }
-
-  // Data transfer
-  while (NumberOfBlocks--) {
-    // Send CMD17 (SD_CMD_READ_SINGLE_BLOCK) to read one block
-    // Check if the SD acknowledged the read block command: R1 response (0x00:
-    // no errors)
-    response = prv_send_cmd(spi, SD_CMD_READ_SINGLE_BLOCK, (ReadAddr + offset) / SD_BLOCK_SIZE,
-                            0xFF, SD_RESPONSE_R1);
-    if (response.r1 != SD_R1_NO_ERROR) {
-      prv_pulse_idle(spi);
-      return status_msg(STATUS_CODE_INTERNAL_ERROR,
-                        "Failed to read because SD card responded with an error\n");
-    }
-
-    // Now look for the data token to signify the start of the data
-    if (status_ok(sd_wait_data(spi, SD_TOKEN_START_DATA_SINGLE_BLOCK_READ))) {
-      // Read the SD block data : read 512 bytes of data
-      spi_exchange(spi, NULL, 0, dest + offset, SD_BLOCK_SIZE);
-      // Set next read address
-      offset += SD_BLOCK_SIZE;
-      // get CRC bytes (not really needed by us, but required by SD)
-      prv_write_dummy(spi, 3);
+    last_status = sd_get_next_data_token(spi, &data_token);
+    if (last_status != STATUS_CODE_OK) return last_status;
+    if (data_token == SD_TOKEN_START_DATA_MULTI_BLOCK_READ) {
+      last_status = prv_read_multi(spi, dest, SD_BLOCK_SIZE);
+      if (last_status != STATUS_CODE_OK) return last_status;
+      // Burn the two CRC bytes
+      prv_read_multi(spi, NULL, 2);
     } else {
-      prv_pulse_idle(spi);
-      return status_msg(STATUS_CODE_TIMEOUT, "SD card timeout\n");
+      prv_end_transaction(spi);
+      if (data_token & SD_TOKEN_ERRORLESS_MASK) {
+        return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD Card gave an invalid token for the multi-block operation type\n");
+      } else {
+        return status_msg(STATUS_CODE_INTERNAL_ERROR, "The SD Card encountered an error while reading.\n");
+      }
     }
-
-    // Sets the CS line to high to end the read transaction
-    spi_cs_set_state(spi, GPIO_STATE_HIGH);
-    prv_write_read_byte(spi, SD_DUMMY_BYTE);
-  }
-
-  prv_pulse_idle(spi);
+    
+    dest += SD_BLOCK_SIZE;
+  } while (block_count--);
+  last_status = prv_send_cmd(spi, &last_response, SD_CMD_STOP_TRANSMISSION, 0);
+  prv_end_transaction(spi);
+  if (last_status != STATUS_CODE_OK) return last_status;
+  if (!(last_response.r1 & SD_R1_NO_ERRORS)) 
+    return status_msg(STATUS_CODE_INTERNAL_ERROR, "An unknown error occurred while stopping transmission. It is recommended not to use this SD Card further.\n");
   return STATUS_CODE_OK;
 }
 
 static StatusCode prv_sd_write_block(SpiPort spi, uint8_t *src, uint32_t WriteAddr) {
   SdResponse response;
 
-  // Send CMD16 (SD_CMD_SET_BLOCKLEN) to set the size of the block and
-  // Check if the SD acknowledged the set block length command: R1 response
-  // (0x00: no errors)
-  prv_send_cmd(spi, &response, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE);
-  prv_pulse_idle(spi);
-  if (response.data != SD_R1_NO_ERROR) {
-    return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card error\n");
-  }
+  // Note: CMD16 is useless since the default is 512, and higher-capacity cards ignore changing block size anyways
 
   // Send CMD24 (SD_CMD_WRITE_SINGLE_BLOCK) to write blocks  and
-  // Check if the SD acknowledged the write block command: R1 response (0x00: no
+  // check if the SD acknowledged the write block command: R1 response (0x00: no
   // errors)
 
   prv_send_cmd(spi, &response, SD_CMD_WRITE_BLOCK, WriteAddr / SD_BLOCK_SIZE);
-  if (response.data != SD_R1_NO_ERROR) {
-    prv_pulse_idle(spi);
+  if (response.r1 != SD_R1_NO_ERRORS) {
+    prv_end_transaction(spi);
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card error\n");
   }
 
@@ -431,11 +438,11 @@ static StatusCode prv_sd_write_block(SpiPort spi, uint8_t *src, uint32_t WriteAd
 
   if (!status_ok(prv_sd_get_data_response(spi))) {
     // Quit and return failed status
-    prv_pulse_idle(spi);
+    prv_end_transaction(spi);
     return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card error\n");
   }
 
-  prv_pulse_idle(spi);
+  prv_end_transaction(spi);
   return STATUS_CODE_OK;
 }
 
@@ -452,15 +459,15 @@ StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t WriteAddr, uint32
   // Check if the SD acknowledged the set block length command: R1 response
   // (0x00: no errors)
   prv_send_cmd(spi, &response, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE);
-  prv_pulse_idle(spi);
-  if (response.data != SD_R1_NO_ERROR) {
+  prv_end_transaction(spi);
+  if (response.r1 != SD_R1_NO_ERRORS) {
     return status_code(STATUS_CODE_INTERNAL_ERROR);
   }
 
   // Data transfer
   prv_send_cmd(spi, &response, SD_CMD_WRITE_MULTIPLE_BLOCK, WriteAddr / SD_BLOCK_SIZE);
-  if (response.data != SD_R1_NO_ERROR) {
-    prv_pulse_idle(spi);
+  if (response.r1 != SD_R1_NO_ERRORS) {
+    prv_end_transaction(spi);
     return status_code(STATUS_CODE_INTERNAL_ERROR);
   }
 
@@ -483,7 +490,7 @@ StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t WriteAddr, uint32
 
     if (!status_ok(prv_sd_get_data_response(spi))) {
       // Quit and return failed status
-      prv_pulse_idle(spi);
+      prv_end_transaction(spi);
       return status_code(STATUS_CODE_INTERNAL_ERROR);
     }
   }
@@ -497,21 +504,14 @@ StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t WriteAddr, uint32
   // Catch the last busy response
   volatile uint8_t dataresponse;
   uint16_t timeout = 0xFFFF;
-  while ((dataresponse = prv_read_byte(spi)) == 0x00 && timeout) {
+  while ((dataresponse = prv_read_byte(spi, NULL)) == 0x00 && timeout) {
     timeout--;
   }
 
-  prv_pulse_idle(spi);
+  prv_end_transaction(spi);
   return STATUS_CODE_OK;
 }
 
 StatusCode sd_is_initialized(SpiPort spi) {
-  SdResponse res = prv_send_cmd(spi, SD_CMD_STATUS, 0, SD_DUMMY_BYTE, SD_RESPONSE_R2);
-  prv_write_dummy(spi, 1);
-
-  if (res.r1 == 0 && res.r2 == 0) {
-    return STATUS_CODE_OK;
-  }
-
-  return status_code(STATUS_CODE_INTERNAL_ERROR);
+  return STATUS_CODE_UNIMPLEMENTED;
 }
