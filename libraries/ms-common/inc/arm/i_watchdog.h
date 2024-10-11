@@ -4,4 +4,3 @@
 
 void IWDG_Start(void);
 void IWDG_Reload(void);
-void IWDG_Stop(void);

@@ -219,7 +219,7 @@ void USB_LP_CAN1_RX0_IRQHandler(void) {
         CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_FMP0);
         __disable_irq();
         NVIC_SystemReset();
-        while(1);
+        while (1);
       }
       // check id against filter out, if matches any filter in filter out then dont push
       bool s_filter_id_match = false;
@@ -251,7 +251,7 @@ void CAN1_RX1_IRQHandler(void) {
         CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_FMP1);
         __disable_irq();
         NVIC_SystemReset();
-        while(1);
+        while (1);
       }
 
       // check id against filter out, if matches any filter in filter out then dont push
