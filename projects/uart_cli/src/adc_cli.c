@@ -8,57 +8,48 @@
 #include "log.h"
 #include "string.h"
 
-// Change these to match ADC
 static const char adc_help[] =
     "CLI Reference for GPIO Pins. Usage: \n\r"
     "adc <add/run/raw/converted> <parameters> \n\r\n"
 
-    "Initializes GPIO globally by setting all pins to their default state. \n\r"
-    "ONLY CALL ONCE or it will deinit all current settings. Change \n\r"
-    "setting by calling gpio_init_pin. \n\r\n"
+    "Commands:\n\r"
+    "  - add: Initialize an ADC channel\n\r"
+    "  - run: Start ADC conversions on all initialized channels\n\r"
+    "  - raw: Read raw ADC values from a specified channel\n\r"
+    "  - converted: Read converted (processed) ADC values\n\r\n"
 
     "Type \"help\" after any action for detailed reference.\n\r";
 
 static const char adc_add_help[] =
-    "Usage: Set the pin state by address.\n\r"
-    "gpio set <address> <state> \n\r\n"
+    "Usage: Add an ADC channel by specifying the pin and mode. \n\r"
+    "adc add <address> <mode> \n\r\n"
 
-    "Address: <Port (a-g)><Pin (0-15)> \n\r"
-    "Examples: A0, D5, E11, G15\n\r\n"
+    "Address: <Port (A, B)><Pin (0-7 for A, 0-1 for B)> \n\r"
+    "Examples: A0, A7, B1\n\r\n"
 
-    "State: \"high\" or \"low\"\n\r";
+    "Pin Modes: \"analog\", \"input_floating\", \"input_pull_down\", \n\r"
+    "\"input_pull_up\", \"output_open_drain\", \"output_push_pull\", \n\r"
+    "\"altfn_open_drain\", \"altfn_push_pull\" \n\r\n"
+
+    "Example: adc add A0 analog\n\r";
 
 static const char adc_run_help[] =
-    "Usage: Initializes a GPIO pin by address. GPIOs are configured \n\r"
-    "to a specified mode, at the max refresh speed \n\r"
-    "The init_state only matters if the pin is configured as an output \n\r"
-    "gpio init_pin <address> <pin_mode> <init_state> \n\r\n"
-
-    "Address: <Port (a-g)><Pin (0-15)> \n\r"
-    "Examples: A0, D5, E11, G15\n\r\n"
-
-    "Pin Modes: \"ANALOG\", \"INPUT_FLOATING\", \"INPUT_PULL_DOWN\", \n\r"
-    "\"INPUT_PULL_UP\", \"OUTPUT_OPEN_DRAIN\", \"OUTPUT_PUSH_PULL\", \n\r"
-    "\"ALFTN_OPEN_DRAIN\", \"ALTFN_PUSH_PULL\" \n\r\n"
-
-    "State: \"high\" or \"low\"\n\r";
+    "Usage: Start ADC conversions on all initialized channels. \n\r"
+    "adc run\n\r";
 
 static const char adc_read_converted_help[] =
-    "Usage: Toggles the output state of the pin. \n\r"
-    "gpio toggle <address> \n\r\n"
+    "Usage: Read converted (processed) ADC values from the specified channel. \n\r"
+    "adc converted <address>\n\r\n"
 
-    "Address: <Port (a-g)><Pin (0-15)> \n\r"
-    "Examples: A0, D5, E11, G15\n\r";
+    "Address: <Port (a-b)><Pin (0-7 for a, 0-1 for b)> \n\r"
+    "Example: adc converted A0\n\r";
 
 static const char adc_read_raw_help[] =
-    "Usage: Gets the value of the input register for a pin and assigns it to the state \n\r"
-    "that is passed in. \n\r"
-    "gpio get <address> <input_state> \n\r\n"
+    "Usage: Read raw ADC values from the specified channel. \n\r"
+    "adc raw <address>\n\r\n"
 
-    "Address: <Port (a-g)><Pin (0-15)> \n\r"
-    "Examples: A0, D5, E11, G15\n\r\n"
-
-    "State: \"high\" or \"low\"\n\r";
+    "Address: <Port (a-b)><Pin (0-7 for a, 0-1 for b)> \n\r"
+    "Example: adc raw A0\n\r";
 
 static void prv_add_channel(char *args) {
   char addr[MAX_CMD_LEN + 1] = { 0 };
@@ -76,13 +67,12 @@ static void prv_add_channel(char *args) {
     printf("\r%s\n", adc_add_help);
     return;
   } else if (!(adc_valid_addr(addr) && (pin_mode_enum != NUM_GPIO_MODES) &&
-               adc_valid_state(state_str))) {
+               adc_valid_pin_port(state_str))) {
     printf("Invalid pin mode\n\r");
     printf("\r%s\n", adc_add_help);
     return;
   }
 
-  // Might need to change port and pin
   GpioAddress address = { .port = addr[0] - 97, .pin = strtol(addr + 1, NULL, 10) };
 
   if (adc_add_channel(address) == STATUS_CODE_OK) {
@@ -123,7 +113,7 @@ static void prv_read_raw(char *args) {
     printf("\r%s\n", adc_read_raw_help);
     return;
   } else if (!(adc_valid_addr(addr) && (pin_mode_enum != NUM_GPIO_MODES) &&
-               adc_valid_state(state_str))) {
+               adc_valid_pin_port(state_str))) {
     printf("Invalid pin mode\n\r");
     printf("\r%s\n", adc_read_raw_help);
     return;
@@ -154,7 +144,7 @@ static void prv_read_converted(char *args) {
     printf("\r%s\n", adc_read_converted_help);
     return;
   } else if (!(adc_valid_addr(addr) && (pin_mode_enum != NUM_GPIO_MODES) &&
-               adc_valid_state(state_str))) {
+               adc_valid_pin_port(state_str))) {
     printf("Invalid pin mode\n\r");
     printf("\r%s\n", adc_read_converted_help);
     return;
@@ -188,13 +178,17 @@ bool adc_valid_addr(char *addr) {
 }
 
 //Replace with valid adc pin
-bool adc_valid_state(char *state) {
-  if (strcmp(state, "high") != 0 && strcmp(state, "low") != 0) {
-    printf("Invalid state - must be high or low\n\r");
-    return false;
-  } else {
+//Assuming we're using STM32F103C8T6 which has PA0-PA7, PB0, PB1 as ADC pins
+bool adc_valid_pin_port(char *state_str) {
+  char port = strtol(state_str[1], NULL, 10);
+  char pin = state_str[0] - 97;
+  if (port == 'A' && pin >= 0 && pin < 8) {
     return true;
   }
+  if (port == 'B' && pin >= 0 && pin < 2) {
+    return true;
+  }
+  return false;
 }
 
 int adc_valid_pin_mode(char *pin_mode) {
