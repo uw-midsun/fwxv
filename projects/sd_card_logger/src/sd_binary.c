@@ -85,6 +85,7 @@
 #define SD_CMD_SEND_CSD (9)
 #define SD_CMD_SEND_CID (10)
 #define SD_CMD_STOP_TRANSMISSION (12)
+#define SD_CMD_SEND_STATUS (13)
 #define SD_CMD_SET_BLOCKLEN (16)
 #define SD_CMD_READ_SINGLE_BLOCK (17)
 #define SD_CMD_READ_MULTIPLE_BLOCK (18)
@@ -408,110 +409,72 @@ StatusCode sd_read_blocks(SpiPort spi, uint8_t *dest, uint32_t read_addr, uint32
   return STATUS_CODE_OK;
 }
 
-static StatusCode prv_sd_write_block(SpiPort spi, uint8_t *src, uint32_t WriteAddr) {
-  SdResponse response;
-
-  // Note: CMD16 is useless since the default is 512, and higher-capacity cards ignore changing block size anyways
-
-  // Send CMD24 (SD_CMD_WRITE_SINGLE_BLOCK) to write blocks  and
-  // check if the SD acknowledged the write block command: R1 response (0x00: no
-  // errors)
-
-  prv_send_cmd(spi, &response, SD_CMD_WRITE_BLOCK, WriteAddr / SD_BLOCK_SIZE);
-  if (response.r1 != SD_R1_NO_ERRORS) {
-    prv_end_transaction(spi);
-    return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card error\n");
-  }
-
-  prv_write_dummy(spi, SD_DUMMY_COUNT_CONST);
-
-  // Send the data token to signify the start of the data
-  uint8_t dat = SD_TOKEN_START_DATA_SINGLE_BLOCK_WRITE;
-  spi_tx(spi, &dat, 1);
-
-  // Write the block data to SD
-  spi_tx(spi, src, SD_BLOCK_SIZE);
-
-  // Put CRC bytes (not really needed by us, but required by SD)
-  uint16_t crc = crc15_calculate(src, SD_BLOCK_SIZE);
-  spi_tx(spi, &crc, 2);
-
-  if (!status_ok(prv_sd_get_data_response(spi))) {
-    // Quit and return failed status
-    prv_end_transaction(spi);
-    return status_msg(STATUS_CODE_INTERNAL_ERROR, "SD card error\n");
-  }
-
-  prv_end_transaction(spi);
-  return STATUS_CODE_OK;
-}
-
 // potentially autocalculate number of blocks?
-StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t WriteAddr, uint32_t NumberOfBlocks) {
-  if (!NumberOfBlocks) {
-    return prv_sd_write_block(spi, src, WriteAddr);
+StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t write_addr, uint32_t NumberOfBlocks) {
+  if (NumberOfBlocks <= 0) {
+    return status_msg(STATUS_CODE_INVALID_ARGS, "Number of blocks cannot be 0");
   }
 
-  uint32_t offset = 0;
+  StatusCode last_status;
   SdResponse response;
+  uint8_t datawrite_response;
 
-  // Send CMD16 (SD_CMD_SET_BLOCKLEN) to set the size of the block and
-  // Check if the SD acknowledged the set block length command: R1 response
-  // (0x00: no errors)
-  prv_send_cmd(spi, &response, SD_CMD_SET_BLOCKLEN, SD_BLOCK_SIZE);
-  prv_end_transaction(spi);
-  if (response.r1 != SD_R1_NO_ERRORS) {
-    return status_code(STATUS_CODE_INTERNAL_ERROR);
-  }
+  // Set Blocklen is redundant since HC SD cards don't support changing block length anyways, and everyone uses 512
 
   // Data transfer
-  prv_send_cmd(spi, &response, SD_CMD_WRITE_MULTIPLE_BLOCK, WriteAddr / SD_BLOCK_SIZE);
+  last_status = prv_send_cmd(spi, &response, SD_CMD_WRITE_MULTIPLE_BLOCK, write_addr);
   if (response.r1 != SD_R1_NO_ERRORS) {
     prv_end_transaction(spi);
-    return status_code(STATUS_CODE_INTERNAL_ERROR);
+    return status_msg(STATUS_CODE_INTERNAL_ERROR, "An error occurred while initializing the card-writing process");
   }
 
-  prv_write_dummy(spi, SD_DUMMY_COUNT_CONST);
-
   while (NumberOfBlocks--) {
+    // Padding
+    prv_read_byte(spi, NULL);
+    
     // Send the data token to signify the start of the data
-    uint8_t dat = SD_TOKEN_START_DATA_MULTI_BLOCK_WRITE;
-    spi_tx(spi, &dat, 1);
+    prv_write_read_byte(spi, NULL, SD_TOKEN_START_DATA_MULTI_BLOCK_WRITE);
 
     // Write the block data to SD
-    spi_tx(spi, src + offset, SD_BLOCK_SIZE);
+    spi_tx(spi, src, SD_BLOCK_SIZE);
+    src += SD_BLOCK_SIZE;
 
-    // Set next write address
-    offset += SD_BLOCK_SIZE;
-
-    // Put CRC bytes (not really needed by us, but required by SD)
-    uint16_t crc = crc15_calculate(src + offset, SD_BLOCK_SIZE);
+    // Put CRC bytes (not really needed by us, but required by SD) (are they? we'll put them there anyways)
+    uint16_t crc = crc15_calculate(src, SD_BLOCK_SIZE);
     spi_tx(spi, &crc, 2);
 
-    if (!status_ok(prv_sd_get_data_response(spi))) {
+    last_status = prv_sd_get_next_data_token(spi, &datawrite_response);
+    if (!(((datawrite_response & SD_TOKEN_RESPONSE_MASK) == SD_TOKEN_RESPONSE_MASKED_VAL) && ((datawrite_response & SD_TOKEN_RESPONSE_DATA_MASK) == SD_TOKEN_RESPONSE_ACCEPT))) {
       // Quit and return failed status
+      prv_read_byte(spi, NULL);
+      prv_write_read_byte(spi, NULL, SD_TOKEN_STOP_DATA_MULTI_BLOCK_WRITE);
+      prv_read_byte(spi, NULL);
+      uint8_t busy_byte;
+      do {
+        prv_read_byte(spi, &busy_byte);
+      } while (!busy_byte);
       prv_end_transaction(spi);
-      return status_code(STATUS_CODE_INTERNAL_ERROR);
+      return status_msg(STATUS_CODE_INTERNAL_ERROR, "An error occurred while writing blocks to the SD Card.");
     }
   }
 
-  // Write the block data to SD
-  uint8_t end_transmission = SD_TOKEN_STOP_DATA_MULTI_BLOCK_WRITE;
-  spi_tx(spi, &end_transmission, 1);
-
-  prv_write_dummy(spi, SD_DUMMY_COUNT_CONST);
-
-  // Catch the last busy response
-  volatile uint8_t dataresponse;
-  uint16_t timeout = 0xFFFF;
-  while ((dataresponse = prv_read_byte(spi, NULL)) == 0x00 && timeout) {
-    timeout--;
-  }
-
+  prv_read_byte(spi, NULL); // Spacing
+  prv_write_read_byte(spi, NULL, SD_TOKEN_STOP_DATA_MULTI_BLOCK_WRITE);
+  prv_read_byte(spi, NULL); // Padding byte
+  uint8_t busy_byte;
+  do {
+    prv_read_byte(spi, &busy_byte);
+  } while (!busy_byte);
   prv_end_transaction(spi);
   return STATUS_CODE_OK;
 }
 
-StatusCode sd_is_initialized(SpiPort spi) {
-  return STATUS_CODE_UNIMPLEMENTED;
+bool sd_is_initialized(SpiPort spi) {
+  StatusCode last_status;
+  SdResponse resp;
+
+  last_status = prv_send_cmd(spi, &resp, SD_CMD_SEND_STATUS, 0);
+  if (last_status != STATUS_CODE_OK) return false;
+  if (resp.r1 != SD_R1_NO_ERRORS) return false;
+  return true;
 }
