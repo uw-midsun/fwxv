@@ -2,19 +2,18 @@
 
 #include "stm32f10x_iwdg.h"
 
-// This is the time that we want the clock to reset after
-#define RELOAD_TIME 3000
+void IWDG_SetValues(uint16_t prescaler_value) {
+  // Unlock register to write to
+  IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
 
-// This is a prescaler value that scales a 32 kHz clock (LSI)
-#define PRESCALER_VALUE IWDG_Prescaler_32
-
-// To get the reload value based on how the prescaler is defined
-#define RELOAD_VALUE (uint16_t)(RELOAD_TIME * (32000 / PRESCALER_VALUE))
-
-void IWDG_Start(void) {
-  IWDG_Enable();
+  // Set the prescaler value using the #define from above and write it into the IWDG_PR register
   IWDG_SetPrescaler(PRESCALER_VALUE);
+
+  // Set the reload value using #define from above and write it into IWDG_WLR register
   IWDG_SetReload(RELOAD_VALUE);
+
+  // Reload the IWDG with the value set previously in IWDG_SetReload
+  IWDG_ReloadCounter();
 }
 
 void IWDG_Reload(void) {
