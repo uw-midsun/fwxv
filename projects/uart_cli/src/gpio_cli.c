@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <cstdio>
+
 #include "gpio.h"
 #include "log.h"
 #include "string.h"

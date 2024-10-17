@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+#include <cstdio>
+
 #include "can.h"
 #include "can_board_ids.h"
 #include "gpio.h"

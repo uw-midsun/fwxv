@@ -1,3 +1,5 @@
+#include <cstdio>
+
 #include "status.h"
 #include "test_helpers.h"
 #include "unity.h"
