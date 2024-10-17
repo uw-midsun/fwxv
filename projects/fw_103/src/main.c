@@ -11,8 +11,37 @@
 
 #include <stdio.h>
 
+#include "delay.h"
 #include "log.h"
 #include "tasks.h"
+#include "gpio.h"
+#include "ads1115.h"
+
+GpioAddress led_addr = {
+  .port = GPIO_PORT_B,
+  .pin = 3,
+};
+
+GpioAddress ready_pin = {
+  .port = GPIO_PORT_B,
+  .pin = GPIO_Pin_0,
+};
+
+ADS1115_Config config = {
+  .handler_task = <your_task_name>,
+  .i2c_addr = ADS1115_ADDR_GND,
+  .i2c_port = ADS1115_I2C_PORT,
+  .ready_pin = &ready_pin,
+};
+
+
+TASK(blink, TASK_STACK_512) {
+  gpio_init_pin(&led_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+  while (true) {
+    gpio_toggle_state(&led_addr);
+    delay_s(1);
+  }
+};
 
 int main() {
   tasks_init();
@@ -20,6 +49,7 @@ int main() {
   gpio_init();
   LOG_DEBUG("Welcome to FW 103!\n");
 
+  tasks_init_task(blink, TASK_PRIORITY(1), NULL);
   tasks_start();
 
   LOG_DEBUG("exiting main?\n");
