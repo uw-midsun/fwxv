@@ -2,8 +2,6 @@
 
 #include <stdio.h>
 
-#include <cstdio>
-
 #include "ctype.h"
 #include "interrupt.h"
 #include "log.h"

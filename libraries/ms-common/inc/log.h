@@ -3,8 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <cstdio>
-
 #include "FreeRTOS.h"
 #include "semaphore.h"
 #include "task.h"

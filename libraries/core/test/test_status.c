@@ -1,8 +1,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-#include <cstdio>
-
 #include "misc.h"
 #include "status.h"
 #include "unity.h"

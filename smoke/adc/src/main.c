@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-#include <cstdio>
-
 #include "adc.h"
 #include "delay.h"
 #include "gpio.h"

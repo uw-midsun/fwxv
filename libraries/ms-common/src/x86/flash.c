@@ -5,8 +5,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <cstdio>
-
 #include "log.h"
 
 #define FLASH_DEFAULT_FILENAME "x86_flash"
