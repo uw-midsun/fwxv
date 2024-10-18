@@ -2,7 +2,7 @@
 
 #include "stm32f10x_iwdg.h"
 
-void IWDG_SetValues(IWDGPrescalerValue prescaler_value) {
+void IWDG_SetValues(IWDGPrescalerValue prescaler_value, uint16_t reload_period_ms) {
   // Unlock register to write to
   IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
 
@@ -10,7 +10,7 @@ void IWDG_SetValues(IWDGPrescalerValue prescaler_value) {
   IWDG_SetPrescaler((uint8_t)prescaler_value);
 
   // Set the reload value using #define from above and write it into IWDG_WLR register
-  IWDG_SetReload((40000 / (2 ^ (prescaler_value + 2))));
+  IWDG_SetReload(((reload_period_ms * 40000) / ((4 * (1 << prescaler_value)) * 1000)));
 
   // Reload the IWDG with the value set previously in IWDG_SetReload
   IWDG_ReloadCounter();
