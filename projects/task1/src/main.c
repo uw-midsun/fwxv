@@ -36,8 +36,8 @@ int main(void) {
         log_init();
         
         tasks_init(); 
-        tasks_init_task(task1, TASK_PRIORITY(3), NULL);
-        tasks_init_task(task2, TASK_PRIORITY(2), NULL); 
+        tasks_init_task(task1, TASK_PRIORITY(2), NULL);
+        tasks_init_task(task2, TASK_PRIORITY(3), NULL); 
 
         tasks_start(); 
 }
