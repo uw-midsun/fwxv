@@ -13,12 +13,33 @@
 
 #include "log.h"
 #include "tasks.h"
+#include "gpio.h"
+#include "delay.h"
+
+GpioAddress led_addr = {
+  .port = GPIO_PORT_B,
+  .pin = 3,
+};
+
+
+TASK(blink, TASK_STACK_512)
+{
+        LOG_DEBUG("blink Initialized!\n"); 
+
+         gpio_init_pin(&led_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+
+        while (true) {
+                gpio_toggle_state(&led_addr); 
+                delay_ms(1000);
+        }
+}
 
 int main() {
   tasks_init();
   log_init();
   gpio_init();
   LOG_DEBUG("Welcome to FW 103!\n");
+ tasks_init_task(blink, TASK_PRIORITY(2), NULL);
 
   tasks_start();
 
