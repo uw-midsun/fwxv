@@ -56,7 +56,7 @@ StatusCode ads1115_read_converted(ADS1115_Config *config, ADS1115_Channel channe
   uint16_t raw;
   ads1115_read_raw(config, channel, &raw); 
 
-  *reading = raw/65535 * 4.096 - 2.048;
+  *reading = ((float) raw)/65535 * 4.096 - 2.048;
 
   return STATUS_CODE_OK;
 }
