@@ -1,9 +1,15 @@
-#include "crc32.h"  // Include the header file for CRC32 function declarations
+/*
+CRC32 for calculating crc calculation on pc
+This crc32.c file in x86 does not use HAL Libraries and uses an algorithm to calculated crc checksum
+Can customize crc polynomial, which the HAL libraries cannot do
+The polynomial used here is the same polynomial used in the HAL libraries (0x04C11DB7)
+*/
 
-#include "log.h"  // Include the logging utility, possibly used for debugging or status messages
+#include "crc32.h" 
+#include "log.h" 
 #include "misc.h"
-#include "stm32f10x.h"  // Include the STM32F1 series specific header file for hardware definitions
-#include "stm32f10x_crc.h"  // Include the CRC library header
+#include "stm32f10x.h"  
+#include "stm32f10x_crc.h"  
 
 // Define the CRC32 polynomial and initial value
 #define CRC32_POLYNOMIAL \

@@ -1,9 +1,14 @@
-#include "crc32.h"  // Include the header file for CRC32 function declarations
+/*
+CRC32 for calculating crc calculation on the STM33F10x Board in ARM
+Another crc32.c file in x86 that does not use HAL Libraries and used an algorithm to calculated crc checksum
+*/
 
-#include "log.h"  // Include the logging utility, possibly used for debugging or status messages
+
+#include "crc32.h" 
+#include "log.h"  
 #include "misc.h"
-#include "stm32f10x.h"  // Include the STM32F1 series specific header file for hardware definitions
-#include "stm32f10x_crc.h"  // Include the CRC library header
+#include "stm32f10x.h"  
+#include "stm32f10x_crc.h" 
 
 // Initialization function for CRC
 StatusCode crc_init(void) {
@@ -16,7 +21,7 @@ StatusCode crc_init(void) {
   return STATUS_CODE_OK;  // Return OK status
 }
 
-// Function to calculate CRC32 for a given buffer, with an option to append to an existing CRC
+// Function to calculate CRC32 for a given buffer
 uint32_t crc_calculate(const uint32_t *buffer, size_t buffer_len) {
   CRC_ResetDR();  // Reset the CRC Data Register
 
@@ -26,4 +31,6 @@ uint32_t crc_calculate(const uint32_t *buffer, size_t buffer_len) {
   }
 
   return ~CRC_GetCRC();  // Return the inverted final CRC value
+  // Convention of CRC standards to return the inverted value
+  // Single bit errors are easier to detect 
 }
