@@ -10,6 +10,7 @@
 
 typedef enum{
   REG_BANK_SEL = 0x7F,
+  GYRO_REG_ADDR = 0x06
 }bmi323_registers;
 
 typedef struct {
@@ -17,7 +18,15 @@ typedef struct {
 }bmi323_settings;
 
 typedef struct {
+  int16_t x;
+  int16_t y;
+  int16_t z;
+} axes;
+
+typedef struct {
   bmi323_settings *settings;
+
+  axes gyro;
 } bmi323_storage;
 
 
@@ -25,3 +34,5 @@ static StatusCode set_register(uint16_t reg_addr, uint16_t value);
 static StatusCode set_multi_register(uint16_t reg_addr, uint16_t *value, uint16_t len);
 static StatusCode get_register(bmi323_registers reg, uint16_t *value);
 static StatusCode get_multi_register(bmi323_registers reg, uint16_t *reg_val[6], uint8_t len);
+
+static StatusCode get_gyroscope_data(axes *gyro);

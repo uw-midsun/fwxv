@@ -2,15 +2,6 @@
 static bmi323_storage *s_storage;
 
 
-static StatusCode prv_set_user_bank(uint8_t user_bank) {
-    uint8_t buf[2];
-    buf[0] = WRITE & REG_BANK_SEL;
-    buf[1] = user_bank;
-    StatusCode status = spi_exchange(s_storage->settings->spi_port, buf, sizeof(buf), NULL, 0);
-    return status;
-}
-
-
 //read operation requires 1 dummy byte before payload
 static StatusCode get_register(bmi323_registers reg, uint16_t *value){
     //register length of 2 bytes, 2nd one is dummy byte
@@ -53,4 +44,21 @@ static StatusCode set_multi_register(uint16_t reg_addr, uint16_t *value, uint16_
     StatusCode status_data = spi_exchange(s_storage->settings->spi_port, value, len, NULL, 0);
 
     return status_data;
+}
+
+static StatusCode get_gyroscope_data(axes *gyro) {
+    uint16_t temp[6];
+
+    StatusCode status = get_multi_register(GYRO_REG_ADDR, &temp, 6);
+
+    if (status == STATUS_CODE_OK) {
+        //(int16_t)((msb << 8) | lsb);
+        gyro->x = (int16_t)((temp[0] << 8) | temp[1]);
+        gyro->y = (int16_t)((temp[2] << 8) | temp[3]);
+        gyro->z = (int16_t)((temp[4] << 8) | temp[5]);
+
+        return STATUS_CODE_OK;
+    }
+
+    return status;
 }
