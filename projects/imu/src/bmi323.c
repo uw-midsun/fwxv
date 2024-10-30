@@ -8,7 +8,7 @@ static StatusCode get_register(bmi323_registers reg, uint16_t *value){
     //register length of 2 bytes, 2nd one is dummy byte
     uint8_t reg8[2];
     reg8[0] = READ | reg;
-    reg8[1] = 0x00;
+    reg8[1] = DUMMY_BYTE;
     // prv_set_user_bank(user_bank);
     StatusCode status = spi_exchange(s_storage->settings->spi_port, &reg8, sizeof(uint8_t) * 2, value, sizeof(uint16_t));
     return status;
@@ -89,11 +89,11 @@ static StatusCode get_accel_offset_gain(struct accel_gain_offset *accel_go){
         result = get_multi_register(ACC_DP_OFF_X, data, 12);
 
         if(result == STATUS_CODE_OK){
-            accel_off_x = (uint16_t)(data[0] << 8 | data[1]);
+            accel_off_x = (uint16_t)(data[1] << 8 | data[0]);
             accel_gain_x = (uint16_t)data[2];
-            accel_off_y = (uint16_t)(data[4] << 8 | data[5]);
+            accel_off_y = (uint16_t)(data[5] << 8 | data[4]);
             accel_gain_y = (uint16_t)data[6];
-            accel_off_z = (uint16_t)(data[8] << 8 | data[9]);
+            accel_off_z = (uint16_t)(data[9] << 8 | data[8]);
             accel_gain_z = (uint16_t)data[10];
 
             accel_go -> accel_offset_x = (accel_off_x & BMI3_ACC_DP_DOFFSET_X_MASK);
@@ -123,16 +123,15 @@ static StatusCode set_accel_offset_gain(struct accel_gain_offset *accel_go){
     accel_off_z = accel_go -> accel_offset_z & BMI3_ACC_DP_DOFFSET_Z_MASK;
     accel_gain_z = accel_go -> accel_gain_z & BMI3_ACC_DP_DGAIN_Z_MASK;
 
-    data[0] = (uint8_t)(accel_off_x & 0x00FF);
-    data[1] = (uint8_t)(accel_off_x & 0xFF00) >> 8;
+    data[0] = (uint8_t)(accel_off_x & BMI_SET_LOW_BYTE);
+    data[1] = (uint8_t)(accel_off_x & BMI_SET_HIGH_BYTE) >> 8;
     data[2] = (uint8_t)(accel_gain_x);
-    data[4] = (uint8_t)(accel_off_y & 0x00FF);
-    data[5] = (uint8_t)(accel_off_y & 0xFF00) >> 8;
+    data[4] = (uint8_t)(accel_off_y & BMI_SET_LOW_BYTE);
+    data[5] = (uint8_t)(accel_off_y & BMI_SET_HIGH_BYTE) >> 8;
     data[6] = (uint8_t)(accel_gain_y);
-    data[8] = (uint8_t)(accel_off_z & 0x00FF);
-    data[9] = (uint8_t)(accel_off_z & 0xFF00) >> 8;
+    data[8] = (uint8_t)(accel_off_z & BMI_SET_LOW_BYTE);
+    data[9] = (uint8_t)(accel_off_z & BMI_SET_HIGH_BYTE) >> 8;
     data[10] = (uint8_t)(accel_gain_z);
-
     result = set_multi_register(ACC_DP_OFF_X, data, 12);
 
     return result;

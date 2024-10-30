@@ -6,9 +6,9 @@
 
 #define READ 0x80
 #define WRITE 0x7F
-#define DUMMY_BYTE = 0x00
-#define BMI_SET_LOW_BYTE = UINT16_C(0x00FF)
-#define BMI_SET_HIGH_BYTE = UINT16_C(0xFF00)
+#define DUMMY_BYTE 0x00
+#define BMI_SET_LOW_BYTE 0x00FF
+#define BMI_SET_HIGH_BYTE 0xFF00
 
 
 /*
