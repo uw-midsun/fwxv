@@ -31,22 +31,20 @@ static StatusCode get_multi_register(bmi323_registers reg, uint16_t *reg_val[6],
     return status;
 }
 
-static StatusCode set_register(uint8_t user_bank, uint8_t reg_addr, uint8_t value) {
-    uint8_t tx_buff[2];
+static StatusCode set_register(uint16_t reg_addr, uint16_t value) {
+    uint16_t tx_buff[2];
 
     tx_buff[0] = WRITE & reg_addr;
     tx_buff[1] = value;
 
-    // prv_set_user_bank(user_bank);
     StatusCode status = spi_exchange(s_storage->settings->spi_port, tx_buff, sizeof(tx_buff), NULL, 0);
 
     return status;
 }
 
-static StatusCode set_multi_register(uint8_t user_bank, uint8_t reg_addr, uint8_t *value, uint8_t len) {
-    uint8_t reg_mask = WRITE & reg_addr;
+static StatusCode set_multi_register(uint16_t reg_addr, uint16_t *value, uint16_t len) {
+    uint16_t reg_mask = WRITE & reg_addr;
 
-    // prv_set_user_bank(user_bank);
     StatusCode status_addr = spi_exchange(s_storage->settings->spi_port, reg_mask, sizeof(reg_mask), NULL, 0);
     if (status_addr != STATUS_CODE_OK) {
         return status_addr;

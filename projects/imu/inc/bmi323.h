@@ -21,7 +21,7 @@ typedef struct {
 } bmi323_storage;
 
 
-static StatusCode set_register(uint8_t user_bank, uint8_t reg_addr, uint8_t value);
-static StatusCode set_multi_register(uint8_t user_bank, uint8_t reg_addr, uint8_t *value, uint8_t len);
-static StatusCode get_register(bmi323_registers reg, uint8_t *value);
+static StatusCode set_register(uint16_t reg_addr, uint16_t value);
+static StatusCode set_multi_register(uint16_t reg_addr, uint16_t *value, uint16_t len);
+static StatusCode get_register(bmi323_registers reg, uint16_t *value);
 static StatusCode get_multi_register(bmi323_registers reg, uint16_t *reg_val[6], uint8_t len);
