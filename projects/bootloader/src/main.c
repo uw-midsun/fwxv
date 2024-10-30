@@ -11,6 +11,7 @@
 #define BOOTLOADER_TIMEOUT_MS        15000
 
 volatile uint32_t bootloader_timer = 0;
+static uint8_t flash_buffer[BOOTLOADER_PAGE_BYTES];
 
 const Boot_CanSettings can_settings = {
   .device_id = SYSTEM_CAN_DEVICE_BOOTLOADER,

@@ -21,7 +21,9 @@ typedef enum {
   /// @brief Bootloader is prompted to jump to application defined by APP_START_ADDRESS
   BOOTLOADER_JUMP_APP,
   /// @brief Bootloader is in fault state
-  BOOTLOADER_FAULT
+  BOOTLOADER_FAULT,
+  /// @brief Bootloader is in ping state
+  BOOTLOADER_PING,
 } BootloaderStates;
 
 typedef struct {

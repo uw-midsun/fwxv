@@ -18,37 +18,26 @@ class Ping_Application:
     def ping_application(self, **kwargs):
         node_id = kwargs.get("node_id")
 
-        # Represents the ping_type, along with branch and project names
+        # Represents the ping_type, along with the data being sent
         ping_type = kwargs.get("ping_type")
-        branch = kwargs.get("branch")
-        project = kwargs.get("project")
+        data = kwargs.get("data")
 
+        # Set state to PING
         meta_datagram = Datagram(
-            datagram_type_id=METADATA,
+            datagram_type_id=PING_METADATA,
             node_ids=0,
-            data=string_to_bytearray(len(branch) if (len(branch)) else len(project))
+            data=string_to_bytearray(len(data))
         )
 
         print(f"Starting ping application process for boards {node_id}...")
 
-        byte_data = None
-        datagram_type = None
+        self._sender.send(meta_datagram)
 
-        if ping_type == "branch":
-            self._sender.send(meta_datagram)
-            byte_data = string_to_bytearray(branch)
-            datagram_type = BRANCH
-        elif ping_type == "project":
-            self._sender.send(meta_datagram)
-            byte_data = string_to_bytearray(project)
-            datagram_type = PROJECT
-        elif ping_type == "node_id":
-            datagram_type = NODE_ID
-
+        # Separate enum that each ECU will read and process accordingly
         datagram = Datagram(
-            datagram_type_id=datagram_type,
+            datagram_type_id=PING, #TO DO fix with proper enum classifying data type
             node_ids=node_id if ping_type == "node_id" else 0,
-            data=byte_data
+            data=string_to_bytearray(data)
         )
         self._sender.send(datagram)
         print(f"Ping application completed for boards {node_id}")

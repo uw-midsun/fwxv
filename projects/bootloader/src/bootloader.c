@@ -2,14 +2,15 @@
 #include "boot_crc32.h"
 
 // Store CAN traffic in 1024 byte buffer to write to flash
-static uint8_t flash_buffer[BOOTLOADER_PAGE_BYTES];
+static uint8_t *flash_buffer;
 
 static BootloaderDatagram_t datagram;
 static BootloaderStateData prv_bootloader = { .state = BOOTLOADER_UNINITIALIZED,
                                               .error = BOOTLOADER_ERROR_NONE,
                                               .first_byte_received = false };
 
-BootloaderError bootloader_init() {
+BootloaderError bootloader_init(uint8_t *buffer) {
+  flash_buffer = buffer;
   prv_bootloader.bytes_written = 0;
   prv_bootloader.binary_size = 0;
   prv_bootloader.application_start = APP_START_ADDRESS;
@@ -35,7 +36,7 @@ static BootloaderError bootloader_switch_states(const BootloaderStates new_state
   switch (current_state) {
     case BOOTLOADER_IDLE:
       if (new_state == BOOTLOADER_JUMP_APP || new_state == BOOTLOADER_START ||
-          new_state == BOOTLOADER_FAULT) {
+          new_state == BOOTLOADER_FAULT || new_state == BOOTLOADER_PING) {
         prv_bootloader.state = new_state;
       } else {
         return_err = BOOTLOADER_INVALID_ARGS;
@@ -86,6 +87,16 @@ static BootloaderError bootloader_switch_states(const BootloaderStates new_state
       }
       break;
 
+    case BOOTLOADER_PING:
+      if (new_state == BOOTLOADER_START || new_state == BOOTLOADER_JUMP_APP ||
+          new_state == BOOTLOADER_DATA_READY || new_state == BOOTLOADER_FAULT || new_state == BOOTLOADER_PING) {
+        prv_bootloader.state = new_state;
+      } else {
+        return_err = BOOTLOADER_INVALID_ARGS;
+        prv_bootloader.state = BOOTLOADER_FAULT;
+      }
+      break;
+      
     default:
       return_err = BOOTLOADER_INVALID_ARGS;
       prv_bootloader.state = BOOTLOADER_FAULT;
@@ -105,6 +116,8 @@ static BootloaderError bootloader_handle_arbitration_id(Boot_CanMessage *msg) {
       return bootloader_switch_states(BOOTLOADER_DATA_RECEIVE);
     case CAN_ARBITRATION_JUMP_ID:
       return bootloader_switch_states(BOOTLOADER_JUMP_APP);
+    case CAN_ARBITRATION_PING:
+      return bootloader_switch_states(BOOTLOADER_PING);
     default:
       return BOOTLOADER_INVALID_ARGS;
   }
@@ -222,6 +235,11 @@ static BootloaderError bootloader_fault() {
   return BOOTLOADER_INTERNAL_ERR;
 };
 
+static BootloaderError bootloader_ping() {
+  BootloaderError error = BOOTLOADER_ERROR_NONE;
+  //
+}
+
 static BootloaderError bootloader_run_state() {
   switch (prv_bootloader.state) {
     case BOOTLOADER_UNINITIALIZED:
@@ -241,6 +259,8 @@ static BootloaderError bootloader_run_state() {
       return bootloader_jump_app();
     case BOOTLOADER_FAULT:
       return bootloader_fault();
+    case BOOTLOADER_PING:
+       return bootloader_ping();
     default:
       return BOOTLOADER_INTERNAL_ERR;
   }

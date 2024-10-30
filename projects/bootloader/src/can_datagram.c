@@ -2,6 +2,47 @@
 
 uint8_t error_buffer[DGRAM_MAX_MSG_SIZE];
 
+// typedef struct {
+//   uint32_t id;
+//   uint8_t extended;
+//   size_t dlc;
+//   union {
+//     uint64_t data;
+//     uint32_t data_u32[2];
+//     uint16_t data_u16[4];
+//     uint8_t data_u8[8];
+//   };
+// } Boot_CanMessage;
+
+
+// typedef struct {
+//   uint8_t datagram_type_id;
+//   union {
+//     struct {
+//       uint16_t node_ids;
+//       uint32_t data_len;
+//     } start;
+//     struct {
+//       uint16_t sequence_num;
+//       uint32_t crc32;
+//     } sequencing;
+//     struct {
+//       uint8_t *binary_data;
+//     } data;
+//     struct {
+//       uint16_t node_ids;
+//     } jump_app;
+//     struct {
+//       uint8_t ack_status;
+//       uint16_t bootloader_error;
+//     } ack;
+//     struct {
+        
+
+//     } ping;
+//   } payload;
+// } BootloaderDatagram_t;
+
 BootloaderDatagram_t unpack_datagram(Boot_CanMessage *msg, uint16_t *target_nodes) {
   BootloaderDatagram_t ret_datagram;
   do {
@@ -27,6 +68,20 @@ BootloaderDatagram_t unpack_datagram(Boot_CanMessage *msg, uint16_t *target_node
       case CAN_ARBITRATION_JUMP_ID:
         ret_datagram.payload.jump_app.node_ids = msg->data_u16[0];
         *target_nodes = msg->data_u16[0];
+        break;
+      case CAN_ARBITRATION_PING:
+        ret_datagram.payload.ping.metadata = msg->data_u8;
+        break;
+      case CAN_PING_NODE_ID:
+        ret_datagram.payload.ping.node_id = msg->data_u8;
+        break;
+      case CAN_PING_BRANCH:
+        ret_datagram.payload.ping.branchproject = msg->data_u8;
+        ret_datagram.payload.ping.isBranch = 1;
+        break;
+      case CAN_PING_PROJECT:
+        ret_datagram.payload.ping.branchproject = msg->data_u8;
+        ret_datagram.payload.ping.isBranch = 0;
         break;
       default:
         break;
