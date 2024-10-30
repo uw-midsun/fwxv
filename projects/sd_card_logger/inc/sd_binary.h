@@ -28,8 +28,8 @@ StatusCode sd_card_init(SpiPort spi);
 StatusCode sd_read_blocks(SpiPort spi, uint8_t *dest, uint32_t readAddr, uint32_t numberOfBlocks);
 
 // Write blocks to the SD card from |src| to a location on the SD card specified
-// by |writeAddr|
+// by |writeAddr|. Blocks are 512 bytes in size, so src should have 512 * |numberOfBlocks| bytes.
 StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t writeAddr, uint32_t numberOfBlocks);
 
 // Determines whether the SD card is ready in on a given SPI port
-StatusCode sd_is_initialized(SpiPort spi);
+bool sd_is_initialized(SpiPort spi);
