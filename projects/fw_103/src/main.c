@@ -35,8 +35,9 @@ TASK(LEDS, TASK_STACK_512) {
     .i2c_port = ADS1115_I2C_PORT,
     .ready_pin = &ready_pin,
   };
+
   while (true) {
-    gpio_toggle_state(&LEDYELLOW);
+    
     delay_ms(1000);
   }
 }
