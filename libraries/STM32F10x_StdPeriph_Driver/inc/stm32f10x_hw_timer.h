@@ -18,4 +18,6 @@ typedef void (* HardwareTimerCallback) (TIM_TypeDef *TIMx);
 
 
 
-StatusCode hardware_timer_init_and_start(uint32_t duration_us, HardwareTimerCallback func, TIM_TypeDef *TIMX);
+StatusCode hardware_timer_init(uint32_t duration_us, TIM_TypeDef *TIMX);
+
+StatusCode hardware_timer_start(HardwareTimerCallback *func, TIM_TypeDef *TIMX);
