@@ -13,6 +13,6 @@ StatusCode hardware_timer_init_and_start(uint32_t duration_us, HardwareTimerCall
                 TIM_CLOCKDIVISION_DIV1, 
                 0};
 
-        
+        TIM_TimeBaseInit(TIM1, &config); 
 
 }
