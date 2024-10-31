@@ -7,7 +7,7 @@ StatusCode hardware_timer_init_and_start(uint32_t duration_us, HardwareTimerCall
     //RCC
 
         struct TIM_TimeBaseInitTypeDef config = {
-                prescaler, 
+                prescaler, // replace this using clock speed / 1000000
                 TIM_CounterMode_Up, 
                 duration_us - 1, 
                 TIM_CLOCKDIVISION_DIV1, 
