@@ -235,9 +235,40 @@ static BootloaderError bootloader_fault() {
   return BOOTLOADER_INTERNAL_ERR;
 };
 
+volatile uint32_t bootloader_timer = 0;
+#define BOOTLOADER_TIMEOUT_MS        15000
+
+static void ping_run(Boot_CanMessage *msg) {
+  //branch out into the three ID
+}
+
 static BootloaderError bootloader_ping() {
   BootloaderError error = BOOTLOADER_ERROR_NONE;
-  //
+  /* Start handling each req 
+  1 - Git
+  2 - Proj
+  3 - Node_ID
+  */
+
+  Boot_CanMessage msg = { 0 };
+
+  while (true) {
+    if(boot_can_receive(&msg) == BOOTLOADER_ERROR_NONE){
+      bootloader_timer = 0;
+      //bootloader_run(&msg);
+      ping_run(&msg);
+    }
+
+    if (bootloader_timer > BOOTLOADER_TIMEOUT_MS) {
+        bootloader_timer = 0;
+        if (boot_verify_flash_memory() == BOOTLOADER_ERROR_NONE) {
+          send_ack_datagram(NACK, BOOTLOADER_TIMEOUT);
+          bootloader_jump_app();
+        }
+        send_ack_datagram(NACK, BOOTLOADER_FLASH_MEMORY_VERIFY_FAILED);
+    }
+    
+  }
 }
 
 static BootloaderError bootloader_run_state() {

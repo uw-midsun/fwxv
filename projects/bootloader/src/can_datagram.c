@@ -70,19 +70,11 @@ BootloaderDatagram_t unpack_datagram(Boot_CanMessage *msg, uint16_t *target_node
         *target_nodes = msg->data_u16[0];
         break;
       case CAN_ARBITRATION_PING:
-        ret_datagram.payload.ping.metadata = msg->data_u8;
+      
+        ret_datagram.payload.jump_app.node_ids = msg->data_u16[0];
+        ret_datagram.payload.
         break;
-      case CAN_PING_NODE_ID:
-        ret_datagram.payload.ping.node_id = msg->data_u8;
-        break;
-      case CAN_PING_BRANCH:
-        ret_datagram.payload.ping.branchproject = msg->data_u8;
-        ret_datagram.payload.ping.isBranch = 1;
-        break;
-      case CAN_PING_PROJECT:
-        ret_datagram.payload.ping.branchproject = msg->data_u8;
-        ret_datagram.payload.ping.isBranch = 0;
-        break;
+    
       default:
         break;
     }
