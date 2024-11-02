@@ -14,7 +14,6 @@ uint8_t error_buffer[DGRAM_MAX_MSG_SIZE];
 //   };
 // } Boot_CanMessage;
 
-
 // typedef struct {
 //   uint8_t datagram_type_id;
 //   union {
@@ -37,7 +36,6 @@ uint8_t error_buffer[DGRAM_MAX_MSG_SIZE];
 //       uint16_t bootloader_error;
 //     } ack;
 //     struct {
-        
 
 //     } ping;
 //   } payload;
@@ -71,11 +69,13 @@ BootloaderDatagram_t unpack_datagram(Boot_CanMessage *msg, uint16_t *target_node
         break;
       case CAN_ARBITRATION_PING:
         ret_datagram.payload.ping.node_ids = msg->data_u16[0];
-      *target_nodes = msg->data_u16[0];
-      ret_datagram.payload.ping.req = msg->data_u8[1];
-      ret_datagram.payload.ping.data_len = ((uint32_t)msg->data_u16[2] << 16) | (uint32_t)msg->data_u16[1]; // Combine the two 16 bit values into a 32 bit value
-      break;
-    
+        *target_nodes = msg->data_u16[0];
+        ret_datagram.payload.ping.req = msg->data_u8[1];
+        ret_datagram.payload.ping.data_len =
+            ((uint32_t)msg->data_u16[2] << 16) |
+            (uint32_t)msg->data_u16[1];  // Combine the two 16 bit values into a 32 bit value
+        break;
+
       default:
         break;
     }
