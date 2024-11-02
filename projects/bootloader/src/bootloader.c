@@ -1,4 +1,5 @@
 #include "bootloader.h"
+
 #include "boot_crc32.h"
 
 // Store CAN traffic in 1024 byte buffer to write to flash
@@ -20,13 +21,14 @@ BootloaderError bootloader_init(uint8_t *buffer) {
   prv_bootloader.state = BOOTLOADER_IDLE;
   prv_bootloader.target_nodes = 0;
   prv_bootloader.buffer_index = 0;
+  prv_bootloader.ping_req = 0;
 
   boot_crc_init();
 
   return BOOTLOADER_ERROR_NONE;
 }
 
-static BootloaderError bootloader_switch_states(const BootloaderStates new_state) {
+static BootloaderError wbootloader_switch_states(const BootloaderStates new_state) {
   BootloaderError return_err = BOOTLOADER_ERROR_NONE;
   BootloaderStates current_state = prv_bootloader.state;
   if (current_state == new_state) {
@@ -89,14 +91,15 @@ static BootloaderError bootloader_switch_states(const BootloaderStates new_state
 
     case BOOTLOADER_PING:
       if (new_state == BOOTLOADER_START || new_state == BOOTLOADER_JUMP_APP ||
-          new_state == BOOTLOADER_DATA_READY || new_state == BOOTLOADER_FAULT || new_state == BOOTLOADER_PING) {
+          new_state == BOOTLOADER_DATA_READY || new_state == BOOTLOADER_FAULT ||
+          new_state == BOOTLOADER_PING) {
         prv_bootloader.state = new_state;
       } else {
         return_err = BOOTLOADER_INVALID_ARGS;
         prv_bootloader.state = BOOTLOADER_FAULT;
       }
       break;
-      
+
     default:
       return_err = BOOTLOADER_INVALID_ARGS;
       prv_bootloader.state = BOOTLOADER_FAULT;
@@ -117,9 +120,11 @@ static BootloaderError bootloader_handle_arbitration_id(Boot_CanMessage *msg) {
     case CAN_ARBITRATION_JUMP_ID:
       return bootloader_switch_states(BOOTLOADER_JUMP_APP);
     case CAN_ARBITRATION_PING:
-      return bootloader_switch_states(BOOTLOADER_PING);
-    default:
-      return BOOTLOADER_INVALID_ARGS;
+      return bootloader_switch_states(BOOTLOADER_PING_READY);
+    case CAN_ARBITRATION_PING_RECEIVE:
+      return bootloader_switch_states(BOOTLOADER_PING_RECEIVE)
+
+          default : return BOOTLOADER_INVALID_ARGS;
   }
 }
 
@@ -183,22 +188,25 @@ static BootloaderError bootloader_data_receive() {
   if (BOOTLOADER_PAGE_BYTES - prv_bootloader.buffer_index < 8) {
     bytes_to_copy = BOOTLOADER_PAGE_BYTES - prv_bootloader.buffer_index;
   }
-  if (prv_bootloader.binary_size - (prv_bootloader.buffer_index + prv_bootloader.bytes_written) < 8) {
-    bytes_to_copy = prv_bootloader.binary_size - (prv_bootloader.buffer_index + prv_bootloader.bytes_written);
+  if (prv_bootloader.binary_size - (prv_bootloader.buffer_index + prv_bootloader.bytes_written) <
+      8) {
+    bytes_to_copy =
+        prv_bootloader.binary_size - (prv_bootloader.buffer_index + prv_bootloader.bytes_written);
   }
 
-  memcpy(flash_buffer + prv_bootloader.buffer_index, datagram.payload.data.binary_data, bytes_to_copy);
+  memcpy(flash_buffer + prv_bootloader.buffer_index, datagram.payload.data.binary_data,
+         bytes_to_copy);
   prv_bootloader.buffer_index += bytes_to_copy;
 
   if (prv_bootloader.buffer_index == BOOTLOADER_PAGE_BYTES ||
-      (prv_bootloader.bytes_written + prv_bootloader.buffer_index)  >= prv_bootloader.binary_size) {
-
-    uint32_t calculated_crc32 = boot_crc_calculate((const uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
+      (prv_bootloader.bytes_written + prv_bootloader.buffer_index) >= prv_bootloader.binary_size) {
+    uint32_t calculated_crc32 = boot_crc_calculate((const uint32_t *)flash_buffer,
+                                                   BYTES_TO_WORD(prv_bootloader.buffer_index));
     if (calculated_crc32 != prv_bootloader.packet_crc32) {
       send_ack_datagram(NACK, BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE);
       return BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE;
     }
-    
+
     error |= boot_flash_erase(BOOTLOADER_ADDR_TO_PAGE(prv_bootloader.current_address));
     error |= boot_flash_write(prv_bootloader.current_address, flash_buffer, BOOTLOADER_PAGE_BYTES);
     error |= boot_flash_read(prv_bootloader.current_address, flash_buffer, BOOTLOADER_PAGE_BYTES);
@@ -208,7 +216,8 @@ static BootloaderError bootloader_data_receive() {
       return error;
     }
 
-    calculated_crc32 = boot_crc_calculate((uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
+    calculated_crc32 =
+        boot_crc_calculate((uint32_t *)flash_buffer, BYTES_TO_WORD(prv_bootloader.buffer_index));
     if (calculated_crc32 != prv_bootloader.packet_crc32) {
       send_ack_datagram(NACK, BOOTLOADER_CRC_MISMATCH_AFTER_WRITE);
       return BOOTLOADER_CRC_MISMATCH_AFTER_WRITE;
@@ -235,39 +244,28 @@ static BootloaderError bootloader_fault() {
   return BOOTLOADER_INTERNAL_ERR;
 };
 
-volatile uint32_t bootloader_timer = 0;
-#define BOOTLOADER_TIMEOUT_MS        15000
-
-static void ping_run(Boot_CanMessage *msg) {
-  //branch out into the three ID
-}
-
 static BootloaderError bootloader_ping() {
   BootloaderError error = BOOTLOADER_ERROR_NONE;
-  /* Start handling each req 
-  1 - Git
-  2 - Proj
-  3 - Node_ID
+  /* Start handling each req
+  1 - Node_ID
+  2 - Branch
+  3 - Project
   */
 
-  Boot_CanMessage msg = { 0 };
-
-  while (true) {
-    if(boot_can_receive(&msg) == BOOTLOADER_ERROR_NONE){
-      bootloader_timer = 0;
-      //bootloader_run(&msg);
-      ping_run(&msg);
+  if (prv_bootloader.ping_req == 0) {
+    switch (datagram.payload.ping.req) {
+      case BOOTLOADER_PING_NODES:
+        break;
+      case BOOTLOADER_PING_BRANCH:
+        break;
+      case BOOTLOADER_PING_PROJECT:
+        break;
+      default:
+        return BOOTLOADER_INTERNAL_ERR;
     }
-
-    if (bootloader_timer > BOOTLOADER_TIMEOUT_MS) {
-        bootloader_timer = 0;
-        if (boot_verify_flash_memory() == BOOTLOADER_ERROR_NONE) {
-          send_ack_datagram(NACK, BOOTLOADER_TIMEOUT);
-          bootloader_jump_app();
-        }
-        send_ack_datagram(NACK, BOOTLOADER_FLASH_MEMORY_VERIFY_FAILED);
-    }
-    
+    ++prv_bootloader.ping_req;  // Received the first datagram, rest will be data.
+  } else {
+    // Start handling the rest of the datagrams
   }
 }
 
@@ -291,7 +289,7 @@ static BootloaderError bootloader_run_state() {
     case BOOTLOADER_FAULT:
       return bootloader_fault();
     case BOOTLOADER_PING:
-       return bootloader_ping();
+      return bootloader_ping();
     default:
       return BOOTLOADER_INTERNAL_ERR;
   }

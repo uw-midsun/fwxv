@@ -60,5 +60,7 @@ typedef enum {
   /// @brief Bootloader time out
   BOOTLOADER_TIMEOUT,
   /// @brief Bootloader flash memory verification failed. Everything is still erased
-  BOOTLOADER_FLASH_MEMORY_VERIFY_FAILED
+  BOOTLOADER_FLASH_MEMORY_VERIFY_FAILED,
+  /// @brief Bootloader ping timeout
+  BOOTLOADER_PING_TIMEOUT
 } BootloaderError;

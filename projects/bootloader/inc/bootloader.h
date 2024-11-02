@@ -22,9 +22,20 @@ typedef enum {
   BOOTLOADER_JUMP_APP,
   /// @brief Bootloader is in fault state
   BOOTLOADER_FAULT,
-  /// @brief Bootloader is in ping state
-  BOOTLOADER_PING,
+  /// @brief Bootloader is ready to start receiving data
+  BOOTLOADER_PING_READY,
+  /// @brief Bootloader is receiving data
+  BOOTLOADER_PING_RECEIVE,
 } BootloaderStates;
+
+typedef enum {
+  /// @brief Bootloader should start pinging MCU's
+  BOOTLOADER_PING_NODES = 0,
+  /// @brief Bootloader ping should do branch stuff
+  BOOTLOADER_PING_BRANCH,
+  /// @brief Bootloader ping should do group stuff
+  BOOTLOADER_PING_PROJECT,
+} BooloaderPingStates;
 
 typedef struct {
   uintptr_t application_start;
@@ -34,6 +45,7 @@ typedef struct {
   uint32_t packet_crc32;
   uint16_t expected_sequence_number;
   uint16_t buffer_index;
+  uint16_t ping_req;
 
   BootloaderStates state;
   BootloaderError error;
