@@ -208,3 +208,158 @@ static StatusCode set_accel_offset_gain(struct accel_gain_offset *accel_go){
 
     return result;
 }
+
+/*
+
+EXT.GYR_SC_SELECT.sens_en
+EXT.GYR_SC_SELECT.offs_en
+if both are being calibrated, sens is first
+
+write 0b0 to change default configuration
+
+by default, results of the self-calibration are written to data path registers:
+    GYR_DP_DGAIN_X
+    GYR_DP_DGAIN_Y
+    GYR_DP_DGAIN_Z
+    GYR_DP_OFF_X
+    GYR_DP_OFF_Y
+    GYR_DP_OFF_Z
+
+    by setting EXT.GYR_SC_SELECT.apply_corr to 0b0, the update of the data path registers can be suppressed
+    sensitivity of motion detection can be configured through EXT.GYR_MOT_DET.slope
+
+    prerequisites for self calibration:
+        if FEATURE_IO1.state is 0b00, self calibration can be initiated
+        accelerometer must be in high performace mode
+        sample rate of accelerometer is preffered to be in the range of 25Hz to 200Hz
+        alternative sensor configurations must be disabled by:
+            ALT_ACC_CONF.alt_acc_mode
+            ALT_GYR_CONF.alt_gyr_mode
+        to 0b0
+
+    to execute self calibration:
+        write 0x0101 to the register CMD
+        state of self calibration can be determined by checking
+            FEATURE_IO1.sc_st_complete
+                0b0 -> ongoing
+                0b1 -> completed
+                    or
+            FEATURE_IO1.state
+                0b01 -> ongoing
+            FEATURE_IO1.error_status
+                0x5 -> completed
+        Success of the sef calibration
+            FEATURE_IO1.gyro_sc_result
+                0b1 -> success
+                0b0 -> failure
+*/
+
+static StatusCode gyro_crt_calibration(){
+    StatusCode enable_status = enable_feature_engine();
+
+    if(enable_status == STATUS_CODE_OK){
+        
+        //poll int status register value
+        uint16_t int_status_int1;
+        get_register(INT_STATUS_INT1, int_status_int1);
+        uint16_t int_status_int2;
+        get_register(INT_STATUS_INT2, int_status_int2);
+
+        int_status_int1 &= (1<<10);
+        int_status_int2 &= (1<<10);
+
+        while(int_status_int1 != 1 && int_status_int2 != 1){
+            get_register(INT_STATUS_INT1, int_status_int1);
+            get_register(INT_STATUS_INT2, int_status_int2);
+
+            int_status_int1 &= (1<<10);
+            int_status_int2 &= (1<<10);            
+        }
+
+        //read FEATURE_IO1 and check error status
+        uint16_t feat_state;
+        get_register(FEATURE_IO1, feat_state);
+
+        //error status
+        feat_state &= 1111;
+
+        while(feat_state != 0x5){
+            get_register(FEATURE_IO1, feat_state);
+            feat_state &= 1111;
+        }
+
+        //run the calibration
+        set_register(CMD, 0x0101);
+        
+
+        //wait until self calibration is complete
+        get_register(FEATURE_IO1, feat_state);
+        feat_state &= (1<<6);
+
+        while(feat_state != 0b1){
+            get_register(FEATURE_IO1, feat_state);
+            feat_state &= (1<<6);
+        }
+
+        //poll int status register value
+        get_register(INT_STATUS_INT1, int_status_int1);
+        get_register(INT_STATUS_INT2, int_status_int2);
+        int_status_int1 &= (1<<10);
+        int_status_int2 &= (1<<10);
+
+        while(int_status_int1 != 1 && int_status_int2 != 1){
+            get_register(INT_STATUS_INT1, int_status_int1);
+            get_register(INT_STATUS_INT2, int_status_int2);
+            int_status_int1 &= (1<<10);
+            int_status_int2 &= (1<<10);
+        }
+
+        //read FEATURE_IO1 and check sc_st_complete and gyro_sc_result
+        get_register(FEATURE_IO1, feat_state);
+
+        feat_state &= (1<<4);
+
+        while(feat_state != 1){
+            get_register(FEATURE_IO1, feat_state);
+            feat_state &= (1<<4);
+        }
+
+        get_register(FEATURE_IO1, feat_state);
+        feat_state &= (1<<5);
+
+        while(feat_state != 1){
+            get_register(FEATURE_IO1, feat_state);
+            feat_state &= (1<<5);
+        }
+
+        //also check error status if necessary
+
+    }
+
+}
+
+static StatusCode enable_feature_engine(){
+    set_register(FEATURE_IO2, 0x012C);
+    set_register(FEATURE_IO_STATUS, 0x0001);
+
+    uint16_t feature_ctrl;
+
+    get_register(FEATURE_CTRL, feature_ctrl);
+
+    //set FEATURE_CTRL.engine_en to 0b1
+    feature_ctrl &= 1;
+
+    set_register(FEATURE_CTRL, feature_ctrl);
+
+    uint16_t feat_state;
+
+    get_register(FEATURE_IO1, feat_state);
+
+    uint16_t state = feat_state & (0b1111);
+
+    while(state != 0b001){
+        //add a timeout here
+    }
+
+    return STATUS_CODE_OK;//should only return if we didnt timeout
+}

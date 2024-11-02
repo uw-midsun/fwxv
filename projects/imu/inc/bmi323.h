@@ -4,12 +4,25 @@
 #include "spi.h"
 
 
-#define READ 0x80
+#define CMD 0x7E
 #define WRITE 0x7F
+#define READ 0x80
+#define FEATURE_IO0 0x10
+#define FEATURE_IO1 0x11
+#define FEATURE_IO2 0x12
+#define FEATURE_IO3 0x13
+#define FEATURE_IO_STATUS 0x14
+#define FEATURE_CTRL 0x40
+#define INT_STATUS_INT1 0x0D
+#define INT_STATUS_INT2 0x0E
+
+
+
 #define DUMMY_BYTE 0x00
 #define BMI_SET_LOW_BYTE 0x00FF
 #define BMI_SET_HIGH_BYTE 0xFF00
 #define BMI3_E_NULL_PTR INT8_C(-1)
+
 
 
 /*
