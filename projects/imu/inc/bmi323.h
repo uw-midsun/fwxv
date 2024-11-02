@@ -9,6 +9,7 @@
 #define DUMMY_BYTE 0x00
 #define BMI_SET_LOW_BYTE 0x00FF
 #define BMI_SET_HIGH_BYTE 0xFF00
+#define BMI3_E_NULL_PTR INT8_C(-1)
 
 
 /*
@@ -23,6 +24,13 @@ this might be 13 or 14 idk
 #define BMI3_ACC_DP_DGAIN_X_MASK UINT16_C(0x00FF)
 #define BMI3_ACC_DP_DGAIN_Y_MASK UINT16_C(0x00FF)
 #define BMI3_ACC_DP_DGAIN_Z_MASK UINT16_C(0x00FF)
+
+#define BMI3_GYR_DP_OFF_X_MASK UINT16_C(0x03FF)
+#define BMI3_GYR_DP_DGAIN_X_MASK UINT16_C(0x007F)
+#define BMI3_GYR_DP_OFF_Y_MASK UINT16_C(0x03FF)
+#define BMI3_GYR_DP_DGAIN_Y_MASK UINT16_C(0x007F)
+#define BMI3_GYR_DP_OFF_Z_MASK UINT16_C(0x03FF)
+#define BMI3_GYR_DP_DGAIN_Z_MASK UINT16_C(0x007F)
 
 typedef enum{
   REG_BANK_SEL = 0x7F,
@@ -52,9 +60,18 @@ struct accel_gain_offset{
   uint16_t accel_offset_x;
   uint16_t accel_offset_y;
   uint16_t accel_offset_z;
-  uint16_t accel_gain_x;
-  uint16_t accel_gain_y;
-  uint16_t accel_gain_z;
+  uint8_t accel_gain_x;
+  uint8_t accel_gain_y;
+  uint8_t accel_gain_z;
+};
+
+struct gyro_gain_offset{
+  uint16_t gyro_offset_x;
+  uint16_t gyro_offset_y;
+  uint16_t gyro_offset_z;
+  uint8_t gyro_gain_x;
+  uint8_t gyro_gain_y;
+  uint8_t gyro_gain_z;
 };
 
 typedef struct {

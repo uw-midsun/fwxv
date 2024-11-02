@@ -78,6 +78,73 @@ static StatusCode get_accel_data(axes *accel){
     return status;
 }
 
+static StatusCode get_gyro_offset_gain(struct gyro_gain_offset *gyro_go){
+    StatusCode result;
+    uint8_t data[12] = {0};
+
+    uint16_t gyro_off_x, gyro_off_y, gyro_off_z;
+    uint8_t gyro_gain_x, gyro_gain_y, gyro_gain_z;
+
+    if(gyro_go != NULL){
+        result = get_multi_register(GYR_DP_OFF_X, data, 12);
+
+        if(result == STATUS_CODE_OK){
+            gyro_off_x = (uint16_t)(data[1] << 8 | data[0]);
+            gyro_gain_x = (uint8_t)(data[2]);
+            gyro_off_y = (uint16_t)(data[5] << 8 | data[4]);
+            gyro_gain_y = (uint8_t)(data[6]);
+            gyro_off_z = (uint16_t)(data[9] << 8 | data[8]);
+            gyro_gain_z = (uint8_t)(data[10]);
+
+            gyro_go -> gyro_offset_x = gyro_off_x & BMI3_GYR_DP_OFF_X_MASK;
+            gyro_go -> gyro_gain_x = gyro_gain_x & BMI3_GYR_DP_DGAIN_X_MASK;
+            gyro_go -> gyro_offset_y = gyro_off_y & BMI3_GYR_DP_OFF_Y_MASK;
+            gyro_go -> gyro_gain_y = gyro_gain_y & BMI3_GYR_DP_DGAIN_Y_MASK;
+            gyro_go -> gyro_offset_z = gyro_off_z & BMI3_GYR_DP_OFF_Z_MASK;
+            gyro_go -> gyro_gain_z = gyro_gain_z & BMI3_GYR_DP_DGAIN_Z_MASK;
+            
+        }
+
+    }else{
+        result = BMI3_E_NULL_PTR;
+    }
+
+    return result;
+}
+
+static StatusCode set_gyro_offset_gain(struct gyro_gain_offset *gyro_go){
+    StatusCode result;
+    uint8_t data[12] = {0};
+
+    uint16_t gyro_off_x, gyro_off_y, gyro_off_z;
+    uint8_t gyro_gain_x, gyro_gain_y, gyro_gain_z;
+
+    if(gyro_go != NULL){
+        gyro_off_x = gyro_go -> gyro_offset_x & BMI3_GYR_DP_OFF_X_MASK;
+        gyro_gain_x = gyro_go -> gyro_gain_x & BMI3_GYR_DP_DGAIN_X_MASK;
+        gyro_off_y = gyro_go -> gyro_offset_y & BMI3_GYR_DP_OFF_Y_MASK;
+        gyro_gain_y = gyro_go -> gyro_gain_y & BMI3_GYR_DP_DGAIN_Y_MASK;
+        gyro_off_z = gyro_go -> gyro_offset_z & BMI3_GYR_DP_OFF_Z_MASK;
+        gyro_gain_z = gyro_go -> gyro_gain_z & BMI3_GYR_DP_DGAIN_Z_MASK;
+
+        data[0] = (uint8_t)(gyro_off_x & BMI_SET_LOW_BYTE);
+        data[1] = (uint8_t)(gyro_off_x & BMI_SET_HIGH_BYTE) >> 8;
+        data[2] = (uint8_t)(gyro_gain_x);
+        data[4] = (uint8_t)(gyro_off_y & BMI_SET_LOW_BYTE);
+        data[5] = (uint8_t)(gyro_off_y & BMI_SET_HIGH_BYTE) >> 8;
+        data[6] = (uint8_t)(gyro_gain_y);
+        data[8] = (uint8_t)(gyro_off_z & BMI_SET_LOW_BYTE);
+        data[9] = (uint8_t)(gyro_off_z & BMI_SET_HIGH_BYTE) >> 8;
+        data[10] = (uint8_t)(gyro_gain_z);
+
+        result = set_multi_register(GYR_DP_OFF_X, data, 12);
+    }else{
+        result = BMI3_E_NULL_PTR;
+    }
+
+    return result;
+}
+
 static StatusCode get_accel_offset_gain(struct accel_gain_offset *accel_go){
     StatusCode result;
     uint8_t data[12] = {0};
@@ -90,11 +157,11 @@ static StatusCode get_accel_offset_gain(struct accel_gain_offset *accel_go){
 
         if(result == STATUS_CODE_OK){
             accel_off_x = (uint16_t)(data[1] << 8 | data[0]);
-            accel_gain_x = (uint16_t)data[2];
+            accel_gain_x = (uint8_t)data[2];
             accel_off_y = (uint16_t)(data[5] << 8 | data[4]);
-            accel_gain_y = (uint16_t)data[6];
+            accel_gain_y = (uint8_t)data[6];
             accel_off_z = (uint16_t)(data[9] << 8 | data[8]);
-            accel_gain_z = (uint16_t)data[10];
+            accel_gain_z = (uint8_t)data[10];
 
             accel_go -> accel_offset_x = (accel_off_x & BMI3_ACC_DP_DOFFSET_X_MASK);
             accel_go -> accel_gain_x = (accel_gain_x & BMI3_ACC_DP_DGAIN_X_MASK);
@@ -103,6 +170,8 @@ static StatusCode get_accel_offset_gain(struct accel_gain_offset *accel_go){
             accel_go -> accel_offset_z = (accel_off_z & BMI3_ACC_DP_DOFFSET_Z_MASK);
             accel_go -> accel_gain_z = (accel_gain_z & BMI3_ACC_DP_DGAIN_Z_MASK);
         }
+    }else{
+        result = BMI3_E_NULL_PTR;
     }
 
     return result;
@@ -115,24 +184,27 @@ static StatusCode set_accel_offset_gain(struct accel_gain_offset *accel_go){
     
     uint16_t accel_off_x, accel_off_y, accel_off_z;
     uint8_t accel_gain_x, accel_gain_y, accel_gain_z;
+    if(accel_go != NULL){
+        accel_off_x = accel_go -> accel_offset_x & BMI3_ACC_DP_DOFFSET_X_MASK;
+        accel_gain_x = accel_go -> accel_gain_x & BMI3_ACC_DP_DGAIN_X_MASK;
+        accel_off_y = accel_go -> accel_offset_y & BMI3_ACC_DP_DOFFSET_Y_MASK;
+        accel_gain_y = accel_go -> accel_gain_y & BMI3_ACC_DP_DGAIN_Y_MASK;
+        accel_off_z = accel_go -> accel_offset_z & BMI3_ACC_DP_DOFFSET_Z_MASK;
+        accel_gain_z = accel_go -> accel_gain_z & BMI3_ACC_DP_DGAIN_Z_MASK;
 
-    accel_off_x = accel_go -> accel_offset_x & BMI3_ACC_DP_DOFFSET_X_MASK;
-    accel_gain_x = accel_go -> accel_gain_x & BMI3_ACC_DP_DGAIN_X_MASK;
-    accel_off_y = accel_go -> accel_offset_y & BMI3_ACC_DP_DOFFSET_Y_MASK;
-    accel_gain_y = accel_go -> accel_gain_y & BMI3_ACC_DP_DGAIN_Y_MASK;
-    accel_off_z = accel_go -> accel_offset_z & BMI3_ACC_DP_DOFFSET_Z_MASK;
-    accel_gain_z = accel_go -> accel_gain_z & BMI3_ACC_DP_DGAIN_Z_MASK;
-
-    data[0] = (uint8_t)(accel_off_x & BMI_SET_LOW_BYTE);
-    data[1] = (uint8_t)(accel_off_x & BMI_SET_HIGH_BYTE) >> 8;
-    data[2] = (uint8_t)(accel_gain_x);
-    data[4] = (uint8_t)(accel_off_y & BMI_SET_LOW_BYTE);
-    data[5] = (uint8_t)(accel_off_y & BMI_SET_HIGH_BYTE) >> 8;
-    data[6] = (uint8_t)(accel_gain_y);
-    data[8] = (uint8_t)(accel_off_z & BMI_SET_LOW_BYTE);
-    data[9] = (uint8_t)(accel_off_z & BMI_SET_HIGH_BYTE) >> 8;
-    data[10] = (uint8_t)(accel_gain_z);
-    result = set_multi_register(ACC_DP_OFF_X, data, 12);
+        data[0] = (uint8_t)(accel_off_x & BMI_SET_LOW_BYTE);
+        data[1] = (uint8_t)(accel_off_x & BMI_SET_HIGH_BYTE) >> 8;
+        data[2] = (uint8_t)(accel_gain_x);
+        data[4] = (uint8_t)(accel_off_y & BMI_SET_LOW_BYTE);
+        data[5] = (uint8_t)(accel_off_y & BMI_SET_HIGH_BYTE) >> 8;
+        data[6] = (uint8_t)(accel_gain_y);
+        data[8] = (uint8_t)(accel_off_z & BMI_SET_LOW_BYTE);
+        data[9] = (uint8_t)(accel_off_z & BMI_SET_HIGH_BYTE) >> 8;
+        data[10] = (uint8_t)(accel_gain_z);
+        result = set_multi_register(ACC_DP_OFF_X, data, 12);
+    }else{
+        result = BMI3_E_NULL_PTR;
+    }
 
     return result;
 }
