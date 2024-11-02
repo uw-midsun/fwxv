@@ -18,9 +18,8 @@ static UartSettings uart_settings = { .tx = { .port = GPIO_PORT_B, .pin = 6 },
                                       .baudrate = 115200 };
 
 static UartSettings uart2_settings = { .tx = { .port = GPIO_PORT_A, .pin = 2 },
-                                      .rx = { .port = GPIO_PORT_A, .pin = 3 },
-                                      .baudrate = 115200 };
-
+                                       .rx = { .port = GPIO_PORT_A, .pin = 3 },
+                                       .baudrate = 115200 };
 
 TASK(master_task, TASK_STACK_512) {
   uint8_t data_buffer[MAX_CMD_LEN + 1] = { 0 };
@@ -43,7 +42,7 @@ TASK(master_task, TASK_STACK_512) {
     ++idx;
 
     if (data == '\r') {
-      test=0xAB;
+      test = 0xAB;
       LOG_DEBUG("%s\n", data_buffer);
       memset(data_buffer, 0, sizeof(data_buffer));
       idx = 0;
