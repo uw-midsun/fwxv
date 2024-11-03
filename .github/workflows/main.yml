@@ -1,12 +1,16 @@
 name: CI
 
 on:
+  # Run on all pull requests and all pushes to main
   push:
     branches: [main]
   pull_request:
+
+  # Allow running this workflow manually
   workflow_dispatch:
 
 env:
+  # Set defines for builds/tests
   DEFINES: "LOG_LEVEL=LOG_LEVEL_WARN"
 
 jobs:
@@ -23,34 +27,18 @@ jobs:
           sudo ./requirements.sh
           pip install -r requirements.txt --upgrade
 
-      - name: Install libncurses5
-        run: sudo apt-get install -y libncurses5 libncursesw5
-        
-      - name: Install STM32 toolchain
-        env:
-          GCC_PATH: arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi
-          GCC_URL: https://developer.arm.com/-/media/Files/downloads/gnu/13.2.Rel1/binrel/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi.tar.xz
-        run: |
-          cd ${HOME}
-          wget -nv $GCC_URL
-          
-          echo "Extracting archive..."
-          tar xf ${GCC_PATH}.tar.xz
-          
-          echo "Listing GCC bin directory:"
-          ls -la ${GCC_PATH}/bin/
-          
-          echo "Adding to PATH..."
-          echo "${HOME}/${GCC_PATH}/bin" >> $GITHUB_PATH
-          
-          # Export path for current shell
-          export PATH="${HOME}/${GCC_PATH}/bin:${PATH}"
-          
-          echo "Current PATH:"
-          echo $PATH
-          
-          echo "Testing GCC installation:"
-          ${HOME}/${GCC_PATH}/bin/arm-none-eabi-gcc --version
+          - name: Install STM32 toolchain
+          run: |
+            wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/13.2.rel1/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
+            tar xf arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
+            echo "${GITHUB_WORKSPACE}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/bin" >> $GITHUB_PATH
+            
+            # Install LTO plugin
+            sudo apt-get update
+            sudo apt-get install -y gcc-arm-none-eabi-plugin-dev
+  
+      - name: Force PATH to update
+        run: hash -r
 
       - name: Print versions of everything
         run: |
@@ -84,21 +72,6 @@ jobs:
       - name: Build stm32f10x
         id: build-stm32
         run: |
-          sudo rm -f /etc/apt/sources.list.d/maarten-fonville-ubuntu-protobuf-focal.list
-          sudo apt-get update
-          
-          # Install binutils
-          sudo apt-get install -y binutils binutils-dev
-          
-          # Configure LTO-aware tools and make sure plugin is executable
-          export AR=arm-none-eabi-gcc-ar
-          export RANLIB=arm-none-eabi-gcc-ranlib
-          export NM=arm-none-eabi-gcc-nm
-          
-          # Enable LTO
-          export CCFLAGS="${CCFLAGS} -flto"
-          export LINKFLAGS="${LINKFLAGS} -flto"
-          
           scons --platform=arm --define="${DEFINES}"
 
       - name: Build and test
@@ -114,3 +87,4 @@ jobs:
 
           scons --platform=x86 --define="${DEFINES}"
           scons test --platform=x86 --define="${DEFINES}"
+        # missing make pytest_all
