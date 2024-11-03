@@ -87,18 +87,22 @@ jobs:
           sudo rm -f /etc/apt/sources.list.d/maarten-fonville-ubuntu-protobuf-focal.list
           sudo apt-get update
           
-          # Install binutils plugin support
-          sudo apt-get install -y binutils-plugin-dev
+          # Install binutils
+          sudo apt-get install -y binutils binutils-dev
           
-          # Configure LTO-aware tools
+          # Configure LTO-aware tools and make sure plugin is executable
           export AR=arm-none-eabi-gcc-ar
           export RANLIB=arm-none-eabi-gcc-ranlib
           export NM=arm-none-eabi-gcc-nm
+          export LTO_PLUGIN="${HOME}/${GCC_PATH}/lib/gcc/arm-none-eabi/13.2.1/liblto_plugin.so"
+          chmod +x "${LTO_PLUGIN}"
           
-          # Enable LTO and specify plugin path
+          # Enable LTO
           export CCFLAGS="${CCFLAGS} -flto"
           export LINKFLAGS="${LINKFLAGS} -flto"
-          export LTO_PLUGIN="${HOME}/${GCC_PATH}/lib/gcc/arm-none-eabi/13.2.1/liblto_plugin.so"
+          
+          # Debug - check if plugin exists and its permissions
+          ls -l "${LTO_PLUGIN}"
           
           scons --platform=arm --define="${DEFINES}"
 
