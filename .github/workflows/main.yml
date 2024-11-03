@@ -32,11 +32,10 @@ jobs:
 
       - name: Install STM32 toolchain
         run: |
-          cd ${HOME}
+          cd /tmp
           wget -nv ${{ env.GCC_URL }}
-          mkdir -p ${{ env.GCC_PATH }}
-          tar -xJf ${{ env.GCC_ARCHIVE }}
-          echo "${HOME}/${{ env.GCC_PATH }}/bin" >> $GITHUB_PATH
+          sudo tar xf ${{ env.GCC_ARCHIVE }} -C /usr/share/
+          sudo ln -s /usr/share/${{ env.GCC_PATH }}/bin/* /usr/bin/
           
           # Add optimization flags to environment
           echo "CFLAGS=-O3 -flto -ffunction-sections -fdata-sections" >> $GITHUB_ENV
