@@ -84,11 +84,12 @@ jobs:
       - name: Build stm32f10x
         id: build-stm32
         run: |
-          # The workflow will build without link-time-optimization
-          export CCFLAGS="${CCFLAGS} -fno-lto"
-          export LINKFLAGS="${LINKFLAGS} -fno-lto"
+          sudo apt-get install -y gcc-arm-none-eabi gcc-arm-none-eabi-plugin binutils-arm-none-eabi
+    
+          # Use GCC-specific archiver and tools that support LTO
           export AR=arm-none-eabi-gcc-ar
           export RANLIB=arm-none-eabi-gcc-ranlib
+          export NM=arm-none-eabi-gcc-nm
           scons --platform=arm --define="${DEFINES}"
 
       - name: Build and test
