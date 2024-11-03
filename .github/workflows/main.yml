@@ -33,8 +33,24 @@ jobs:
         run: |
           cd ${HOME}
           wget -nv $GCC_URL
+          
+          echo "Extracting archive..."
           tar xf ${GCC_PATH}.tar.xz
+          
+          echo "Listing GCC bin directory:"
+          ls -la ${GCC_PATH}/bin/
+          
+          echo "Adding to PATH..."
+          echo "${HOME}/${GCC_PATH}/bin" >> $GITHUB_PATH
+          
+          # Export path for current shell
           export PATH="${HOME}/${GCC_PATH}/bin:${PATH}"
+          
+          echo "Current PATH:"
+          echo $PATH
+          
+          echo "Testing GCC installation:"
+          ${HOME}/${GCC_PATH}/bin/arm-none-eabi-gcc --version
 
       - name: Print versions of everything
         run: |
@@ -68,11 +84,11 @@ jobs:
       - name: Build stm32f10x
         id: build-stm32
         run: |
+          # The workflow will build without link-time-optimization
           export CCFLAGS="${CCFLAGS} -fno-lto"
           export LINKFLAGS="${LINKFLAGS} -fno-lto"
           export AR=arm-none-eabi-gcc-ar
           export RANLIB=arm-none-eabi-gcc-ranlib
-          
           scons --platform=arm --define="${DEFINES}"
 
       - name: Build and test
