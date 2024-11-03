@@ -94,8 +94,6 @@ jobs:
           export AR=arm-none-eabi-gcc-ar
           export RANLIB=arm-none-eabi-gcc-ranlib
           export NM=arm-none-eabi-gcc-nm
-          export LTO_PLUGIN="${HOME}/${GCC_PATH}/lib/gcc/arm-none-eabi/13.2.1/liblto_plugin.so"
-          chmod +x "${LTO_PLUGIN}"
           
           # Enable LTO
           export CCFLAGS="${CCFLAGS} -flto"
