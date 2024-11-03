@@ -1,17 +1,17 @@
 name: CI
 
 on:
+  # Run on all pull requests and all pushes to main
   push:
     branches: [main]
   pull_request:
+
+  # Allow running this workflow manually
   workflow_dispatch:
 
 env:
+  # Set defines for builds/tests
   DEFINES: "LOG_LEVEL=LOG_LEVEL_WARN"
-  GCC_VERSION: "13.2.1"
-  GCC_PATH: "arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi"
-  GCC_ARCHIVE: "arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz"
-  GCC_URL: "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz"
 
 jobs:
   build:
@@ -27,19 +27,17 @@ jobs:
           sudo ./requirements.sh
           pip install -r requirements.txt --upgrade
 
-      - name: Install libncurses5
-        run: sudo apt-get install -y libncurses5 libncursesw5
-
       - name: Install STM32 toolchain
+        env:
+          GCC_PATH: arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi
+          GCC_ARCHIVE_PATH: arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
+          GCC_URL: https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
         run: |
-          cd /tmp
-          wget -nv ${{ env.GCC_URL }}
-          sudo tar xf ${{ env.GCC_ARCHIVE }} -C /usr/share/
-          sudo ln -s /usr/share/${{ env.GCC_PATH }}/bin/* /usr/bin/
-          
-          # Add optimization flags to environment
-          echo "CFLAGS=-O3 -flto -ffunction-sections -fdata-sections" >> $GITHUB_ENV
-          echo "LDFLAGS=-Wl,--gc-sections" >> $GITHUB_ENV
+          cd ${HOME}
+          wget -nv $GCC_URL
+          mkdir -p $GCC_PATH
+          tar -xJf $GCC_ARCHIVE_PATH
+          echo "${HOME}/${GCC_PATH}/bin" >> $GITHUB_PATH
 
       - name: Force PATH to update
         run: hash -r
@@ -75,8 +73,11 @@ jobs:
 
       - name: Build stm32f10x
         id: build-stm32
+        env:
+          CFLAGS: "-O3 -ffunction-sections -fdata-sections"
+          LDFLAGS: "-Wl,--gc-sections"
         run: |
-          scons --platform=arm --define="${DEFINES}" CFLAGS="${{ env.CFLAGS }}" LDFLAGS="${{ env.LDFLAGS }}"
+          scons --platform=arm --define="${DEFINES}" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
 
       - name: Build and test
         id: build-test
