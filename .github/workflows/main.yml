@@ -27,15 +27,15 @@ jobs:
           sudo ./requirements.sh
           pip install -r requirements.txt --upgrade
 
-          - name: Install STM32 toolchain
-          run: |
-            wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/13.2.rel1/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
-            tar xf arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
-            echo "${GITHUB_WORKSPACE}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/bin" >> $GITHUB_PATH
-            
-            # Install LTO plugin
-            sudo apt-get update
-            sudo apt-get install -y gcc-arm-none-eabi-plugin-dev
+      - name: Install STM32 toolchain
+        run: |
+          wget https://developer.arm.com/-/media/Files/downloads/gnu-rm/13.2.rel1/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
+          tar xf arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
+          echo "${GITHUB_WORKSPACE}/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi/bin" >> $GITHUB_PATH
+          
+          # Install LTO plugin
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi-plugin-dev
   
       - name: Force PATH to update
         run: hash -r
