@@ -84,13 +84,20 @@ jobs:
       - name: Build stm32f10x
         id: build-stm32
         run: |
+          sudo rm -f /etc/apt/sources.list.d/maarten-fonville-ubuntu-protobuf-focal.list
           sudo apt-get update
+          
+          # Install binutils plugin support
           sudo apt-get install -y binutils-plugin-dev
-
+          
+          # Configure LTO-aware tools
           export AR=arm-none-eabi-gcc-ar
           export RANLIB=arm-none-eabi-gcc-ranlib
           export NM=arm-none-eabi-gcc-nm
-
+          
+          # Enable LTO and specify plugin path
+          export CCFLAGS="${CCFLAGS} -flto"
+          export LINKFLAGS="${LINKFLAGS} -flto"
           export LTO_PLUGIN="${HOME}/${GCC_PATH}/lib/gcc/arm-none-eabi/13.2.1/liblto_plugin.so"
           
           scons --platform=arm --define="${DEFINES}"
