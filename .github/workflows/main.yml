@@ -1,17 +1,17 @@
 name: CI
 
 on:
-  # Run on all pull requests and all pushes to main
   push:
     branches: [main]
   pull_request:
-
-  # Allow running this workflow manually
   workflow_dispatch:
 
 env:
-  # Set defines for builds/tests
   DEFINES: "LOG_LEVEL=LOG_LEVEL_WARN"
+  GCC_VERSION: "13.2.1"
+  GCC_PATH: "arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi"
+  GCC_ARCHIVE: "arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz"
+  GCC_URL: "https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz"
 
 jobs:
   build:
@@ -27,12 +27,23 @@ jobs:
           sudo ./requirements.sh
           pip install -r requirements.txt --upgrade
 
-      - name: Install dependencies
+      - name: Install libncurses5
+        run: sudo apt-get install -y libncurses5 libncursesw5
+
+      - name: Install STM32 toolchain
         run: |
-          sudo apt install binutils-arm-none-eabi
-          sudo apt-get install -y libncurses5 libncursesw5
-          sudo apt-get -y install gcc-11
-          sudo apt-get -y install g++-11
+          cd ${HOME}
+          wget -nv ${{ env.GCC_URL }}
+          mkdir -p ${{ env.GCC_PATH }}
+          tar -xJf ${{ env.GCC_ARCHIVE }}
+          echo "${HOME}/${{ env.GCC_PATH }}/bin" >> $GITHUB_PATH
+          
+          # Add optimization flags to environment
+          echo "CFLAGS=-O3 -flto -ffunction-sections -fdata-sections" >> $GITHUB_ENV
+          echo "LDFLAGS=-Wl,--gc-sections" >> $GITHUB_ENV
+
+      - name: Force PATH to update
+        run: hash -r
 
       - name: Print versions of everything
         run: |
@@ -66,7 +77,7 @@ jobs:
       - name: Build stm32f10x
         id: build-stm32
         run: |
-          scons --platform=arm --define="${DEFINES}"
+          scons --platform=arm --define="${DEFINES}" CFLAGS="${{ env.CFLAGS }}" LDFLAGS="${{ env.LDFLAGS }}"
 
       - name: Build and test
         id: build-test
