@@ -33,10 +33,10 @@ jobs:
           GCC_ARCHIVE_PATH: gcc-arm-none-eabi-8-2019-q3-update-linux.tar.bz2
           GCC_URL:  https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/binrel/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi.tar.xz -O arm-gcc.tar.xz
         run: |
-          wget https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/binrel/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi.tar.xz -O arm-gcc.tar.xz
-          tar xf arm-gcc.tar.xz -C /usr/local
-          add_line_if_dne 'PATH=$PATH:/usr/local/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin' /etc/profile
-          rm arm-gcc.tar.xz
+          sudo wget https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/binrel/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi.tar.xz -O arm-gcc.tar.xz
+          sudo tar xf arm-gcc.tar.xz -C /usr/local
+          sudo add_line_if_dne 'PATH=$PATH:/usr/local/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin' /etc/profile
+          sudo rm arm-gcc.tar.xz
 
       - name: Force PATH to update
         run: hash -r
