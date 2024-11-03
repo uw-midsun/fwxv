@@ -99,9 +99,6 @@ jobs:
           export CCFLAGS="${CCFLAGS} -flto"
           export LINKFLAGS="${LINKFLAGS} -flto"
           
-          # Debug - check if plugin exists and its permissions
-          ls -l "${LTO_PLUGIN}"
-          
           scons --platform=arm --define="${DEFINES}"
 
       - name: Build and test
