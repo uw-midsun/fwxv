@@ -28,44 +28,32 @@ jobs:
         
       - name: Install STM32 toolchain
         env:
-          GCC_PATH: arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi
-          GCC_ARCHIVE_PATH: arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
-          GCC_URL: https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
+          GCC_PATH: arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi
+          GCC_URL: https://developer.arm.com/-/media/Files/downloads/gnu/13.2.Rel1/binrel/arm-gnu-toolchain-13.2.Rel1-x86_64-arm-none-eabi.tar.xz
         run: |
           cd ${HOME}
           echo "Current directory: $(pwd)"
+          
           echo "Downloading toolchain..."
           wget -nv $GCC_URL
           
-          echo "Creating directory..."
-          mkdir -p $GCC_PATH
-          
-          echo "Listing files before extract:"
-          ls -la
-          
           echo "Extracting archive..."
-          tar -xJvf $GCC_ARCHIVE_PATH
+          tar xf ${GCC_PATH}.tar.xz
           
-          echo "Listing files after extract:"
-          ls -la
-          
-          echo "Listing contents of GCC_PATH:"
-          ls -la ${GCC_PATH}
+          echo "Listing GCC bin directory:"
+          ls -la ${GCC_PATH}/bin/
           
           echo "Adding to PATH..."
           echo "${HOME}/${GCC_PATH}/bin" >> $GITHUB_PATH
           
+          # Export path for current shell
+          export PATH="${HOME}/${GCC_PATH}/bin:${PATH}"
+          
           echo "Current PATH:"
           echo $PATH
           
-          echo "Looking for arm-none-eabi-gcc:"
-          find ${HOME} -name arm-none-eabi-gcc
-
-      - name: Force PATH to update
-        run: |
-          hash -r
-          echo "Updated PATH:"
-          echo $PATH
+          echo "Testing GCC installation:"
+          ${HOME}/${GCC_PATH}/bin/arm-none-eabi-gcc --version
 
       - name: Print versions of everything
         run: |
@@ -80,6 +68,7 @@ jobs:
           clang --version
           clang-format --version
           pylint --version
+
       - name: Format and lint
         run: |
           scons format
