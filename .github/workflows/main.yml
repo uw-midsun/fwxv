@@ -40,20 +40,31 @@ jobs:
           echo "Extracting archive..."
           tar xf ${GCC_PATH}.tar.xz
           
-          echo "Listing GCC bin directory:"
-          ls -la ${GCC_PATH}/bin/
+          echo "Setting up LTO plugin..."
+          # Find the LTO plugin in the GCC installation
+          LTO_PLUGIN=$(find ${HOME}/${GCC_PATH} -name "liblto_plugin.so")
+          echo "Found LTO plugin at: ${LTO_PLUGIN}"
           
-          echo "Adding to PATH..."
+          # Set the plugin path for binutils
+          export PLUGIN_LD_FILE="${LTO_PLUGIN}"
+          echo "PLUGIN_LD_FILE=${PLUGIN_LD_FILE}" >> $GITHUB_ENV
+          
+          # Add plugin directory to library path
+          PLUGIN_DIR=$(dirname "${LTO_PLUGIN}")
+          echo "LD_LIBRARY_PATH=${PLUGIN_DIR}:${LD_LIBRARY_PATH}" >> $GITHUB_ENV
+          
+          echo "Adding GCC to PATH..."
           echo "${HOME}/${GCC_PATH}/bin" >> $GITHUB_PATH
-          
-          # Export path for current shell
           export PATH="${HOME}/${GCC_PATH}/bin:${PATH}"
-          
-          echo "Current PATH:"
-          echo $PATH
           
           echo "Testing GCC installation:"
           ${HOME}/${GCC_PATH}/bin/arm-none-eabi-gcc --version
+          
+          # Print plugin info for debugging
+          echo "Plugin setup info:"
+          echo "LTO_PLUGIN=${LTO_PLUGIN}"
+          echo "PLUGIN_DIR=${PLUGIN_DIR}"
+          ls -la ${PLUGIN_DIR}
 
       - name: Print versions of everything
         run: |
