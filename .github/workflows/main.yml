@@ -1,16 +1,12 @@
 name: CI
 
 on:
-  # Run on all pull requests and all pushes to main
   push:
     branches: [main]
   pull_request:
-
-  # Allow running this workflow manually
   workflow_dispatch:
 
 env:
-  # Set defines for builds/tests
   DEFINES: "LOG_LEVEL=LOG_LEVEL_WARN"
 
 jobs:
@@ -27,6 +23,9 @@ jobs:
           sudo ./requirements.sh
           pip install -r requirements.txt --upgrade
 
+      - name: Install libncurses5
+        run: sudo apt-get install -y libncurses5 libncursesw5
+        
       - name: Install STM32 toolchain
         env:
           GCC_PATH: arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi
@@ -34,13 +33,39 @@ jobs:
           GCC_URL: https://developer.arm.com/-/media/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-eabi.tar.xz
         run: |
           cd ${HOME}
+          echo "Current directory: $(pwd)"
+          echo "Downloading toolchain..."
           wget -nv $GCC_URL
+          
+          echo "Creating directory..."
           mkdir -p $GCC_PATH
-          tar -xJf $GCC_ARCHIVE_PATH
+          
+          echo "Listing files before extract:"
+          ls -la
+          
+          echo "Extracting archive..."
+          tar -xJvf $GCC_ARCHIVE_PATH
+          
+          echo "Listing files after extract:"
+          ls -la
+          
+          echo "Listing contents of GCC_PATH:"
+          ls -la ${GCC_PATH}
+          
+          echo "Adding to PATH..."
           echo "${HOME}/${GCC_PATH}/bin" >> $GITHUB_PATH
+          
+          echo "Current PATH:"
+          echo $PATH
+          
+          echo "Looking for arm-none-eabi-gcc:"
+          find ${HOME} -name arm-none-eabi-gcc
 
       - name: Force PATH to update
-        run: hash -r
+        run: |
+          hash -r
+          echo "Updated PATH:"
+          echo $PATH
 
       - name: Print versions of everything
         run: |
@@ -55,7 +80,6 @@ jobs:
           clang --version
           clang-format --version
           pylint --version
-
       - name: Format and lint
         run: |
           scons format
