@@ -73,11 +73,8 @@ jobs:
 
       - name: Build stm32f10x
         id: build-stm32
-        env:
-          CFLAGS: "-O3 -ffunction-sections -fdata-sections"
-          LDFLAGS: "-Wl,--gc-sections"
         run: |
-          scons --platform=arm --define="${DEFINES}" CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
+          scons --platform=arm --define="${DEFINES}"
 
       - name: Build and test
         id: build-test
