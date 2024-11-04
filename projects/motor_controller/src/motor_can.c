@@ -1,8 +1,8 @@
 
 #include "motor_can.h"
 
-#include <stdint.h>
 #include <math.h>
+#include <stdint.h>
 
 #include "log.h"
 #include "mcp2515.h"
