@@ -121,6 +121,50 @@ def get_data():
     return {"Boards": boards, "Messages": messages, "Messages_dict": messages_dict}
 
 
+def decode_packet(messages_dict, bitstream):
+    clean_bitstream = bitstream.replace(" ", "")
+
+    # Extract the source_id
+    source_id_binary = clean_bitstream[0:8]  # start: start + length
+    source_id = int(source_id_binary, 2)
+    print(source_id)
+
+    # Extract the msg_id (next 24 bits)
+    msg_id_binary = clean_bitstream[8:32]  
+    msg_id = int(msg_id_binary, 2)
+    print(msg_id)
+
+    if msg_id in messages_dict:
+        message = messages_dict[msg_id]
+    else:
+        print(f"Source ID {msg_id} not found in messages_dict.")
+        return
+    
+    parsed_signals = []
+    data_start_bit = 56
+
+    # Iterate through each signal in the message dictionary
+    for signal in message['signals']:
+        name = signal['name']
+        start_bit = signal['start_bit'] + data_start_bit
+        length = signal['length']
+        
+        # # Extract the relevant bits for the signal
+        signal_bits = clean_bitstream[start_bit:start_bit + length]
+        
+        # # Convert the bits to a decimal value
+        signal_value = int(signal_bits, 2)
+        
+        # # Store the parsed signal value
+        parsed_signals.append({
+                "name": name,
+                "value": signal_value
+            })
+
+    return {"message ID": msg_id, 
+            "message name": messages_dict[msg_id]["name"], 
+            "signals": parsed_signals}
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-t", "--template", nargs='+', default=[], dest="templates",
@@ -131,6 +175,18 @@ def main():
 
     args = parser.parse_args()
     data = get_data()
+
+    # # Define message values
+    # source_id = 1                 # source_id (3 + 4 bits)
+    # type_field = 0                # type (1 bit)
+    # msg_id = 3                    # msg_id (24 bits)
+    # dlc = 5 Bytes                 # (40 bits)
+    # throttle_output_value = 30    # throttle_value (32 bits)
+    # brake_output_value = 31       # brake_value (8 bits)
+
+    print(decode_packet(data["Messages_dict"], "0000 0001 0000 0000 0000 0000 0000 0011 0000 0000 0000 0000 0000 0101 0000 0000 0000 0000 0000 0000 0001 1110 0001 1111"))
+
+
     data.update({"Board": args.board})
 
     template_loader = jinja2.FileSystemLoader(
