@@ -4,7 +4,7 @@ Import ('FLASH_TYPE')
 PLATFORM_DIR = os.getcwd()
 
 compiler = 'arm-none-eabi-gcc'
-ranlib = 'arm-none-eabi-ranlib'
+ranlib = 'arm-none-eabi-gcc-ranlib'
 objcopy = 'arm-none-eabi-objcopy'
 ar = 'arm-none-eabi-gcc-ar'
 
