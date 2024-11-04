@@ -31,12 +31,13 @@ jobs:
         env:
           GCC_PATH: gcc-arm-none-eabi-8-2019-q3-update
           GCC_ARCHIVE_PATH: gcc-arm-none-eabi-8-2019-q3-update-linux.tar.bz2
-          GCC_URL:  https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/binrel/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi.tar.xz -O arm-gcc.tar.xz
+          GCC_URL: https://developer.arm.com/-/media/Files/downloads/gnu-rm/8-2019q3/RC1.1/gcc-arm-none-eabi-8-2019-q3-update-linux.tar.bz2
         run: |
-          sudo wget https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/binrel/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi.tar.xz -O arm-gcc.tar.xz
-          sudo tar xf arm-gcc.tar.xz -C /usr/local
-          # sudo add_line_if_dne 'PATH=$PATH:/usr/local/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi/bin' /etc/profile
-          sudo rm arm-gcc.tar.xz
+          cd ${HOME}
+          wget -nv $GCC_URL
+          mkdir -p $GCC_PATH
+          tar -xjf $GCC_ARCHIVE_PATH
+          echo "${HOME}/${GCC_PATH}/bin" >> $GITHUB_PATH
 
       - name: Force PATH to update
         run: hash -r
@@ -88,3 +89,4 @@ jobs:
 
           scons --platform=x86 --define="${DEFINES}"
           scons test --platform=x86 --define="${DEFINES}"
+        # missing make pytest_all
