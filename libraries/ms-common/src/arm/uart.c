@@ -34,10 +34,6 @@ static UartPortData s_port[] = {
                     .periph = RCC_APB1Periph_USART2,
                     .irq = USART2_IRQn,
                     .base = USART2 },
-  [UART_PORT_3] = { .rcc_cmd = RCC_APB1PeriphClockCmd,
-                    .periph = RCC_APB1Periph_USART3,
-                    .irq = USART3_IRQn,
-                    .base = USART3 },
 };
 
 static void prv_handle_irq(UartPort uart);
@@ -168,9 +164,4 @@ void USART1_IRQHandler(void) {
 
 void USART2_IRQHandler(void) {
   prv_handle_irq(UART_PORT_2);
-}
-
-void USART3_4_IRQHandler(void) {
-  prv_handle_irq(UART_PORT_3);
-  prv_handle_irq(UART_PORT_4);
 }
