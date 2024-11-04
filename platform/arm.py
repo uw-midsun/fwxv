@@ -6,7 +6,7 @@ PLATFORM_DIR = os.getcwd()
 compiler = 'arm-none-eabi-gcc'
 ranlib = 'arm-none-eabi-ranlib'
 objcopy = 'arm-none-eabi-objcopy'
-ar = 'arm-none-eabi-ar'
+ar = 'arm-none-eabi-gcc-ar'
 
 arch_cflags = [
     '-mlittle-endian',
