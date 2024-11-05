@@ -26,5 +26,4 @@ void can_tx_all() {
         (uint64_t) g_tx_struct.{{message.name}}_{{signal.name}} << {{signal.start_bit}}{{ " |" if not loop.last }}
     {%- endfor -%}
     );
-{%- endfor %}
-}
+{%  }
