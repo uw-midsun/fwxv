@@ -10,9 +10,47 @@
 */
 
 #include <stdio.h>
-
+#include "delay.h"
 #include "log.h"
 #include "tasks.h"
+#include "gpio.h"
+#include "ads1115.h"
+
+
+TASK(LEDS, TASK_STACK_512) {
+  // GpioAddress struct
+  GpioAddress led_addr = {
+    .port = GPIO_PORT_B,
+    .pin = 3,
+  };
+
+  // !!!Initialize the pin before the while loop in your task!!!
+  GpioAddress ready_pin = {
+    .port = GPIO_PORT_B,
+    .pin = GPIO_Pin_0,
+  };
+  
+  ADS1115_Config config = {
+    .handler_task = LEDS,
+    .i2c_addr = ADS1115_ADDR_GND,
+    .i2c_port = ADS1115_I2C_PORT,                      
+    .ready_pin = &ready_pin,                          
+     };
+
+    ADS1115_Channel channel = 5;
+
+    float reading = 1.0;
+
+  while (true){
+    gpio_toggle_state(&led_addr);
+    delay_ms(1000);
+    ads1115_read_converted(&config, channel, &reading);
+    LOG_DEBUG("%f\n", reading);
+  }
+
+    
+}
+
 
 int main() {
   tasks_init();
@@ -20,8 +58,10 @@ int main() {
   gpio_init();
   LOG_DEBUG("Welcome to FW 103!\n");
 
+  tasks_init_task(LEDS, TASK_PRIORITY(2), NULL);
   tasks_start();
 
   LOG_DEBUG("exiting main?\n");
   return 0;
 }
+
