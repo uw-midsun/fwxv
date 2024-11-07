@@ -32,15 +32,11 @@ uint16_t bkp_read(uint16_t reg) {
     else{} {
         return 0;
     }
-    // what should we return instead?
-    // Does this need reg * 32 instead?
-
 }
 
 StatusCode bkp_write(uint16_t reg, uint16_t data){
 
     if (reg >= 1 && reg <= 42) {
-        // does this need 32
         BKP_WriteBackupRegister(reg*32, data);
         return STATUS_CODE_OK;
     }

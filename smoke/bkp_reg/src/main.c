@@ -40,9 +40,7 @@ TASK(bkp_task, TASK_STACK_512) { //512 bytes almost always enough
 
   //testing config tamper 
 
-  // should we consider 
   StatusCode state = bkp_config_tamper(1, DISABLE); 
-  // ask aryan 
   if (state == STATUS_CODE_OK && CR_TPE_BB == 0 && CR_TPAL_BB == 1) {
   
     LOG_DEBUG("Config Tamper works"); 
