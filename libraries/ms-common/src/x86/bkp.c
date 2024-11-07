@@ -32,23 +32,30 @@ void bkp_init() {
     PWR_BackupAccessCmd(ENABLE);
 
 
-    
+    /*
     int PWREN_ON = 1;
     PWREN_ON <<= 28;
     int BKPEN_ON = 1;
     BKPEN_ON <<= 27;
+
+    int DBP_ON = 1;
+    DBP_ON <<= 8;
+    PWR->CR |= DBP_ON;
+
+    RCC->APB1ENR |= PWREN_ON;
+    RCC->APB1ENR |= BKPEN_ON;
+    
+    */
+
     //is this the right one?
     // uint32_t *RCC_APB1ENR = RCC_APB1ENR ;
     // *RCC_APB1ENR |= PWREN_ON;
     // *RCC_APB1ENR |= BKPEN_ON;
     // RCC is pointer, -> means to access the APB1ENR member of the structure pointed to by RCC
-    RCC->APB1ENR |= PWREN_ON;
-    RCC->APB1ENR |= BKPEN_ON;
+
     // set the DBP bit in the Power control register (PWR_CR) to enable access to the
     // Backup registers and RTC.
-    int DBP_ON = 1;
-    DBP_ON <<= 8;
-    PWR->CR |= DBP_ON;
+    
 }
 
 // Set everything to our desired bit values
