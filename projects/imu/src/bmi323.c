@@ -370,3 +370,14 @@ static StatusCode enable_feature_engine(){
 
     return STATUS_CODE_OK;//should only return if we didnt timeout
 }
+
+static StatusCode imu_init(){
+    StatusCode status = enable_feature_engine();
+    if(status != STATUS_CODE_OK){
+        return status;
+    }else{
+        status = gyro_crt_calibration();
+    }
+
+    return status;
+}
