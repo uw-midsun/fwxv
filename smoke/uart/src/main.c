@@ -58,7 +58,7 @@ int main() {
 
   tasks_init();
 
-  tasks_init_task(master_task, TASK_PRIORITY(0), NULL);
+  tasks_init_task(master_task, TASK_PRIORITY(2), NULL);
 
   tasks_start();
 

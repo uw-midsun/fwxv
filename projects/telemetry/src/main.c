@@ -11,19 +11,22 @@
 static CanStorage s_can_storage = { 0 };
 
 static const CanSettings can_settings = {
-  .device_id = SYSTEM_CAN_DEVICE_NEW_TELEMETRY,
+  .device_id = SYSTEM_CAN_DEVICE_TELEMETRY,
   .bitrate = CAN_HW_BITRATE_500KBPS,
   .tx = { GPIO_PORT_A, 12 },
   .rx = { GPIO_PORT_A, 11 },
   .loopback = false,
 };
 
-static UartSettings uart_settings = { .tx = { .port = GPIO_PORT_B, .pin = 6 },
-                                      .rx = { .port = GPIO_PORT_B, .pin = 7 },
+static UartSettings uart_settings = { .tx = { .port = GPIO_PORT_A, .pin = 2 },
+                                      .rx = { .port = GPIO_PORT_A, .pin = 3 },
                                       .baudrate = 115200 };
 
 TASK(CAN_TO_UART, TASK_STACK_256) {
   while (true) {
+    uint8_t test = 0xFF;
+    size_t test_len = sizeof(test);
+    uart_tx(UART_PORT_2, &test, &test_len);
     CanMessage msg = { 0 };
     Datagram datagram = { .start_frame = 0xAA, .end_of_frame = 0xBB };
 
@@ -32,10 +35,16 @@ TASK(CAN_TO_UART, TASK_STACK_256) {
 
     if (ret == STATUS_CODE_OK) {
       decode_can_message(datagram, msg);
-      size_t len = sizeof(datagram);
-      StatusCode uart_ret = uart_tx(UART_PORT_1, &datagram, &len);
+
+      // Typecast datagram object to pass into uart_tx
+      uint8_t *uint8_datagram = (uint8_t *) &datagram; 
+      size_t len = sizeof(uint8_datagram);
+      StatusCode uart_ret = uart_tx(UART_PORT_2, uint8_datagram, &len);
+      if (uart_ret != STATUS_CODE_OK) {
+        LOG_DEBUG("UART_TX FAILED\n");
+      }
     } else {
-      LOG_DEBUG("can_queue_pop failed\n");
+      // LOG_DEBUG("can_queue_pop failed\n");
     }
   }
 }
@@ -59,7 +68,7 @@ Datagram decode_can_message(Datagram datagram, CanMessage msg) {
 
 int main() {
   tasks_init();
-  log_init();
+  uart_init(UART_PORT_2, &uart_settings);
 
   init_master_task();
   can_init(&s_can_storage, &can_settings);
