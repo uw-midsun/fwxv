@@ -235,19 +235,6 @@ static BootloaderError bootloader_data_receive() {
   return BOOTLOADER_ERROR_NONE;
 }
 
-static BootloaderError bootloader_pingdata_receive(){
-  BootloaderError error = BOOTLOADER_ERROR_NONE;
-  if (!prv_bootloader.first_byte_received) {
-    send_ack_datagram(NACK, BOOTLOADER_INTERNAL_ERR);
-    return BOOTLOADER_INTERNAL_ERR;
-  }
-  if (prv_bootloader.buffer_index >= BOOTLOADER_PING_BYTES) {
-    send_ack_datagram(NACK, BOOTLOADER_BUFFER_OVERFLOW);
-    return BOOTLOADER_BUFFER_OVERFLOW;
-  }
-
-}
-
 static BootloaderError bootloader_fault() {
   /* Implement code to reset the board. */
   return BOOTLOADER_INTERNAL_ERR;
@@ -255,31 +242,52 @@ static BootloaderError bootloader_fault() {
 
 static BootloaderError bootloader_ping() {
   BootloaderError error = BOOTLOADER_ERROR_NONE;
-  /* Start handling each req
-  1 - Node_ID
-  2 - Branch
-  3 - Project
-  */
+
+  // typedef struct {
+  //   uintptr_t application_start;
+  //   uintptr_t current_address;
+  //   uint32_t bytes_written;
+  //   uint32_t binary_size;
+  //   uint32_t packet_crc32;
+  //   uint16_t expected_sequence_number;
+  //   uint16_t buffer_index;
+  //   BootloaderPingStates ping_type;
+  //   uint8_t ping_data_len;
+
+  //   BootloaderStates state;
+  //   BootloaderError error;
+  //   uint16_t target_nodes;
+  //   bool first_byte_received;
+  //   bool first_ping_received;
+  // } BootloaderStateData;
 
   if (!prv_bootloader.first_ping_received) {
+    prv_bootloader.buffer_index = 0;
+
+    // Save type and datalen
     prv_bootloader.ping_type = datagram.payload.ping.req;
-    prv_bootloader.ping_data_len = datagram.payload.ping.data_len;
-    prv_bootloader.first_ping_received = true;
+    prv_bootloader.binary_size = datagram.payload.ping.data_len;
+    prv_bootloader.first_byte_received = true;
   } else {
-    // Start handling the rest of the datagrams
+  
+    // Start handling the rest of the datagrams (ping data)
+    memcpy(flash_buffer + prv_bootloader.buffer_index, datagram.payload.data.binary_data, 8);
+    prv_bootloader.buffer_index += 8;
 
+
+    if (prv_bootloader.buffer_index > BOOTLOADER_PAGE_BYTES) {
+      // If we somehow go over the buffer SEND ERROR datagram
+
+    }
+
+    uint32_t calculated_crc32 = boot_crc_calculate((const uint32_t *)flash_buffer,
+                                                   BYTES_TO_WORD(prv_bootloader.buffer_index));
+    if (calculated_crc32 != prv_bootloader.packet_crc32) {
+      send_ack_datagram(NACK, BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE);
+      return BOOTLOADER_CRC_MISMATCH_BEFORE_WRITE;
+    }
     
-
-    // switch (datagram.payload.ping.req) {
-    //   case BOOTLOADER_PING_NODES:
-    //     break;
-    //   case BOOTLOADER_PING_BRANCH:
-    //     break;
-    //   case BOOTLOADER_PING_PROJECT:
-    //     break;
-    //   default:
-    //     return BOOTLOADER_INTERNAL_ERR;
-    // }
+    //when done, flash, datagram.payload.ping.req = false
   }
 }
 
