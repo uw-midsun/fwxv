@@ -6,18 +6,20 @@
 #include <unistd.h>
 
 #include "log.h"
+#include "stm32f10x_rcc.h"
+#include "stm32f10x_bkp.h"
 
 // Look into which pins cant be changed and can only be read
 
-int const address_default = 0x00;
-void bkp_clear() {
-	// change to 0x34 which is BKP_CSR
-    uint16_t register = address_default + 0x34;
-    int bit1_change =(1 << 1);
-    int bit0_change = 1;
-    register |= bit1_change;
-    register |= bit0_change;	
-}
+// int const address_default = 0x00;
+// void bkp_clear() {
+// 	// change to 0x34 which is BKP_CSR
+//     uint16_t register = address_default + 0x34;
+//     int bit1_change =(1 << 1);
+//     int bit0_change = 1;
+//     register |= bit1_change;
+//     register |= bit0_change;	
+// }
 
 
 // Sets to pins to default values
@@ -26,7 +28,11 @@ void bkp_init() {
     enable power and backup interface clocks by setting PWREN and BKPEN bits in
     RCC_APB1ENR register
 */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_BKP, ENABLE);
+    PWR_BackupAccessCmd(ENABLE);
 
+
+    
     int PWREN_ON = 1;
     PWREN_ON <<= 28;
     int BKPEN_ON = 1;
@@ -44,6 +50,7 @@ void bkp_init() {
     DBP_ON <<= 8;
     PWR->CR |= DBP_ON;
 }
+
 // Set everything to our desired bit values
 // 6.4.3 BKP_CR
 // Bit 0 = 1
@@ -57,26 +64,55 @@ void bkp_init() {
 // Bit 9 = 0
 
 
+uint16_t bkp_read(uint16_t reg) {
+    if(reg>=1 && reg <=42){
+        BKP_ReadBackupRegister(reg);
+    }
+    // what should we return instead?
 
+}
 
-void bkp_read(uint8_t register) {
-    // if(register >= 1 && register <= 42){
-    //     BKP_DR1
-    // }
-    BKP
+StatusCode bkp_write(uint16_t reg, uint16_t data){
+
+    if (reg >= 1 && reg <= 42) {
+        BKP_WriteBackupRegister(reg*32, data);
+        return STATUS_CODE_OK;
+    }
+    else{
+        return STATUS_CODE_INVALID_ARGS;
+    }
     
 }
 
-void bkp_write(uint8_t register, uint16_t data){
-    if(register >= 1 && register <= 42){
-        
+StatusCode bkp_clear(){
+    
+    for (int i=1; i<=42; i++) { 
+        bkp_write(i, 0); 
+    } 
+    return STATUS_CODE_OK; 
+   
+}
+
+StatusCode bkp_config_tamper(uint16_t TamperPinLevel, FunctionalState State){
+    if(TamperPinLevel == 1 || TamperPinLevel == 0){
+        BKP_TamperPinLevelConfig(TamperPinLevel^1U);
+        BKP_TamperPinCmd(State);
+        return STATUS_CODE_OK;
+    }
+    else{
+        return STATUS_CODE_INVALID_ARGS;
     }
 }
 
-// void bkp_clear();
+StatusCode smoke_test(){
+    /*
+        create a .h file  
+        create TASK that tests
 
-//void bkp_config_tamper();
+    */ 
 
+
+}
 
 
 
