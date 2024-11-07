@@ -8,7 +8,7 @@ static uint8_t *flash_buffer;
 static BootloaderDatagram_t datagram;
 static BootloaderStateData prv_bootloader = { .state = BOOTLOADER_UNINITIALIZED,
                                               .error = BOOTLOADER_ERROR_NONE,
-                                              .first_byte_received = false };
+                                              .first_byte_received = false, .first_ping_received = false };
 
 BootloaderError bootloader_init(uint8_t *buffer) {
   flash_buffer = buffer;
@@ -21,14 +21,13 @@ BootloaderError bootloader_init(uint8_t *buffer) {
   prv_bootloader.state = BOOTLOADER_IDLE;
   prv_bootloader.target_nodes = 0;
   prv_bootloader.buffer_index = 0;
-  prv_bootloader.ping_req = 0;
 
   boot_crc_init();
 
   return BOOTLOADER_ERROR_NONE;
 }
 
-static BootloaderError wbootloader_switch_states(const BootloaderStates new_state) {
+static BootloaderError bootloader_switch_states(const BootloaderStates new_state) {
   BootloaderError return_err = BOOTLOADER_ERROR_NONE;
   BootloaderStates current_state = prv_bootloader.state;
   if (current_state == new_state) {
@@ -120,10 +119,7 @@ static BootloaderError bootloader_handle_arbitration_id(Boot_CanMessage *msg) {
     case CAN_ARBITRATION_JUMP_ID:
       return bootloader_switch_states(BOOTLOADER_JUMP_APP);
     case CAN_ARBITRATION_PING:
-      return bootloader_switch_states(BOOTLOADER_PING_READY);
-    case CAN_ARBITRATION_PING_RECEIVE:
-      return bootloader_switch_states(BOOTLOADER_PING_RECEIVE)
-
+      return bootloader_switch_states(BOOTLOADER_PING);
           default : return BOOTLOADER_INVALID_ARGS;
   }
 }
@@ -239,6 +235,19 @@ static BootloaderError bootloader_data_receive() {
   return BOOTLOADER_ERROR_NONE;
 }
 
+static BootloaderError bootloader_pingdata_receive(){
+  BootloaderError error = BOOTLOADER_ERROR_NONE;
+  if (!prv_bootloader.first_byte_received) {
+    send_ack_datagram(NACK, BOOTLOADER_INTERNAL_ERR);
+    return BOOTLOADER_INTERNAL_ERR;
+  }
+  if (prv_bootloader.buffer_index >= BOOTLOADER_PING_BYTES) {
+    send_ack_datagram(NACK, BOOTLOADER_BUFFER_OVERFLOW);
+    return BOOTLOADER_BUFFER_OVERFLOW;
+  }
+
+}
+
 static BootloaderError bootloader_fault() {
   /* Implement code to reset the board. */
   return BOOTLOADER_INTERNAL_ERR;
@@ -252,20 +261,25 @@ static BootloaderError bootloader_ping() {
   3 - Project
   */
 
-  if (prv_bootloader.ping_req == 0) {
-    switch (datagram.payload.ping.req) {
-      case BOOTLOADER_PING_NODES:
-        break;
-      case BOOTLOADER_PING_BRANCH:
-        break;
-      case BOOTLOADER_PING_PROJECT:
-        break;
-      default:
-        return BOOTLOADER_INTERNAL_ERR;
-    }
-    ++prv_bootloader.ping_req;  // Received the first datagram, rest will be data.
+  if (!prv_bootloader.first_ping_received) {
+    prv_bootloader.ping_type = datagram.payload.ping.req;
+    prv_bootloader.ping_data_len = datagram.payload.ping.data_len;
+    prv_bootloader.first_ping_received = true;
   } else {
     // Start handling the rest of the datagrams
+
+    
+
+    // switch (datagram.payload.ping.req) {
+    //   case BOOTLOADER_PING_NODES:
+    //     break;
+    //   case BOOTLOADER_PING_BRANCH:
+    //     break;
+    //   case BOOTLOADER_PING_PROJECT:
+    //     break;
+    //   default:
+    //     return BOOTLOADER_INTERNAL_ERR;
+    // }
   }
 }
 

@@ -29,7 +29,7 @@ int main() {
   /* Set the vector table offset at flash base */
   SCB->VTOR = FLASH_BASE;
   boot_can_init(&can_settings);
-  bootloader_init();
+  bootloader_init(flash_buffer);
   if(SysTick_Config(SystemCoreClock / 1000)) {
     send_ack_datagram(0, BOOTLOADER_INTERNAL_ERR);
     while(true); // Hang
