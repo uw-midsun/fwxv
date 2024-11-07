@@ -1,0 +1,93 @@
+import json
+import jinja2
+from pathlib import Path
+
+###########################################################
+# Variables setup
+###########################################################
+
+Import('VARS')
+
+TARGET = VARS.get("TARGET")
+
+# default configuration for projects
+DEFAULT_CONFIG = {"libs": ["FreeRTOS", "ms-common"]}
+
+
+def new_task(target, task_name):
+    '''Create a new task within target'''
+    DATA = {"task_name": task_name}
+    target_path = Path(target)
+    target_path.joinpath("inc").mkdir()
+    target_path.joinpath("src").mkdir()
+
+    templateLoader = jinja2.FileSystemLoader(searchpath="scons/template")
+    env = jinja2.Environment(loader=templateLoader)
+
+    template = env.get_template("_task.h.jinja")
+    output = template.render(data=DATA)
+    target_path.joinpath(f'inc/{task_name}_task.h').write_text(output)
+
+    template = env.get_template("_task.c.jinja")
+    output = template.render(data=DATA)
+    target_path.joinpath(f'src/{task_name}_task.c').write_text(output)
+
+
+def new_target(target, source, env):
+    """Creates a new project or library.
+
+    Creates a subfolder in the appropriate folder with the specified name
+    with the following structure:
+
+    project/library/smoke
+    - name
+        - inc
+        - README.md
+        - config.json 
+        - src
+        - test
+    py
+    - name
+        - __init__.py
+        - main.py
+    """
+    if not TARGET:
+        print("Missing target. Expected --project=..., or --library=..., or --python=..., or --smoke=...")
+        return
+
+    task_name = GetOption("task")
+    if task_name:
+        new_task(TARGET, task_name)
+        return
+
+    target_dir = Path(TARGET)
+    target_dir.mkdir(parents=True)
+
+    if TARGET.startswith('py'):
+        target_dir.joinpath('__init__.py').touch()
+        target_dir.joinpath('main.py').touch()
+        print(f'Created new {TARGET}')
+        return
+
+    for folder in ['src', 'inc', 'test']:
+        target_dir.joinpath(folder).mkdir(parents=True, exist_ok=True)
+
+    config = []
+    if TARGET.startswith("project") or TARGET.startswith("smoke"):
+        config = DEFAULT_CONFIG
+
+    target_dir.joinpath("config.json").write_text(json.dumps(config, indent=4))
+
+    readme_template = Path("scons/template/README.md")
+    readme_file = target_dir.joinpath("README.md")
+    readme_file.write_text(readme_template.read_text() + target_dir.name)
+
+    main_c_template = Path("scons/template/main.c")
+    main_c_file = target_dir.joinpath("src/main.c")
+    main_c_file.write_text(main_c_template.read_text())
+
+    print(f'Created new {TARGET}')
+
+
+new = Command('new_proj.txt', [], new_target)
+Alias('new', new)

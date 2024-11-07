@@ -1,0 +1,13 @@
+{
+  "x86_libs": [
+    "x86"
+  ],
+  "arm_libs": [
+    "stm32f10x"
+  ],
+  "mocks": {
+    "test_mock": [
+      "status_impl_update"
+    ]
+  }
+}

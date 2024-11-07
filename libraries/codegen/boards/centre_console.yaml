@@ -1,0 +1,67 @@
+# Message Definitions in plaintext are on the wiki at:
+# https://uwmidsun.atlassian.net/l/cp/Pxn8Xhm8
+#
+# If you are making changes to this file please update the corresponding entry
+# on the wiki. If you need to add a new message use a reasonable
+# reserved ID. The higher ID the lower the priority. Generally
+# - 0-13: Critical messages (have ACK)
+# - 14-30: Actionable messages (trigger a change in another system)
+# - 30-63: Data messages (usually not actionable by an onboard device)
+
+---
+Messages:
+  cc_info: 
+    id: 5
+    critical: true
+    target:
+      motor_controller:
+        watchdog: 3
+      power_distribution:
+        watchdog: 3
+    signals:
+      target_velocity:
+        length: 32
+      drive_state:
+        length: 8
+      cruise_control:
+        length: 8
+      regen_braking:
+        length: 8
+      hazard_enabled:
+        length: 8
+  cc_pedal:
+    id: 3
+    critical: true
+    target:
+      motor_controller:
+        watchdog: 0
+      power_distribution:
+        watchdog: 0
+    signals:
+      throttle_output:
+        length: 32
+      brake_output:
+        length: 8
+  cc_steering:
+    id: 6
+    critical: true
+    target:
+      power_distribution:
+        watchdog: 0
+      motor_controller:
+        watchdog: 0
+    signals:
+      input_cc:
+        length: 8 # (cc_toggle | cc_increse | cc_decrease)
+      input_lights:
+        length: 8
+    
+  cc_regen:
+    id: 8
+    critical: true
+    target:
+      motor_controller:
+        watchdog: 0
+    signals:
+      percent:
+        length: 32 # (cc_toggle | cc_increse | cc_decrease)

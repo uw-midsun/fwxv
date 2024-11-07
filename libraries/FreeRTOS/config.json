@@ -1,0 +1,10 @@
+{
+    "libs": [
+        "ms-freertos"
+    ],
+    "cflags": [
+        "-ffreestanding",
+        "-nostdlib"
+    ],
+    "no_lint": true
+}

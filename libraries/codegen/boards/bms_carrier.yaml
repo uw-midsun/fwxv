@@ -1,0 +1,131 @@
+# Message Definitions in plaintext are on the wiki at:
+# https://uwmidsun.atlassian.net/l/cp/Pxn8Xhm8
+#
+# If you are making changes to this file please update the corresponding entry
+# on the wiki. If you need to add a new message use a reasonable
+# reserved ID. The higher ID the lower the priority. Generally
+# - 0-13: Critical messages (have ACK)
+# - 14-30: Actionable messages (trigger a change in another system)
+# - 30-63: Data messages (usually not actionable by an onboard device)
+
+---
+  Messages:
+    battery_status:
+      id: 1
+      critical: true
+      target:
+        centre_console:
+          watchdog: 3
+        power_distribution:
+          watchdog: 5
+      signals:
+        fault:
+          length: 16
+        fault_val:
+          length: 16
+        aux_batt_v:
+          length: 16
+        afe_status:
+          length: 8
+
+    battery_info:
+      id: 14
+      critical: true
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        fan1:
+          length: 8
+        fan2:
+          length: 8
+        max_cell_v:
+          length: 16
+        min_cell_v:
+          length: 16
+
+    battery_vt:
+      id: 15
+      critical: true
+      target:
+        centre_console:
+          watchdog: 0
+      signals:
+        voltage:
+          length: 16
+        current:
+          length: 16
+        temperature:
+          length: 16
+        batt_perc:
+          length: 16
+   
+    battery_relay_info:
+      id: 16
+      critical: false
+      target:
+        power_distribution:
+          watchdog: 0
+      signals:
+        state:
+          length: 8
+
+    AFE1_status:
+          id: 60
+          critical: false
+          target:
+            centre_console:
+              watchdog: 0
+            power_distribution:
+              watchdog: 3
+          signals:
+            id:
+              length: 8
+            temp:
+              length: 8
+            v1:
+              length: 16
+            v2:
+              length: 16
+            v3:
+              length: 16
+
+    AFE2_status:
+      id: 61
+      critical: false
+      target:
+        centre_console:
+          watchdog: 0
+        power_distribution:
+          watchdog: 3
+      signals:
+        id:
+          length: 8
+        temp:
+          length: 8
+        v1:
+          length: 16
+        v2:
+          length: 16
+        v3:
+          length: 16
+
+    AFE3_status:
+      id: 62
+      critical: false
+      target:
+        centre_console:
+          watchdog: 0
+        power_distribution:
+          watchdog: 3
+      signals:
+        id:
+          length: 8
+        temp:
+          length: 8
+        v1:
+          length: 16
+        v2:
+          length: 16
+        v3:
+          length: 16

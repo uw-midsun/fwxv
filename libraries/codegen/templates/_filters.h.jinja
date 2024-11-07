@@ -1,0 +1,16 @@
+{% set board = data["Board"] -%}
+{% set messages = data["Messages"] | selectattr("receiver", "contains", board) | list -%}
+
+#pragma once
+
+#include "can_boards_ids.h"
+#include "can_codegen.h"
+
+#include <stdint.h>
+
+void add_all_can_filters()
+{
+{%- for message in messages %} 
+  can_add_filter(SYSTEM_CAN_MESSAGE_{{ message.sender | upper }}_{{ message.name | upper }});
+{%- endfor %}
+}

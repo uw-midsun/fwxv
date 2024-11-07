@@ -1,0 +1,10 @@
+{
+    "arm_libs": [
+        "STM32F10x_StdPeriph_Driver"
+    ],
+    "no_lint": true,
+    "cflags": [
+        "-ffreestanding",
+        "-nostdlib"
+    ]
+}

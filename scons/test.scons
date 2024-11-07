@@ -1,0 +1,120 @@
+from scons.common import parse_config, flash_run
+import subprocess
+from pathlib import Path
+
+Import('VARS')
+
+TARGET = VARS.get("TARGET")
+PLATFORM = VARS.get("PLATFORM")
+env = VARS.get("env")
+
+ROOT = Dir('#')
+
+BUILD_DIR = ROOT.Dir('build').Dir(PLATFORM)
+BIN_DIR = BUILD_DIR.Dir('bin')
+OBJ_DIR = BUILD_DIR.Dir('obj')
+TEST_DIR = BUILD_DIR.Dir('test')
+
+PROJ_DIR = ROOT.Dir('projects')
+LIB_DIR = ROOT.Dir('libraries')
+SMOKE_DIR = ROOT.Dir('smoke')
+
+GEN_RUNNER = 'libraries/unity/auto/generate_test_runner.py'
+GEN_RUNNER_CONFIG = 'libraries/unity/unity_config.yml'
+
+###########################################################
+# Create appropriate test targets, (when lib/proj target is defined)
+###########################################################
+run_list = []
+
+
+def add_to_run_list(target, source, env):
+    run_list.extend(source)
+
+
+def add_test_targets(target, source, env):
+    entry = ROOT.Dir(Path(target[0].path).relative_to(BIN_DIR.path))
+    config = parse_config(entry)
+
+    if entry.path.startswith("libraries"):
+        # libraries target will look like libraries/lib[name].a
+        # extract the name and convert to the directory of the actual library
+        entry = ROOT.Dir(f"libraries/{entry.name[3:-2]}")
+    # non-libraries has a main.o that needs to be removed from the source for tests
+    sources_no_main = list(filter(lambda f: f.name != "main.o", source))
+
+    # create target for every test
+    for test_file in entry.glob('test/*.c'):
+        test_module_name = Path(test_file.path).stem
+
+        mocks = config.get("mocks", {}).get(test_module_name, [])
+        mock_link_flags = [f'-Wl,-wrap,{mock}' for mock in mocks]
+
+        runner_exec = TEST_DIR.File(f"{entry.path}/bin/{test_module_name}")
+
+        runner_file = TEST_DIR.File(test_file.path)
+        autogen = env.Action(f'python3 {GEN_RUNNER} {GEN_RUNNER_CONFIG} {test_file.path} {runner_file.path}',
+                             f'Autogen    {test_file.path} test_runner')
+        runner_file = env.Command(
+            runner_file,
+            [test_file, ROOT.Dir("libraries/unity/auto").glob("*")],
+            autogen)
+        test_sources = [runner_file, OBJ_DIR.File(test_file.path)]
+
+        test_target = env.Program(
+            target=runner_exec,
+            source=sources_no_main + test_sources,
+            LIBS=env['LIBS'] + ['unity'],
+            LINKFLAGS=env['LINKFLAGS'] + mock_link_flags,
+            PROGEMITTER=None,  # don't trigger emitter recursively
+        )
+
+        if PLATFORM == 'arm':
+            test_target = env.Bin(target=ROOT.File(runner_exec.path+'.bin'),
+                                  source=test_target)
+        env.Command(f"test/{entry.path}/{test_module_name}",
+                    test_target, env.Action(add_to_run_list, None))
+    # target and source are not modified
+    # this emitter only adds the test targets based on the project/library's inc + src
+    return target, source
+
+
+def run_test(target, source, env):
+    fails = []
+    for test_name, test_file in zip(source, run_list):
+        if PLATFORM == "x86":
+            test_process = subprocess.run(test_file.path)
+            if test_process.returncode != 0:
+                fails.append(test_name)
+
+        elif PLATFORM == "arm":
+            serialData = flash_run(test_file)
+
+            # wait until test ok or fail
+            while True:
+                line: str = serialData.readline().decode("utf-8")
+                print(line, end='')
+                if line.startswith('OK'):
+                    break
+                if line.startswith('FAIL'):
+                    fails.append(test_name)
+                    break
+
+    print(f"{len(run_list)} Files tested {len(fails)} Failures")
+    for fail in fails:
+        print(f"  {fail}")
+    return ""
+
+
+env.Append(PROGEMITTER=add_test_targets)
+env.Append(LIBEMITTER=add_test_targets)
+# generate all test target names
+all_tests = []
+for entry in PROJ_DIR.glob('*') + LIB_DIR.glob('*') + SMOKE_DIR.glob('*'):
+    for test_file in entry.glob('test/*.c'):
+        test_module_name = Path(test_file.path).stem
+        all_tests.append(f"test/{entry.path}/{test_module_name}")
+
+TARGET = str(Path("test", TARGET or '', GetOption("testfile") or ''))
+selected_tests = [t for t in all_tests if t.startswith(TARGET)]
+env.Command("#/test", selected_tests, env.Action(run_test, "Running tests:"))

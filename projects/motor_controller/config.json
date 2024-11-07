@@ -1,0 +1,12 @@
+{
+    "libs": [
+        "FreeRTOS",
+        "ms-common",
+        "master"
+    ],
+    "can": true,
+    "mocks": {
+        "motor_can_tx": ["mcp2515_hw_transmit", "mcp2515_hw_init"],
+        "motor_can_rx": ["mcp2515_hw_transmit", "mcp2515_hw_init"]
+    }
+}
