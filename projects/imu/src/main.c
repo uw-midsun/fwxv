@@ -4,12 +4,42 @@
 #include "master_task.h"
 #include "tasks.h"
 #include "spi.h"
+#include "can.h"
+#include "can_board_ids.h"
 
-void pre_loop_init() {}
+static CanStorage s_can_storage = { 0 };
+const CanSettings can_settings = {
+  .device_id = SYSTEM_CAN_DEVICE_IMU,
+  .bitrate = CAN_HW_BITRATE_500KBPS,
+  .tx = { GPIO_PORT_A, 12 },
+  .rx = { GPIO_PORT_A, 11 },
+  .loopback = false,
+};
 
-void run_fast_cycle() {}
+void pre_loop_init() {
+  /*
+  calibration
+  imu init
+  
+  */
+}
 
-void run_medium_cycle() {}
+void run_fast_cycle() {
+  
+}
+
+void run_medium_cycle() {
+    run_can_rx_cycle();
+    wait_tasks(1);
+
+    run_can_tx_cycle();
+    wait_tasks(1);
+/*
+get values
+
+*/
+
+}
 
 void run_slow_cycle() {}
 
@@ -17,6 +47,7 @@ int main() {
   tasks_init();
   log_init();
   LOG_DEBUG("Welcome to TEST!");
+  can_init(&s_can_storage, &can_settings);
 
   init_master_task();
 

@@ -4,27 +4,27 @@ static bmi323_storage *s_storage;
 
 
 //read operation requires 1 dummy byte before payload
-static StatusCode get_register(bmi323_registers reg, uint16_t *value){
+static StatusCode get_register(bmi323_registers reg, uint8_t *value){
     //register length of 2 bytes, 2nd one is dummy byte
     uint8_t reg8[2];
     reg8[0] = READ | reg;
     reg8[1] = DUMMY_BYTE;
     // prv_set_user_bank(user_bank);
-    StatusCode status = spi_exchange(s_storage->settings->spi_port, &reg8, sizeof(uint8_t) * 2, value, sizeof(uint16_t));
+    StatusCode status = spi_exchange(s_storage->settings->spi_port, reg8, sizeof(uint8_t) * 2, value, sizeof(uint16_t));
     return status;
 }
 
-static StatusCode get_multi_register(bmi323_registers reg, uint16_t *reg_val[6], uint8_t len){
+static StatusCode get_multi_register(bmi323_registers reg, uint8_t *reg_val, uint8_t len){
     uint8_t reg8[2];
     reg8[0] = READ | reg;
     reg8[1] = 0x00;
     // prv_set_user_bank(user_bank);
-    StatusCode status = spi_exchange(s_storage->settings->spi_port, &reg8, sizeof(uint8_t) * 2, reg_val, sizeof(uint16_t) * len);
+    StatusCode status = spi_exchange(s_storage->settings->spi_port, reg8, sizeof(uint8_t) * 2, reg_val, sizeof(uint16_t) * len);
     return status;
 }
 
 static StatusCode set_register(uint16_t reg_addr, uint16_t value) {
-    uint16_t tx_buff[2];
+    uint8_t tx_buff[2];
 
     tx_buff[0] = WRITE & reg_addr;
     tx_buff[1] = value;
@@ -34,10 +34,10 @@ static StatusCode set_register(uint16_t reg_addr, uint16_t value) {
     return status;
 }
 
-static StatusCode set_multi_register(uint16_t reg_addr, uint16_t *value, uint16_t len) {
-    uint16_t reg_mask = WRITE & reg_addr;
+static StatusCode set_multi_register(uint8_t reg_addr, uint8_t *value, uint16_t len) {
+    uint8_t reg_mask = WRITE & reg_addr;
 
-    StatusCode status_addr = spi_exchange(s_storage->settings->spi_port, reg_mask, sizeof(reg_mask), NULL, 0);
+    StatusCode status_addr = spi_exchange(s_storage->settings->spi_port, &reg_mask, sizeof(reg_mask), NULL, 0);
     if (status_addr != STATUS_CODE_OK) {
         return status_addr;
     }
@@ -267,14 +267,21 @@ static StatusCode gyro_crt_calibration(){
 
         int_status_int1 &= (1<<10);
         int_status_int2 &= (1<<10);
+        uint8_t timeout = 0;
 
         while(int_status_int1 != 1 && int_status_int2 != 1){
             get_register(INT_STATUS_INT1, int_status_int1);
             get_register(INT_STATUS_INT2, int_status_int2);
 
             int_status_int1 &= (1<<10);
-            int_status_int2 &= (1<<10);            
+            int_status_int2 &= (1<<10);     
+            timeout++;
+            if(timeout > 500){
+                return STATUS_CODE_TIMEOUT;
+            }
         }
+
+        timeout = 0;
 
         //read FEATURE_IO1 and check error status
         uint16_t feat_state;
