@@ -110,3 +110,4 @@ static StatusCode get_register(bmi323_registers reg, uint8_t *value);
 static StatusCode get_multi_register(bmi323_registers reg, uint8_t *reg_val, uint8_t len);
 static StatusCode get_gyroscope_data(axes *gyro);
 static StatusCode get_accel_data(axes *accel);
+static StatusCode enable_feature_engine();

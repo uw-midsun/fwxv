@@ -48,9 +48,9 @@ static StatusCode set_multi_register(uint8_t reg_addr, uint8_t *value, uint16_t 
 }
 
 static StatusCode get_gyroscope_data(axes *gyro) {
-    uint16_t data[6];
+    uint8_t data[6] = {0};
 
-    StatusCode status = get_multi_register(GYRO_REG_ADDR, &data, 6);
+    StatusCode status = get_multi_register(GYRO_REG_ADDR, data, 6);
 
     if (status == STATUS_CODE_OK) {
         //(int16_t)((msb << 8) | lsb);
@@ -65,10 +65,10 @@ static StatusCode get_gyroscope_data(axes *gyro) {
 }
 
 static StatusCode get_accel_data(axes *accel){
-    uint16_t data[6];
-    StatusCode status = get_multi_register(ACCEL_REG_ADDR, &data, 6);
+    uint8_t data[6] = {0};
+    StatusCode status = get_multi_register(ACCEL_REG_ADDR, data, 6);
 
-    if(status = STATUS_CODE_OK){
+    if(status == STATUS_CODE_OK){
         accel->x = (int16_t)((data[0] << 8) | data[1]);
         accel->y = (int16_t)((data[2] << 8) | data[3]);
         accel->z = (int16_t)((data[4] << 8) | data[5]);
@@ -260,18 +260,18 @@ static StatusCode gyro_crt_calibration(){
     if(enable_status == STATUS_CODE_OK){
         
         //poll int status register value
-        uint16_t int_status_int1;
-        get_register(INT_STATUS_INT1, int_status_int1);
-        uint16_t int_status_int2;
-        get_register(INT_STATUS_INT2, int_status_int2);
+        uint8_t int_status_int1;
+        get_register(INT_STATUS_INT1, &int_status_int1);
+        uint8_t int_status_int2;
+        get_register(INT_STATUS_INT2, &int_status_int2);
 
         int_status_int1 &= (1<<10);
         int_status_int2 &= (1<<10);
-        uint8_t timeout = 0;
+        uint16_t timeout = 0;
 
         while(int_status_int1 != 1 && int_status_int2 != 1){
-            get_register(INT_STATUS_INT1, int_status_int1);
-            get_register(INT_STATUS_INT2, int_status_int2);
+            get_register(INT_STATUS_INT1, &int_status_int1);
+            get_register(INT_STATUS_INT2, &int_status_int2);
 
             int_status_int1 &= (1<<10);
             int_status_int2 &= (1<<10);     
@@ -284,14 +284,14 @@ static StatusCode gyro_crt_calibration(){
         timeout = 0;
 
         //read FEATURE_IO1 and check error status
-        uint16_t feat_state;
-        get_register(FEATURE_IO1, feat_state);
+        uint8_t feat_state;
+        get_register(FEATURE_IO1, &feat_state);
 
         //error status
         feat_state &= 1111;
 
         while(feat_state != 0x5){
-            get_register(FEATURE_IO1, feat_state);
+            get_register(FEATURE_IO1, &feat_state);
             feat_state &= 1111;
         }
 
@@ -300,42 +300,42 @@ static StatusCode gyro_crt_calibration(){
         
 
         //wait until self calibration is complete
-        get_register(FEATURE_IO1, feat_state);
+        get_register(FEATURE_IO1, &feat_state);
         feat_state &= (1<<6);
 
         while(feat_state != 0b1){
-            get_register(FEATURE_IO1, feat_state);
+            get_register(FEATURE_IO1, &feat_state);
             feat_state &= (1<<6);
         }
 
         //poll int status register value
-        get_register(INT_STATUS_INT1, int_status_int1);
-        get_register(INT_STATUS_INT2, int_status_int2);
+        get_register(INT_STATUS_INT1, &int_status_int1);
+        get_register(INT_STATUS_INT2, &int_status_int2);
         int_status_int1 &= (1<<10);
         int_status_int2 &= (1<<10);
 
         while(int_status_int1 != 1 && int_status_int2 != 1){
-            get_register(INT_STATUS_INT1, int_status_int1);
-            get_register(INT_STATUS_INT2, int_status_int2);
+            get_register(INT_STATUS_INT1, &int_status_int1);
+            get_register(INT_STATUS_INT2, &int_status_int2);
             int_status_int1 &= (1<<10);
             int_status_int2 &= (1<<10);
         }
 
         //read FEATURE_IO1 and check sc_st_complete and gyro_sc_result
-        get_register(FEATURE_IO1, feat_state);
+        get_register(FEATURE_IO1, &feat_state);
 
         feat_state &= (1<<4);
 
         while(feat_state != 1){
-            get_register(FEATURE_IO1, feat_state);
+            get_register(FEATURE_IO1, &feat_state);
             feat_state &= (1<<4);
         }
 
-        get_register(FEATURE_IO1, feat_state);
+        get_register(FEATURE_IO1, &feat_state);
         feat_state &= (1<<5);
 
         while(feat_state != 1){
-            get_register(FEATURE_IO1, feat_state);
+            get_register(FEATURE_IO1, &feat_state);
             feat_state &= (1<<5);
         }
 
@@ -349,20 +349,20 @@ static StatusCode enable_feature_engine(){
     set_register(FEATURE_IO2, 0x012C);
     set_register(FEATURE_IO_STATUS, 0x0001);
 
-    uint16_t feature_ctrl;
+    uint8_t feature_ctrl;
 
-    get_register(FEATURE_CTRL, feature_ctrl);
+    get_register(FEATURE_CTRL, &feature_ctrl);
 
     //set FEATURE_CTRL.engine_en to 0b1
     feature_ctrl &= 1;
 
     set_register(FEATURE_CTRL, feature_ctrl);
 
-    uint16_t feat_state;
+    uint8_t feat_state;
 
-    get_register(FEATURE_IO1, feat_state);
+    get_register(FEATURE_IO1, &feat_state);
 
-    uint16_t state = feat_state & (0b1111);
+    uint8_t state = feat_state & (0b1111);
 
     while(state != 0b001){
         //add a timeout here
