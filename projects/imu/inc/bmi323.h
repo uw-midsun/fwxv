@@ -58,7 +58,7 @@ typedef enum {
     ACC_DP_DGAIN_Y = 0x63,
     ACC_DP_OFF_Z = 0x64,
     ACC_DP_DGAIN_Z = 0x65
-}accel_og;
+}accel_go_registers;
 
 typedef enum {
     GYR_DP_OFF_X = 0x66,
@@ -67,25 +67,25 @@ typedef enum {
     GYR_DP_DGAIN_Y = 0x69,
     GYR_DP_OFF_Z = 0x6A,
     GYR_DP_DGAIN_Z = 0x6B
-}gyro_og;
+}gyro_go_registers;
 
-struct accel_gain_offset{
+typedef struct{
   uint16_t accel_offset_x;
   uint16_t accel_offset_y;
   uint16_t accel_offset_z;
   uint8_t accel_gain_x;
   uint8_t accel_gain_y;
   uint8_t accel_gain_z;
-};
+}accel_gain_offset_values;
 
-struct gyro_gain_offset{
+typedef struct{
   uint16_t gyro_offset_x;
   uint16_t gyro_offset_y;
   uint16_t gyro_offset_z;
   uint8_t gyro_gain_x;
   uint8_t gyro_gain_y;
   uint8_t gyro_gain_z;
-};
+}gyro_gain_offset_values;
 
 typedef struct {
   SpiPort spi_port;
@@ -101,8 +101,18 @@ typedef struct {
   bmi323_settings *settings;
   axes accel;
   axes gyro;
+  accel_gain_offset_values accel_go_values;
+  gyro_gain_offset_values gyro_go_values;
 } bmi323_storage;
 
+typedef struct{
+  bmi323_settings *settings;
+  uint32_t spi_baudrate;
+  GpioAddress mosi;
+  GpioAddress miso;
+  GpioAddress sclk;
+  GpioAddress cs;
+}imu_config;
 
 static StatusCode set_register(uint16_t reg_addr, uint16_t value);
 static StatusCode set_multi_register(uint8_t reg_addr, uint8_t *value, uint16_t len);

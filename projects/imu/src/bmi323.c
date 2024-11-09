@@ -2,6 +2,29 @@
 
 static bmi323_storage *s_storage;
 
+/*
+static const LtcAfeSettings s_afe_settings = {
+  .mosi = AFE_SPI_MOSI,
+  .miso = AFE_SPI_MISO,
+  .sclk = AFE_SPI_SCK,
+  .cs = AFE_SPI_CS,
+
+  .spi_port = AFE_SPI_PORT,
+  .spi_baudrate = 750000,
+
+  .adc_mode = LTC_AFE_ADC_MODE_7KHZ,
+
+  .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
+  .aux_bitset = { 0x14, 0x15, 0x15 },
+
+  .num_devices = 3,
+  .num_cells = 12,
+  .num_thermistors = NUM_THERMISTORS,
+};
+
+
+*/
+
 
 //read operation requires 1 dummy byte before payload
 static StatusCode get_register(bmi323_registers reg, uint8_t *value){
@@ -78,14 +101,14 @@ static StatusCode get_accel_data(axes *accel){
     return status;
 }
 
-static StatusCode get_gyro_offset_gain(struct gyro_gain_offset *gyro_go){
+static StatusCode get_gyro_offset_gain(gyro_gain_offset_values *gyro_go_values){
     StatusCode result;
     uint8_t data[12] = {0};
 
     uint16_t gyro_off_x, gyro_off_y, gyro_off_z;
     uint8_t gyro_gain_x, gyro_gain_y, gyro_gain_z;
 
-    if(gyro_go != NULL){
+    if(gyro_go_values != NULL){
         result = get_multi_register(GYR_DP_OFF_X, data, 12);
 
         if(result == STATUS_CODE_OK){
@@ -96,12 +119,12 @@ static StatusCode get_gyro_offset_gain(struct gyro_gain_offset *gyro_go){
             gyro_off_z = (uint16_t)(data[9] << 8 | data[8]);
             gyro_gain_z = (uint8_t)(data[10]);
 
-            gyro_go -> gyro_offset_x = gyro_off_x & BMI3_GYR_DP_OFF_X_MASK;
-            gyro_go -> gyro_gain_x = gyro_gain_x & BMI3_GYR_DP_DGAIN_X_MASK;
-            gyro_go -> gyro_offset_y = gyro_off_y & BMI3_GYR_DP_OFF_Y_MASK;
-            gyro_go -> gyro_gain_y = gyro_gain_y & BMI3_GYR_DP_DGAIN_Y_MASK;
-            gyro_go -> gyro_offset_z = gyro_off_z & BMI3_GYR_DP_OFF_Z_MASK;
-            gyro_go -> gyro_gain_z = gyro_gain_z & BMI3_GYR_DP_DGAIN_Z_MASK;
+            gyro_go_values -> gyro_offset_x = gyro_off_x & BMI3_GYR_DP_OFF_X_MASK;
+            gyro_go_values -> gyro_gain_x = gyro_gain_x & BMI3_GYR_DP_DGAIN_X_MASK;
+            gyro_go_values -> gyro_offset_y = gyro_off_y & BMI3_GYR_DP_OFF_Y_MASK;
+            gyro_go_values -> gyro_gain_y = gyro_gain_y & BMI3_GYR_DP_DGAIN_Y_MASK;
+            gyro_go_values -> gyro_offset_z = gyro_off_z & BMI3_GYR_DP_OFF_Z_MASK;
+            gyro_go_values -> gyro_gain_z = gyro_gain_z & BMI3_GYR_DP_DGAIN_Z_MASK;
             
         }
 
@@ -112,20 +135,20 @@ static StatusCode get_gyro_offset_gain(struct gyro_gain_offset *gyro_go){
     return result;
 }
 
-static StatusCode set_gyro_offset_gain(struct gyro_gain_offset *gyro_go){
+static StatusCode set_gyro_offset_gain(gyro_gain_offset_values *gyro_go_values){
     StatusCode result;
     uint8_t data[12] = {0};
 
     uint16_t gyro_off_x, gyro_off_y, gyro_off_z;
     uint8_t gyro_gain_x, gyro_gain_y, gyro_gain_z;
 
-    if(gyro_go != NULL){
-        gyro_off_x = gyro_go -> gyro_offset_x & BMI3_GYR_DP_OFF_X_MASK;
-        gyro_gain_x = gyro_go -> gyro_gain_x & BMI3_GYR_DP_DGAIN_X_MASK;
-        gyro_off_y = gyro_go -> gyro_offset_y & BMI3_GYR_DP_OFF_Y_MASK;
-        gyro_gain_y = gyro_go -> gyro_gain_y & BMI3_GYR_DP_DGAIN_Y_MASK;
-        gyro_off_z = gyro_go -> gyro_offset_z & BMI3_GYR_DP_OFF_Z_MASK;
-        gyro_gain_z = gyro_go -> gyro_gain_z & BMI3_GYR_DP_DGAIN_Z_MASK;
+    if(gyro_go_values != NULL){
+        gyro_off_x = gyro_go_values -> gyro_offset_x & BMI3_GYR_DP_OFF_X_MASK;
+        gyro_gain_x = gyro_go_values -> gyro_gain_x & BMI3_GYR_DP_DGAIN_X_MASK;
+        gyro_off_y = gyro_go_values -> gyro_offset_y & BMI3_GYR_DP_OFF_Y_MASK;
+        gyro_gain_y = gyro_go_values -> gyro_gain_y & BMI3_GYR_DP_DGAIN_Y_MASK;
+        gyro_off_z = gyro_go_values -> gyro_offset_z & BMI3_GYR_DP_OFF_Z_MASK;
+        gyro_gain_z = gyro_go_values -> gyro_gain_z & BMI3_GYR_DP_DGAIN_Z_MASK;
 
         data[0] = (uint8_t)(gyro_off_x & BMI_SET_LOW_BYTE);
         data[1] = (uint8_t)(gyro_off_x & BMI_SET_HIGH_BYTE) >> 8;
@@ -145,14 +168,14 @@ static StatusCode set_gyro_offset_gain(struct gyro_gain_offset *gyro_go){
     return result;
 }
 
-static StatusCode get_accel_offset_gain(struct accel_gain_offset *accel_go){
+static StatusCode get_accel_offset_gain(accel_gain_offset_values *accel_go_values){
     StatusCode result;
     uint8_t data[12] = {0};
 
     uint16_t accel_off_x, accel_off_y, accel_off_z;
     uint8_t accel_gain_x, accel_gain_y, accel_gain_z;
 
-    if(accel_go != NULL){
+    if(accel_go_values != NULL){
         result = get_multi_register(ACC_DP_OFF_X, data, 12);
 
         if(result == STATUS_CODE_OK){
@@ -163,12 +186,12 @@ static StatusCode get_accel_offset_gain(struct accel_gain_offset *accel_go){
             accel_off_z = (uint16_t)(data[9] << 8 | data[8]);
             accel_gain_z = (uint8_t)data[10];
 
-            accel_go -> accel_offset_x = (accel_off_x & BMI3_ACC_DP_DOFFSET_X_MASK);
-            accel_go -> accel_gain_x = (accel_gain_x & BMI3_ACC_DP_DGAIN_X_MASK);
-            accel_go -> accel_offset_y = (accel_off_y & BMI3_ACC_DP_DOFFSET_Y_MASK);
-            accel_go -> accel_gain_y = (accel_gain_y & BMI3_ACC_DP_DGAIN_Y_MASK);
-            accel_go -> accel_offset_z = (accel_off_z & BMI3_ACC_DP_DOFFSET_Z_MASK);
-            accel_go -> accel_gain_z = (accel_gain_z & BMI3_ACC_DP_DGAIN_Z_MASK);
+            accel_go_values -> accel_offset_x = (accel_off_x & BMI3_ACC_DP_DOFFSET_X_MASK);
+            accel_go_values -> accel_gain_x = (accel_gain_x & BMI3_ACC_DP_DGAIN_X_MASK);
+            accel_go_values -> accel_offset_y = (accel_off_y & BMI3_ACC_DP_DOFFSET_Y_MASK);
+            accel_go_values -> accel_gain_y = (accel_gain_y & BMI3_ACC_DP_DGAIN_Y_MASK);
+            accel_go_values -> accel_offset_z = (accel_off_z & BMI3_ACC_DP_DOFFSET_Z_MASK);
+            accel_go_values -> accel_gain_z = (accel_gain_z & BMI3_ACC_DP_DGAIN_Z_MASK);
         }
     }else{
         result = BMI3_E_NULL_PTR;
@@ -177,20 +200,20 @@ static StatusCode get_accel_offset_gain(struct accel_gain_offset *accel_go){
     return result;
 }
 
-static StatusCode set_accel_offset_gain(struct accel_gain_offset *accel_go){
+static StatusCode set_accel_offset_gain(accel_gain_offset_values *accel_go_values){
     StatusCode result;
 
     uint8_t data[12] = {0};
     
     uint16_t accel_off_x, accel_off_y, accel_off_z;
     uint8_t accel_gain_x, accel_gain_y, accel_gain_z;
-    if(accel_go != NULL){
-        accel_off_x = accel_go -> accel_offset_x & BMI3_ACC_DP_DOFFSET_X_MASK;
-        accel_gain_x = accel_go -> accel_gain_x & BMI3_ACC_DP_DGAIN_X_MASK;
-        accel_off_y = accel_go -> accel_offset_y & BMI3_ACC_DP_DOFFSET_Y_MASK;
-        accel_gain_y = accel_go -> accel_gain_y & BMI3_ACC_DP_DGAIN_Y_MASK;
-        accel_off_z = accel_go -> accel_offset_z & BMI3_ACC_DP_DOFFSET_Z_MASK;
-        accel_gain_z = accel_go -> accel_gain_z & BMI3_ACC_DP_DGAIN_Z_MASK;
+    if(accel_go_values != NULL){
+        accel_off_x = accel_go_values -> accel_offset_x & BMI3_ACC_DP_DOFFSET_X_MASK;
+        accel_gain_x = accel_go_values -> accel_gain_x & BMI3_ACC_DP_DGAIN_X_MASK;
+        accel_off_y = accel_go_values -> accel_offset_y & BMI3_ACC_DP_DOFFSET_Y_MASK;
+        accel_gain_y = accel_go_values -> accel_gain_y & BMI3_ACC_DP_DGAIN_Y_MASK;
+        accel_off_z = accel_go_values -> accel_offset_z & BMI3_ACC_DP_DOFFSET_Z_MASK;
+        accel_gain_z = accel_go_values -> accel_gain_z & BMI3_ACC_DP_DGAIN_Z_MASK;
 
         data[0] = (uint8_t)(accel_off_x & BMI_SET_LOW_BYTE);
         data[1] = (uint8_t)(accel_off_x & BMI_SET_HIGH_BYTE) >> 8;
@@ -367,7 +390,13 @@ static StatusCode gyro_crt_calibration(){
 
         //also check error status if necessary
 
+    }else{
+        return STATUS_CODE_INCOMPLETE;
     }
+
+    get_accel_offset_gain(&s_storage->accel_go_values);
+
+    return STATUS_CODE_OK;
 
 }
 
@@ -397,7 +426,17 @@ static StatusCode enable_feature_engine(){
     return STATUS_CODE_OK;//should only return if we didnt timeout
 }
 
-static StatusCode imu_init(){
+static StatusCode imu_init(imu_config *config){
+
+    const SpiSettings spi_settings = {
+        .baudrate = config->spi_baudrate,
+        .mode = SPI_MODE_1,
+        .mosi = config->mosi,
+        .miso = config->miso,
+        .sclk = config->sclk,
+        .cs = config->cs,
+    };
+    spi_init(s_storage->settings->spi_port, &spi_settings);
     StatusCode status = enable_feature_engine();
     if(status != STATUS_CODE_OK){
         return status;

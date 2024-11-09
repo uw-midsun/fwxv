@@ -6,6 +6,9 @@
 #include "spi.h"
 #include "can.h"
 #include "can_board_ids.h"
+#include "bmi323.h"
+
+static bmi323_storage *s_storage;
 
 static CanStorage s_can_storage = { 0 };
 const CanSettings can_settings = {
@@ -18,10 +21,12 @@ const CanSettings can_settings = {
 
 void pre_loop_init() {
   /*
-  calibration
   imu init
-  
+    -> calibration
   */
+  imu_init();
+  
+
 }
 
 void run_fast_cycle() {
@@ -29,15 +34,17 @@ void run_fast_cycle() {
 }
 
 void run_medium_cycle() {
-    run_can_rx_cycle();
-    wait_tasks(1);
+  run_can_rx_cycle();
+  wait_tasks(1);
 
-    run_can_tx_cycle();
-    wait_tasks(1);
 /*
 get values
-
 */
+  get_gyroscope_data(&s_storage->gyro);
+  get_accel_data(&s_storage->accel);
+
+  run_can_tx_cycle();
+  wait_tasks(1);
 
 }
 
