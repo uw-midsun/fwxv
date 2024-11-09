@@ -31,19 +31,19 @@ TASK(CAN_TO_UART, TASK_STACK_256) {
     Datagram datagram = { .start_frame = 0xAA };
 
     // Polling can_storage queue
-    while(can_queue_pop(&s_can_storage.rx_queue, &msg) != STATUS_CODE_OK) {
-      // LOG_DEBUG("can_queue_pop failed\n");  
+    while (can_queue_pop(&s_can_storage.rx_queue, &msg) != STATUS_CODE_OK) {
+      // LOG_DEBUG("can_queue_pop failed\n");
     }
     size_t data_len = decode_can_message(&datagram, &msg);
 
     // Typecast datagram object to pass into uart_tx
-    uint8_t *uint8_datagram = (uint8_t *) &datagram; 
+    uint8_t *uint8_datagram = (uint8_t *)&datagram;
     size_t tx_len = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(size_t) + data_len;
     StatusCode uart_ret = uart_tx(UART_PORT_2, uint8_datagram, &tx_len);
     for (unsigned int i = 0; i < sizeof(Datagram); ++i) {
       LOG_DEBUG("TX: %x\n", uint8_datagram[i]);
     }
-    
+
     if (uart_ret != STATUS_CODE_OK) {
       LOG_DEBUG("UART_TX FAILED\n");
     }

@@ -2,7 +2,7 @@
 
 #include "can.h"
 
-#pragma pack (push, 1)
+#pragma pack(push, 1)
 typedef struct {
   // Initialize start_frame as 0xAA
   uint8_t start_frame;
@@ -11,7 +11,6 @@ typedef struct {
 
   // Only use dlc number of bytes in data, plus 1 byte for end_of_frame
   uint8_t data[9];
-
 
   // union {
   //   uint64_t data_u64;
