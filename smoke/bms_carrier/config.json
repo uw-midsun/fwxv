@@ -1,0 +1,19 @@
+{
+    "libs": [
+        "FreeRTOS",
+        "ms-common",
+        "master",
+        "ms-drivers"
+    ],
+    "can": true,
+    "include": [
+        "projects/bms_carrier/inc"
+    ],
+    "sources": [
+        "projects/bms_carrier/src/current_sense.o",
+        "projects/bms_carrier/src/cell_sense.o",
+        "projects/bms_carrier/src/state_of_charge.o",
+        "projects/bms_carrier/src/relays.o",
+        "projects/bms_carrier/src/fault_bps.o"
+    ]
+}
