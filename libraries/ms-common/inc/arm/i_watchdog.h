@@ -1,4 +1,5 @@
 #pragma once
+#include <stdint.h>
 
 // An enum for the supported prescaler values
 typedef enum {

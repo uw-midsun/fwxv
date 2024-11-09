@@ -1,5 +1,7 @@
 #include "i_watchdog.h"
 
+#include <stdint.h>
+
 #include "stm32f10x_iwdg.h"
 
 void IWDG_SetValues(IWDGPrescalerValue prescaler_value, uint16_t reload_period_ms) {
