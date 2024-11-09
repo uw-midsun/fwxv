@@ -12,6 +12,5 @@ typedef enum {
   IWDG_Prescaler_256
 } IWDGPrescalerValue;
 
-void IWDG_Start(void);
+void IWDG_SetValues(IWDGPrescalerValue prescaler_value, uint16_t reload_period_ms);
 void IWDG_Reload(void);
-void IWDG_CalculateValues(uint16_t reset_time, uint16_t reload_period_ms);
