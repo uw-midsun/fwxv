@@ -60,7 +60,7 @@ def check_yaml_file(data):
 def get_data():
     boards = []
     messages = []
-
+    messages_dict = {}
     for yaml_path in Path(__file__).parent.glob("boards/*.yaml"):
         # read yaml
         with open(yaml_path, "r") as f:
@@ -94,8 +94,31 @@ def get_data():
                 "receiver": message["target"],
             })
 
-    return {"Boards": boards, "Messages": messages}
+            messages_dict[message["id"]] = {
+                "id": message["id"],
+                "critical": message["critical"],
+                "name": message_name,
+                "signals": signals,
+                "sender": sender,
+                "receiver": message["target"],
+            }
 
+            print("Boards:")
+            for board in boards:
+                print(f" - {board}")
+
+            print("\nMessages:")
+            for message in messages:
+                print(f"Message Name: {message['name']}")
+                print(f"  ID: {message['id']}")
+                print(f"  Critical: {message['critical']}")
+                print(f"  Sender: {message['sender']}")
+                print(f"  Receiver: {message['receiver']}")
+                print("  Signals:")
+                for signal in message['signals']:
+                    print(f"   - Name: {signal['name']}, Start Bit: {signal['start_bit']}, Length: {signal['length']}")
+
+    return {"Boards": boards, "Messages": messages, "Messages_dict": messages_dict}
 
 def main():
     parser = argparse.ArgumentParser()
@@ -119,6 +142,6 @@ def main():
             output = env.get_template(template).render(data=data)
             Path(output_dir, get_file_name(template, args.board)).write_text(output)
 
-
+            
 if __name__ == "__main__":
     main()
