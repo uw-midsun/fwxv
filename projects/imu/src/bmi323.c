@@ -260,18 +260,34 @@ static StatusCode gyro_crt_calibration(){
     if(enable_status == STATUS_CODE_OK){
         
         //poll int status register value
-        uint8_t int_status_int1;
-        get_register(INT_STATUS_INT1, &int_status_int1);
-        uint8_t int_status_int2;
-        get_register(INT_STATUS_INT2, &int_status_int2);
+        uint16_t int_status_int1;
+        uint16_t int_status_int2;
 
+        uint8_t data1[2] = {0};
+        uint8_t data2[2] = {0};
+
+        get_multi_register(INT_STATUS_INT1, data1, 2);
+        get_multi_register(INT_STATUS_INT2, data2, 2);
+
+        int_status_int1 = data1[1] << 8 | data1[0];
+        int_status_int2 = data2[1] << 8 | data2[0];
+
+        // get_register(INT_STATUS_INT1, &int_status_int1);
+        // get_register(INT_STATUS_INT2, &int_status_int2);
+
+        //could just get the second byte and shift it by 2
         int_status_int1 &= (1<<10);
         int_status_int2 &= (1<<10);
         uint16_t timeout = 0;
 
         while(int_status_int1 != 1 && int_status_int2 != 1){
-            get_register(INT_STATUS_INT1, &int_status_int1);
-            get_register(INT_STATUS_INT2, &int_status_int2);
+            get_multi_register(INT_STATUS_INT1, data1, 2);
+            get_multi_register(INT_STATUS_INT2, data2, 2);
+
+            int_status_int1 = data1[1] << 8 | data1[0];
+            int_status_int2 = data2[1] << 8 | data2[0];
+            // get_register(INT_STATUS_INT1, &int_status_int1);
+            // get_register(INT_STATUS_INT2, &int_status_int2);
 
             int_status_int1 &= (1<<10);
             int_status_int2 &= (1<<10);     
@@ -309,14 +325,24 @@ static StatusCode gyro_crt_calibration(){
         }
 
         //poll int status register value
-        get_register(INT_STATUS_INT1, &int_status_int1);
-        get_register(INT_STATUS_INT2, &int_status_int2);
+        get_multi_register(INT_STATUS_INT1, data1, 2);
+        get_multi_register(INT_STATUS_INT2, data2, 2);
+
+        int_status_int1 = data1[1] << 8 | data1[0];
+        int_status_int2 = data2[1] << 8 | data2[0];
+        // get_register(INT_STATUS_INT1, &int_status_int1);
+        // get_register(INT_STATUS_INT2, &int_status_int2);
         int_status_int1 &= (1<<10);
         int_status_int2 &= (1<<10);
 
         while(int_status_int1 != 1 && int_status_int2 != 1){
-            get_register(INT_STATUS_INT1, &int_status_int1);
-            get_register(INT_STATUS_INT2, &int_status_int2);
+            get_multi_register(INT_STATUS_INT1, data1, 2);
+            get_multi_register(INT_STATUS_INT2, data2, 2);
+
+            int_status_int1 = data1[1] << 8 | data1[0];
+            int_status_int2 = data2[1] << 8 | data2[0];
+            // get_register(INT_STATUS_INT1, &int_status_int1);
+            // get_register(INT_STATUS_INT2, &int_status_int2);
             int_status_int1 &= (1<<10);
             int_status_int2 &= (1<<10);
         }
