@@ -9,7 +9,7 @@ from datetime import datetime
 class BMSListener:
     def __init__(self):
         # CAN setup
-        self.db = cantools.database.load_file("system_can.dbc")
+        self.db = cantools.database.load_file("/home/firmware/dev/Akashem06/fwxv/smoke/bms_carrier/scripts/system_can.dbc")
         self.can_bus = can.interface.Bus(channel='vcan0', bustype='virtual')
 
         self.start_time = time.time()

@@ -96,7 +96,7 @@ StatusCode max17261_current(Max17261Storage *storage, int32_t *current_a);
  * @param soc_pct - voltage in mV returned in this var
  * @return STATUS_CODE_OK on success
  */
-StatusCode max17261_voltage(Max17261Storage *storage, uint16_t *vcell_mv);
+StatusCode max17261_voltage(Max17261Storage *storage, uint32_t *vcell_mv);
 
 /* @brief Gets a temperature reading in celcius
  * @param storage - a pointer to an already initialized Max17261Storage struct

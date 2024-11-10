@@ -6,7 +6,7 @@ from bms_listener import BMSListener
 
 class TestBMSListener:
     def __init__(self):
-        self.dbc_file = 'system_can.dbc'
+        self.dbc_file = '/home/firmware/dev/Akashem06/fwxv/smoke/bms_carrier/scripts/system_can.dbc'
         self.db = cantools.database.load_file(self.dbc_file)
         self.can_bus = can.interface.Bus(channel='vcan0', bustype='virtual')
         
