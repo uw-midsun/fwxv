@@ -13,9 +13,9 @@
 
 #include "ads1115.h"
 #include "delay.h"
+#include "gpio.h"
 #include "log.h"
 #include "tasks.h"
-#include "gpio.h"
 
 GpioAddress led_addr = {
   .port = GPIO_PORT_B,
@@ -31,8 +31,8 @@ ADS1115_Config config = {
 
 TASK(t1, TASK_STACK_512) {
   gpio_init_pin(&led_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_HIGH);
-  
-  while(true) {
+
+  while (true) {
     gpio_toggle_state(&led_addr);
     GpioState pin_state;
     gpio_get_state(&led_addr, &pin_state);
@@ -57,7 +57,7 @@ int main() {
   LOG_DEBUG("Welcome to FW 103!\n");
 
   tasks_init_task(t1, TASK_PRIORITY(2), NULL);
-  
+
   tasks_start();
 
   LOG_DEBUG("exiting main?\n");

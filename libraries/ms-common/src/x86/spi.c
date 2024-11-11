@@ -42,7 +42,8 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   return STATUS_CODE_OK;
 }
 
-StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data, size_t rx_len) {
+StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
+                        size_t rx_len) {
   if (spi >= NUM_SPI_PORTS) {
     return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
   }
@@ -86,13 +87,12 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
   return STATUS_CODE_OK;
 }
 
-inline StatusCode spi_exchange_noreset(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data, size_t rx_len) 
-{
+inline StatusCode spi_exchange_noreset(SpiPort spi, uint8_t *tx_data, size_t tx_len,
+                                       uint8_t *rx_data, size_t rx_len) {
   GpioState prev_state = s_port[spi].cs_state;
   StatusCode s = spi_exchange(spi, tx_data, tx_len, rx_data, rx_len);
   s_port[spi].cs_state = prev_state;
   return s;
-
 }
 
 StatusCode spi_get_tx(SpiPort spi, uint8_t *data, uint8_t len) {

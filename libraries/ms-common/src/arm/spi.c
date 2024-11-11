@@ -105,7 +105,7 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   return STATUS_CODE_OK;
 }
 
-StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
+StatusCode spi_exchange_noreset(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
                         size_t rx_len) {
   if (spi >= NUM_SPI_PORTS) {
     return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
@@ -153,11 +153,22 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
       rx_data[i - tx_len] = data;
     }
   }
-
-  // set spi CS state HIGH
-  gpio_set_state(&s_port[spi].cs, GPIO_STATE_HIGH);
   mutex_unlock(&s_port[spi].spi_buf.mutex);
+  return STATUS_CODE_OK;
+}
 
+StatusCode spi_cs_set_state(SpiPort spi, GpioState state) {
+  status_ok_or_return(mutex_lock(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
+  gpio_set_state(&s_port[spi].cs, state);
+  mutex_unlock(&s_port[spi].spi_buf.mutex);
+  return STATUS_CODE_OK;
+}
+
+StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
+                        size_t rx_len) {
+  // set spi CS state HIGH
+  spi_exchange_noreset(spi, tx_data, tx_len, rx_data, rx_len);
+  spi_cs_set_state(spi, GPIO_STATE_HIGH);
   return STATUS_CODE_OK;
 }
 

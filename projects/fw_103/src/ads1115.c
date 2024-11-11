@@ -59,10 +59,9 @@ StatusCode ads1115_read_raw(ADS1115_Config *config, ADS1115_Channel channel, int
 }
 
 StatusCode ads1115_read_converted(ADS1115_Config *config, ADS1115_Channel channel, float *reading) {
-  
-  int16_t raw_reading;	
+  int16_t raw_reading;
   ads1115_read_raw(config, channel, &raw_reading);
-  *reading = ((raw_reading/65535.0)*4.096) - 2.048;
+  *reading = ((raw_reading / 65535.0) * 4.096) - 2.048;
 
   return STATUS_CODE_OK;
 }
