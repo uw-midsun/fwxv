@@ -5,8 +5,5 @@
         "master",
         "ms-drivers"
     ],
-    "can": true,
-    "mocks": {
-        "test_state_of_charge": ["xTaskGetTickCount"]
-    }
+    "can": true
 }

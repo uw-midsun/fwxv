@@ -72,30 +72,19 @@ AddOption(
     help="(x86) Specifies the sanitizer. One of 'asan' for Address sanitizer or 'tsan' for Thread sanitizer. Defaults to none."
 )
 
-AddOption(
-    '--flash',
-    dest='flash',
-    type='choice',
-    choices=('bootloader', 'application', 'default'),
-    default='default',
-    help="Specifies which application to flash. The bootloader, application or the entire flash bank"
-)
-
 PLATFORM = GetOption('platform')
 TARGET = GetOption('name')
-FLASH_TYPE = GetOption('flash')
 
 ###########################################################
 # Environment setup
 ###########################################################
 
 # Retrieve the construction environment from the appropriate platform script
-env = SConscript(f'platform/{PLATFORM}.py', exports='FLASH_TYPE')
+env = SConscript(f'platform/{PLATFORM}.py')
 
 VARS = {
     "PLATFORM": PLATFORM,
     "TARGET": TARGET,
-    "FLASH_TYPE": FLASH_TYPE,
     "env": env,
 }
 
@@ -162,14 +151,6 @@ elif COMMAND == "lint" or COMMAND == "format":
     SConscript('scons/lint_format.scons', exports='VARS')
 
 ###########################################################
-# Erasing the flash memory
-###########################################################
-elif COMMAND == "erase_flash":
-    def erase_flash(target, source, env, *args, **kwargs):
-        flash_run(None, COMMAND)
-    AlwaysBuild(Command('#/erase_flash', None, erase_flash))
-    
-###########################################################
 # Build
 ###########################################################
 else:  # command not recognised, default to build
@@ -207,7 +188,7 @@ if PLATFORM == 'arm' and TARGET:
 
     # flash the MCU using openocd
     def flash_run_target(target, source, env):
-        serialData = flash_run(project_bin, FLASH_TYPE)
+        serialData = flash_run(project_bin)
         #while True:
         #    line: str = serialData.readline().decode("utf-8")
         #    print(line, end='')

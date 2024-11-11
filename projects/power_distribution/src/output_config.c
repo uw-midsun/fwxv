@@ -157,140 +157,140 @@ BtsLoadSwitchOutput g_output_config[NUM_OUTPUTS] = {
     .select_pin = &s_solar_sense_1_2_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_SOLAR,
+    .resistor = 0,
   },
   [SOLAR_SENSE_2] = {
     .enable_pin = &s_solar_sense_2_en,
     .select_pin = &s_solar_sense_1_2_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_SOLAR,
+    .resistor = 0,
   },
   [PEDAL] = {
     .enable_pin = &s_pedal_en,
     .select_pin = &s_pedal_steering_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_PEDAL_STEERING,
+    .resistor = 0,
   },
   [DRL_LEFT] = {
     .enable_pin = &s_drl_left_en,
     .select_pin = &s_pedal_steering_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_PEDAL_STEERING,
+    .resistor = 0,
   },
   [LEFT_TURN] = {
     .enable_pin = &s_turn_left_en,
     .select_pin = &s_left_right_turn_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_LEFT_RIGHT_TURN,
+    .resistor = 0,
   },
   [RIGHT_TURN] = {
     .enable_pin = &s_right_turn_en,
     .select_pin = &s_left_right_turn_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_LEFT_RIGHT_TURN,
+    .resistor = 0,
   },
   [DRL_RIGHT] = {
     .enable_pin = &s_drl_right_en,
     .select_pin = &s_drl_brake_light_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_DRL_BRAKE,
+    .resistor = 0,
   },
   [BRAKE_LIGHT] = {
     .enable_pin = &s_brake_light_en,
     .select_pin = &s_drl_brake_light_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_DRL_BRAKE,
+    .resistor = 0,
   },
   [CENTER_CONSOLE] = {
     .enable_pin = &s_center_console_en,
     .select_pin = &s_center_console_bms_dcdc_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_CENTER_CONSOLE_BMS_DCDC,
+    .resistor = 0,
   },
   [BMS_DCDC] = {
     .enable_pin = &s_bms_dcdc_en,
     .select_pin = &s_center_console_bms_dcdc_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_CENTER_CONSOLE_BMS_DCDC,
+    .resistor = 0,
   },
   [MCI] = {
     .enable_pin = &s_mci_en,
     .select_pin = &s_mci_bps_light_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_MCI_BPS_LIGHT,
+    .resistor = 0,
   },
   [BPS_LIGHT] = {
     .enable_pin = &s_bps_light_en,
     .select_pin = &s_mci_bps_light_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_MCI_BPS_LIGHT,
+    .resistor = 0,
   },
   [SPARE_12V_1] = {
     .enable_pin = &s_spare_12v_1_en,
     .select_pin = &s_spare_12v_1_2_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_DCDC_SPARE,
+    .resistor = 0,
   },
   [SPARE_12V_2] = {
     .enable_pin = &s_spare_12v_2_en,
     .select_pin = &s_spare_12v_1_2_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_DCDC_SPARE,
+    .resistor = 0,
   },
   [BMS_AUX] = {
     .enable_pin = &s_bms_aux_en,
     .select_pin = &s_bms_aux_driver_fan_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_BMS_AUX,
+    .resistor = 0,
   },
   [DRIVER_FAN] = {
     .enable_pin = &s_driver_fan_en,
     .select_pin = &s_bms_aux_driver_fan_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_BMS_AUX,
+    .resistor = 0,
   },
   [REAR_CAM_LCD] = {
     .enable_pin = &s_rear_cam_lcd_en,
     .select_pin = &s_rear_cam_lcd_spare_5v_dcdc_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_CAMERA,
+    .resistor = 0,
   },
   [SPARE_5V_DCDC] = {
     .enable_pin = &s_spare_5v_dcdc_en,
     .select_pin = &s_rear_cam_lcd_spare_5v_dcdc_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_CAMERA,
+    .resistor = 0,
   },
   [TELEMETRY] = {
     .enable_pin = &s_telemetry_en,
     .select_pin = &s_telemetry_spare_5v_aux_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_TELEMETRY,
+    .resistor = 0,
   },
   [SPARE_5V_AUX] = {
     .enable_pin = &s_spare_5v_aux_en,
     .select_pin = &s_telemetry_spare_5v_aux_dsel,
     .select_state = { .select_state_pca9555 = PCA9555_GPIO_STATE_HIGH  },
     .sense_pin = &(GpioAddress)PD_MUX_OUTPUT_PIN, // NOLINT
-    .mux_val = ISENSE_TELEMETRY,
+    .resistor = 0,
   },
 };
 

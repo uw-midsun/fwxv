@@ -1,7 +1,0 @@
-{
-    "arm_libs": [
-    "stm32f10x"
-    ],
-    "no_lint": true,
-    "arm_only": true
-}

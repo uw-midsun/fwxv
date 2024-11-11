@@ -38,7 +38,6 @@ static bool s_tx_full = false;
 // takes 1 for filter_in, 2 for filter_out and default is 0
 static int s_can_filter_en = 0;
 static uint32_t can_filters[CAN_HW_NUM_FILTER_BANKS];
-extern uint32_t _flash_start;
 
 static void prv_add_filter_in(uint8_t filter_num, uint32_t mask, uint32_t filter) {
   CAN_FilterInitTypeDef filter_cfg = {
@@ -214,13 +213,6 @@ void USB_LP_CAN1_RX0_IRQHandler(void) {
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP0) == SET) {
     CanMessage rx_msg = { 0 };
     if (can_hw_receive(&rx_msg.id.raw, (bool *)&rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
-      // Handle bootloader jump request
-      if (rx_msg.id.raw == BOOTLOADER_JUMP_ID) {
-        CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_FMP0);
-        __disable_irq();
-        NVIC_SystemReset();
-        while(1);
-      }
       // check id against filter out, if matches any filter in filter out then dont push
       bool s_filter_id_match = false;
       for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++) {
@@ -246,14 +238,6 @@ void CAN1_RX1_IRQHandler(void) {
   if (CAN_GetITStatus(CAN_HW_BASE, CAN_IT_FMP1) == SET) {
     CanMessage rx_msg = { 0 };
     if (can_hw_receive(&rx_msg.id.raw, (bool *)&rx_msg.extended, &rx_msg.data, &rx_msg.dlc)) {
-      // Handle bootloader jump request
-      if (rx_msg.id.raw == BOOTLOADER_JUMP_ID) {
-        CAN_ClearITPendingBit(CAN_HW_BASE, CAN_IT_FMP1);
-        __disable_irq();
-        NVIC_SystemReset();
-        while(1);
-      }
-
       // check id against filter out, if matches any filter in filter out then dont push
       bool s_filter_id_match = false;
       for (int i = 0; i < CAN_HW_NUM_FILTER_BANKS; i++) {

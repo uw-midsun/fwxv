@@ -39,6 +39,7 @@ int main(void) {
   log_init();
 
   tasks_init_task(leds_task, TASK_PRIORITY(2), NULL);
+
   tasks_start();
   LOG_DEBUG("Blinking LEDs...\n");
 

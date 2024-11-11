@@ -18,8 +18,6 @@
 #define CAN_HW_DEV_INTERFACE "vcan0"
 #endif
 
-#define BOOTLOADER_JUMP_ID 35
-
 typedef enum {
   CAN_HW_BUS_STATUS_OK = 0,
   CAN_HW_BUS_STATUS_ERROR,

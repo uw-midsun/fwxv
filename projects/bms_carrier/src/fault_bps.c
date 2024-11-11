@@ -1,11 +1,9 @@
 #include "fault_bps.h"
 
-#include "relays.h"
+static BpsStorage *s_bps_storage;
 
-static uint16_t *fault_bitset;
-
-StatusCode fault_bps_init(BmsStorage *storage) {
-  fault_bitset = &storage->fault_bitset;
+StatusCode fault_bps_init(BpsStorage *storage) {
+  s_bps_storage = storage;
   return STATUS_CODE_OK;
 }
 
@@ -13,22 +11,22 @@ StatusCode fault_bps_init(BmsStorage *storage) {
 StatusCode fault_bps_set(uint8_t fault_bitmask) {
   // NOTE(Mitch): adding log statements in this function may cause hardfault
   bms_relay_fault();
-  *fault_bitset |= (1 << fault_bitmask);
-  if (*fault_bitset & 0x7) {
-    *fault_bitset |= (1 << 15);
+  s_bps_storage->fault_bitset |= (1 << fault_bitmask);
+  if (s_bps_storage->fault_bitset & 0x7) {
+    s_bps_storage->fault_bitset |= (1 << 15);
   } else {
-    *fault_bitset |= (1 << 14);
+    s_bps_storage->fault_bitset |= (1 << 14);
   }
-  set_battery_status_fault(*fault_bitset);
+  set_battery_status_fault(s_bps_storage->fault_bitset);
   return STATUS_CODE_OK;
 }
 
 // Clear fault from fault_bitmask
 StatusCode fault_bps_clear(uint8_t fault_bitmask) {
-  *fault_bitset &= ~(1 << fault_bitmask);
+  s_bps_storage->fault_bitset &= ~(1 << fault_bitmask);
   return STATUS_CODE_OK;
 }
 
 uint8_t fault_bps_get(void) {
-  return *fault_bitset;
+  return s_bps_storage->fault_bitset;
 }

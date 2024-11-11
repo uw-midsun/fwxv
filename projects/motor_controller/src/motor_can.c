@@ -1,7 +1,6 @@
 
 #include "motor_can.h"
 
-#include <math.h>
 #include <stdint.h>
 
 #include "log.h"
@@ -43,9 +42,6 @@ static float s_target_current;
 static float s_target_velocity;
 static float s_car_velocity_l = 0.0;
 static float s_car_velocity_r = 0.0;
-
-void (*mcp2515_rx_all)();
-void (*mcp2515_tx_all)();
 
 static float prv_get_float(uint32_t u) {
   union {
@@ -98,7 +94,7 @@ static void prv_update_target_current_velocity() {
   throttle_percent = prv_clamp_float(throttle_percent);
   bool brake = get_cc_pedal_brake_output();
   float target_vel = (int)(get_cc_info_target_velocity()) * VEL_TO_RPM_RATIO;
-  float car_vel = fabs((s_car_velocity_l + s_car_velocity_r) / 2);
+  float car_vel = abs((s_car_velocity_l + s_car_velocity_r) / 2);
   float opd_threshold = prv_one_pedal_threshold(car_vel);
 
   DriveState drive_state = get_cc_info_drive_state();
@@ -225,13 +221,13 @@ static void motor_controller_rx_all() {
 
       case MOTOR_CONTROLLER_BASE_L + VEL_MEASUREMENT:
         set_motor_velocity_velocity_l(
-            (uint16_t)fabs((prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE)));
+            (uint16_t)abs((prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE)));
         s_car_velocity_l =
             prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE * CONVERT_VELOCITY_TO_KPH;
         break;
       case MOTOR_CONTROLLER_BASE_R + VEL_MEASUREMENT:
         set_motor_velocity_velocity_r(
-            (uint16_t)fabs((prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE)));
+            (uint16_t)abs((prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE)));
         s_car_velocity_r =
             prv_get_float(msg.data_u32[1]) * VELOCITY_SCALE * CONVERT_VELOCITY_TO_KPH;
         break;

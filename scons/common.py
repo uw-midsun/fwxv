@@ -13,8 +13,7 @@ def parse_config(entry):
         'cflags': [],
         'mocks': {},
         'no_lint': False,
-        'can': False,
-        'arm_only': False
+        "can": False,
     }
     config_file = entry.File('config.json')
     if not config_file.exists():
@@ -26,7 +25,7 @@ def parse_config(entry):
     return ret
 
 
-def flash_run(entry, flash_type):
+def flash_run(entry):
     '''flash and run file, return a pyserial object which monitors the device serial output'''
     try:
         output = subprocess.check_output(["ls", "/dev/serial/by-id/"])
@@ -47,28 +46,9 @@ def flash_run(entry, flash_type):
         '-f target/stm32f1x.cfg',
         '-f {}/stm32f1-openocd.cfg'.format(PLATFORM_DIR),
         '-c "stm32f1x.cpu configure -rtos FreeRTOS"',
+        '-c "stm_flash {}"'.format(entry),
+        '-c shutdown'
     ]
-    if flash_type == 'default':
-        OPENOCD_CFG += [
-            '-c "stm_flash {}"'.format(entry),
-        ]
-    elif flash_type == 'application':
-        OPENOCD_CFG+= [
-            '-c "stm_flash_bootloader_application {}"'.format(entry),
-        ]
-    elif flash_type == 'bootloader':
-        OPENOCD_CFG += [
-            '-c "stm_flash_bootloader {}"'.format(entry),
-        ]
-    elif flash_type == 'erase_flash':
-        OPENOCD_CFG += [
-            '-c "stm_erase"',
-        ]
-    else:
-        raise ValueError('Invalid flash_type')
-    
-    OPENOCD_CFG.append('-c shutdown')
-
     cmd = 'sudo {}'.format(' '.join(OPENOCD_CFG))
 
     subprocess.run(cmd, shell=True).check_returncode()

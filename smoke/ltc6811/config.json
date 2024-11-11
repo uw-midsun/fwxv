@@ -1,8 +1,0 @@
-{
-    "libs": [
-        "FreeRTOS",
-        "ms-common",
-        "ms-drivers",
-        "core"
-    ]
-}

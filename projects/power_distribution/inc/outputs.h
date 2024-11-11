@@ -72,25 +72,6 @@ typedef enum {
   NUM_OUTPUT_GROUPS,
 } OutputGroup;
 
-typedef enum {
-  ISENSE_PEDAL_STEERING = 6,
-  ISENSE_SOLAR,
-  ISENSE_LEFT_RIGHT_TURN,
-  ISENSE_DRL_BRAKE,
-  ISENSE_CENTER_CONSOLE_BMS_DCDC,
-  ISENSE_BMS_AUX,
-  ISENSE_TELEMETRY,
-  ISENSE_CAMERA,
-  ISENSE_DCDC_SPARE,
-  ISENSE_MCI_BPS_LIGHT,
-} ISenseMux;
-
-#define ISENSE_GAIN 2.7
-#define ISENSE_BIAS 1
-#define ISENSE_R1_KOHMS 1
-#define ISENSE_R2_KOHMS 1.21
-#define ISENSE_VOLTAGE_DIVIDER (ISENSE_R2_KOHMS / (ISENSE_R1_KOHMS + ISENSE_R2_KOHMS))
-
 typedef struct OutputMeasurementConfig {
   uint8_t mux_val;
 } OutputMeasurementConfig;

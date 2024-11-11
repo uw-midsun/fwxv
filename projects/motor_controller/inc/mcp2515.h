@@ -4,9 +4,9 @@
 #include "mcp2515_defs.h"
 #include "mcp2515_hw.h"
 
-extern void (*mcp2515_rx_all)();
+void (*mcp2515_rx_all)();
 
-extern void (*mcp2515_tx_all)();
+void (*mcp2515_tx_all)();
 
 // Initializes the specified CAN configuration.
 StatusCode mcp2515_init(Mcp2515Storage *storage, const Mcp2515Settings *settings);
