@@ -43,6 +43,13 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings);
 StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
                         size_t rx_len);
 
+// Version of spi_exchange that doesn't affect CS whatsoever, except for in the case of a timeout in
+// which case it'll pull it up.
+StatusCode spi_exchange_noreset(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
+                                size_t rx_len);
+
+StatusCode spi_cs_set_state(SpiPort spi, GpioState state);
+
 #ifdef MS_PLATFORM_X86
 // Reads data from the tx buffer into data
 StatusCode spi_get_tx(SpiPort spi, uint8_t *data, uint8_t len);

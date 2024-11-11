@@ -13,7 +13,7 @@
 
 #define FLASH_ADDR_TO_PAGE(addr) \
   (((uintptr_t)(addr) - (uintptr_t)FLASH_BASE_ADDR) / FLASH_PAGE_BYTES)
-#define FLASH_PAGE_TO_ADDR(page) ((uintptr_t)(page)*FLASH_PAGE_BYTES + (uintptr_t)FLASH_BASE_ADDR)
+#define FLASH_PAGE_TO_ADDR(page) ((uintptr_t)(page) * FLASH_PAGE_BYTES + (uintptr_t)FLASH_BASE_ADDR)
 #define FLASH_WRITE_BYTES FLASH_MCU_WRITE_BYTES
 #define FLASH_PAGE_BYTES FLASH_MCU_PAGE_BYTES
 
