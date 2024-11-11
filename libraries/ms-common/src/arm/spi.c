@@ -106,7 +106,7 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
 }
 
 StatusCode spi_exchange_noreset(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
-                        size_t rx_len) {
+                                size_t rx_len) {
   if (spi >= NUM_SPI_PORTS) {
     return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
   }

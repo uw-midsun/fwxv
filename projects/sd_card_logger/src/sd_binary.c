@@ -34,11 +34,11 @@
 
 #include <string.h>
 
+#include "crc15.h"
 #include "delay.h"
 #include "gpio.h"
 #include "log.h"
 #include "spi.h"
-#include "crc15.h"
 
 // The size of a command frame for the SD card
 #define SD_SEND_SIZE 6
@@ -242,7 +242,7 @@ static StatusCode prv_sd_get_next_write_data_response(SpiPort spi, uint8_t *resp
     }
   }
   return status_msg(STATUS_CODE_INTERNAL_ERROR,
-                      "Received invalid write Response from the SD Card.\n");
+                    "Received invalid write Response from the SD Card.\n");
 }
 
 static StatusCode prv_send_cmd(SpiPort spi, SdResponse *response_field, uint8_t cmd, uint32_t arg) {
@@ -426,7 +426,8 @@ StatusCode sd_read_blocks(SpiPort spi, uint8_t *dest, uint32_t read_addr, uint32
 }
 
 // potentially autocalculate number of blocks?
-StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t write_addr, uint32_t NumberOfBlocks) {
+StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t write_addr,
+                           uint32_t NumberOfBlocks) {
   if (NumberOfBlocks <= 0) {
     return status_msg(STATUS_CODE_INVALID_ARGS, "Number of blocks cannot be 0");
   }
@@ -464,7 +465,7 @@ StatusCode sd_write_blocks(SpiPort spi, uint8_t *src, uint32_t write_addr, uint3
     // Put CRC bytes (not really needed by us, but required by SD) (are they? we'll put them there
     // anyways)
     uint16_t crc = crc15_calculate(src, SD_BLOCK_SIZE);
-    last_status = spi_tx(spi, (uint8_t*)&crc, 2);
+    last_status = spi_tx(spi, (uint8_t *)&crc, 2);
     if (last_status != STATUS_CODE_OK) return last_status;
 
     last_status = prv_sd_get_next_write_data_response(spi, &datawrite_response);

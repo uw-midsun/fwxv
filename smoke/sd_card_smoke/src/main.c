@@ -20,11 +20,11 @@ TASK(smoke_sd_task, TASK_STACK_512) {
   StatusCode s;
   spi_init(SPI_PORT_2, &spi_settings);
   sd_card_init(SPI_PORT_2);
-  uint8_t spi_tx_data[512] = malloc(sizeof(uint8_t) * 512);
-  uint8_t spi_rx_data[512] = malloc(sizeof(uint8_t) * 512);
+  uint8_t *spi_tx_data = malloc(sizeof(uint8_t) * 512);
+  uint8_t *spi_rx_data = malloc(sizeof(uint8_t) * 512);
   while (true) {
     s = sd_read_blocks(SPI_PORT_2, spi_rx_data, 0, 1);
-    LOG_DEBUG("Read Operation Status %s\n", s);
+    LOG_DEBUG("Read Operation Status Number %i\n", s);
     LOG_DEBUG("bytes READ: \n");
     for (int j = 0; j < 64; j++) {
       LOG_DEBUG("%x %x %x %x %x %x %x %x\n", spi_rx_data[j + 0], spi_rx_data[j + 1],
@@ -33,7 +33,7 @@ TASK(smoke_sd_task, TASK_STACK_512) {
     }
     delay_ms(1000);
     s = sd_write_blocks(SPI_PORT_2, spi_tx_data, 0, 1);
-    LOG_DEBUG("Write Operation Status %s\n", s);
+    LOG_DEBUG("Write Operation Status Number %i\n", s);
     LOG_DEBUG("bytes Write: \n");
     for (int j = 0; j < 64; j++) {
       LOG_DEBUG("%x %x %x %x %x %x %x %x\n", spi_tx_data[j + 0], spi_tx_data[j + 1],

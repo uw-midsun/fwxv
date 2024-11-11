@@ -2,5 +2,11 @@
     "libs": [
         "FreeRTOS",
         "ms-common"
+    ],
+    "include": [
+        "projects/sd_card_logger/inc"
+    ],
+    "sources": [
+        "projects/sd_card_logger/src/sd_binary.o"
     ]
 }
