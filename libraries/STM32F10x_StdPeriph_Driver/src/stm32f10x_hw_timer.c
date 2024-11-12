@@ -29,9 +29,8 @@ StatusCode hardware_timer_init_and_start(uint32_t duration_us){
         return STATUS_CODE_RESOURCE_EXHAUSTED;
     }
 
-    
-    
-    
+
+
 
 
     TIM_Cmd(TIMX, ENABLE);
@@ -45,6 +44,9 @@ StatusCode hardware_timer_init_and_start(uint32_t duration_us){
             TIM_CKD_DIV1, 
             0
         };
+    
 
-    TIM_TimeBaseInit(TIMX, &config); // configs timer
+    TIM_TimeBaseInit(TIMX, &config); // configs timer\
+
+    TIM_ITConfig(TIMX, TIM_IT_Update, ENABLE);
 }
