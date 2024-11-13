@@ -10,7 +10,20 @@
 
 static bmi323_storage *s_storage;
 
+
+
 static CanStorage s_can_storage = { 0 };
+
+const bmi323_settings bmi_settings = {
+  .spi_port = SPI_PORT_2,
+  .mosi = {.port = GPIO_PORT_B, .pin = 15},
+  .miso = {.port = GPIO_PORT_B, .pin = 14},
+  .cs = {.port = GPIO_PORT_B, .pin = 12},
+  .sclk = {.port = GPIO_PORT_B, .pin = 13},
+  .int1 = {.port = GPIO_PORT_B, .pin = 0},
+  .int2 = {.port = GPIO_PORT_B, .pin = 1},
+  .spi_baudrate = 2500000,
+};
 const CanSettings can_settings = {
   .device_id = SYSTEM_CAN_DEVICE_IMU,
   .bitrate = CAN_HW_BITRATE_500KBPS,

@@ -88,10 +88,6 @@ typedef struct{
 }gyro_gain_offset_values;
 
 typedef struct {
-  SpiPort spi_port;
-}bmi323_settings;
-
-typedef struct {
   int16_t x;
   int16_t y;
   int16_t z;
@@ -106,13 +102,15 @@ typedef struct {
 } bmi323_storage;
 
 typedef struct{
-  bmi323_settings *settings;
+  SpiPort spi_port;
   uint32_t spi_baudrate;
   GpioAddress mosi;
   GpioAddress miso;
   GpioAddress sclk;
   GpioAddress cs;
-}imu_config;
+  GpioAddress int1;
+  GpioAddress int2;
+}bmi323_settings;
 
 static StatusCode set_register(uint16_t reg_addr, uint16_t value);
 static StatusCode set_multi_register(uint8_t reg_addr, uint8_t *value, uint16_t len);
