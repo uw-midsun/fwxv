@@ -1,9 +1,19 @@
 
 #include "stm32f10x_hw_timer.h"
 
+HardwareTimerCallback htim2, htim3, htim4;
+void TIM2_IRQHandler(void) {
+    htim2();
+}
+void TIM3_IRQHandler(void) {
+    htim3();
+}
+void TIM4_IRQHandler(void) {
+    htim4();
+}
 
 
-StatusCode hardware_timer_init_and_start(uint32_t duration_us){
+StatusCode hardware_timer_init_and_start(uint32_t duration_us, HardwareTimerCallback callback){
     //Timer array for which timers are in use.
     static bool timers[3] = {false, false, false};
 
@@ -15,15 +25,18 @@ StatusCode hardware_timer_init_and_start(uint32_t duration_us){
         TIMX = TIM2;
         timers[0] = true;
         ABP_periph = RCC_APB1Periph_TIM2;
-        
+        htim2 = callback;
     } else if (!timers[1]){
         TIMX = TIM3;
         timers[1] = true;
-        ABP_periph = RCC_APB1Periph_TIM2;
+        ABP_periph = RCC_APB1Periph_TIM3;
+        htim3 = callback;
     } else if (!timers[2]){
         TIMX = TIM4; 
         timers[2] = true;
-        ABP_periph = RCC_APB1Periph_TIM2;
+        ABP_periph = RCC_APB1Periph_TIM4;
+        htim4 = callback;
+
     } else {
         //All timers are in use
         return STATUS_CODE_RESOURCE_EXHAUSTED;
@@ -31,7 +44,7 @@ StatusCode hardware_timer_init_and_start(uint32_t duration_us){
 
 
 
-
+    
 
     TIM_Cmd(TIMX, ENABLE);
 
@@ -46,7 +59,11 @@ StatusCode hardware_timer_init_and_start(uint32_t duration_us){
         };
     
 
-    TIM_TimeBaseInit(TIMX, &config); // configs timer\
+    TIM_TimeBaseInit(TIMX, &config); // configs timer
 
     TIM_ITConfig(TIMX, TIM_IT_Update, ENABLE);
+    
+
 }
+
+

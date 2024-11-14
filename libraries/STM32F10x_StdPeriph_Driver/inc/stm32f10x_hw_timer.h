@@ -5,9 +5,10 @@
 #include <stdint.h>
 
 
-typedef void (* HardwareTimerCallback) (TIM_TypeDef *TIMX);
+typedef void (* HardwareTimerCallback) (void);
 
 
-StatusCode hardware_timer_init_and_start(uint32_t duration_us);
+StatusCode hardware_timer_init_and_start(uint32_t duration_us, HardwareTimerCallback callback);
 
 StatusCode hardware_timer_interrupt(uint32_t duration_us);
+static void privateCallback(void);
