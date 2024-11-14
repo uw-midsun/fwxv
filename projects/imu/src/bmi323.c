@@ -426,15 +426,15 @@ static StatusCode enable_feature_engine(){
     return STATUS_CODE_OK;//should only return if we didnt timeout
 }
 
-static StatusCode imu_init(imu_config *config){
+static StatusCode imu_init(bmi323_settings *settings){
 
     const SpiSettings spi_settings = {
-        .baudrate = config->spi_baudrate,
+        .baudrate = settings->spi_baudrate,
         .mode = SPI_MODE_1,
-        .mosi = config->mosi,
-        .miso = config->miso,
-        .sclk = config->sclk,
-        .cs = config->cs,
+        .mosi = settings->mosi,
+        .miso = settings->miso,
+        .sclk = settings->sclk,
+        .cs = settings->cs,
     };
     spi_init(s_storage->settings->spi_port, &spi_settings);
     StatusCode status = enable_feature_engine();
