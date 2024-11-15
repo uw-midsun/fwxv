@@ -11,6 +11,7 @@ static BmsStorage *bms;
 
 #define CELL_TEMP_OUTLIER 80
 uint8_t afe_message_index = 0;
+static bool prv_cell_data_updated = false;
 
 typedef enum ThermistorMap {
   THERMISTOR_2 = 0,
@@ -70,7 +71,7 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0x14, 0x15, 0x15 },
 
-  .num_devices = 2,
+  .num_devices = 3,
   .num_cells = 12,
   .num_thermistors = NUM_THERMISTORS,
 };
@@ -260,8 +261,17 @@ static StatusCode prv_cell_sense_run() {
   }
   ltc_afe_storage->max_temp = max_temp;
 
+  prv_cell_data_updated = true;
+  return status;
+}
+
+StatusCode log_cell_sense() {
   // CAN Logging
   // AFE messages are logged with 3 voltages at a time, and an index 0-3 to encompass all voltages
+  if (prv_cell_data_updated != true) {
+    return STATUS_CODE_RESOURCE_EXHAUSTED;
+  }
+
   const uint8_t NUM_MSG = 4;
   const uint8_t READINGS_PER_MSG = 3;
 
@@ -294,7 +304,12 @@ static StatusCode prv_cell_sense_run() {
   }
 
   afe_message_index = (afe_message_index + 1) % NUM_MSG;
-  return status;
+
+  if (afe_message_index == 0) {
+    prv_cell_data_updated = false;
+  }
+
+  return STATUS_CODE_OK;
 }
 
 // Task bc delays

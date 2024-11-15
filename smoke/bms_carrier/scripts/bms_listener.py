@@ -9,8 +9,8 @@ from datetime import datetime
 class BMSListener:
     def __init__(self):
         # CAN setup
-        self.db = cantools.database.load_file("/home/firmware/dev/Akashem06/fwxv/smoke/bms_carrier/scripts/system_can.dbc")
-        self.can_bus = can.interface.Bus(channel='vcan0', bustype='virtual')
+        self.db = cantools.database.load_file('/home/vagrant/shared/fwxv/smoke/bms_carrier/scripts/system_can.dbc')
+        self.can_bus = can.interface.Bus(channel='can0', bustype='socketcan')
 
         self.start_time = time.time()
 
@@ -22,13 +22,19 @@ class BMSListener:
         self.temperatures_2 = []
         self.temperatures_3 = []
 
+        self.afe1_sampled = False
+        self.afe2_sampled = False
+        self.afe3_sampled = False
+
+        self.last_id = 0
+
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.csv_battvt = f"csv_data/BATTVT_{timestamp}.csv"
+        self.csv_battvt = f"/home/vagrant/shared/fwxv/smoke/bms_carrier/csv_data/BATTVT_{timestamp}.csv"
         with open(self.csv_battvt, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(['Time(s)', 'Voltage(V)', 'Current(A)', 'Battery_%'])
+            writer.writerow(['Time(s)', 'Voltage(V)', 'Current(A)', 'TEMP (C)', 'Battery_%'])
         
-        self.csv_afe1 = f"csv_data/AFE_1_{timestamp}.csv"
+        self.csv_afe1 = f"/home/vagrant/shared/fwxv/smoke/bms_carrier/csv_data/AFE_1_{timestamp}.csv"
         with open(self.csv_afe1, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow([
@@ -45,9 +51,11 @@ class BMSListener:
                 'CELL VOLTAGE 10 (100 uV)',
                 'CELL VOLTAGE 11 (100 uV)',
                 'CELL VOLTAGE 12 (100 uV)',
-                'Temperature(C)'])
+                'Temperature 1(C)',
+                'Temperature 2(C)',
+                'Temperature 3(C)'])
         
-        self.csv_afe2 = f"csv_data/AFE_2_{timestamp}.csv"
+        self.csv_afe2 = f"/home/vagrant/shared/fwxv/smoke/bms_carrier/csv_data/AFE_2_{timestamp}.csv"
         with open(self.csv_afe2, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow([
@@ -64,9 +72,11 @@ class BMSListener:
                 'CELL VOLTAGE 10 (100 uV)',
                 'CELL VOLTAGE 11 (100 uV)',
                 'CELL VOLTAGE 12 (100 uV)',
-                'Temperature(C)'])
+                'Temperature 1(C)',
+                'Temperature 2(C)',
+                'Temperature 3(C)'])
         
-        self.csv_afe3 = f"csv_data/AFE_3_{timestamp}.csv"
+        self.csv_afe3 = f"/home/vagrant/shared/fwxv/smoke/bms_carrier/csv_data/AFE_3_{timestamp}.csv"
         with open(self.csv_afe3, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow([
@@ -91,25 +101,34 @@ class BMSListener:
     
     def __del__(self):
         print("Cleaning up...")
-        self.notifier.stop()
-        self.can_bus.shutdown()
 
     def handle_bms_message(self, msg):
         """Handle incoming CAN messages"""
         try:
             print(msg)
             decoded_msg = self.db.decode_message(msg.arbitration_id, msg.data)
+            if msg.arbitration_id == 1925 or msg.arbitration_id == 1957 or msg.arbitration_id == 1989:
+                id = decoded_msg.get('id', 0)
+                if id != self.last_id:
+                    self.last_id = id
+                    self.afe1_sampled = False
+                    self.afe2_sampled = False
+                    self.afe3_sampled = False
+                
             current_time = time.time() - self.start_time
             print(decoded_msg)
             if msg.arbitration_id == 15:
                 voltage = decoded_msg.get('voltage', 0)
                 current = decoded_msg.get('current', 0)
+                if current > 32767:
+                    current = current - 65536
                 temperature = decoded_msg.get('temperature', 0)
                 batt_perc = decoded_msg.get('batt_perc', 0)
                 self.write_batt_vt_csv(self.csv_battvt, current_time, voltage, current, temperature, batt_perc)
 
             # AFE 1   
-            if msg.arbitration_id == 1922:
+            if msg.arbitration_id == 1925 and self.afe1_sampled == False:
+                self.afe1_sampled = True
                 v1 = decoded_msg.get('v1', 0)
                 v2 = decoded_msg.get('v2', 0)
                 v3 = decoded_msg.get('v3', 0)
@@ -127,7 +146,8 @@ class BMSListener:
                     self.temperatures_1 = []   
 
             # AFE 2
-            if msg.arbitration_id == 1954:
+            if msg.arbitration_id == 1957 and self.afe2_sampled == False:
+                self.afe2_sampled = True
                 v1 = decoded_msg.get('v1', 0)
                 v2 = decoded_msg.get('v2', 0)
                 v3 = decoded_msg.get('v3', 0)
@@ -145,7 +165,8 @@ class BMSListener:
                     self.temperatures_2 = []
 
             # AFE 3
-            if msg.arbitration_id == 1986:
+            if msg.arbitration_id == 1989 and self.afe3_sampled == False:
+                self.afe3_sampled = True
                 v1 = decoded_msg.get('v1', 0)
                 v2 = decoded_msg.get('v2', 0)
                 v3 = decoded_msg.get('v3', 0)
