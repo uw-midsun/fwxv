@@ -40,7 +40,7 @@ typedef struct {
   uintptr_t application_start;
   uintptr_t current_address;
   uint32_t bytes_written;
-  uint32_t binary_size;
+  uint32_t data_size;
   uint32_t packet_crc32;
   uint16_t expected_sequence_number;
   uint16_t buffer_index;
