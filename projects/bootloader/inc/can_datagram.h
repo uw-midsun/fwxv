@@ -45,11 +45,9 @@ typedef struct {
     struct {
       // node_id
       uint16_t node_ids;
-      // Request
-      uint8_t req;
-      // Length of data being sent
-      uint16_t data_len;
       uint32_t crc32;
+      // Request and Length of data being sent
+      uint16_t req : 4, data_len : 12;
     } ping;
   } payload;
 } BootloaderDatagram_t;
