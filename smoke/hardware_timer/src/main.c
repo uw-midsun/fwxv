@@ -1,0 +1,30 @@
+#include <stdio.h>
+
+#include "log.h"
+#include "master_task.h"
+#include "tasks.h"
+
+void pre_loop_init() {}
+
+void run_fast_cycle() {}
+
+void run_medium_cycle() {}
+
+void run_slow_cycle() {}
+
+// in callbacks do log debug
+// time how long between the on/off takes for the led pin itself. 
+  // use oscilloscope to test the timing, to see delay of the 
+
+int main() {
+  tasks_init();
+  log_init();
+  LOG_DEBUG("Welcome to TEST!");
+
+  init_master_task();
+
+  tasks_start();
+
+  LOG_DEBUG("exiting main?");
+  return 0;
+}

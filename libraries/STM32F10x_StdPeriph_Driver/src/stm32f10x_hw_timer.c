@@ -1,6 +1,14 @@
 
 #include "stm32f10x_hw_timer.h"
 
+typedef struct {
+    TIM_TypeDef tim;
+    bool state;
+    HardwareTimerCallback *callback;
+} HWTimerData;
+
+static HWTimerData s_timer[3];
+
 HardwareTimerCallback htim2, htim3, htim4;
 void TIM2_IRQHandler(void) {
     htim2();
@@ -10,6 +18,11 @@ void TIM3_IRQHandler(void) {
 }
 void TIM4_IRQHandler(void) {
     htim4();
+}
+
+static void prv_tim_callback_func(uint8_t timer_id) {
+    
+    s_timer[timer_id].callback();
 }
 
 
