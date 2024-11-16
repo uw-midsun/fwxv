@@ -48,7 +48,8 @@ typedef struct {
       // Request
       uint8_t req;
       // Length of data being sent
-      uint32_t data_len;
+      uint16_t data_len;
+      uint32_t crc32;
     } ping;
   } payload;
 } BootloaderDatagram_t;
