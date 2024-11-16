@@ -288,7 +288,14 @@ static BootloaderError bootloader_ping() {
     }
     
     //when done, flash, datagram.payload.ping.req = false
+    prv_bootloader.bytes_written += prv_bootloader.buffer_index;
+    prv_bootloader.current_address += prv_bootloader.buffer_index;
+    prv_bootloader.buffer_index = 0;
+    datagram.payload.ping.req = false;
+    memset(flash_buffer, 0, sizeof(flash_buffer));
+    send_ack_datagram(ACK, BOOTLOADER_ERROR_NONE);
   }
+  return BOOTLOADER_ERROR_NONE;
 }
 
 static BootloaderError bootloader_run_state() {
