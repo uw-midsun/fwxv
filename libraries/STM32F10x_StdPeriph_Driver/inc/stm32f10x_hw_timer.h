@@ -3,9 +3,10 @@
 #include "stm32f10x_rcc.h"
 #include "status.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 
-typedef void (* HardwareTimerCallback) (void);
+typedef void (*HardwareTimerCallback) (void);
 
 
 StatusCode hardware_timer_init_and_start(uint32_t duration_us, HardwareTimerCallback callback);
