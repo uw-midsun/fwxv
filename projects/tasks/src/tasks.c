@@ -8,7 +8,7 @@
 #include "log.h"
 #include "misc.h"
 #include "delay.h"
-
+#include "queues.h"
 
 TASK(task1, TASK_STACK_512) {
   int counter1 = 0;
