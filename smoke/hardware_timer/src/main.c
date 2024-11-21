@@ -17,9 +17,7 @@ TASK(HWTimer, TASK_STACK_512) {
 void hardware_callback(void){
   static i = 0;
   LOG_DEBUG("%d", i);
-  i++;  
-
-
+  i++;
 }
 
 // in callbacks do log debug
@@ -30,6 +28,7 @@ int main() {
   tasks_init();
   log_init();
   LOG_DEBUG("Welcome to TEST!");
+  tasks_init_task(HWTimer);
 
   tasks_start();
 
