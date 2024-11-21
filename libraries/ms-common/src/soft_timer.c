@@ -11,9 +11,8 @@ StatusCode soft_timer_init(uint32_t duration_ms, SoftTimerCallback callback, Sof
     // timer already exist/inuse, delete the old timer
     xTimerDelete(timer->id, 0);
   }
-  timer->id = xTimerCreateStatic(NULL, pdMS_TO_TICKS(duration_ms), pdFALSE,  //
-                                 NULL, 
-                                 , &timer->buffer);
+    timer->id = xTimerCreateStatic(NULL, pdMS_TO_TICKS(duration_ms), pdFALSE,  //
+                                 NULL, callback, &timer->buffer);
   return STATUS_CODE_OK;
 }
 

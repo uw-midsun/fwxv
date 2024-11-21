@@ -1,16 +1,26 @@
 #include <stdio.h>
 
 #include "log.h"
-#include "master_task.h"
 #include "tasks.h"
+#include "../stm32f10x_hw_timer.h"
 
-void pre_loop_init() {}
 
-void run_fast_cycle() {}
+TASK(HWTimer, TASK_STACK_512) {
+  while(true) {
+    if (hardware_timer_init_and_start(1000, hardware_callback) != 0) LOG_DEBUG("ERROR");
+    if (hardware_timer_init_and_start(40,hardware_callback ) != 0) LOG_DEBUG("ERROR");
+    if (hardware_timer_init_and_start(1, hardware_callback) != 0) LOG_DEBUG("ERROR");
+    if (hardware_timer_init_and_start(1, hardware_callback) == 0) LOG_DEBUG("ERROR");
+  }
+}
 
-void run_medium_cycle() {}
+void hardware_callback(void){
+  static i = 0;
+  LOG_DEBUG("%d", i);
+  i++;  
 
-void run_slow_cycle() {}
+
+}
 
 // in callbacks do log debug
 // time how long between the on/off takes for the led pin itself. 
@@ -20,8 +30,6 @@ int main() {
   tasks_init();
   log_init();
   LOG_DEBUG("Welcome to TEST!");
-
-  init_master_task();
 
   tasks_start();
 
