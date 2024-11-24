@@ -3,6 +3,7 @@ import pty
 import cantools
 import serial
 
+
 class State:
     SOM = "SOM"
     ID = "ID"
@@ -10,6 +11,7 @@ class State:
     DATA = "DATA"
     EOM = "EOM"
     VALID = "VALID"
+
 
 class DatagramDecoder:
     def __init__(self):
@@ -32,7 +34,7 @@ class DatagramDecoder:
         self.slave_serial.write(bytes(packet))
 
     def read(self):
-        recv = os.read(self.master,1000)
+        recv = os.read(self.master, 1000)
         if self.parse_byte(recv):
             message = self.db.get_message_by_frame_id(self.datagram["id"])
             decoded_data = message.decode(self.datagram['data'])
@@ -52,38 +54,36 @@ class DatagramDecoder:
             return False
 
     def parse_byte(self, byte):
-        match self.message_state:
-            case (State.SOM | State.VALID):
-                self.buffer = []
-                self.datagram = None
-                if byte == 0xAA:
-                    self.message_state = State.ID
-            case State.ID:
-                self.buffer.append(byte)
-                if len(self.buffer) == 4:
-                    message_id = int.from_bytes(self.buffer, byteorder='big')
-                    if self.is_valid_id(message_id):
-                        self.datagram = {"id": message_id}
-                        self.buffer = []
-                        self.message_state = State.DLC
-                    else:
-                        self.message_state = State.SOM
-            case State.DLC:
-                self.datagram["dlc"] = byte
-                if self.datagram["dlc"] <= 9:
-                    self.datagram["data"] = []
-                    self.message_state = State.DATA
+        if self.message_state == State.SOM or self.message_state == State.VALID:
+            self.buffer = []
+            self.datagram = None
+            if byte == 0xAA:
+                self.message_state = State.ID
+        elif self.message_state == State.ID:
+            self.buffer.append(byte)
+            if len(self.buffer) == 4:
+                message_id = int.from_bytes(self.buffer, byteorder='big')
+                if self.is_valid_id(message_id):
+                    self.datagram = {"id": message_id}
+                    self.buffer = []
+                    self.message_state = State.DLC
                 else:
                     self.message_state = State.SOM
-            case State.DATA:
-                self.buffer.append(byte)
-                if len(self.buffer) == self.datagram["dlc"]:
-                    self.datagram["data"] = self.buffer
-                    self.message_state = State.EOM
-            case State.EOM:
-                if byte == 0xBB:
-                    self.message_state = State.VALID
-                else:
-                    self.message_state = State.SOM
+        elif self.message_state == State.DLC:
+            self.datagram["dlc"] = byte
+            if self.datagram["dlc"] <= 9:
+                self.datagram["data"] = []
+                self.message_state = State.DATA
+            else:
+                self.message_state = State.SOM
+        elif self.message_state == State.DATA:
+            self.buffer.append(byte)
+            if len(self.buffer) == self.datagram["dlc"]:
+                self.datagram["data"] = self.buffer
+                self.message_state = State.EOM
+        elif self.message_state == State.EOM:
+            if byte == 0xBB:
+                self.message_state = State.VALID
+            else:
+                self.message_state = State.SOM
         return self.message_state == State.VALID
-    
