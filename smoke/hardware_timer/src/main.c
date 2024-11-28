@@ -1,43 +1,26 @@
 #include <stdio.h>
 #include "log.h"
 #include "tasks.h"
-
-void pre_loop_init() {}
-
-void run_fast_cycle() {}
-
-void run_medium_cycle() {}
-
-void hardware_callback(void){
-  static i = 0;
-  LOG_DEBUG("%d", i);
-  i++;
-}
+#include "hw_timer.h"
+#include "soft_timer.h"
 
 // in callbacks do log debug
 // time how long between the on/off takes for the led pin itself. 
   // use oscilloscope to test the timing, to see delay of the 
-
-
-static void private_callback(void){
-      LOG_DEBUG("Callback triggered!"); 
-}
+static int i= 0;
 
 TASK(HWTimer, TASK_STACK_512) {
-  while(true) {
-    if (hardware_timer_init_and_start(1000, hardware_callback) != 0) LOG_DEBUG("ERROR");
-    if (hardware_timer_init_and_start(40,hardware_callback ) != 0) LOG_DEBUG("ERROR");
     if (hardware_timer_init_and_start(1, hardware_callback) != 0) LOG_DEBUG("ERROR");
-    if (hardware_timer_init_and_start(1, hardware_callback) == 0) LOG_DEBUG("ERROR");
-  }
+    //if (hardware_timer_init_and_start(40,hardware_callback ) != 0) LOG_DEBUG("ERROR");
+    //if (hardware_timer_init_and_start(1, hardware_callback) != 0) LOG_DEBUG("ERROR");
+    //if (hardware_timer_init_and_start(1, hardware_callback) == 0) LOG_DEBUG("ERROR");
 }
 
 void hardware_callback(void){
-  static i = 0;
-  LOG_DEBUG("%d", i);
-  i++;  
-
-
+  i++;
+  if (i % 1000000 == 0){
+    LOG_DEBUG("%d\n", i/100000);
+  }
 }
 
 

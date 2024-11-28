@@ -1,6 +1,7 @@
 
 #include "hw_timer.h"
 #include "stm32f10x_interrupt.h"
+#include <stddef.h>
 
 
 typedef struct {
@@ -13,6 +14,8 @@ typedef struct {
 
 
 } HWTimerData;
+
+void placeholder(){}
 
 //Timers configuration 
 static HWTimerData s_timer[3] = {
@@ -39,9 +42,7 @@ void TIM4_IRQHandler(void) {
 }
 
 
-StatusCode hardware_timer_init_and_start(uint32_t duration_us, HardwareTimerCallback callback){
-
-    //Timer array for which timers are in use.
+StatusCode hardware_timer_init_and_start(uint16_t duration_us, HardwareTimerCallback callback){
 
     // TIM_TypeDef *TIMX;
     for (int i = 0; i < 3; i++){
@@ -52,9 +53,13 @@ StatusCode hardware_timer_init_and_start(uint32_t duration_us, HardwareTimerCall
             
             RCC_APB1PeriphClockCmd(s_timer[i].ABP_periph, ENABLE);
             
+            RCC_ClocksTypeDef clocks;
+            RCC_GetClocksFreq(&clocks);
+            uint32_t prescaler = (clocks.PCLK2_Frequency)/1000000;
+
             
             TIM_TimeBaseInitTypeDef config = {
-            72 - 1, // replace this using clock speed / 1000000
+            (uint16_t) prescaler,
             TIM_CounterMode_Up, 
             duration_us - 1, 
             TIM_CKD_DIV1, 
@@ -74,12 +79,12 @@ StatusCode hardware_timer_init_and_start(uint32_t duration_us, HardwareTimerCall
             // enable timer
             TIM_Cmd(s_timer[i].TIMX, ENABLE);
 
+
             return STATUS_CODE_OK;
 
-        } else {
-            //All timers are in use
-            return STATUS_CODE_RESOURCE_EXHAUSTED;
-        }
+        } 
     }
+    return STATUS_CODE_RESOURCE_EXHAUSTED;
+
 }
 

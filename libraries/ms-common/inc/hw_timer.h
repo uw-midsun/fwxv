@@ -9,9 +9,8 @@
 typedef void (*HardwareTimerCallback) (void);
 
 
-StatusCode hardware_timer_init_and_start(uint32_t duration_us, HardwareTimerCallback callback);
+StatusCode hardware_timer_init_and_start(uint16_t duration_us, HardwareTimerCallback callback);
 
-StatusCode hardware_timer_interrupt(uint32_t duration_us);
-
+StatusCode hardware_timer_interrupt(uint16_t duration_us);
 
 void hardware_callback(void);
