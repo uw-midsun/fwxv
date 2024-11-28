@@ -19,10 +19,11 @@ class Ping_Application:
 
     def ping_application(self, **kwargs):
         start_time = time.time()
-        node_id = kwargs.get("node_id")
+        # node_id = kwargs.get("node_id")
 
         # Represents the ping_type, along with the data being sent
         ping_type = kwargs.get("ping_type")
+
         data = kwargs.get("data")
 
         # Set state to PING
