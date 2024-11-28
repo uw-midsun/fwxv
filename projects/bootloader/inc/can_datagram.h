@@ -16,7 +16,9 @@ typedef enum {
   CAN_ARBITRATION_JUMP_ID,
   CAN_ARBITRATION_ACK_ID,
   CAN_ARBITRATION_START_ID,
-  CAN_ARBITRATION_JUMP_BOOTLOADER
+  CAN_ARBITRATION_JUMP_BOOTLOADER,
+  CAN_ARBITRATION_PING,
+  CAN_ARBITRATION_PING_RECEIVE,
 } BootloaderCanID;
 
 typedef struct {
@@ -40,6 +42,13 @@ typedef struct {
       uint8_t ack_status;
       uint16_t bootloader_error;
     } ack;
+    struct {
+      // node_id
+      uint16_t node_ids;
+      uint32_t crc32;
+      // Request and Length of data being sent
+      uint16_t req : 4, data_len : 12;
+    } ping;
   } payload;
 } BootloaderDatagram_t;
 
