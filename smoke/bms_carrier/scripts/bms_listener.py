@@ -6,10 +6,12 @@ import time
 import csv
 from datetime import datetime
 
+
 class BMSListener:
     def __init__(self):
         # CAN setup
-        self.db = cantools.database.load_file('/home/vagrant/shared/fwxv/smoke/bms_carrier/scripts/system_can.dbc')
+        self.db = cantools.database.load_file(
+            '/home/vagrant/shared/fwxv/smoke/bms_carrier/scripts/system_can.dbc')
         self.can_bus = can.interface.Bus(channel='can0', bustype='socketcan')
 
         self.start_time = time.time()
@@ -33,7 +35,7 @@ class BMSListener:
         with open(self.csv_battvt, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(['Time(s)', 'Voltage(V)', 'Current(A)', 'TEMP (C)', 'Battery_%'])
-        
+
         self.csv_afe1 = f"/home/vagrant/shared/fwxv/smoke/bms_carrier/csv_data/AFE_1_{timestamp}.csv"
         with open(self.csv_afe1, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -54,7 +56,7 @@ class BMSListener:
                 'Temperature 1(C)',
                 'Temperature 2(C)',
                 'Temperature 3(C)'])
-        
+
         self.csv_afe2 = f"/home/vagrant/shared/fwxv/smoke/bms_carrier/csv_data/AFE_2_{timestamp}.csv"
         with open(self.csv_afe2, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -75,7 +77,7 @@ class BMSListener:
                 'Temperature 1(C)',
                 'Temperature 2(C)',
                 'Temperature 3(C)'])
-        
+
         self.csv_afe3 = f"/home/vagrant/shared/fwxv/smoke/bms_carrier/csv_data/AFE_3_{timestamp}.csv"
         with open(self.csv_afe3, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
@@ -98,7 +100,7 @@ class BMSListener:
                 'Temperature 3(C)'])
 
         self.notifier = can.Notifier(self.can_bus, [self.handle_bms_message])
-    
+
     def __del__(self):
         print("Cleaning up...")
 
@@ -114,7 +116,7 @@ class BMSListener:
                     self.afe1_sampled = False
                     self.afe2_sampled = False
                     self.afe3_sampled = False
-                
+
             current_time = time.time() - self.start_time
             print(decoded_msg)
             if msg.arbitration_id == 15:
@@ -124,9 +126,15 @@ class BMSListener:
                     current = current - 65536
                 temperature = decoded_msg.get('temperature', 0)
                 batt_perc = decoded_msg.get('batt_perc', 0)
-                self.write_batt_vt_csv(self.csv_battvt, current_time, voltage, current, temperature, batt_perc)
+                self.write_batt_vt_csv(
+                    self.csv_battvt,
+                    current_time,
+                    voltage,
+                    current,
+                    temperature,
+                    batt_perc)
 
-            # AFE 1   
+            # AFE 1
             if msg.arbitration_id == 1925 and self.afe1_sampled == False:
                 self.afe1_sampled = True
                 v1 = decoded_msg.get('v1', 0)
@@ -141,9 +149,13 @@ class BMSListener:
 
                 id = decoded_msg.get('id', 0)
                 if id == 3:
-                    self.write_afe_csv(self.csv_afe1, current_time, self.cell_voltages_1, self.temperatures_1)
+                    self.write_afe_csv(
+                        self.csv_afe1,
+                        current_time,
+                        self.cell_voltages_1,
+                        self.temperatures_1)
                     self.cell_voltages_1 = []
-                    self.temperatures_1 = []   
+                    self.temperatures_1 = []
 
             # AFE 2
             if msg.arbitration_id == 1957 and self.afe2_sampled == False:
@@ -160,7 +172,11 @@ class BMSListener:
 
                 id = decoded_msg.get('id', 0)
                 if id == 3:
-                    self.write_afe_csv(self.csv_afe2, current_time, self.cell_voltages_2, self.temperatures_2)
+                    self.write_afe_csv(
+                        self.csv_afe2,
+                        current_time,
+                        self.cell_voltages_2,
+                        self.temperatures_2)
                     self.cell_voltages_2 = []
                     self.temperatures_2 = []
 
@@ -179,13 +195,17 @@ class BMSListener:
 
                 id = decoded_msg.get('id', 0)
                 if id == 3:
-                    self.write_afe_csv(self.csv_afe3, current_time, self.cell_voltages_3, self.temperatures_3)
+                    self.write_afe_csv(
+                        self.csv_afe3,
+                        current_time,
+                        self.cell_voltages_3,
+                        self.temperatures_3)
                     self.cell_voltages_3 = []
                     self.temperatures_3 = []
-            
+
         except KeyError as e:
             print(f"Error decoding message: {e}")
-            
+
         except Exception as e:
             print(f"Unexpected error: {e}")
 
@@ -194,7 +214,6 @@ class BMSListener:
             writer = csv.writer(csvfile)
             writer.writerow([f"{time:.3f}", voltage, current, temperature, batt_perc])
 
-    
     def write_afe_csv(self, csv_file, time, cell_voltages, cell_temperatures):
         with open(csv_file, 'a', newline='') as csvfile:
             writer = csv.writer(csvfile)

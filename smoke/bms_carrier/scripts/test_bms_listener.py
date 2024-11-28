@@ -4,12 +4,13 @@ import numpy as np
 import time
 from bms_listener import BMSListener
 
+
 class TestBMSListener:
     def __init__(self):
         self.dbc_file = '/home/firmware/dev/Akashem06/fwxv/smoke/bms_carrier/scripts/system_can.dbc'
         self.db = cantools.database.load_file(self.dbc_file)
         self.can_bus = can.interface.Bus(channel='vcan0', bustype='virtual')
-        
+
         self.listener = BMSListener()
         self.listener.db = self.db
         self.listener.can_bus = self.can_bus
@@ -19,7 +20,7 @@ class TestBMSListener:
         self.test_current = 150
         self.test_temperature = 25
         self.test_batt_perc = 80
-        
+
         self.READINGS_PER_MSG = 3
         self.NUM_MSG = 4
         self.test_afe_message_index = 0
@@ -27,12 +28,12 @@ class TestBMSListener:
         # Generate mock data
         self.mock_cell_voltages = []
         self.mock_temp = []
-        
+
         # Generate mock cell voltages (33.3V ± 0.05V)
         for _ in range(12 * 3):  # 3 AFEs, 12 cells each
             voltage = 33300 + np.random.randint(-500, 500)  # 100 uV
             self.mock_cell_voltages.append(voltage)
-        
+
         # Generate mock temperatures (25°C ± 5°C)
         for _ in range(6 * 3):  # 6 thermistors per AFE, 3 AFEs
             temp = 25 + np.random.randint(-5, 5)
@@ -71,7 +72,7 @@ class TestBMSListener:
             # Send messages for each AFE
             for config in afe_configs:
                 msg_id = config['base_id']
-                
+
                 # Prepare data dictionary
                 data = {
                     'id': self.test_afe_message_index,
@@ -79,7 +80,7 @@ class TestBMSListener:
                     'v2': config['voltages'][1],
                     'v3': config['voltages'][2]
                 }
-                
+
                 # Only include temperature in first three messages of each group
                 if self.test_afe_message_index < 4:
                     data['temp'] = self.mock_temp[config['temp_index']]
@@ -106,7 +107,7 @@ class TestBMSListener:
                 'temperature': self.test_temperature,
                 'batt_perc': self.test_batt_perc
             }
-            
+
             msg = can.Message(
                 arbitration_id=15,  # battery_vt message ID
                 data=self.db.encode_message(15, data),
@@ -126,7 +127,7 @@ class TestBMSListener:
                 self.mock_battery_message()
                 self.mock_afe_messages()
                 time.sleep(1)  # Wait 1 second between messages
-                
+
         except KeyboardInterrupt:
             print("\nTest stopped by user")
         except Exception as e:
@@ -135,6 +136,7 @@ class TestBMSListener:
             print("Shutting down...")
             self.listener.__del__()  # Clean up the listener
             self.can_bus.shutdown()
+
 
 if __name__ == "__main__":
     test = TestBMSListener()

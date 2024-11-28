@@ -23,7 +23,7 @@ StatusCode prv_fuel_gauge_read() {
 
   status |= max17261_current(s_fuel_guage_storage, &s_storage->pack_current);
   delay_ms(5);
-  status |= max17261_voltage(s_fuel_guage_storage,&s_storage->pack_voltage);
+  status |= max17261_voltage(s_fuel_guage_storage, &s_storage->pack_voltage);
   delay_ms(5);
   status |= max17261_temp(s_fuel_guage_storage, &s_storage->temperature);
   delay_ms(5);

@@ -10,8 +10,8 @@
 #include "gpio_it.h"
 #include "log.h"
 #include "master_task.h"
-#include "state_of_charge.h"
 #include "relays.h"
+#include "state_of_charge.h"
 #include "tasks.h"
 
 #define FUEL_GAUGE_CYCLE_TIME_MS 100
@@ -48,8 +48,7 @@ void pre_loop_init() {
   state_of_charge_init(&bms_storage);
 }
 
-void run_fast_cycle() {
-}
+void run_fast_cycle() {}
 
 void run_medium_cycle() {
   run_can_rx_cycle();

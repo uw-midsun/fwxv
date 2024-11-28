@@ -321,7 +321,7 @@ TASK(cell_sense_conversions, TASK_STACK_512) {
     prv_cell_sense_conversions();
     prv_cell_sense_run();
     /* Delay is TBD */
-    xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(10000));
+    xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(5000));
   }
 }
 
