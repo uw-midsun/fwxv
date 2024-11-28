@@ -20,11 +20,23 @@ void hardware_callback(void){
 
 
 static void private_callback(void){
-      LOG_DEBUG("Callback triggered!");
-      
+      LOG_DEBUG("Callback triggered!"); 
 }
 
-TASK(timer_task, TASK_STACK_512){
+TASK(HWTimer, TASK_STACK_512) {
+  while(true) {
+    if (hardware_timer_init_and_start(1000, hardware_callback) != 0) LOG_DEBUG("ERROR");
+    if (hardware_timer_init_and_start(40,hardware_callback ) != 0) LOG_DEBUG("ERROR");
+    if (hardware_timer_init_and_start(1, hardware_callback) != 0) LOG_DEBUG("ERROR");
+    if (hardware_timer_init_and_start(1, hardware_callback) == 0) LOG_DEBUG("ERROR");
+  }
+}
+
+void hardware_callback(void){
+  static i = 0;
+  LOG_DEBUG("%d", i);
+  i++;  
+
 
 }
 
@@ -33,7 +45,7 @@ int main() {
   tasks_init();
   log_init();
   LOG_DEBUG("Welcome to TEST!");
-  tasks_init_task(timer_task, 1, NULL);
+  tasks_init_task(HWTimer, 1, NULL);
 
   tasks_start();
 
