@@ -25,27 +25,39 @@ define_flags = ['-D{}'.format(define) for define in defines]
 
 cflags = [
     '-ffreestanding',
-    '-Wall',
-    '-Wextra',
-    '-Werror',
-    '-g3',
-    '-Os',
-    '-Wno-discarded-qualifiers',
-    '-Wno-unused-variable',
+    '-Wall', # Enables all warnings
+    '-Wextra', # Enables extra warnings
+    '-Wno-discarded-qualifiers', # Disables warnings for qualifiers that are ignored
+    '-Wno-unused-variable', # Disables warnings for unused variables
     '-Wno-unused-parameter',
     '-Wsign-conversion',
     '-Wpointer-arith',
-    '-Wundef',
+    '-Wundef', # Warns if an undefined identifier is evaluated in an #if directive
     '-Wno-enum-conversion',
-    '-ffunction-sections',
-    '-fdata-sections',
-    '-flto',
-    '-fsingle-precision-constant',
-    '-fno-math-errno',
-    '-Wl,--gc-sections',
+    '-ffunction-sections', # Places each function in its own section
+    '-fdata-sections', # Places each data item in its own section
+    '-fsingle-precision-constant', # Treats floating-point constants as single precision
+    '-fno-math-errno', # Disables setting errno after math library functions
+    '-Wl,--gc-sections', # Removes unused sections
     '-Wl,-Map=build/out.map',
     '--specs=nosys.specs',
     '--specs=nano.specs',
+    '-fno-common', # Treats global variables as defined symbols
+]
+
+debug_cflags = [
+    "-g3", # Generate extensive debugging information
+    "-Og", # Optimizes code for debugging
+    '-Werror',  # Treats all warnings as errors
+    "-fstack-usage", # Generates stack usage information in .su files
+    "-fstack-protector-strong", # Enables stack overflow protection
+    
+]
+release_cflags = [
+    "-Os", # Optimize for size
+    '-flto', # Enables link-time optimization
+    "-DNDEBUG", # Disables assertions
+    "-fmerge-all-constants", # Merges identical constants
 ]
 
 def get_link_flags(flash_type='default'):
@@ -60,19 +72,24 @@ def get_link_flags(flash_type='default'):
         '-T{}'.format(script),
     ]
 
-def create_arm_env(flash_type='default'):
+def create_arm_env(flash_type='default', build_type='debug'):
+    combined_cflags = cflags + arch_cflags + define_flags
+    if build_type == 'debug':
+        combined_cflags += debug_cflags
+    else:
+        combined_cflags += release_cflags
     return Environment(
         ENV = { 'PATH': os.environ['PATH'] },
 
         CC=compiler,
-        CCFLAGS=cflags + arch_cflags + define_flags,
+        CCFLAGS=combined_cflags,
         CPPPATH=[],
 
         AS=compiler,
-        ASFLAGS=['-c'] + cflags + arch_cflags + define_flags,
+        ASFLAGS=['-c'] + combined_cflags,
         
         LINK=compiler,
-        LINKFLAGS=cflags + arch_cflags + get_link_flags(flash_type),
+        LINKFLAGS= combined_cflags + get_link_flags(flash_type),
 
         AR=ar,
         RANLIB=ranlib,
@@ -81,7 +98,7 @@ def create_arm_env(flash_type='default'):
     )
 
 bin_builder = Builder(action='{} -O binary $SOURCE $TARGET'.format(objcopy))
-arm_env = create_arm_env(FLASH_TYPE)
+arm_env = create_arm_env(FLASH_TYPE, BUILD_TYPE)
 arm_env.Append(BUILDERS={'Bin': bin_builder})
 
 Return('arm_env')

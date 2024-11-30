@@ -81,10 +81,19 @@ AddOption(
     help="Specifies which application to flash. The bootloader, application or the entire flash bank"
 )
 
+AddOption(
+    '--build-type',
+    dest='build_type',
+    type='choice',
+    choices=('debug', 'release'),
+    default='debug',
+    help="Specifies the build type. One of 'debug' or 'release'. Defaults to 'debug'."
+)
+
 PLATFORM = GetOption('platform')
 TARGET = GetOption('name')
 FLASH_TYPE = GetOption('flash')
-
+BUILD_TYPE = GetOption('build_type')
 ###########################################################
 # Environment setup
 ###########################################################
@@ -96,6 +105,7 @@ VARS = {
     "PLATFORM": PLATFORM,
     "TARGET": TARGET,
     "FLASH_TYPE": FLASH_TYPE,
+    "BUILD_TYPE": BUILD_TYPE,
     "env": env,
 }
 
