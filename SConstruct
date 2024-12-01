@@ -99,7 +99,7 @@ BUILD_TYPE = GetOption('build_type')
 ###########################################################
 
 # Retrieve the construction environment from the appropriate platform script
-env = SConscript(f'platform/{PLATFORM}.py', exports='FLASH_TYPE BUILD_TYPE')
+env = SConscript(f'platform/{PLATFORM}.py', exports={'FLASH_TYPE': FLASH_TYPE, 'BUILD_TYPE': BUILD_TYPE})
 
 VARS = {
     "PLATFORM": PLATFORM,
