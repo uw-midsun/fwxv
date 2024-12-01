@@ -50,7 +50,8 @@ debug_cflags = [
     "-Og", # Optimizes code for debugging
     '-Werror',  # Treats all warnings as errors
     "-fstack-usage", # Generates stack usage information in .su files
-    "-fstack-protector-strong", # Enables stack overflow protection
+    # (commented out due to missing --lssp and --lssp_nonshared libraries)
+    #"-fstack-protector-strong", # Enables stack overflow protection
     
 ]
 release_cflags = [
