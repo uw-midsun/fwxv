@@ -18,6 +18,8 @@
           watchdog: 3
         power_distribution:
           watchdog: 5
+        telemetry:
+          watchdog: 0
       signals:
         fault:
           length: 16
@@ -33,6 +35,8 @@
       critical: true
       target:
         centre_console:
+          watchdog: 0
+        telemetry:
           watchdog: 0
       signals:
         fan1:
@@ -50,6 +54,8 @@
       target:
         centre_console:
           watchdog: 0
+        telemetry:
+          watchdog: 0
       signals:
         voltage:
           length: 16
@@ -66,6 +72,8 @@
       target:
         power_distribution:
           watchdog: 0
+        telemetry:
+          watchdog: 0
       signals:
         state:
           length: 8
@@ -78,6 +86,8 @@
               watchdog: 0
             power_distribution:
               watchdog: 3
+            telemetry:
+              watchdog: 0
           signals:
             id:
               length: 8
@@ -98,6 +108,8 @@
           watchdog: 0
         power_distribution:
           watchdog: 3
+        telemetry:
+          watchdog: 0
       signals:
         id:
           length: 8
@@ -118,6 +130,8 @@
           watchdog: 0
         power_distribution:
           watchdog: 3
+        telemetry:
+          watchdog: 0
       signals:
         id:
           length: 8
