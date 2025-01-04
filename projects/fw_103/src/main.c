@@ -51,6 +51,9 @@ int main() {
   tasks_init();
   log_init();
   gpio_init();
+
+  tasks_init_task(led_toggle, TASK_PRIORITY(2), NULL);
+  
   LOG_DEBUG("Welcome to FW 103!\n");
 
   tasks_start();
