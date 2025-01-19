@@ -1,0 +1,9 @@
+{
+    "libs": [
+        "FreeRTOS",
+        "ms-common",
+        "ms-drivers",
+        "master"
+    ],
+    "can": true
+}
