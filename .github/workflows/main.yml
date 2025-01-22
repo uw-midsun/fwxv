@@ -29,15 +29,16 @@ jobs:
 
       - name: Install STM32 toolchain
         env:
-          GCC_PATH: gcc-arm-none-eabi-8-2019-q3-update
-          GCC_ARCHIVE_PATH: gcc-arm-none-eabi-8-2019-q3-update-linux.tar.bz2
-          GCC_URL: https://developer.arm.com/-/media/Files/downloads/gnu-rm/8-2019q3/RC1.1/gcc-arm-none-eabi-8-2019-q3-update-linux.tar.bz2
+          GCC_PATH: arm-gnu-toolchain-11.3.rel1
+          GCC_ARCHIVE_PATH: arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi.tar.xz
+          GCC_URL: https://developer.arm.com/-/media/Files/downloads/gnu/11.3.rel1/binrel/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-eabi.tar.xz
         run: |
           cd ${HOME}
-          wget -nv $GCC_URL
+          wget -nv $GCC_URL -O $GCC_ARCHIVE_PATH
           mkdir -p $GCC_PATH
-          tar -xjf $GCC_ARCHIVE_PATH
+          tar -xf $GCC_ARCHIVE_PATH -C $GCC_PATH --strip-components=1
           echo "${HOME}/${GCC_PATH}/bin" >> $GITHUB_PATH
+          rm $GCC_ARCHIVE_PATH
 
       - name: Force PATH to update
         run: hash -r

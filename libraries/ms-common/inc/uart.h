@@ -12,7 +12,7 @@
 // Module is not thread safe - do not access a single port from
 // two locations at the same time
 
-#define UART_MAX_BUFFER_LEN 512
+#define UART_MAX_BUFFER_LEN 256
 
 typedef struct {
   GpioAddress tx;  // tx pin

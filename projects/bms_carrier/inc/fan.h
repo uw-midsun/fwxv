@@ -13,4 +13,4 @@
 #define BMS_FAN_TEMP_LOWER_THRESHOLD 40  // Threshold before fan is full strength
 
 void bms_run_fan(void);
-void bms_fan_init(BmsStorage *bms_storage);
+void bms_fan_init(BmsStorage *storage);

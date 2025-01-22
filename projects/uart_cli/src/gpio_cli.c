@@ -141,7 +141,7 @@ static void prv_get(char *args) {
   }
 
   GpioAddress address = { .port = args[0] - 97, .pin = strtol(args + 1, NULL, 10) };
-  GpioState input_state;
+  GpioState input_state = GPIO_STATE_LOW;
 
   if (gpio_get_state(&address, &input_state) == STATUS_CODE_OK) {
     if (input_state) {

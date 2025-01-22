@@ -2,6 +2,7 @@
 
 #include "bms.h"
 #include "current_sense.h"
+#include "fault_bps.h"
 #include "gpio_it.h"
 #include "interrupt.h"
 #include "master_task.h"
