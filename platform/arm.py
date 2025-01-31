@@ -1,5 +1,5 @@
 import os
-Import ('FLASH_TYPE', 'BUILD_TYPE')
+import ('FLASH_TYPE', 'BUILD_TYPE')
 
 PLATFORM_DIR = os.getcwd()
 
