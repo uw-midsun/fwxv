@@ -2,7 +2,7 @@
 
 // I2C Base Address as described in the datasheet (Section 8.5.1.1)
 // Pins 7 and 8 are unconnected in schematics, treated as LOW 
-#define ADC128D818_I2C_BASE_ADDRESS 0x1D 
+#define ADC128D818_I2C_BASE_ADDRESS 0x1D
 
 // Register Addresses from Table 3 in Section 8.6
 #define ADC128D818_REG_CONFIG 0x00
