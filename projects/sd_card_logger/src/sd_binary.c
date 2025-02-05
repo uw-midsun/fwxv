@@ -257,8 +257,6 @@ static StatusCode prv_send_cmd(SpiPort spi, SdResponse *response_field, uint8_t 
   frame[5] = (uint8_t)0x95;  // CRC for a CMD0. We can hardcode this since the CRC is ignored from
                              // then on anyways.
 
-  spi_cs_set_state(spi, GPIO_STATE_LOW);
-
   spi_tx(spi, frame, SD_SEND_SIZE);
 
   if (cmd == SD_CMD_STOP_TRANSMISSION) {
@@ -308,6 +306,9 @@ StatusCode sd_card_init(SpiPort spi) {
   volatile uint16_t retry_counter = SD_NUM_RETRIES;
 
   sd_port[spi] = SpiPortSdConfig_default;
+
+  // Wait to give the clock time to spin up
+  delay_s(1);
 
   // Send CMD0 (SD_CMD_GO_IDLE_STATE) to put SD in SPI mode and
   // wait for In Idle State Response (R1 Format) equal to 0x01
