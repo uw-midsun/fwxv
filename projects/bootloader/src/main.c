@@ -11,6 +11,7 @@
 #define BOOTLOADER_TIMEOUT_MS        15000
 
 volatile uint32_t bootloader_timer = 0;
+static uint8_t flash_buffer[BOOTLOADER_PAGE_BYTES];
 
 const Boot_CanSettings can_settings = {
   .device_id = SYSTEM_CAN_DEVICE_BOOTLOADER,
@@ -28,7 +29,7 @@ int main() {
   /* Set the vector table offset at flash base */
   SCB->VTOR = FLASH_BASE;
   boot_can_init(&can_settings);
-  bootloader_init();
+  bootloader_init(flash_buffer);
   if(SysTick_Config(SystemCoreClock / 1000)) {
     send_ack_datagram(0, BOOTLOADER_INTERNAL_ERR);
     while(true); // Hang
