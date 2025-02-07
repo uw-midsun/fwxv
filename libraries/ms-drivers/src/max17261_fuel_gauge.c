@@ -92,10 +92,10 @@ StatusCode max17261_current(Max17261Storage *storage, int32_t *current_ua) {
   return STATUS_CODE_OK;
 }
 
-StatusCode max17261_voltage(Max17261Storage *storage, uint16_t *vcell_mv) {
+StatusCode max17261_voltage(Max17261Storage *storage, uint32_t *vcell_mv) {
   uint16_t vcell_reg_val = 0;
   status_ok_or_return(max17261_get_reg(storage, MAX17261_VCELL, &vcell_reg_val));
-  *vcell_mv = (uint16_t)((float)(vcell_reg_val)*VOLT_LSB);
+  *vcell_mv = (uint32_t)((vcell_reg_val)*VOLT_LSB);
 
   return STATUS_CODE_OK;
 }

@@ -23,7 +23,7 @@ StatusCode prv_fuel_gauge_read() {
 
   status |= max17261_current(s_fuel_guage_storage, &s_storage->pack_current);
   delay_ms(5);
-  status |= max17261_voltage(s_fuel_guage_storage, (uint16_t *)(&s_storage->pack_voltage));
+  status |= max17261_voltage(s_fuel_guage_storage, &s_storage->pack_voltage);
   delay_ms(5);
   status |= max17261_temp(s_fuel_guage_storage, &s_storage->temperature);
   delay_ms(5);
@@ -31,9 +31,9 @@ StatusCode prv_fuel_gauge_read() {
   // Measured voltage corresponds to one cell. Multiply it by the number of cells in series
   s_storage->pack_voltage = s_storage->pack_voltage * s_storage->config.series_count;
 
-  // LOG_DEBUG("CURRENT: %" PRIu32 "\n", s_storage->pack_current);
-  // LOG_DEBUG("VOLTAGE: %" PRIu32 "\n", s_storage->pack_voltage);
-  // LOG_DEBUG("TEMP: %d\n", s_storage->temperature);
+  LOG_DEBUG("CURRENT: %" PRIu32 "\n", s_storage->pack_current);
+  LOG_DEBUG("VOLTAGE: %" PRIu32 "\n", s_storage->pack_voltage);
+  LOG_DEBUG("TEMP: %d\n", s_storage->temperature);
 
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("Status error: %d\n", status);
@@ -75,7 +75,7 @@ TASK(current_sense, TASK_STACK_256) {
     // Handle alert from fuel gauge
     if (notification & (1 << ALRT_GPIO_IT)) {
       LOG_DEBUG("ALERT_PIN triggered\n");
-      fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
+      // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
     }
     prv_fuel_gauge_read();
     send_task_end();

@@ -1,5 +1,7 @@
 #include "state_of_charge.h"
 
+#include "log.h"
+
 BmsStorage *bms;
 static StateOfChargeStorage s_storage;
 static float voltage_weight = 1.0f;
@@ -43,8 +45,8 @@ void coulomb_counting_soc() {
   float integrated_current = 0.5f * (float)(bms->pack_current + s_storage.last_current) * (d_time);
   s_storage.i_soc = s_storage.averaged_soc + (integrated_current / bms->config.pack_capacity);
 
-  if (s_storage.i_soc > 1.0f) {
-    s_storage.i_soc = 1.0f;
+  if (s_storage.i_soc > 100.0f) {
+    s_storage.i_soc = 100.0f;
   } else if (s_storage.i_soc < 0.0f) {
     s_storage.i_soc = 0.0f;
   }
@@ -95,7 +97,7 @@ StatusCode update_state_of_chrage() {
 
   s_storage.averaged_soc =
       (voltage_weight * s_storage.v_soc) + ((1 - voltage_weight) * (s_storage.i_soc));
-
+  LOG_DEBUG("STATE OF CHARGE CALC: %d\n", (int)(s_storage.averaged_soc * 100));
   set_battery_vt_batt_perc((uint16_t)s_storage.averaged_soc);
   ramp_voltage_weight();
   update_storage();
