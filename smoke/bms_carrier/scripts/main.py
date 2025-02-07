@@ -15,6 +15,7 @@ class TestBMSListener:
         self.listener.db = self.db
         self.listener.can_bus = self.can_bus
 
+
 if __name__ == "__main__":
     test = TestBMSListener()
     while True:

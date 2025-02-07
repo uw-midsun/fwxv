@@ -86,7 +86,7 @@ static float prv_one_pedal_drive_current(float throttle_percent, float threshold
   } else {
     *drive_state = BRAKE;
     // TODO (Aryan): Validate then make this true. Ran into issues at FSGP
-    set_motor_velocity_brakes_enabled(false);
+    set_motor_velocity_brakes_enabled(true);
     return (threshold - throttle_percent) / (threshold);
   }
   LOG_DEBUG("ERROR: One pedal throttle not calculated\n");

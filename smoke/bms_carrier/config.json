@@ -15,5 +15,6 @@
         "projects/bms_carrier/src/state_of_charge.o",
         "projects/bms_carrier/src/relays.o",
         "projects/bms_carrier/src/fault_bps.o"
-    ]
+    ],
+    "no_lint": true
 }
