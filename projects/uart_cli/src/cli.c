@@ -17,7 +17,8 @@ static const char cli_help[] =
 
 static char cmd_buffer[MAX_CMD_LEN + 1];
 // Add additional peripherals to lookup array
-static const CmdStruct cmd_lookup[] = { { .cmd_name = "gpio", .cmd_func = &gpio_cmd } };
+static const CmdStruct cmd_lookup[] = { { .cmd_name = "gpio", .cmd_func = &gpio_cmd },
+                                          {.cmd_name = "adc", .cmd_func = &adc_cmd} };
 
 void cli_init() {
   // Add peripheral init calls here
