@@ -47,7 +47,7 @@ TASK(gpio_project, TASK_MIN_STACK_SIZE) {
       uint8_t interrupt_pin = get_pin_from_notif(notif);
       char interrupt_port = get_port_from_notif(notif);
       if (interrupt_pin >= 32) {
-        LOG_DEBUG("Invalid Pin! Notif val: %u, port: %c\n", notif, interrupt_port);
+        LOG_DEBUG("Invalid Pin! Notif val: %u, port: %c\n", (unsigned int)notif, interrupt_port);
       } else {
         LOG_DEBUG("Notification: %c%u\n", interrupt_port, interrupt_pin);
       }

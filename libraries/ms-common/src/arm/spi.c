@@ -105,8 +105,9 @@ StatusCode spi_init(SpiPort spi, const SpiSettings *settings) {
   return STATUS_CODE_OK;
 }
 
-StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
-                        size_t rx_len) {
+// Rewritten from previous to have a variant that keeps CS low after the transaction. Needed because SD card read/write requires holding CS low for the duration of a transaction.
+StatusCode spi_exchange_noreset(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
+                                size_t rx_len) {
   if (spi >= NUM_SPI_PORTS) {
     return status_msg(STATUS_CODE_EMPTY, "Invalid SPI port.");
   }
@@ -153,11 +154,24 @@ StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *r
       rx_data[i - tx_len] = data;
     }
   }
-
-  // set spi CS state HIGH
-  gpio_set_state(&s_port[spi].cs, GPIO_STATE_HIGH);
   mutex_unlock(&s_port[spi].spi_buf.mutex);
+  return STATUS_CODE_OK;
+}
 
+// API function to manually set the state of the Chip Select (CS) line. 
+// Needed for SD card driver since there are times where we have to manually determine timing for pulling CS up or down.
+StatusCode spi_cs_set_state(SpiPort spi, GpioState state) {
+  status_ok_or_return(mutex_lock(&s_port[spi].spi_buf.mutex, SPI_TIMEOUT_MS));
+  gpio_set_state(&s_port[spi].cs, state);
+  mutex_unlock(&s_port[spi].spi_buf.mutex);
+  return STATUS_CODE_OK;
+}
+
+StatusCode spi_exchange(SpiPort spi, uint8_t *tx_data, size_t tx_len, uint8_t *rx_data,
+                        size_t rx_len) {
+  spi_exchange_noreset(spi, tx_data, tx_len, rx_data, rx_len);
+  // Pull high once we're done
+  spi_cs_set_state(spi, GPIO_STATE_HIGH);
   return STATUS_CODE_OK;
 }
 
