@@ -904,8 +904,9 @@
 
 /* Defaults to uint16_t for backward compatibility, but can be overridden
  * in FreeRTOSConfig.h if uint16_t is too restrictive. */
-    #define configSTACK_DEPTH_TYPE    uint16_t
+    #define configSTACK_DEPTH_TYPE    uint16_t          
 #endif
+// This could be too restrictive for task depths over 128, causing memory corruption
 
 #ifndef configRUN_TIME_COUNTER_TYPE
 

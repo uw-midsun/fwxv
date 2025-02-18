@@ -76,7 +76,9 @@ extern uint32_t SystemCoreClock;
 #define configUSE_TIMERS 1
 #define configTIMER_TASK_PRIORITY 3
 #define configTIMER_QUEUE_LENGTH 10
-#define configTIMER_TASK_STACK_DEPTH configMINIMAL_STACK_SIZE
+#define configTIMER_TASK_STACK_DEPTH \
+  configMINIMAL_STACK_SIZE  // setting task depth to 128 (minimal stack size) will cause segfaults
+                            // for tasks above 128
 
 // Optional functions - most linkers will remove unused functions anyway
 #define INCLUDE_vTaskPrioritySet 1
