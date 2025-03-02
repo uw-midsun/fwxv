@@ -15,8 +15,7 @@
 #include "tasks.h"
 #include "delay.h"
 #include "gpio.h"
-
-
+#include "ads1115.h"
 
 // Define ADC task
 TASK(run_leds, TASK_STACK_512) {
@@ -26,17 +25,38 @@ TASK(run_leds, TASK_STACK_512) {
     .port = GPIO_PORT_B,
     .pin = 3,
   };
+
+  GpioAddress ready_pin = {
+    .port = GPIO_PORT_B,
+    .pin = GPIO_Pin_0,
+  };
+
+  ADS1115_Config config = {
+    .handler_task = run_leds,
+    .i2c_addr = ADS1115_ADDR_GND,
+    .i2c_port = ADS1115_I2C_PORT,
+    .ready_pin = &ready_pin,
+  };
+
   // Track current LED pin state
   GpioState current_led_state;
+  // ADC reading buffer
+  float buff;
 
   // Initialize LED pin
   gpio_init_pin(&led_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
+
+  ads1115_init(&config, ADS1115_ADDR_GND, &ready_pin);
 
   while(true) {
     gpio_toggle_state(&led_addr);
     delay_ms(1000);
 
     gpio_get_state(&led_addr, &current_led_state);
+    ads1115_read_converted(&config, ADS1115_CHANNEL_0, &buff);
+
+    // Serial Monitor
+    LOG_DEBUG("ADC Reading: %f V\n", buff);
 
     if (current_led_state == GPIO_STATE_LOW) {
       LOG_DEBUG("LED off\n");
@@ -53,7 +73,7 @@ int main() {
   LOG_DEBUG("Welcome to FW 103!\n");
 
   // Create ADC task
-  tasks_init_task(run_leds, TASK_PRIORITY(1), NULL);
+  tasks_init_task(run_leds, TASK_PRIORITY(2), NULL);
 
   tasks_start();
 
