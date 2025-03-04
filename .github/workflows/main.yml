@@ -15,7 +15,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v3
@@ -26,6 +26,9 @@ jobs:
           chmod +x ./requirements.sh
           sudo ./requirements.sh
           pip install -r requirements.txt --upgrade
+
+      - name: Install libncurses5
+        run: sudo apt install libncurses-dev
 
       - name: Install STM32 toolchain
         env:
@@ -50,7 +53,6 @@ jobs:
           arm-none-eabi-objdump --version
           arm-none-eabi-size --version
           arm-none-eabi-gcc-ar --version
-          arm-none-eabi-gdb --version
           gcc --version
           make --version
           clang --version
