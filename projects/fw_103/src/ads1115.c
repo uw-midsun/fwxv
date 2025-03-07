@@ -15,7 +15,7 @@ StatusCode ads1115_init(ADS1115_Config *config, ADS1115_Address i2c_addr, GpioAd
 
   // Write Config register
   /* TODO: fill out this value */
-  cmd = 0b0000010010000000; // 0 000 010 0 100 0 0 0 11, last 00 for alrt pin
+  cmd = 0b0000010010000011; // 0 000 010 0 100 0 0 0 11, last 00 for alrt pin, 11 for disable compartor to thresholds
   i2c_write_reg(config->i2c_port, i2c_addr, ADS1115_REG_CONFIG, (uint8_t *)(&cmd), 2);
 
   /* TODO (optional) */
@@ -26,12 +26,19 @@ StatusCode ads1115_init(ADS1115_Config *config, ADS1115_Address i2c_addr, GpioAd
   /* TODO (optional) */
   // Set high thresh to 1V
   cmd = 0b11111001111111; //32767*1/2.048 = 15999
-  i2c_write_reg(config->i2c_port, i2c_addr, ADS1115_REG_LO_THRESH, (uint8_t *)(&cmd), 2);
+  i2c_write_reg(config->i2c_port, i2c_addr, ADS1115_REG_HI_THRESH, (uint8_t *)(&cmd), 2);
 
-  // Register the ALRT pin
+  // Register the ALRT pin, would be anything but 11 in config register
   /* TODO (optional) */
-  gpio_init_pin(ready_pin, GPIO_INPUT_PULL_UP, GPIO_STATE_HIGH);
-  // gpio_it_register_interrupt(ready_pin, const InterruptSettings *settings, const Event event, const Task *task);
+  gpio_init_pin(ready_pin, GPIO_INPUT_PULL_UP, GPIO_STATE_HIGH); // line is active low
+
+  InterruptSettings settings = {
+    .type = INTERRUPT_TYPE_INTERRUPT,
+    .priority = INTERRUPT_PRIORITY_NORMAL,
+    .edge = INTERRUPT_EDGE_FALLING,
+  };
+  
+  gpio_it_register_interrupt(ready_pin, &settings, 1, config->handler_task);
 
   return STATUS_CODE_OK;
 }
