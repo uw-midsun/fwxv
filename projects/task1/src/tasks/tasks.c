@@ -41,8 +41,8 @@ int main(void) {
     tasks_init();
 
     // task_init_task  task, priority, and context (parameters to pass, not needed here).
-    tasks_init_task(task1, 2, NULL);
-    tasks_init_task(task2, 1, NULL);
+    tasks_init_task(task1, TASK_PRIORITY(2), NULL);
+    tasks_init_task(task2, TASK_PRIORITY(1), NULL);
 
     LOG_DEBUG("Program start...\n");
     // Start the scheduler
