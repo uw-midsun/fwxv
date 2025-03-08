@@ -29,13 +29,13 @@ TASK(led_task, TASK_STACK_512){
   //Initializing ADS1115 config and ready pin
   GpioAddress ready_pin = {
     .port = GPIO_PORT_B,
-    .pin = GPIO_Pin_0,
+    .pin = GPIO_Pin_0
   };
   ADS1115_Config config = {
     .handler_task = led_task,
     .i2c_addr = ADS1115_ADDR_GND,
     .i2c_port = ADS1115_I2C_PORT,
-    .ready_pin = &ready_pin,
+    .ready_pin = &ready_pin
   };
 
   // Initializing gpio pins
@@ -49,6 +49,7 @@ TASK(led_task, TASK_STACK_512){
     gpio_toggle_state(&led_addr);
     delay_s(1);
     ads1115_read_converted(&config, ADS1115_CHANNEL_0, 0);
+    delay_s(1);
   }
 }
 int main() {
