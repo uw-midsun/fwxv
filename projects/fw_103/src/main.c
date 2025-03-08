@@ -44,12 +44,13 @@ TASK(led_task, TASK_STACK_512){
   
   //Initializing I2C
   ads1115_init(&config, ADS1115_ADDR_GND, &ready_pin);
+  float reading; 
 
   while(1){
     gpio_toggle_state(&led_addr);
     delay_s(1);
-    ads1115_read_converted(&config, ADS1115_CHANNEL_0, 0);
-    delay_s(1);
+    ads1115_read_converted(&config, ADS1115_CHANNEL_0, &reading);
+    delay_ms(100);
   }
 }
 int main() {
