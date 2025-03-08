@@ -18,9 +18,6 @@
 #include "FreeRTOS.h"
 #include "ads1115.h"
 
-
-
-
 TASK(led_task, TASK_STACK_512){
 
   //Initializing led GPIO address
@@ -43,7 +40,7 @@ TASK(led_task, TASK_STACK_512){
 
   // Initializing gpio pins
   gpio_init();
-  gpio_init_pin(&led_addr);
+  gpio_init_pin(&led_addr, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   
   //Initializing I2C
   ads1115_init(&config, ADS1115_ADDR_GND, &ready_pin);

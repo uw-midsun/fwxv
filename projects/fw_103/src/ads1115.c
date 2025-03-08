@@ -56,8 +56,8 @@ StatusCode ads1115_read_raw(ADS1115_Config *config, ADS1115_Channel channel, uin
 
 StatusCode ads1115_read_converted(ADS1115_Config *config, ADS1115_Channel channel, float *reading) {
   /* TODO: complete function */
-  uint16_t *raw_reading;
+  uint16_t raw_reading;
   ads1115_read_raw(config, channel, &raw_reading);
-  *reading = ((float) *raw_reading / (1 << 16) )* 2.048;
+  *reading = ((float) raw_reading / (1 << 16) )* 2.048;
   return STATUS_CODE_OK;
 }
