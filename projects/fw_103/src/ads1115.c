@@ -38,7 +38,7 @@ StatusCode ads1115_init(ADS1115_Config *config, ADS1115_Address i2c_addr, GpioAd
     .edge = INTERRUPT_EDGE_FALLING,
   };
   
-  gpio_it_register_interrupt(ready_pin, &settings, 1, config->handler_task);
+  gpio_it_register_interrupt(ready_pin, &settings, DONE_CONVERSION, config->handler_task);
 
   return STATUS_CODE_OK;
 }

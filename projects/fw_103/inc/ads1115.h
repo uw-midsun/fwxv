@@ -8,6 +8,13 @@
 
 #define ADS1115_I2C_PORT 0
 
+// event is uint8
+typedef enum {
+  DONE_CONVERSION = 0,
+  OUT_OF_VOLTAGE_RANGE,
+  NUM_INTERRUPT_EVENTS,
+} InterruptEvent;
+
 typedef enum {
   ADS1115_ADDR_GND = 0x48,  // 0b1001000
   ADS1115_ADDR_VDD = 0x49,  // 0b1001001
