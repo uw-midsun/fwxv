@@ -39,7 +39,6 @@ cflags = [
     '-Wno-enum-conversion',
     '-ffunction-sections',
     '-fdata-sections',
-    '-flto',
     '-fsingle-precision-constant',
     '-fno-math-errno',
     '-Wl,--gc-sections',

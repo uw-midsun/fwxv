@@ -1,12 +1,13 @@
+#include "telemetry.h"
+
 #include "can.h"
+#include "can_board_ids.h"
 #include "datagram.h"
+#include "delay.h"
 #include "gpio.h"
 #include "log.h"
-#include "can_board_ids.h"
 #include "tasks.h"
 #include "uart.h"
-#include "delay.h"
-#include "telemetry.h"
 
 static TelemetryStorage *telemetry_storage;
 
@@ -25,7 +26,8 @@ TASK(can_message_listener, TASK_STACK_256) {
   StatusCode status = STATUS_CODE_OK;
 
   while (true) {
-    while (queue_receive(&s_can_storage.rx_queue.queue, &message, QUEUE_DELAY_BLOCKING) != STATUS_CODE_OK) {
+    while (queue_receive(&s_can_storage.rx_queue.queue, &message, QUEUE_DELAY_BLOCKING) !=
+           STATUS_CODE_OK) {
     }
     LOG_DEBUG("Received message\n");
     decode_can_message(&datagram, &message);
@@ -47,7 +49,8 @@ TASK(can_message_processor, TASK_STACK_256) {
 
   while (true) {
     /* Wait for new data to be in the queue */
-    while (queue_receive(&telemetry_storage->datagram_queue, &tx_datagram, QUEUE_DELAY_BLOCKING) == STATUS_CODE_OK) {
+    while (queue_receive(&telemetry_storage->datagram_queue, &tx_datagram, QUEUE_DELAY_BLOCKING) ==
+           STATUS_CODE_OK) {
       LOG_DEBUG("Processing message\n");
       datagram_length = tx_datagram.dlc + DATAGRAM_METADATA_SIZE;
       log_decoded_message(&tx_datagram);

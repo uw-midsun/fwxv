@@ -14,6 +14,8 @@ Messages:
     id: 5
     critical: true
     target:
+      telemetry:
+          watchdog: 0
       motor_controller:
         watchdog: 3
       power_distribution:
@@ -33,6 +35,8 @@ Messages:
     id: 3
     critical: true
     target:
+      telemetry:
+          watchdog: 0
       motor_controller:
         watchdog: 0
       power_distribution:

@@ -324,21 +324,21 @@ static OutputGroupDef s_output_group_brake = { .num_outputs = 1, .outputs = { BR
 
 static OutputGroupDef s_output_group_bps = { .num_outputs = 1, .outputs = { BPS_LIGHT } };
 
-static OutputGroupDef s_output_group_power_off = { .num_outputs = 8,
-                                                   .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX,
-                                                                PEDAL, DRL_RIGHT, DRL_LEFT,
-                                                                REAR_CAM_LCD, SPARE_5V_AUX } };
+static OutputGroupDef s_output_group_power_off = {
+  .num_outputs = 8,
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, DRL_RIGHT, DRL_LEFT, SPARE_12V_1, SPARE_5V_AUX }
+};
 
 static OutputGroupDef s_output_group_power_drive = {
   .num_outputs = 10,
-  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, PEDAL, MCI, DRL_RIGHT, DRL_LEFT, DRIVER_FAN,
-               REAR_CAM_LCD, SPARE_5V_AUX }
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, BMS_AUX, MCI, DRL_RIGHT, DRL_LEFT,
+               SPARE_12V_1, SPARE_5V_AUX }
 };
 
-static OutputGroupDef s_output_group_power_fault = { .num_outputs = 8,
-                                                     .outputs = { CENTER_CONSOLE, BMS_DCDC, PEDAL,
-                                                                  DRL_LEFT, DRL_RIGHT, BPS_LIGHT,
-                                                                  REAR_CAM_LCD, SPARE_5V_AUX } };
+static OutputGroupDef s_output_group_power_fault = {
+  .num_outputs = 8,
+  .outputs = { CENTER_CONSOLE, BMS_DCDC, DRL_LEFT, DRL_RIGHT, BPS_LIGHT, SPARE_12V_1, SPARE_5V_AUX }
+};
 
 const OutputGroupDef *g_output_group_map[NUM_OUTPUT_GROUPS] = {
   [OUTPUT_GROUP_ALL] = NULL,  // Special case

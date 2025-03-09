@@ -46,6 +46,8 @@
       id: 2
       critical: true
       target:
+        telemetry:
+          watchdog: 0
         centre_console:
           watchdog: 3
       signals:

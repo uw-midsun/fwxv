@@ -56,23 +56,22 @@ void run_fast_cycle() {
     LOG_DEBUG("KILLSWITCH PRESSED\n");
     fault_bps_set(BMS_FAULT_KILLSWITCH);
   }
-  run_can_rx_cycle();
-  wait_tasks(1);
-  run_can_tx_cycle();
-  wait_tasks(1);
 }
 
 void run_medium_cycle() {
+  // run_can_rx_cycle();
+  // wait_tasks(1);
   current_sense_run();
   wait_tasks(1);
   aux_sense_run();
   bms_run_fan();
+  // run_can_tx_cycle();
+  // wait_tasks(1);
 }
 
 void run_slow_cycle() {}
 
 int main() {
-  // Remove this in the future - Aryan
   tasks_init();
   log_init();
   gpio_init();

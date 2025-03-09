@@ -156,6 +156,12 @@ elif COMMAND == "clean":
     AlwaysBuild(Command('#/clean', [], 'rm -rf build/*'))
 
 ###########################################################
+# Cantools Autogeneration Script
+###########################################################
+elif COMMAND == "cantools":
+    SConscript('scons/cantools.scons', exports='VARS')
+
+###########################################################
 # Linting and Formatting
 ###########################################################
 elif COMMAND == "lint" or COMMAND == "format":
