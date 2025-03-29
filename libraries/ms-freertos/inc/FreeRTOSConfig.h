@@ -132,8 +132,7 @@ extern uint32_t SystemCoreClock;
 #define configASSERT(x)       \
   if ((x) == 0) {             \
     taskDISABLE_INTERRUPTS(); \
-    for (;;)                  \
-      ;                       \
+    for (;;) {}               \
   }
 
 // Definitions that map the FreeRTOS port interrupt handlers to their CMSIS

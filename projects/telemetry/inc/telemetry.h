@@ -1,5 +1,10 @@
 #pragma once
 
+#include "datagram.h"
+#include "queues.h"
+#include "status.h"
+#include "uart.h"
+
 typedef struct {
   UartPort uart_port;         /**< UART Port for the telemetry interface (XBee, ELRS, etc.) */
   UartSettings uart_settings; /**< UART Settings for the telemetry interface */

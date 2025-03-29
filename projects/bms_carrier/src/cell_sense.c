@@ -11,6 +11,8 @@ static BmsStorage *bms;
 
 #define CELL_TEMP_OUTLIER 80
 uint8_t afe_message_index = 0;
+uint8_t failure_count = 0;
+
 static bool prv_cell_data_updated = false;
 
 typedef enum ThermistorMap {
@@ -71,7 +73,7 @@ static const LtcAfeSettings s_afe_settings = {
   .cell_bitset = { 0xFFF, 0xFFF, 0xFFF },
   .aux_bitset = { 0x14, 0x15, 0x15 },
 
-  .num_devices = 3,
+  .num_devices = 2,
   .num_cells = 12,
   .num_thermistors = NUM_THERMISTORS,
 };
@@ -96,7 +98,11 @@ static StatusCode prv_cell_sense_conversions() {
   }
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("Cell conv failed): %d\n", status);
-    fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+  
+    if (++failure_count >= CELL_SENSE_MAX_FAILURES) {
+      fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+    }
+  
     return status;
   }
   delay_ms(CONV_DELAY_MS);
@@ -111,7 +117,10 @@ static StatusCode prv_cell_sense_conversions() {
   }
   if (status != STATUS_CODE_OK) {
     LOG_DEBUG("Cell read failed %d\n", status);
-    fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+
+    if (++failure_count >= CELL_SENSE_MAX_FAILURES) {
+      fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+    }
     return status;
   }
 
@@ -137,7 +146,10 @@ static StatusCode prv_cell_sense_conversions() {
       }
       if (status) {
         LOG_DEBUG("Thermistor conv failed for therm %d: Status %d\n", (uint8_t)thermistor, status);
-        fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+
+        if (++failure_count >= CELL_SENSE_MAX_FAILURES) {
+          fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+        }
         return status;
       }
       delay_ms(AUX_CONV_DELAY_MS);
@@ -153,11 +165,21 @@ static StatusCode prv_cell_sense_conversions() {
       if (status) {
         LOG_DEBUG("Thermistor read trigger failed for thermistor %d,  %d\n", (uint8_t)thermistor,
                   status);
-        fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+
+        if (++failure_count >= CELL_SENSE_MAX_FAILURES) {
+          fault_bps_set(BMS_FAULT_COMMS_LOSS_AFE);
+        }
+
         return status;
       }
     }
   }
+
+  if (status == STATUS_CODE_OK) {
+    // If we arrive here, there has been no failed readings
+    failure_count = 0;
+  }
+
   return status;
 }
 
@@ -202,7 +224,11 @@ static StatusCode prv_cell_sense_run() {
   }
   if (max_voltage - min_voltage >= CELL_UNBALANCED) {
     LOG_DEBUG("UNBALANCED\n");
-    fault_bps_set(BMS_FAULT_UNBALANCE);
+
+    if (++failure_count >= CELL_SENSE_MAX_FAILURES) {
+      fault_bps_set(BMS_FAULT_UNBALANCE);
+    }
+
     status = STATUS_CODE_INTERNAL_ERROR;
   }
 
@@ -234,12 +260,12 @@ static StatusCode prv_cell_sense_run() {
         uint8_t index = dev * LTC_AFE_MAX_THERMISTORS_PER_DEVICE + thermistor;
         ltc_afe_storage->aux_voltages[index] =
             calculate_temperature(ltc_afe_storage->aux_voltages[index]);
-        LOG_DEBUG("Thermistor reading dev %d, %d: %d\n", dev, thermistor,
-                  ltc_afe_storage->aux_voltages[index]);
-        max_temp = ltc_afe_storage->aux_voltages[index] > max_temp
-                       ? ltc_afe_storage->aux_voltages[index]
-                       : max_temp;
-        delay_ms(3);
+        // LOG_DEBUG("Thermistor reading dev %d, %d: %d\n", dev, thermistor,
+        //           ltc_afe_storage->aux_voltages[index]);
+        // max_temp = ltc_afe_storage->aux_voltages[index] > max_temp
+        //                ? ltc_afe_storage->aux_voltages[index]
+        //                : max_temp;
+        // delay_ms(3);
         if (ltc_afe_storage->aux_voltages[index] > CELL_TEMP_OUTLIER) {
           continue;
         }
@@ -247,12 +273,22 @@ static StatusCode prv_cell_sense_run() {
           if (ltc_afe_storage->aux_voltages[index] >= CELL_MAX_TEMPERATURE_DISCHARGE) {
             LOG_DEBUG("CELL OVERTEMP\n");
             fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
+
+            if (++failure_count >= CELL_SENSE_MAX_FAILURES) {
+              fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
+            }
+
             status = STATUS_CODE_INTERNAL_ERROR;
           }
         } else {
           if (ltc_afe_storage->aux_voltages[index] >= CELL_MAX_TEMPERATURE_CHARGE) {
             LOG_DEBUG("CELL OVERTEMP\n");
             fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
+
+            if (++failure_count >= CELL_SENSE_MAX_FAILURES) {
+              fault_bps_set(BMS_FAULT_OVERTEMP_CELL);
+            }
+
             status = STATUS_CODE_INTERNAL_ERROR;
           }
         }
@@ -262,6 +298,12 @@ static StatusCode prv_cell_sense_run() {
   ltc_afe_storage->max_temp = max_temp;
 
   prv_cell_data_updated = true;
+
+  if (status == STATUS_CODE_OK) {
+    // If we arrive here, there has been no failed readings
+    failure_count = 0;
+  }
+
   return status;
 }
 
@@ -318,8 +360,10 @@ TASK(cell_sense_conversions, TASK_STACK_512) {
   delay_ms(10);
   TickType_t xLastWakeTime = xTaskGetTickCount();
   while (true) {
-    prv_cell_sense_conversions();
-    prv_cell_sense_run();
+    if (prv_cell_sense_conversions() == STATUS_CODE_OK) {
+      prv_cell_sense_run();
+    }
+
     /* Delay is TBD */
     xTaskDelayUntil(&xLastWakeTime, pdMS_TO_TICKS(5000));
   }
@@ -328,6 +372,6 @@ TASK(cell_sense_conversions, TASK_STACK_512) {
 StatusCode cell_sense_init(BmsStorage *storage) {
   bms = storage;
   ltc_afe_storage = &(bms->ltc_afe_storage);
-  tasks_init_task(cell_sense_conversions, TASK_PRIORITY(2), NULL);
+  tasks_init_task(cell_sense_conversions, TASK_PRIORITY(1), NULL);
   return STATUS_CODE_OK;
 }
