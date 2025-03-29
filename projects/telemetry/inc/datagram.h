@@ -3,7 +3,7 @@
 #include "can.h"
 
 /** @brief  Datagram buffer size */
-#define DATAGRAM_BUFFER_SIZE 128U
+#define DATAGRAM_BUFFER_SIZE 256U
 /** @brief  Start of frame indicator */
 #define DATAGRAM_START_FRAME 0xAAU
 /** @brief  End of frame indicator */

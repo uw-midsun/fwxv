@@ -233,9 +233,6 @@ def main():
     
     transmit_thread.start()
     
-    can_data_cache.set("bms_carrier_battery_vt", "voltage", 15000)
-
-    system_can_message_bms_carrier_battery_vt.data = bytearray(pack(can_data_cache.get("bms_carrier_battery_vt", "voltage"), 16) + pack(can_data_cache.get("bms_carrier_battery_vt", "current"), 16) + pack(can_data_cache.get("bms_carrier_battery_vt", "temperature"), 16) + pack(can_data_cache.get("bms_carrier_battery_vt", "batt_perc"), 16))
     try:
         while True:
             time.sleep(1)
