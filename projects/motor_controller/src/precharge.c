@@ -16,10 +16,11 @@ StatusCode precharge_init(const PrechargeSettings *settings, Event event, const 
   gpio_init_pin(&settings->precharge_monitor, GPIO_INPUT_FLOATING, GPIO_STATE_HIGH);
 
   GpioState state;
+  delay_ms(10);
   gpio_get_state(&settings->precharge_monitor, &state);
 
-  delay_ms(10);
-
+  LOG_DEBUG("Precharge state: %d\n", state);
+  delay_ms(50);
   if (state == GPIO_STATE_HIGH) {
    InterruptSettings monitor_it_settings = {
      .type = INTERRUPT_TYPE_INTERRUPT,
@@ -29,10 +30,6 @@ StatusCode precharge_init(const PrechargeSettings *settings, Event event, const 
    set_mc_status_precharge_status(false);
    return gpio_it_register_interrupt(&settings->precharge_monitor, &monitor_it_settings, event,
                                      task);
-  } else {
-   set_mc_status_precharge_status(true);
-   gpio_set_state(&settings->motor_sw, GPIO_STATE_HIGH);
-   return STATUS_CODE_OK;
   }
 
   set_mc_status_precharge_status(true);

@@ -40,7 +40,7 @@ static void prv_wakeup_idle(LtcAfeStorage *afe) {
     gpio_set_state(&settings->cs, GPIO_STATE_LOW);
     gpio_set_state(&settings->cs, GPIO_STATE_HIGH);
     // Wait for 1ms (should be 300us) - greater than tWAKE, less than tIDLE
-    delay_ms(1);
+    non_blocking_delay_ms(1);
   }
 }
 
@@ -237,10 +237,17 @@ StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
         LOG_DEBUG("Communication Failed with device: %d\n\r", device);
         LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
         LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
-        LOG_DEBUG("Voltage: %d %d %d\n\r", voltage_register[device].reg.voltages[0],
-                  voltage_register[device].reg.voltages[1],
-                  voltage_register[device].reg.voltages[2]);
-        return status_code(STATUS_CODE_INTERNAL_ERROR);
+        // LOG_DEBUG("Voltage: %d %d %d\n\r", voltage_register[device].reg.voltages[0],
+        //           voltage_register[device].reg.voltages[1],
+        //           voltage_register[device].reg.voltages[2]);
+                  
+        if (voltage_register[device].reg.voltages[0] == 65535U && \
+            voltage_register[device].reg.voltages[1] == 65535U && \
+            voltage_register[device].reg.voltages[2] == 65535U) {
+          return status_code(STATUS_CODE_UNREACHABLE);
+        } else {
+          return status_code(STATUS_CODE_INTERNAL_ERROR);
+        }
       }
 
       for (uint16_t cell = 0; cell < LTC6811_CELLS_IN_REG; ++cell) {
@@ -273,9 +280,14 @@ StatusCode ltc_afe_impl_read_aux(LtcAfeStorage *afe, uint8_t thermistor) {
     uint16_t data_pec = crc15_calculate((uint8_t *)&register_data[device], 6);
     if (received_pec != data_pec) {
       // return early on failure
-      LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
-      LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
-      return status_code(STATUS_CODE_INTERNAL_ERROR);
+      // LOG_DEBUG("RECEIVED_PEC: %d\n\r", received_pec);
+      // LOG_DEBUG("DATA_PEC: %d\n\r", data_pec);
+
+      if (received_pec == 65535U) {
+        return status_code(STATUS_CODE_UNREACHABLE);
+      } else {
+        return status_code(STATUS_CODE_INTERNAL_ERROR);
+      }
     }
     // data comes in in the form { 1, 1, 2, 2, 3, 3, PEC, PEC }
     // we only care about GPIO4 and the PEC

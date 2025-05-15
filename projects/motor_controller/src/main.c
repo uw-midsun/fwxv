@@ -50,9 +50,9 @@ static PrechargeSettings s_precharge_settings = {
 };
 
 void pre_loop_init() {
+  precharge_init(&s_precharge_settings, PRECHARGE_EVENT, get_master_task());
   mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
   init_motor_controller_can();
-  precharge_init(&s_precharge_settings, PRECHARGE_EVENT, get_master_task());
 }
 
 void run_fast_cycle() {
@@ -65,7 +65,7 @@ void run_fast_cycle() {
   }
   run_mcp2515_rx_cycle();
   wait_tasks(1);
-
+  
   run_mcp2515_tx_cycle();
   wait_tasks(1);
 }
@@ -73,7 +73,7 @@ void run_fast_cycle() {
 void run_medium_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
-
+  
   run_can_tx_cycle();
   wait_tasks(1);
 }
@@ -86,10 +86,8 @@ int main() {
   gpio_init();
   interrupt_init();
   gpio_it_init();
-
-  can_init(&s_can_storage, &can_settings);
-
-  LOG_DEBUG("Motor Controller Task\n");
+  
+  // can_init(&s_can_storage, &can_settings);
 
   init_master_task();
 

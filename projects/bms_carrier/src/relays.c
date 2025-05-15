@@ -33,9 +33,9 @@ static StatusCode prv_close_relays(void) {
     gpio_get_state(&s_relays_sense[i], &sense_state);
     if (sense_state != GPIO_STATE_HIGH) {
       LOG_DEBUG("Relay %d not closed\n", i);
-      fault_bps_set(BMS_FAULT_RELAY_CLOSE_FAILED);
-      bms_relay_fault();
-      return STATUS_CODE_INTERNAL_ERROR;
+      // fault_bps_set(BMS_FAULT_RELAY_CLOSE_FAILED);
+      // bms_relay_fault();
+      // return STATUS_CODE_INTERNAL_ERROR;
     }
   }
   return STATUS_CODE_OK;
@@ -74,12 +74,12 @@ StatusCode init_bms_relays(GpioAddress *killswitch) {
 
   delay_ms(5);
   gpio_get_state(killswitch, &ks_state);
-  if (ks_state == GPIO_STATE_LOW) {
-    LOG_DEBUG("KILLSWITCH SET");
-    delay_ms(5);
-    fault_bps_set(BMS_FAULT_KILLSWITCH);
-    return STATUS_CODE_INTERNAL_ERROR;
-  }
+  // if (ks_state == GPIO_STATE_LOW) {
+  //   LOG_DEBUG("KILLSWITCH SET");
+  //   delay_ms(5);
+  //   fault_bps_set(BMS_FAULT_KILLSWITCH);
+  //   return STATUS_CODE_INTERNAL_ERROR;
+  // }
 
   gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);

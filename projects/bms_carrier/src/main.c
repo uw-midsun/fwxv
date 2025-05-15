@@ -7,6 +7,7 @@
 #include "can_board_ids.h"
 #include "cell_sense.h"
 #include "current_sense.h"
+#include "state_of_charge.h"
 #include "fan.h"
 #include "gpio.h"
 #include "gpio_it.h"
@@ -46,27 +47,30 @@ void pre_loop_init() {
   init_bms_relays(&kill_switch_mntr);
   current_sense_init(&bms_storage, &i2c_settings, FUEL_GAUGE_CYCLE_TIME_MS);
   cell_sense_init(&bms_storage);
-  aux_sense_init(&bms_storage);
+  // aux_sense_init(&bms_storage);
   bms_fan_init(&bms_storage);
+  state_of_charge_init(&bms_storage);
 }
 
 void run_fast_cycle() {
+}
+
+void run_medium_cycle() {
   notify_get(&notification);
   if (notification & (1 << KILLSWITCH_IT)) {
     LOG_DEBUG("KILLSWITCH PRESSED\n");
     fault_bps_set(BMS_FAULT_KILLSWITCH);
   }
-}
-
-void run_medium_cycle() {
-  // run_can_rx_cycle();
-  // wait_tasks(1);
+  run_can_rx_cycle();
+  wait_tasks(1);
   current_sense_run();
   wait_tasks(1);
-  aux_sense_run();
   bms_run_fan();
-  // run_can_tx_cycle();
-  // wait_tasks(1);
+  // aux_sense_run();
+  update_state_of_chrage();
+  log_cell_sense();
+  run_can_tx_cycle();
+  wait_tasks(1);
 }
 
 void run_slow_cycle() {}

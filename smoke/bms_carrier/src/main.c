@@ -55,7 +55,7 @@ void run_medium_cycle() {
   // wait_tasks(1);
   current_sense_run();
   wait_tasks(1);
-  // update_state_of_chrage();
+  update_state_of_chrage();
   log_cell_sense();
   // run_can_tx_cycle();
   // wait_tasks(1);
