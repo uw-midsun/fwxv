@@ -37,7 +37,6 @@ int main(void) {
 
     tasks_init_task(task1, TASK_PRIORITY(1), NULL);
     tasks_init_task(task2, TASK_PRIORITY(2), NULL);
-  
     LOG_DEBUG("Program start...\n");
     // Start the scheduler
     tasks_start();
