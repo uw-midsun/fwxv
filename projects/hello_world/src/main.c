@@ -1,5 +1,3 @@
-/* COMMENTED THIS OUT FOR NOW, SO I CAN WORK ON 102 TASK 1
-
 #include <stdio.h>
 #include <unistd.h>
 
@@ -21,5 +19,4 @@ int main() {
   }
   return 0;
 }
-*/
 
