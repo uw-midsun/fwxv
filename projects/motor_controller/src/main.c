@@ -87,7 +87,7 @@ int main() {
   interrupt_init();
   gpio_it_init();
   
-  // can_init(&s_can_storage, &can_settings);
+  can_init(&s_can_storage, &can_settings);
 
   init_master_task();
 

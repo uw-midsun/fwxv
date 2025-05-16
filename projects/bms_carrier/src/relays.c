@@ -72,8 +72,8 @@ StatusCode init_bms_relays(GpioAddress *killswitch) {
   gpio_it_register_interrupt(killswitch, &it_settings, KILLSWITCH_IT, get_master_task());
   GpioState ks_state = GPIO_STATE_LOW;
 
-  delay_ms(5);
-  gpio_get_state(killswitch, &ks_state);
+  // delay_ms(5);
+  // gpio_get_state(killswitch, &ks_state);
   // if (ks_state == GPIO_STATE_LOW) {
   //   LOG_DEBUG("KILLSWITCH SET");
   //   delay_ms(5);

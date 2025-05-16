@@ -202,7 +202,7 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
   return STATUS_CODE_OK;
 }
 
-TASK(MCP2515_INTERRUPT, TASK_STACK_256) {
+TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
   mcp2515_hw_init_after_schedular_start();
 
   LOG_DEBUG("MCP2515_INTERRUPT hw initilaized\n");
