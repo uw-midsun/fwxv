@@ -26,7 +26,7 @@ TASK(can_message_listener, TASK_STACK_256) {
   StatusCode status = STATUS_CODE_OK;
 
   while (true) {
-    while (queue_receive(&s_can_storage.rx_queue.queue, &message, 0xFF) !=
+    while (queue_receive(&s_can_storage.rx_queue.queue, &message, 0xFF) != //0xFF was previously QUEUE_DELAY_BLOCKING 
            STATUS_CODE_OK) {
     }
     LOG_DEBUG("Received message\n");
@@ -49,7 +49,7 @@ TASK(can_message_processor, TASK_STACK_256) {
 
   while (true) {
     /* Wait for new data to be in the queue */
-    while (queue_receive(&telemetry_storage->datagram_queue, &tx_datagram, 0xFF) ==
+    while (queue_receive(&telemetry_storage->datagram_queue, &tx_datagram, 0xFF) == //0xFF was previously QUEUE_DELAY_BLOCKING
            STATUS_CODE_OK) {
       LOG_DEBUG("Processing message\n");
       datagram_length = tx_datagram.dlc + DATAGRAM_METADATA_SIZE;
