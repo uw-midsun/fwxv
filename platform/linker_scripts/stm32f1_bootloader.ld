@@ -1,5 +1,5 @@
 /*
-This is the linker script for the bootloader on STM32F103C8T6.
+This is the linker script for the bootloader on STM32F103CBT6.
 */
 
 /* include the common memory spaces definitions subscript */

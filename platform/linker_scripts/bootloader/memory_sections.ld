@@ -3,7 +3,7 @@ ENTRY(Reset_Handler)
 _bootloader_size = 16K;
 
 _flash_start = 0x08000000;
-_flash_size = 64K;
+_flash_size = 128K;
 _flash_page_size = 1K;
 
 _ram_start = 0x20000000;

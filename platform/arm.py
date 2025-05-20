@@ -29,7 +29,7 @@ cflags = [
     '-Wextra',
     '-Werror',
     '-g3',
-    '-O0',
+    '-Os',
     '-Wno-discarded-qualifiers',
     '-Wno-unused-variable',
     '-Wno-unused-parameter',

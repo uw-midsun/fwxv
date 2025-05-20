@@ -7,13 +7,13 @@
 #include "can_board_ids.h"
 #include "cell_sense.h"
 #include "current_sense.h"
-#include "state_of_charge.h"
 #include "fan.h"
 #include "gpio.h"
 #include "gpio_it.h"
 #include "log.h"
 #include "master_task.h"
 #include "relays.h"
+#include "state_of_charge.h"
 #include "tasks.h"
 
 #define FUEL_GAUGE_CYCLE_TIME_MS 100
@@ -52,8 +52,7 @@ void pre_loop_init() {
   state_of_charge_init(&bms_storage);
 }
 
-void run_fast_cycle() {
-}
+void run_fast_cycle() {}
 
 void run_medium_cycle() {
   notify_get(&notification);

@@ -4,12 +4,12 @@
 #include <math.h>
 #include <stdint.h>
 
+#include "delay.h"
 #include "log.h"
 #include "mcp2515.h"
 #include "motor_controller_getters.h"
 #include "motor_controller_setters.h"
 #include "tasks.h"
-#include "delay.h"
 
 typedef enum MotorControllerMessageIds {
   IDENTIFICATION = 0x00,
@@ -75,7 +75,7 @@ static inline float prv_one_pedal_threshold(float car_velocity) {
 }
 
 static inline float prv_one_pedal_drive_current(float throttle_percent, float threshold,
-                                         DriveState *drive_state) {
+                                                DriveState *drive_state) {
   throttle_percent = prv_clamp_float(throttle_percent);
   if (throttle_percent <= threshold + 0.05 && throttle_percent >= threshold - 0.05) {
     return 0.0;

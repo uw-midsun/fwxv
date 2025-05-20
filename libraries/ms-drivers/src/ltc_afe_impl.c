@@ -240,9 +240,9 @@ StatusCode ltc_afe_impl_read_cells(LtcAfeStorage *afe) {
         // LOG_DEBUG("Voltage: %d %d %d\n\r", voltage_register[device].reg.voltages[0],
         //           voltage_register[device].reg.voltages[1],
         //           voltage_register[device].reg.voltages[2]);
-                  
-        if (voltage_register[device].reg.voltages[0] == 65535U && \
-            voltage_register[device].reg.voltages[1] == 65535U && \
+
+        if (voltage_register[device].reg.voltages[0] == 65535U &&
+            voltage_register[device].reg.voltages[1] == 65535U &&
             voltage_register[device].reg.voltages[2] == 65535U) {
           return status_code(STATUS_CODE_UNREACHABLE);
         } else {

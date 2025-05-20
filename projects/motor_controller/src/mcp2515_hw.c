@@ -187,7 +187,6 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
   uint8_t reg_val = 0;
   prv_read(MCP2515_CTRL_REG_CNF3, &reg_val, 1);
 
-  LOG_DEBUG("MCP2515 Init Status: %d\n", reg_val);
   if (reg_val == 0x05) {
     LOG_DEBUG("Connection SUCCESSFUL\n");
   } else {
@@ -202,7 +201,7 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
   return STATUS_CODE_OK;
 }
 
-TASK(MCP2515_INTERRUPT, TASK_MIN_STACK_SIZE) {
+TASK(MCP2515_INTERRUPT, TASK_STACK_256) {
   mcp2515_hw_init_after_schedular_start();
 
   LOG_DEBUG("MCP2515_INTERRUPT hw initilaized\n");

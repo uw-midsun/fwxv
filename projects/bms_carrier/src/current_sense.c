@@ -1,6 +1,7 @@
 #include "current_sense.h"
 
 #include <inttypes.h>
+#include <math.h>
 #include <string.h>
 
 #include "bms.h"
@@ -42,7 +43,7 @@ StatusCode prv_fuel_gauge_read() {
   }
 
   // Set Battery VT message signals
-  set_battery_vt_current((uint16_t)s_storage->pack_current);
+  set_battery_vt_current((uint16_t)abs(s_storage->pack_current));
   set_battery_vt_voltage((uint16_t)(s_storage->pack_voltage / 10));
   set_battery_vt_temperature(s_storage->temperature);
 
