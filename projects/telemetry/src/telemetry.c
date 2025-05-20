@@ -28,7 +28,9 @@ TASK(can_message_processor, TASK_STACK_512) {
   uint32_t delay_time_ms = (1U / telemetry_storage->config->message_transmit_frequency_hz) * 1000U;
 
   while (true) {
-    while (queue_receive(&s_can_storage.rx_queue.queue, &message, QUEUE_DELAY_BLOCKING) != STATUS_CODE_OK) {}
+    while (queue_receive(&s_can_storage.rx_queue.queue, &message, QUEUE_DELAY_BLOCKING) !=
+           STATUS_CODE_OK) {
+    }
 
     LOG_DEBUG("Received message\n");
     decode_can_message(&tx_datagram, &message);
