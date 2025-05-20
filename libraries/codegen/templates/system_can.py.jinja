@@ -1,0 +1,15 @@
+{% set boards = data["Boards"] -%}
+{% set messages = data["Messages"] -%}
+from enum import Enum
+
+class SystemCanDevice(int, Enum):
+  {% for board in boards -%}
+    SYSTEM_CAN_DEVICE_{{ board | upper }} = {{ loop.index0 }}
+  {% endfor -%}
+  NUM_SYSTEM_CAN_DEVICES = {{ boards | length }}
+  
+class SystemCanMessageId(int, Enum):
+  {%- for message in messages -%}
+    {%- set msg = 'SYSTEM_CAN_MESSAGE_' ~ message.sender | upper ~ '_' ~ message.name | upper %}
+    {{ msg }}_ID = {% if message.critical %}({{ message.id }}) {% else %} (({{ message.id }} << 5) + SystemCanDevice.SYSTEM_CAN_DEVICE_{{ message.sender | upper }}) {% endif %}
+  {%- endfor -%}

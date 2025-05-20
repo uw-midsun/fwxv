@@ -110,11 +110,11 @@ void update_indicators(uint32_t notif) {
   }
 
   if (get_battery_status_fault() & get_pd_status_bps_persist() & (1 << 15)) {
-    pwm_set_dc(PWM_TIMER_1, 100, 3, true);
+    // pwm_set_dc(PWM_TIMER_1, 100, 3, true); AS A RESULT OF PPL HATING ON MY BUZZER - Aryan
     gpio_set_state(&bps_led, GPIO_STATE_LOW);
   } else if ((get_battery_status_fault() & get_pd_status_bps_persist() & (1 << 14)) ||
              get_pd_status_power_state() == EE_POWER_FAULT_STATE) {
-    pwm_set_dc(PWM_TIMER_1, 10, 3, true);
+    // pwm_set_dc(PWM_TIMER_1, 10, 3, true);  AS A RESULT OF PPL HATING ON MY BUZZER - Aryan
     gpio_set_state(&bps_led, GPIO_STATE_LOW);
   } else {
     // PWM will not stop, driver will pull over and diagnose issue

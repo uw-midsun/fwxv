@@ -50,9 +50,9 @@ static PrechargeSettings s_precharge_settings = {
 };
 
 void pre_loop_init() {
+  precharge_init(&s_precharge_settings, PRECHARGE_EVENT, get_master_task());
   mcp2515_init(&s_mcp2515_storage, &s_mcp2515_settings);
   init_motor_controller_can();
-  precharge_init(&s_precharge_settings, PRECHARGE_EVENT, get_master_task());
 }
 
 void run_fast_cycle() {
@@ -88,8 +88,6 @@ int main() {
   gpio_it_init();
 
   can_init(&s_can_storage, &can_settings);
-
-  LOG_DEBUG("Motor Controller Task\n");
 
   init_master_task();
 

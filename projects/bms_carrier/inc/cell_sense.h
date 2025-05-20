@@ -17,8 +17,9 @@
 #define CONV_DELAY_MS 10
 #define AUX_CONV_DELAY_MS 3
 // Maximum number of retry attempts to read cell/aux data once triggered
-#define RETRY_DELAY_MS 1
+#define RETRY_DELAY_MS 5
 #define CELL_SENSE_CONVERSIONS 0
+#define CELL_SENSE_MAX_FAILURES 5
 
 // Fault thresholds - units of mV*10
 #define CELL_OVERVOLTAGE 42500

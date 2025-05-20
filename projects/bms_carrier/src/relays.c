@@ -72,14 +72,14 @@ StatusCode init_bms_relays(GpioAddress *killswitch) {
   gpio_it_register_interrupt(killswitch, &it_settings, KILLSWITCH_IT, get_master_task());
   GpioState ks_state = GPIO_STATE_LOW;
 
-  delay_ms(10);
-  gpio_get_state(killswitch, &ks_state);
-  if (ks_state == GPIO_STATE_LOW) {
-    LOG_DEBUG("KILLSWITCH SET");
-    delay_ms(5);
-    fault_bps_set(BMS_FAULT_KILLSWITCH);
-    return STATUS_CODE_INTERNAL_ERROR;
-  }
+  // delay_ms(5);
+  // gpio_get_state(killswitch, &ks_state);
+  // if (ks_state == GPIO_STATE_LOW) {
+  //   LOG_DEBUG("KILLSWITCH SET");
+  //   delay_ms(5);
+  //   fault_bps_set(BMS_FAULT_KILLSWITCH);
+  //   return STATUS_CODE_INTERNAL_ERROR;
+  // }
 
   gpio_init_pin(&pos_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);
   gpio_init_pin(&neg_relay_en, GPIO_OUTPUT_PUSH_PULL, GPIO_STATE_LOW);

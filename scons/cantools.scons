@@ -1,0 +1,29 @@
+from scons.common import parse_config
+from pathlib import Path
+import subprocess
+
+Import("VARS")
+
+TARGET = VARS.get("TARGET")
+PLATFORM = VARS.get("PLATFORM")
+env = VARS.get("env")
+
+ROOT = Dir('#')
+
+LIB_DIR = ROOT.Dir('libraries')
+
+CAN_DIR = ROOT.Dir("can")
+CAN_TOOLS_DIR = CAN_DIR.Dir("tools")
+
+CODEGEN_DIR = LIB_DIR.Dir("codegen")
+BOARDS_DIR = CODEGEN_DIR.Dir("boards")
+GENERATOR = CODEGEN_DIR.File("generator.py")
+TEMPLATES_DIR = CODEGEN_DIR.Dir("templates")
+
+def run_cantools(target, source, env):
+    subprocess.run(f"python3 {GENERATOR} -f {CAN_TOOLS_DIR} -t system_can.dbc.jinja", shell=True).returncode
+    subprocess.run(f"python3 {GENERATOR} -f {CAN_TOOLS_DIR} -t system_can.py.jinja", shell=True).returncode
+    subprocess.run(f"python3 {GENERATOR} -f {CAN_TOOLS_DIR} -t can_simulator_cache.py.jinja", shell=True).returncode
+    subprocess.run(f"python3 {GENERATOR} -f {CAN_TOOLS_DIR} -t can_simulator.py.jinja", shell=True).returncode
+
+Command('#/cantools', [], run_cantools)

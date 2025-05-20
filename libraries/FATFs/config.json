@@ -1,0 +1,6 @@
+{
+  "cflags": [
+      "-Wno-sign-conversion"
+  ],
+  "no_lint": true
+}

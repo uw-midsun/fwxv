@@ -50,18 +50,14 @@ void run_fast_cycle() {
   run_can_rx_cycle();
   wait_tasks(1);
   get_button_press();
-
-  adc_run();
-  pedal_run();
-
-  run_can_tx_cycle();
-  wait_tasks(1);
 }
 
 void run_medium_cycle() {
   uint32_t notif = 0;
   notify_get(&notif);
 
+  adc_run();
+  pedal_run();
   steering_input(notif);
   update_indicators(notif);
   monitor_cruise_control();
@@ -70,6 +66,8 @@ void run_medium_cycle() {
   wait_tasks(1);
 
   update_drive_output();
+  run_can_tx_cycle();
+  wait_tasks(1);
 }
 
 void run_slow_cycle() {}

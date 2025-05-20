@@ -1,0 +1,97 @@
+{% set boards = data["Boards"] -%}
+{% set messages = data["Messages"] -%}
+import struct
+import time
+from threading import Lock, Thread
+
+from can import Message
+from can.interface import Bus
+from can.broadcastmanager import ThreadBasedCyclicSendTask
+
+from system_can import *
+from can_simulator_cache import *
+
+RETRY_TRANSMIT_S = 0.05
+
+TRANSMIT_PERIOD = 1
+
+messages = []
+
+def pack(num, size):
+    if isinstance(num, float) and size == 32:
+        return struct.pack("f", num)
+    elif size == 32:
+        return struct.pack("I", num)
+    elif size == 16:
+        return struct.pack("H", num)
+    elif size == 8:
+        return struct.pack("B", num)
+    elif size == 64:
+        return struct.pack("Q", num)
+    else:
+        raise ValueError(f"Unknown size {size} for number {num}")
+
+can_data_cache = CanSimulatorDataCache()
+
+{%- for message in messages -%}
+{%- set msg = 'SYSTEM_CAN_MESSAGE_' ~ message.sender | upper ~ '_' ~ message.name | upper %}
+
+{{ msg | lower }} = Message(
+arbitration_id = SystemCanMessageId.{{ msg }}_ID,
+data = bytearray( {%- for signal in message.signals -%} pack(can_data_cache.get("{{ message.sender | lower }}_{{ message.name | lower }}", "{{ signal.name }}"), {{ signal["length"] }}){{ ' + ' if not loop.last }} {%- endfor -%}))
+
+messages.append({{ msg | lower }})
+
+{%- endfor %}
+def periodic_sender(bus, messages, period, stop_event):
+    # Send messages with small delays between each one to avoid buffer overflow
+    while not stop_event.is_set():
+        start_time = time.time()
+
+        # Calculate time per message to spread them over the period
+        if len(messages) > 0:
+            message_delay = min(0.01, period / (len(messages) * 2))  # Don't use more than half the period for delays
+        else:
+            message_delay = 0
+            
+        for msg in messages:
+            try:
+                bus.send(msg)
+                time.sleep(message_delay)
+            except Exception as e:
+                print(f"Error sending message {msg.arbitration_id}: {e}")
+                time.sleep(RETRY_TRANSMIT_S)
+                try:
+                    bus.send(msg)
+                except Exception as e2:
+                    print(f"Failed retry for {msg.arbitration_id}: {e2}")
+
+        # Calculate remaining time in the period
+        elapsed = time.time() - start_time
+        sleep_time = max(0, period - elapsed)
+        time.sleep(sleep_time)
+
+def main():
+    can_bus = Bus(channel='can0', interface='socketcan')
+
+    stop_event = threading.Event()
+
+    transmit_thread = Thread(
+        target=periodic_sender,
+        args=(can_bus, messages, TRANSMIT_PERIOD, stop_event),
+        daemon=True
+    )
+    
+    transmit_thread.start()
+    
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Shutting down CAN simulator...")
+        stop_event.set()
+        time.sleep(0.5)
+
+if __name__ == "__main__":
+    import threading
+    main()

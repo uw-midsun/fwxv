@@ -187,7 +187,6 @@ static StatusCode mcp2515_hw_init_after_schedular_start() {
   uint8_t reg_val = 0;
   prv_read(MCP2515_CTRL_REG_CNF3, &reg_val, 1);
 
-  LOG_DEBUG("MCP2515 Init Status:");
   if (reg_val == 0x05) {
     LOG_DEBUG("Connection SUCCESSFUL\n");
   } else {

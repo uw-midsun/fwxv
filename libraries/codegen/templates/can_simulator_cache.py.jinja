@@ -1,0 +1,21 @@
+{% set boards = data["Boards"] -%}
+{% set messages = data["Messages"] -%}
+class CanSimulatorDataCache:
+    def __init__(self):
+        self.data = {
+{% for message in messages %}
+            "{{ message.sender | lower }}_{{ message.name | lower }}": {
+                # {{ message.name | lower }} cache definitions{% for signal in message.signals %}
+                "{{ signal.name }}": 0,{% endfor %}
+            }{% if not loop.last %},{% endif %}
+{% endfor %}
+        }
+
+    def get(self, message_name, parameter):
+        return self.data.get(message_name, {}).get(parameter, 0)
+    
+    def set(self, message_name, parameter, value):
+        if message_name in self.data and parameter in self.data[message_name]:
+            self.data[message_name][parameter] = value
+            return True
+        return False

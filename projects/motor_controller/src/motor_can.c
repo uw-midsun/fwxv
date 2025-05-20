@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdint.h>
 
+#include "delay.h"
 #include "log.h"
 #include "mcp2515.h"
 #include "motor_controller_getters.h"
@@ -47,7 +48,7 @@ static float s_car_velocity_r = 0.0;
 void (*mcp2515_rx_all)();
 void (*mcp2515_tx_all)();
 
-static float prv_get_float(uint32_t u) {
+static inline float prv_get_float(uint32_t u) {
   union {
     float f;
     uint32_t u;
@@ -55,7 +56,7 @@ static float prv_get_float(uint32_t u) {
   return fu.f;
 }
 
-static float prv_clamp_float(float value) {
+static inline float prv_clamp_float(float value) {
   if (value <= 0.05) {
     return 0.0f;
   } else {
@@ -63,7 +64,7 @@ static float prv_clamp_float(float value) {
   }
 }
 
-static float prv_one_pedal_threshold(float car_velocity) {
+static inline float prv_one_pedal_threshold(float car_velocity) {
   float threshold = 0.0;
   if (car_velocity <= MAX_OPD_SPEED) {
     threshold = car_velocity * COASTING_THRESHOLD_SCALE;
@@ -73,8 +74,8 @@ static float prv_one_pedal_threshold(float car_velocity) {
   return threshold;
 }
 
-static float prv_one_pedal_drive_current(float throttle_percent, float threshold,
-                                         DriveState *drive_state) {
+static inline float prv_one_pedal_drive_current(float throttle_percent, float threshold,
+                                                DriveState *drive_state) {
   throttle_percent = prv_clamp_float(throttle_percent);
   if (throttle_percent <= threshold + 0.05 && throttle_percent >= threshold - 0.05) {
     return 0.0;
@@ -86,7 +87,7 @@ static float prv_one_pedal_drive_current(float throttle_percent, float threshold
   } else {
     *drive_state = BRAKE;
     // TODO (Aryan): Validate then make this true. Ran into issues at FSGP
-    set_motor_velocity_brakes_enabled(true);
+    set_motor_velocity_brakes_enabled(false);
     return (threshold - throttle_percent) / (threshold);
   }
   LOG_DEBUG("ERROR: One pedal throttle not calculated\n");

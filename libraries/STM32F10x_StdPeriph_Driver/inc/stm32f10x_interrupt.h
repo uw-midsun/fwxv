@@ -1,7 +1,7 @@
 #pragma once
 
 // Midsun Firmware implementation to overlay interactions with STM32f1 interrupts 
-// The STM32F103C8T6 (under the category of STM32F10x Medium Density) provides
+// The STM32F103CBT6 (under the category of STM32F10x Medium Density) provides
 // 43 Maskable interrupt channels and 16 priority levels
 //
 // This API provides methods to enable interrupts in the NVIC, as well as configure

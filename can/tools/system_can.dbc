@@ -1,0 +1,185 @@
+NS_ : 
+  NS_DESC_
+  CM_
+  BA_DEF_
+  BA_
+  VAL_
+  CAT_DEF_
+  CAT_
+  FILTER
+  BA_DEF_DEF_
+  EV_DATA_
+  ENVVAR_DATA_
+  SGTYPE_
+  SGTYPE_VAL_
+  BA_DEF_SGTYPE_
+  BA_SGTYPE_
+  SIG_TYPE_REF_
+  VAL_TABLE_
+  SIG_GROUP_
+  SIG_VALTYPE_
+  SIGTYPE_VALTYPE_
+  BO_TX_BU_
+  BA_DEF_REL_
+  BA_REL_
+  BA_DEF_DEF_REL_
+  BU_SG_REL_
+  BU_EV_REL_
+  BU_BO_REL_
+  SG_MUL_VAL_
+
+BS_:
+
+BU_: TELEMETRY MOTOR_CONTROLLER BOOTLOADER CAN_COMMUNICATION CAN_DEBUG NEW_CAN BMS_CARRIER CENTRE_CONSOLE POWER_DISTRIBUTION
+
+BO_   1664 telemetry: 8 telemetry
+  SG_ data : 0|64@1+ (1,0) [0|100] "" telemetry
+
+BO_   1121 motor_controller_vc: 8 motor_controller
+  SG_ mc_voltage_l : 0|16@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ mc_current_l : 16|16@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ mc_voltage_r : 32|16@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ mc_current_r : 48|16@1+ (1,0) [0|100] "" telemetry, centre_console
+
+BO_  36  motor_velocity: 5 motor_controller
+  SG_ velocity_l : 0|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ velocity_r : 16|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ brakes_enabled : 32|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+
+BO_   1217 motor_sink_temps: 8 motor_controller
+  SG_ motor_temp_l : 0|16@1+ (1,0) [0|100] "" centre_console
+  SG_ heatsink_temp_l : 16|16@1+ (1,0) [0|100] "" centre_console
+  SG_ motor_temp_r : 32|16@1+ (1,0) [0|100] "" centre_console
+  SG_ heatsink_temp_r : 48|16@1+ (1,0) [0|100] "" centre_console
+
+BO_   1249 dsp_board_temps: 4 motor_controller
+  SG_ dsp_temp_l : 0|16@1+ (1,0) [0|100] "" centre_console
+  SG_ dsp_temp_r : 16|16@1+ (1,0) [0|100] "" centre_console
+
+BO_  4  mc_status: 7 motor_controller
+  SG_ limit_bitset_l : 0|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ error_bitset_l : 8|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ limit_bitset_r : 16|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ error_bitset_r : 24|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ board_fault_bitset : 32|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ overtemp_bitset : 40|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ precharge_status : 48|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+
+BO_  30  bootloader_start: 8 bootloader
+  SG_ data0 : 0|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data1 : 8|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data2 : 16|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data3 : 24|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data4 : 32|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data5 : 40|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data6 : 48|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data7 : 56|8@1+ (1,0) [0|100] "" bootloader
+
+BO_  31  bootloader_data: 8 bootloader
+  SG_ data0 : 0|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data1 : 8|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data2 : 16|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data3 : 24|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data4 : 32|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data5 : 40|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data6 : 48|8@1+ (1,0) [0|100] "" bootloader
+  SG_ data7 : 56|8@1+ (1,0) [0|100] "" bootloader
+
+BO_  34  one_shot_msg: 4 can_communication
+  SG_ sig1 : 0|16@1+ (1,0) [0|100] "" can_communication
+  SG_ sig2 : 16|16@1+ (1,0) [0|100] "" can_communication
+
+BO_  35  test_debug: 4 can_debug
+  SG_ operation : 0|8@1+ (1,0) [0|100] "" can_debug
+  SG_ operandA : 8|8@1+ (1,0) [0|100] "" can_debug
+  SG_ operandB : 16|8@1+ (1,0) [0|100] "" can_debug
+  SG_ operandC : 24|8@1+ (1,0) [0|100] "" can_debug
+
+BO_   997 transmit_msg1: 1 new_can
+  SG_ status : 0|8@1+ (1,0) [0|100] "" new_can
+
+BO_   1029 transmit_msg2: 2 new_can
+  SG_ signal : 0|8@1+ (1,0) [0|100] "" new_can
+  SG_ signal2 : 8|8@1+ (1,0) [0|100] "" new_can
+
+BO_   1061 transmit_msg3: 1 new_can
+  SG_ help : 0|8@1+ (1,0) [0|100] "" centre_console
+
+BO_  1  battery_status: 7 bms_carrier
+  SG_ fault : 0|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ fault_val : 16|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ aux_batt_v : 32|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ afe_status : 48|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+
+BO_  14  battery_info: 6 bms_carrier
+  SG_ fan1 : 0|8@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ fan2 : 8|8@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ max_cell_v : 16|16@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ min_cell_v : 32|16@1+ (1,0) [0|100] "" telemetry, centre_console
+
+BO_  15  battery_vt: 8 bms_carrier
+  SG_ voltage : 0|16@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ current : 16|16@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ temperature : 32|16@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ batt_perc : 48|16@1+ (1,0) [0|100] "" telemetry, centre_console
+
+BO_   518 battery_relay_info: 1 bms_carrier
+  SG_ state : 0|8@1+ (1,0) [0|100] "" power_distribution
+
+BO_   1926 AFE1_status: 8 bms_carrier
+  SG_ id : 0|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ temp : 8|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ v1 : 16|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ v2 : 32|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ v3 : 48|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+
+BO_   1958 AFE2_status: 8 bms_carrier
+  SG_ id : 0|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ temp : 8|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ v1 : 16|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ v2 : 32|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ v3 : 48|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+
+BO_   1990 AFE3_status: 8 bms_carrier
+  SG_ id : 0|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ temp : 8|8@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ v1 : 16|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ v2 : 32|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+  SG_ v3 : 48|16@1+ (1,0) [0|100] "" telemetry, centre_console, power_distribution
+
+BO_  5  cc_info: 8 centre_console
+  SG_ target_velocity : 0|32@1+ (1,0) [0|100] "" telemetry, motor_controller, power_distribution
+  SG_ drive_state : 32|8@1+ (1,0) [0|100] "" telemetry, motor_controller, power_distribution
+  SG_ cruise_control : 40|8@1+ (1,0) [0|100] "" telemetry, motor_controller, power_distribution
+  SG_ regen_braking : 48|8@1+ (1,0) [0|100] "" telemetry, motor_controller, power_distribution
+  SG_ hazard_enabled : 56|8@1+ (1,0) [0|100] "" telemetry, motor_controller, power_distribution
+
+BO_  3  cc_pedal: 5 centre_console
+  SG_ throttle_output : 0|32@1+ (1,0) [0|100] "" telemetry, motor_controller, power_distribution
+  SG_ brake_output : 32|8@1+ (1,0) [0|100] "" telemetry, motor_controller, power_distribution
+
+BO_  6  cc_steering: 2 centre_console
+  SG_ input_cc : 0|8@1+ (1,0) [0|100] "" power_distribution, motor_controller
+  SG_ input_lights : 8|8@1+ (1,0) [0|100] "" power_distribution, motor_controller
+
+BO_  8  cc_regen: 4 centre_console
+  SG_ percent : 0|32@1+ (1,0) [0|100] "" motor_controller
+
+BO_   1736 current_measurement_1: 6 power_distribution
+  SG_ current_id_1 : 0|8@1+ (1,0) [0|100] "" centre_console
+  SG_ current_1 : 8|16@1+ (1,0) [0|100] "" centre_console
+  SG_ current_id_2 : 24|8@1+ (1,0) [0|100] "" centre_console
+  SG_ current_2 : 32|16@1+ (1,0) [0|100] "" centre_console
+
+BO_   1768 current_measurement_2: 6 power_distribution
+  SG_ current_id_1 : 0|8@1+ (1,0) [0|100] "" centre_console
+  SG_ current_1 : 8|16@1+ (1,0) [0|100] "" centre_console
+  SG_ current_id_2 : 24|8@1+ (1,0) [0|100] "" centre_console
+  SG_ current_2 : 32|16@1+ (1,0) [0|100] "" centre_console
+
+BO_  2  pd_status: 6 power_distribution
+  SG_ power_state : 0|8@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ fault_bitset : 8|8@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ bps_persist : 16|16@1+ (1,0) [0|100] "" telemetry, centre_console
+  SG_ bps_persist_val : 32|16@1+ (1,0) [0|100] "" telemetry, centre_console
+

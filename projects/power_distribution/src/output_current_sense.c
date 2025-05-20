@@ -66,7 +66,7 @@ StatusCode pd_sense_output_group(OutputGroup group) {
           (g_output_config[output].reading_out +
            (((g_output_config[output].reading_out) != 0) * ISENSE_BIAS)) *
           ISENSE_VOLTAGE_DIVIDER * ISENSE_GAIN;
-      LOG_DEBUG("%d, %d\n", output, g_output_config[output].reading_out);
+      // LOG_DEBUG("%d, %d\n", output, g_output_config[output].reading_out);
     }
   }
   return STATUS_CODE_OK;

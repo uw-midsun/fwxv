@@ -1,6 +1,7 @@
 #include "current_sense.h"
 
 #include <inttypes.h>
+#include <math.h>
 #include <string.h>
 
 #include "bms.h"
@@ -22,11 +23,11 @@ StatusCode prv_fuel_gauge_read() {
   StatusCode status = STATUS_CODE_OK;
 
   status |= max17261_current(s_fuel_guage_storage, &s_storage->pack_current);
-  delay_ms(5);
+  non_blocking_delay_ms(5);
   status |= max17261_voltage(s_fuel_guage_storage, &s_storage->pack_voltage);
-  delay_ms(5);
+  non_blocking_delay_ms(5);
   status |= max17261_temp(s_fuel_guage_storage, &s_storage->temperature);
-  delay_ms(5);
+  non_blocking_delay_ms(5);
 
   // Measured voltage corresponds to one cell. Multiply it by the number of cells in series
   s_storage->pack_voltage = s_storage->pack_voltage * s_storage->config.series_count;
@@ -42,7 +43,7 @@ StatusCode prv_fuel_gauge_read() {
   }
 
   // Set Battery VT message signals
-  set_battery_vt_current((uint16_t)s_storage->pack_current);
+  set_battery_vt_current((uint16_t)abs(s_storage->pack_current));
   set_battery_vt_voltage((uint16_t)(s_storage->pack_voltage / 10));
   set_battery_vt_temperature(s_storage->temperature);
 
@@ -66,17 +67,18 @@ StatusCode prv_fuel_gauge_read() {
   return status;
 }
 
-TASK(current_sense, TASK_STACK_256) {
+TASK(current_sense, TASK_STACK_512) {
+  uint32_t notification = 0;
   while (true) {
-    uint32_t notification = 0;
     notify_wait(&notification, BLOCK_INDEFINITELY);
     LOG_DEBUG("Running Current Sense Cycle!\n");
 
     // Handle alert from fuel gauge
-    if (notification & (1 << ALRT_GPIO_IT)) {
-      LOG_DEBUG("ALERT_PIN triggered\n");
-      // fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
-    }
+    // if (notification & (1 << ALRT_GPIO_IT)) {
+    //   LOG_DEBUG("ALERT_PIN triggered\n");
+    //   fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
+    // }
+
     prv_fuel_gauge_read();
     send_task_end();
   }
@@ -121,6 +123,6 @@ StatusCode current_sense_init(BmsStorage *bms_storage, I2CSettings *i2c_settings
   s_fuel_gauge_settings->sense_resistor_mohms = SENSE_RESISTOR_MOHM;
 
   status = max17261_init(s_fuel_guage_storage, s_fuel_gauge_settings, &s_fuel_params);
-  tasks_init_task(current_sense, TASK_PRIORITY(3), NULL);
+  tasks_init_task(current_sense, TASK_PRIORITY(2), NULL);
   return status;
 }

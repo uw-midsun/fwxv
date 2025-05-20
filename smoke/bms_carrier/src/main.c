@@ -51,14 +51,14 @@ void pre_loop_init() {
 void run_fast_cycle() {}
 
 void run_medium_cycle() {
-  run_can_rx_cycle();
-  wait_tasks(1);
+  // run_can_rx_cycle();
+  // wait_tasks(1);
   current_sense_run();
   wait_tasks(1);
   update_state_of_chrage();
   log_cell_sense();
-  run_can_tx_cycle();
-  wait_tasks(1);
+  // run_can_tx_cycle();
+  // wait_tasks(1);
 }
 
 void run_slow_cycle() {}

@@ -1,5 +1,5 @@
 /*
-Default linker script for STM32F103C8T6 64k flash 20k ram
+Default linker script for STM32F103CBT6 128k flash 20k ram
 Used when building non-bootloader projects normally.
 */
 
