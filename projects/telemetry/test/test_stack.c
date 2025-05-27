@@ -33,5 +33,5 @@ void test_stack(){
     printf("\n");
     stack_pop(&my_stack, read);
     printf(read);
-    printf("\n");    
+    printf("\n");
 }

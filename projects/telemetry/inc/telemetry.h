@@ -1,7 +1,7 @@
 #pragma once
 
 #include "datagram.h"
-#include "queues.h"
+#include "stack.h"
 #include "status.h"
 #include "uart.h"
 
@@ -13,7 +13,7 @@ typedef struct {
 
 typedef struct {
   Datagram datagram_buffer[DATAGRAM_BUFFER_SIZE]; /**< Buffer to store the datagram */
-  Queue datagram_queue;                           /**< Queue handle for the datagram buffer */
+  Stack datagram_stack;                           /**< Queue handle for the datagram buffer */
   TelemetryConfig *config; /**< Pointer to the telemetry configuration data */
 } TelemetryStorage;
 

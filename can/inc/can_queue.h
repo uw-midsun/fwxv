@@ -38,4 +38,3 @@ typedef struct CanQueue {
 
 #define can_queue_size(can_queue)                                   \
     queue_get_num_items(&(can_queue)->queue)
-

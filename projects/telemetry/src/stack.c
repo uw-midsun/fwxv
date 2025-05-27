@@ -23,13 +23,29 @@ StatusCode stack_pop(Stack *stack, uint32_t *buf){
     return STATUS_CODE_OK;
 }
 
-StatusCode stack_push(Stack *stack, uint32_t data){
+StatusCode stack_pop_from_isr(Stack *stack, uint32_t *buf, BaseType_t *higher_prio_woken){
+    if(higher_prio_woken == NULL){
+        return STATUS_CODE_INVALID_ARGS;
+    }
+
+    return stack_pop(stack, buf);
+}
+
+StatusCode stack_push(Stack *stack, const uint32_t data){
     for(int i = 0; i < stack->item_size; i++){
         stack->storage_buf[stack->current_item + i] = (uint8_t)(data & (0xFF << (i * 8)));
     }
     stack->current_item = (stack->current_item + stack->item_size) % (stack->num_items * stack->item_size);
 
     return STATUS_CODE_OK;
+}
+
+StatusCode stack_push_from_isr(Stack *stack, const uint32_t data, BaseType_t *higher_prio_woken){
+    if(higher_prio_woken == NULL){
+        return STATUS_CODE_INVALID_ARGS;
+    }
+
+    return stack_push(stack, data);
 }
 
 StatusCode stack_peek(Stack *stack, uint32_t *buf){

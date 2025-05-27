@@ -17,7 +17,9 @@ typedef struct {
 
 StatusCode stack_init(Stack *stack);
 StatusCode stack_pop(Stack *stack, uint32_t *buf);
-StatusCode stack_push(Stack *stack, uint32_t data);
+StatusCode stack_pop_from_isr(Stack *stack, uint32_t *buf, BaseType_t *higher_prio_woken);
+StatusCode stack_push(Stack *stack, const uint32_t data);
+StatusCode stack_push_from_isr(Stack *stack, const uint32_t data, BaseType_t *higher_prio_woken);
 StatusCode stack_peek(Stack *stack, uint32_t *buf);
 uint32_t stack_get_num_items(Stack *stack);
 void stack_reset(Stack *stack);

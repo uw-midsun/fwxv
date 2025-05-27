@@ -1,6 +1,6 @@
 #include "telemetry.h"
 
-#include "can.h"
+#include "telemetry_can.h"
 #include "can_board_ids.h"
 #include "datagram.h"
 #include "delay.h"
@@ -20,22 +20,22 @@ static const CanSettings s_can_settings = {
   .loopback = false,
 };
 
-TASK(can_message_listener, TASK_STACK_256) {
+TASK(can_message_listener, TASK_STACK_256){
   CanMessage message = { 0U };
   Datagram datagram = { 0U };
   StatusCode status = STATUS_CODE_OK;
 
-  while (true) {
-    while (queue_receive(&s_can_storage.rx_queue.queue, &message, QUEUE_DELAY_BLOCKING) !=
-           STATUS_CODE_OK) {
+  while(true){
+    while(stack_pop(&s_can_storage.rx_queue, &message, QUEUE_DELAY_BLOCKING) != STATUS_CODE_OK){
+
     }
-    LOG_DEBUG("Received message\n");
+
+    LOG_DEBUG("Recieved message\n");
     decode_can_message(&datagram, &message);
 
-    /* Push the message to Queue */
-    status = queue_send(&telemetry_storage->datagram_queue, &datagram, 0U);
+    status = stack_push(&telemetry_storage->datagram_stack, &datagram, 0U);
 
-    if (status != STATUS_CODE_OK) {
+    if(status != STATUS_CODE_OK){
       LOG_DEBUG("Failed to enqueue datagram: %d\n", status);
     }
   }
@@ -47,17 +47,16 @@ TASK(can_message_processor, TASK_STACK_256) {
   size_t datagram_length = 0U;
   uint32_t delay_time_ms = (1U / telemetry_storage->config->message_transmit_frequency_hz) * 1000U;
 
-  while (true) {
-    /* Wait for new data to be in the queue */
-    while (queue_receive(&telemetry_storage->datagram_queue, &tx_datagram, QUEUE_DELAY_BLOCKING) ==
-           STATUS_CODE_OK) {
-      LOG_DEBUG("Processing message\n");
+  while(true){
+
+    while(stack_pop(&telemetry_storage->datagram_stack, &tx_datagram, QUEUE_DELAY_BLOCKING) == STATUS_CODE_OK){
+      LOG_DEBUG("Processing message \n");
       datagram_length = tx_datagram.dlc + DATAGRAM_METADATA_SIZE;
       log_decoded_message(&tx_datagram);
       status = uart_tx(UART_PORT_2, (uint8_t *)&tx_datagram, &datagram_length);
 
-      if (status != STATUS_CODE_OK) {
-        LOG_DEBUG("Failed to transmit to telemetry transceiver!\n");
+      if(status != STATUS_CODE_OK){
+        LOG_DEBUG("Failed to transmit to telemetry transciever! \n");
       }
 
       delay_ms(delay_time_ms);
@@ -73,15 +72,14 @@ StatusCode telemetry_init(TelemetryStorage *storage, TelemetryConfig *config) {
   telemetry_storage = storage;
   telemetry_storage->config = config;
 
-  telemetry_storage->datagram_queue.item_size = sizeof(Datagram);
-  telemetry_storage->datagram_queue.num_items = DATAGRAM_BUFFER_SIZE;
-  telemetry_storage->datagram_queue.storage_buf = (uint8_t *)telemetry_storage->datagram_buffer;
+  telemetry_storage->datagram_stack.item_size = sizeof(Datagram);
+  telemetry_storage->datagram_stack.num_items = DATAGRAM_BUFFER_SIZE;
+  telemetry_storage->datagram_stack.storage_buf = (uint8_t *)telemetry_storage->datagram_buffer; 
 
   log_init();
   uart_init(telemetry_storage->config->uart_port, &telemetry_storage->config->uart_settings);
   can_init(&s_can_storage, &s_can_settings);
-  queue_init(&telemetry_storage->datagram_queue);
-
+  stack_init(&telemetry_storage->datagram_stack);
   tasks_init_task(can_message_listener, TASK_PRIORITY(2), NULL);
   tasks_init_task(can_message_processor, TASK_PRIORITY(2), NULL);
 
