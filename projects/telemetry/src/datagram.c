@@ -20,14 +20,14 @@ void decode_can_message(Datagram *datagram, CanMessage *msg) {
 
 void log_decoded_message(Datagram *datagram) {
   delay_ms(5);
-  LOG_DEBUG("Start frame: 0x%0x. End frame: 0x%0x\n", datagram->start_frame,
-            datagram->data[datagram->dlc]);
+  // LOG_DEBUG("Start frame: 0x%0x. End frame: 0x%0x\n", datagram->start_frame,
+            // datagram->data[datagram->dlsc]);
   LOG_DEBUG("Message ID: 0x%0x\n", datagram->id);
   LOG_DEBUG("Datagram DLC: 0x%0x\n", datagram->dlc);
 
   LOG_DEBUG("Data:\n");
   for (size_t i = 0; i < datagram->dlc; ++i) {
     delay_ms(5);
-    LOG_DEBUG("Byte %d: 0x%0x\n", i, datagram->data[i]);
+    // LOG_DEBUG("Byte %d: 0x%0x\n", i, datagram->data[i]);
   }
 }

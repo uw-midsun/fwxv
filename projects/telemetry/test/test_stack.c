@@ -12,12 +12,39 @@ void teardown_test(void){
 }
 
 void test_stack(){
-    uint32_t stack_size = 256;
-    uint32_t item_size = 32;
-    uint8_t buffer[item_size * stack_size]; 
-    Stack my_stack = {256, 32, buffer};
-    uint32_t read;
+    uint32_t stack_size = 3;
+    uint32_t item_size = 2;
+    uint32_t current_item = 0;
+    uint32_t head = 0;
+    uint8_t buffer[item_size * (stack_size + 1)]; //our stack will always have an empty slot between head and tail
+    Stack my_stack = {stack_size, item_size, buffer, current_item, head};
+    uint32_t read = 0;
+    uint32_t curr_index;
 
+    stack_init(&my_stack);
+
+    stack_push(&my_stack, 0x1);
+    printf("index: %d\n", stack_get_current_index(&my_stack));
+    stack_pop(&my_stack, &read);
+    printf("index: %d\n", stack_get_current_index(&my_stack));
+    printf("val: %x\n", read);
+    stack_push(&my_stack, 0x02);
+    printf("index: %d\n", stack_get_current_index(&my_stack));
+    stack_push(&my_stack, 0x03);
+    printf("index: %d\n", stack_get_current_index(&my_stack));
+    stack_push(&my_stack, 0x04);
+    printf("index: %d\n", stack_get_current_index(&my_stack));
+    stack_push(&my_stack, 0x05);
+    printf("index: %d\n", stack_get_current_index(&my_stack));
+    stack_pop(&my_stack, &read);
+    printf("index: %d\n", stack_get_current_index(&my_stack));
+    printf("val: %x\n", read);
+    stack_pop(&my_stack, &read);
+    printf("index: %d\n", stack_get_current_index(&my_stack));
+    printf("val: %x\n", read);
+    stack_pop(&my_stack, &read);
+    printf("index: %d\n", stack_get_current_index(&my_stack));
+    printf("val: %x\n", read);
     stack_push(&my_stack, 0x1111);
     stack_pop(&my_stack, read);
     printf(read);
