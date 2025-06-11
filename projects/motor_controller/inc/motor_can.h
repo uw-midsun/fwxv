@@ -20,8 +20,13 @@
 #define CONVERT_VELOCITY_TO_KPH 3.6    // Converts m/s to km/h
 #define COASTING_THRESHOLD_SCALE 0.05  // Scaling value to determine coasting threshold
 
-#define DRIVER_CONTROL_BASE 0x500
+#define DRIVER_CONTROL_BASE_L 0x500
+#define DRIVER_CONTROL_BASE_R 0x420 /* Placeholder */
+
 #define MOTOR_CONTROLLER_BASE_L 0x400
 #define MOTOR_CONTROLLER_BASE_R 0x80  // TODO: set to actual values
+
+#define TURNING_GAIN 1.0f
+#define TURN_SENSITIVITY 0.05f
 
 void init_motor_controller_can();

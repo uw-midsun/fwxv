@@ -40,10 +40,11 @@ typedef enum DriveState {
   BRAKE,
 } DriveState;
 
-static float s_target_current;
-static float s_target_velocity;
-static float s_car_velocity_l = 0.0;
-static float s_car_velocity_r = 0.0;
+static float s_target_current_l;
+static float s_target_current_r;
+static float s_target_velocity = 0.0;
+static float s_car_velocity_l;
+static float s_car_velocity_r;
 
 void (*mcp2515_rx_all)();
 void (*mcp2515_tx_all)();
@@ -94,6 +95,20 @@ static inline float prv_one_pedal_drive_current(float throttle_percent, float th
   return 0.0;
 }
 
+static void prv_turn_correct(float const throttle_percent){
+  /* if left is faster, delta is positive, else negative*/
+  float delta = TURNING_GAIN * (s_car_velocity_l - s_car_velocity_r); 
+
+  if (fabsf(delta) < TURN_SENSITIVITY){
+    s_target_current_l = throttle_percent; 
+    s_target_current_r = throttle_percent; 
+    return; 
+  }
+  s_target_current_l = fmaxf(throttle_percent + (delta/2), 0.0f); /* left faster = +ve so up torque reduce speed*/
+  s_target_current_r = fmaxf(throttle_percent - (delta/2), 0.0f); /* right faster = -ve so lower torque up speed*/
+  return;
+}
+
 static void prv_update_target_current_velocity() {
   float throttle_percent = prv_get_float(get_cc_pedal_throttle_output());
   throttle_percent = prv_clamp_float(throttle_percent);
@@ -109,7 +124,7 @@ static void prv_update_target_current_velocity() {
   // 100 means we are below 4.0V so regen braking is allowed
   float regen = prv_get_float(get_cc_regen_percent());
   bool cruise = get_cc_info_cruise_control();
-
+  
   if ((drive_state == DRIVE) && cruise && (throttle_percent <= opd_threshold)) {
     drive_state = CRUISE;
   }
@@ -118,6 +133,7 @@ static void prv_update_target_current_velocity() {
   }
   if (drive_state == DRIVE || drive_state == REVERSE) {
     throttle_percent = prv_one_pedal_drive_current(throttle_percent, opd_threshold, &drive_state);
+    prv_turn_correct(throttle_percent); 
   }
   // LOG_DEBUG("throttle:%d\n", (int)(throttle_percent * 1000));
   // LOG_DEBUG("brake:%d\n", brake);
@@ -133,28 +149,35 @@ static void prv_update_target_current_velocity() {
   // https://tritiumcharging.com/wp-content/uploads/2020/11/TritiumWaveSculptor22_Manual.pdf 18.3
   switch (drive_state) {
     case DRIVE:
-      s_target_current = throttle_percent;
-      s_target_velocity = TORQUE_CONTROL_VEL;
+      s_car_velocity_l = TORQUE_CONTROL_VEL;
+      s_car_velocity_r = TORQUE_CONTROL_VEL;
       break;
     case REVERSE:
-      s_target_current = throttle_percent;
-      s_target_velocity = -TORQUE_CONTROL_VEL;
+      s_car_velocity_l = -TORQUE_CONTROL_VEL;
+      s_car_velocity_r = -TORQUE_CONTROL_VEL;
       break;
     case CRUISE:
-      s_target_current = ACCERLATION_FORCE;
-      s_target_velocity = target_vel;
+      s_target_current_l = ACCERLATION_FORCE;
+      s_target_current_r = ACCERLATION_FORCE;
+      s_car_velocity_l = target_vel;
+      s_car_velocity_r = target_vel;
       break;
     case BRAKE:
       if (throttle_percent > regen) {
-        s_target_current = regen;
+        s_target_current_l = regen;
+        s_target_current_r = regen;
       } else {
-        s_target_current = throttle_percent;
+        s_target_current_l = throttle_percent;
+        s_target_current_r = throttle_percent;
       }
-      s_target_velocity = 0;
+      s_car_velocity_l = 0;
+      s_car_velocity_r = 0;
       break;
     case NEUTRAL:
-      s_target_current = 0;
-      s_target_velocity = 0;
+      s_target_current_l = 0;
+      s_target_current_r = 0;
+      s_car_velocity_l = 0;
+      s_car_velocity_r = 0;
       break;
     default:
       // invalid drive state
@@ -185,21 +208,31 @@ static void motor_controller_tx_all() {
 
   prv_update_target_current_velocity();
 
-  CanMessage message = {
-    .id.raw = DRIVER_CONTROL_BASE + 0x01,
+  CanMessage left_message = {
+    .id.raw = DRIVER_CONTROL_BASE_L + 0x01,
     .dlc = 8,
   };
+  CanMessage right_message = {
+    .id.raw = DRIVER_CONTROL_BASE_R + 0x01,
+    .dlc = 8,
+  };
+
   // Very low reading will be ignored
-  if (s_target_current < 0.1) {
-    s_target_current = 0.0f;
+  if (s_target_current_l < 0.1) {
+    s_target_current_l = 0.0f;
   }
-  memcpy(&message.data_u32[0], &s_target_velocity, sizeof(uint32_t));
-  memcpy(&message.data_u32[1], &s_target_current, sizeof(uint32_t));
+  if (s_target_current_r < 0.1) {
+    s_target_current_r = 0.0f;
+  }
 
-  // LOG_DEBUG("s_target_current: %d\n", (int)(s_target_current * 100));
-  // LOG_DEBUG("s_target_velocity: %d\n", (int)(s_target_velocity * 100));
+  memcpy(&left_message.data_u32[0], &s_car_velocity_l, sizeof(uint32_t));
+  memcpy(&left_message.data_u32[1], &s_target_current_l, sizeof(uint32_t));
 
-  mcp2515_transmit(&message);
+  memcpy(&right_message.data_u32[0], &s_car_velocity_r, sizeof(uint32_t));
+  memcpy(&right_message.data_u32[1], &s_target_current_r, sizeof(uint32_t));
+
+  mcp2515_transmit(&left_message);
+  mcp2515_transmit(&right_message);
 }
 
 static void motor_controller_rx_all() {
