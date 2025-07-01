@@ -14,10 +14,11 @@ static void prv_read_throttle_data(uint32_t *reading) {
   // Convert ADC Reading to readable voltage by normalizing with calibration data and dividing
   // to get percentage press. Brake is now just a GPIO. Negatives and > 100 values will be
   // capped.
-  int16_t range_throttle =
-      s_calib_blob->throttle_calib.upper_value - s_calib_blob->throttle_calib.lower_value;
+  // int16_t range_throttle =
+  //     s_calib_blob->throttle_calib.upper_value - s_calib_blob->throttle_calib.lower_value;
+  int16_t range_throttle = 800;
   volatile float calculated_reading =
-      (((float)adc_reading - (float)s_calib_blob->throttle_calib.lower_value) / range_throttle);
+      (((float)adc_reading - (float)800.0f) / range_throttle);
   // Readings are inverted
   calculated_reading = 1 - calculated_reading;
   if (calculated_reading < 0) {
