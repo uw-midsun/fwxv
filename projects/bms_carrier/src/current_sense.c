@@ -19,10 +19,15 @@ static Max17261Settings *s_fuel_gauge_settings;
 static BmsStorage *s_storage;
 static Max27261Params s_fuel_params;
 
+static const int32_t EMA_ALPHA = 30;
+static uint8_t failure_count = 0;
+
 StatusCode prv_fuel_gauge_read() {
   StatusCode status = STATUS_CODE_OK;
 
-  status |= max17261_current(s_fuel_guage_storage, &s_storage->pack_current);
+  // Raw readings
+  int32_t raw_current;
+  status |= max17261_current(s_fuel_guage_storage, &raw_current);
   non_blocking_delay_ms(5);
   status |= max17261_voltage(s_fuel_guage_storage, &s_storage->pack_voltage);
   non_blocking_delay_ms(5);
@@ -31,6 +36,7 @@ StatusCode prv_fuel_gauge_read() {
 
   // Measured voltage corresponds to one cell. Multiply it by the number of cells in series
   s_storage->pack_voltage = s_storage->pack_voltage * s_storage->config.series_count;
+  s_storage->pack_current = (EMA_ALPHA * raw_current + (100 - EMA_ALPHA) * s_storage->pack_current) / 100;
 
   LOG_DEBUG("CURRENT: %" PRIu32 "\n", s_storage->pack_current);
   LOG_DEBUG("VOLTAGE: %" PRIu32 "\n", s_storage->pack_voltage);
@@ -42,7 +48,6 @@ StatusCode prv_fuel_gauge_read() {
     return status;
   }
 
-  // Set Battery VT message signals
   set_battery_vt_current((uint16_t)abs(s_storage->pack_current));
   set_battery_vt_voltage((uint16_t)(s_storage->pack_voltage / 10));
   set_battery_vt_temperature(s_storage->temperature);
@@ -50,18 +55,22 @@ StatusCode prv_fuel_gauge_read() {
   if (s_storage->pack_current >= MAX_SOLAR_CURRENT_A * 1000) {
     bms_open_solar();
   }
+
   if (s_storage->pack_current <= CURRENT_SENSE_MAX_CURRENT_A * 1000) {
-    fault_bps_set(BMS_FAULT_OVERCURRENT);
-    return STATUS_CODE_INTERNAL_ERROR;
+    if (++failure_count >= CURRENT_SENSE_MAX_FAILURES) {
+      fault_bps_set(BMS_FAULT_OVERCURRENT);
+    }
+    status |= STATUS_CODE_INTERNAL_ERROR;
   } else if (s_storage->pack_current >= CURRENT_SENSE_MIN_CURRENT_A * 1000) {
-    fault_bps_set(BMS_FAULT_OVERCURRENT);
-    return STATUS_CODE_INTERNAL_ERROR;
+    if (++failure_count >= CURRENT_SENSE_MAX_FAILURES) {
+      fault_bps_set(BMS_FAULT_OVERCURRENT);
+    }
+    status |= STATUS_CODE_INTERNAL_ERROR;
   } else if (s_storage->pack_voltage >= CURRENT_SENSE_MAX_VOLTAGE_V) {
-    fault_bps_set(BMS_FAULT_OVERVOLTAGE);
-    return STATUS_CODE_INTERNAL_ERROR;
-  } else if (s_storage->temperature >= CURRENT_SENSE_MAX_TEMP_C) {
-    fault_bps_set(BMS_FAULT_OVERTEMP_AMBIENT);
-    return STATUS_CODE_INTERNAL_ERROR;
+    if (++failure_count >= CURRENT_SENSE_MAX_FAILURES) {
+      fault_bps_set(BMS_FAULT_OVERVOLTAGE);
+    }
+    status |= STATUS_CODE_INTERNAL_ERROR;
   }
 
   return status;
@@ -72,12 +81,6 @@ TASK(current_sense, TASK_STACK_512) {
   while (true) {
     notify_wait(&notification, BLOCK_INDEFINITELY);
     LOG_DEBUG("Running Current Sense Cycle!\n");
-
-    // Handle alert from fuel gauge
-    // if (notification & (1 << ALRT_GPIO_IT)) {
-    //   LOG_DEBUG("ALERT_PIN triggered\n");
-    //   fault_bps_set(BMS_FAULT_COMMS_LOSS_CURR_SENSE);
-    // }
 
     prv_fuel_gauge_read();
     send_task_end();

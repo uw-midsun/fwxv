@@ -22,7 +22,7 @@
   { .i2c_address = CC_IO_EXP_ADDR, .pin = PCA9555_PIN_IO1_6 }
 #define REGEN_LED_ADDR \
   { .i2c_address = CC_IO_EXP_ADDR, .pin = PCA9555_PIN_IO0_5 }
-#define AFE_WARNING_LED_ADDR \
+#define BPS_FAULT_LED_ADDR \
   { .i2c_address = CC_IO_EXP_ADDR, .pin = PCA9555_PIN_IO1_7 }
 #define POWER_LED_ADDR \
   { .i2c_address = CC_IO_EXP_ADDR, .pin = PCA9555_PIN_IO0_2 }

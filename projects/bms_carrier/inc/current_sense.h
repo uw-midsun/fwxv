@@ -35,6 +35,8 @@
 
 #define CURRENT_SENSE_STORE_FLASH NUM_FLASH_PAGES - 1
 
+#define CURRENT_SENSE_MAX_FAILURES 3
+
 // Enum for GPIO IT alerts (just the one pin)
 typedef enum { CURRENT_SENSE_RUN_CYCLE = 0, ALRT_GPIO_IT } CurrentSenseNotification;
 

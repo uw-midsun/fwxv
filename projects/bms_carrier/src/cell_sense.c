@@ -12,8 +12,6 @@ static BmsStorage *bms;
 #define TABLE_SIZE 125
 #define LTC_RETRIES 5
 
-#define RETRY
-
 #define CELL_VOLTAGE_LOOKUP(cell) \
   (ltc_afe_storage->cell_voltages[ltc_afe_storage->cell_result_lookup[cell]])
 

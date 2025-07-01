@@ -35,7 +35,7 @@ static void prv_off_state_input(Fsm *fsm, void *context) {
   }
   LOG_DEBUG("IN off state - %d\n", get_received_cc_info());
   LOG_DEBUG("s_bps_storage.fault_bitset %d\n", s_bps_storage.fault_bitset);
-  // pd_sense_output_group(OUTPUT_GROUP_POWER_OFF);
+  pd_sense_output_group(OUTPUT_GROUP_POWER_OFF);
   if (!get_received_cc_info()) {
     return;
   }
@@ -56,7 +56,7 @@ static void prv_precharge_output(void *context) {
 }
 
 static void prv_precharge_input(Fsm *fsm, void *context) {
-  // pd_sense_output_group(OUTPUT_GROUP_POWER_DRIVE);
+  pd_sense_output_group(OUTPUT_GROUP_POWER_DRIVE);
   if (get_mc_status_precharge_status()) {
     fsm_transition(fsm, POWER_STATE_DRIVE);
     set_pd_status_power_state(EE_POWER_DRIVE_STATE);
@@ -81,7 +81,7 @@ static void prv_drive_state_input(Fsm *fsm, void *context) {
   if (!get_received_cc_info()) {
     return;
   }
-  // pd_sense_output_group(OUTPUT_GROUP_POWER_DRIVE);
+  pd_sense_output_group(OUTPUT_GROUP_POWER_DRIVE);
   CentreConsoleDriveState cc_drive_event = get_cc_info_drive_state();
   if (cc_drive_event == EE_DRIVE_OUTPUT_NEUTRAL_STATE) {
     power_context.target_state = POWER_STATE_OFF;
@@ -105,7 +105,7 @@ static void prv_fault_state_output(void *context) {
 }
 
 static void prv_fault_state_input(Fsm *fsm, void *context) {
-  // pd_sense_output_group(OUTPUT_GROUP_POWER_FAULT);
+  pd_sense_output_group(OUTPUT_GROUP_POWER_FAULT);
 }
 
 // Power Sequence FSM declaration for states and transitions

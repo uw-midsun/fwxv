@@ -12,7 +12,7 @@
 #define CONVERT_VELOCITY_TO_KPH 0.036
 
 SegDisplay all_displays = ALL_DISPLAYS;
-GpioAddress bps_led = BPS_LED_ADDR;
+static GpioAddress bps_led = BPS_LED_ADDR;
 
 // Centre Console State Variables
 static bool s_cc_enabled;
@@ -30,7 +30,7 @@ typedef enum DriveLeds {
   RIGHT_LED,
   CRUISE_LED,
   LIGHTS_LED,
-  AFE_WARNING_LED,
+  BPS_FAULT_LED,
   NUM_DRIVE_LED,
 } DriveLeds;
 
@@ -41,7 +41,7 @@ static Pca9555GpioAddress s_output_leds[NUM_DRIVE_LED] = {
   [RIGHT_LED] = RIGHT_LED_ADDR,
   [CRUISE_LED] = CRUISE_LED_ADDR,
   [REGEN_LED] = REGEN_LED_ADDR,
-  [AFE_WARNING_LED] = AFE_WARNING_LED_ADDR,
+  [BPS_FAULT_LED] = BPS_FAULT_LED_ADDR,
 };
 
 static float prv_regen_calc(uint16_t max_cell_v, uint16_t batt_soc) {
@@ -101,24 +101,13 @@ void update_indicators(uint32_t notif) {
     s_last_lights_state = g_tx_struct.cc_steering_input_lights;
   }
 
-  // Update Aux warning LED
-  if (get_battery_status_afe_status()) {
-    pca9555_gpio_set_state(&s_output_leds[AFE_WARNING_LED], PCA9555_GPIO_STATE_HIGH);
-  } else {
-    // PWM will not stop, driver will pull over and diagnose issue
-    pca9555_gpio_set_state(&s_output_leds[AFE_WARNING_LED], PCA9555_GPIO_STATE_LOW);
-  }
+  uint16_t fault = get_battery_status_fault() & ~(0b11 << 14);
+  uint16_t bps_persist = get_pd_status_bps_persist() & ~(0b11 << 14);
 
-  if (get_battery_status_fault() & get_pd_status_bps_persist() & (1 << 15)) {
-    // pwm_set_dc(PWM_TIMER_1, 100, 3, true); AS A RESULT OF PPL HATING ON MY BUZZER - Aryan
-    gpio_set_state(&bps_led, GPIO_STATE_LOW);
-  } else if ((get_battery_status_fault() & get_pd_status_bps_persist() & (1 << 14)) ||
-             get_pd_status_power_state() == EE_POWER_FAULT_STATE) {
-    // pwm_set_dc(PWM_TIMER_1, 10, 3, true);  AS A RESULT OF PPL HATING ON MY BUZZER - Aryan
-    gpio_set_state(&bps_led, GPIO_STATE_LOW);
+  if (fault != 0 || bps_persist != 0) {
+    pca9555_gpio_set_state(&s_output_leds[BPS_FAULT_LED], PCA9555_GPIO_STATE_HIGH);
   } else {
-    // PWM will not stop, driver will pull over and diagnose issue
-    gpio_set_state(&bps_led, GPIO_STATE_HIGH);
+     pca9555_gpio_set_state(&s_output_leds[BPS_FAULT_LED], PCA9555_GPIO_STATE_LOW);
   }
 }
 
@@ -168,33 +157,40 @@ void update_drive_output() {
   set_cc_info_hazard_enabled(s_hazard_state);
 }
 
-TASK(update_displays, TASK_MIN_STACK_SIZE) {
+TASK(update_displays, TASK_STACK_256) {
   seg_displays_init(&all_displays);
-  float car_vel = 0;
-  uint16_t batt_fault = 0;
+  float car_vel = 0.0f;
+  // uint16_t batt_fault = 0;
+
   while (true) {
-    if (get_battery_status_fault()) {
-      batt_fault = (uint16_t)((get_battery_status_fault()) & (~(0b11 << 14)));
-    } else {
+    // bool has_fault = get_battery_status_fault() != 0;
+  
+    // if (has_fault) {
+    //   batt_fault = (uint16_t)(get_battery_status_fault() & (~(0b11 << 14)));
+    // } else {
       float avg_speed = (abs((int16_t)get_motor_velocity_velocity_l()) +
-                         abs((int16_t)get_motor_velocity_velocity_r())) /
-                        2.0f;
-      car_vel = (avg_speed * 60 * MATH_PI * (WHEEL_DIAMETER_CM / CM_TO_INCHES)) / MILES_TO_INCHES;
+                         abs((int16_t)get_motor_velocity_velocity_r()));
+
+      car_vel = avg_speed * 0.036f;
       if (car_vel >= 100.0f) {
         car_vel = 99.9f;
       }
-    }
-    int16_t batt_current = (int16_t)(get_battery_vt_current());
+    // }
+
+    uint16_t batt_current = (uint16_t)(get_battery_vt_current());
     batt_current = abs(batt_current / 100);
-    uint16_t aux_battery_voltage = get_battery_status_aux_batt_v();
-    if (get_battery_status_fault()) {
-      seg_displays_set_int(&all_displays, batt_fault, (uint16_t)batt_current, aux_battery_voltage);
-    } else if (car_vel >= 100) {
-      seg_displays_set_int(&all_displays, (int)car_vel, (uint16_t)batt_current,
-                           aux_battery_voltage);
+
+    uint16_t aux_batt_voltage = get_battery_status_aux_batt_v();
+
+    // if (has_fault) {
+    //   seg_displays_set_int(&all_displays, batt_fault, (uint16_t)batt_current, aux_batt_voltage);
+    if (car_vel >= 100.0f) {
+      seg_displays_set_int(&all_displays, (int)car_vel, batt_current, aux_batt_voltage);
     } else {
-      seg_displays_set_float(&all_displays, car_vel, (uint16_t)batt_current, aux_battery_voltage);
+      seg_displays_set_float(&all_displays, car_vel, batt_current, aux_batt_voltage);
     }
+  
+    delay_ms(3);
   }
 }
 
@@ -212,5 +208,5 @@ StatusCode dashboard_init(void) {
 }
 
 StatusCode display_init(void) {
-  return tasks_init_task(update_displays, TASK_PRIORITY(2), NULL);
+  return tasks_init_task(update_displays, TASK_PRIORITY(1), NULL);
 }

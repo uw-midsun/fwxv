@@ -47,12 +47,12 @@ void pre_loop_init() {
 }
 
 void run_fast_cycle() {
-  run_can_rx_cycle();
-  wait_tasks(1);
   get_button_press();
 }
 
 void run_medium_cycle() {
+  run_can_rx_cycle();
+  wait_tasks(1);
   uint32_t notif = 0;
   notify_get(&notif);
 
