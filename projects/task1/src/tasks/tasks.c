@@ -1,4 +1,4 @@
-// Fimware 102 TASK1 - ETHAN GAN 
+// Fimware 102 TASKS - ETHAN GAN 
 #include <stdbool.h>
 #include <stdint.h>
 
