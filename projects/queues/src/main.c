@@ -1,6 +1,6 @@
-#include <stdio.h>
+/*#include <stdio.h>
 
-/*#include "log.h"
+#include "log.h"
 #include "master_task.h"
 #include "tasks.h"
 
@@ -25,4 +25,3 @@ int main() {
   return 0;
 }
 */
-
