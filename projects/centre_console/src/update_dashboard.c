@@ -35,12 +35,9 @@ typedef enum DriveLeds {
 } DriveLeds;
 
 static Pca9555GpioAddress s_output_leds[NUM_DRIVE_LED] = {
-  [POWER_LED] = POWER_LED_ADDR,
-  [HAZARD_LED] = HAZARD_LED_ADDR,
-  [LEFT_LED] = LEFT_LED_ADDR,
-  [RIGHT_LED] = RIGHT_LED_ADDR,
-  [CRUISE_LED] = CRUISE_LED_ADDR,
-  [REGEN_LED] = REGEN_LED_ADDR,
+  [POWER_LED] = POWER_LED_ADDR,         [HAZARD_LED] = HAZARD_LED_ADDR,
+  [LEFT_LED] = LEFT_LED_ADDR,           [RIGHT_LED] = RIGHT_LED_ADDR,
+  [CRUISE_LED] = CRUISE_LED_ADDR,       [REGEN_LED] = REGEN_LED_ADDR,
   [BPS_FAULT_LED] = BPS_FAULT_LED_ADDR,
 };
 
@@ -162,7 +159,7 @@ TASK(update_displays, TASK_MIN_STACK_SIZE) {
   float car_vel = 0;
   while (true) {
     float avg_speed = (abs((int16_t)get_motor_velocity_velocity_l()) +
-                        abs((int16_t)get_motor_velocity_velocity_r()));
+                       abs((int16_t)get_motor_velocity_velocity_r()));
     car_vel = (avg_speed * 0.036f);
     if (car_vel >= 100.0f) {
       car_vel = 99.9f;
@@ -172,10 +169,9 @@ TASK(update_displays, TASK_MIN_STACK_SIZE) {
     batt_current = abs(batt_current / 100);
     uint16_t min_cell_v = (uint16_t)(get_battery_info_min_cell_v());
     min_cell_v /= 100;
-  
+
     if (car_vel >= 100) {
-      seg_displays_set_int(&all_displays, (int)car_vel, (uint16_t)batt_current,
-                           min_cell_v);
+      seg_displays_set_int(&all_displays, (int)car_vel, (uint16_t)batt_current, min_cell_v);
     } else {
       seg_displays_set_float(&all_displays, car_vel, (uint16_t)batt_current, min_cell_v);
     }
