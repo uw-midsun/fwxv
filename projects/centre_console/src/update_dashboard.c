@@ -98,8 +98,8 @@ void update_indicators(uint32_t notif) {
     s_last_lights_state = g_tx_struct.cc_steering_input_lights;
   }
 
-  uint16_t fault = (uint16_t)(get_battery_status_fault()) & ~(0b11 << 14);
-  uint16_t bps_persist = (uint16_t)(get_pd_status_bps_persist()) & ~(0b11 << 14);
+  uint16_t fault = (uint16_t)(get_battery_status_fault()) & (uint16_t)~(0b11 << 14);
+  uint16_t bps_persist = (uint16_t)(get_pd_status_bps_persist()) & (uint16_t)~(0b11 << 14);
 
   if (fault != 0 || bps_persist != 0) {
     pca9555_gpio_set_state(&s_output_leds[BPS_FAULT_LED], PCA9555_GPIO_STATE_HIGH);
