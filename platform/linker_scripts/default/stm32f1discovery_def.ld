@@ -1,5 +1,5 @@
 /*
-Linker subscript for STM32F103C definitions with 64K Flash and 20K RAM
+Linker subscript for STM32F103C definitions with 128K Flash and 20K RAM
 */
 
 _flash_start = 0x08000000;
